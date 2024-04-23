@@ -1,0 +1,229 @@
+@extends('adminlte::page')
+
+@section('title', 'Poetry')
+
+@section('content_header')
+    <div class="row d-flex justify-content-between">
+      <h1 class="m-0 text-dark col-6">Poetry</h1>
+      <div class="row langButton col-6">
+        <div class="col-4">
+          <select id="lang" class="form-control">
+            @foreach ($languages as $item)
+              <option value="{{ $item->lang_code }}">{{ $item->lang_title }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="col-8">
+          <select id="poets" class="form-control select2">
+            <option value="0">Select Poet</option>
+            @foreach ($poets as $item)
+                <option value="{{ $item->id }}">{{ $item->details->poet_laqab }}</option>
+            @endforeach
+          </select>
+        </div>
+      </div>
+    </div>
+@stop
+
+@section('content')
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Poetry</h3>
+                    <div class="float-right">
+                        <a href="{{ route('admin.poetry.trash') }}" class="btn btn-sm btn-warning float-right mr-1"><i class="fa fa-trash"></i> View Trashed</a>
+                        <a href="{{ route('admin.poetry.create') }}" class="btn btn-sm btn-success mr-1" ><i class="fa fa-plus mr-1"></i> New Poetry</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table id="example1" class="table table-bordered table-striped">
+                        <thead>
+                           <tr>
+                           <th>ID</th>
+                           <th>Title</th>
+                           <th>Information</th>
+                           <th>Poets</th>
+                           <th>Actions</th>
+                           </tr>
+                       </thead>
+                         <tfoot>
+                           <tr>
+                             <th>ID</th>
+                             <th>Title</th>
+                            <th>Information</th>
+                            <th>Poets</th>
+                             <th>Actions</th>
+                           </tr>
+                         </tfoot>
+                         <tbody>
+                              
+                         </tbody>
+                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('plugins.Datatables', true)
+@section('plugins.toastr', true)
+
+@section('css')
+  <style>
+    .text-linked {
+      color: #000000be;
+    }
+  </style>
+@endsection
+
+@section('js')
+
+<script>
+    $(function () {
+       
+      _delete('poetry', 'Poetry');
+      
+
+
+     $(document).on('click', '.btn-visible-poetry', function (e) {
+        e.preventDefault();
+        var button = $(this);
+        var row = button.closest('tr');
+        var itemId = button.data('id');
+        var itemUrl = button.data('url');
+        /// Ajax Request for Delete Poetry
+        $.ajax({
+          url: itemUrl,
+          type:'PUT',
+          headers: {
+              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // If you're using CSRF protection
+          },
+          beforeSend: function (){
+            /// do domthing
+            button.attr('disabled', true)
+            
+          },
+          success: function (response){
+            button.attr('disabled', false)
+
+            // change icon and data 
+            if(response.visibility === 1){
+              button.attr('title', 'Hide Poetry')
+              button.html('<i class="fa fa-eye"></i>')
+            }else{
+              button.attr('title', 'Show Poetry')
+              button.html('<i class="fa fa-eye-slash"></i>')
+            }
+            if(response.type === 'success'){
+              toastr.success(response.message)
+            }else{
+              toastr.error(response.message)
+            }
+            
+          },
+            error: function (xhr, ajaxOptions, thrownError){
+            console.error('error called on ajax request of Delete Poetry')
+            console.error(xhr.status)
+            console.error(thrownError)
+            toastr.error('error called on ajax request of Delete Poetry')
+          }
+        });
+     })
+
+      $('[data-toggle="tooltip"]').tooltip()
+    });
+  </script>
+
+<script>
+  $(document).ready(function() {
+        loadDataTable('sd', '0')
+        $(document).on('change', '#lang', function(){
+          var l = $(this).find(':selected').val();
+          var p = $('#poets').find(':selected').val()
+          loadDataTable(l,p);
+        })
+
+        $(document).on('change', '#poets', function(){
+          var l = $('#lang').find(':selected').val();
+          var p = $(this).find(':selected').val()
+          loadDataTable(l,p);
+        });
+    });
+
+
+    function loadDataTable(lang, poet)
+    {
+      if ($.fn.DataTable.isDataTable('#example1')) {
+          $('#example1').DataTable().destroy();
+      }
+
+      var newLangs = '';
+      $('#example1').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{{ route('admin.poetry.datatable') }}',
+                data: {
+                    lang: lang,
+                    poet_id: poet
+                }
+            },
+            columns: [
+                { "data": "id", searchable: false},
+                /* { "data": "poetry_title" }, */
+                {data: 'poetry_title', render: function (data, type, row) {                    
+                    var p_url = '{{ url('poetry') }}/'+row.category.slug+'/'+row.poetry_slug+'?lang='+row.lang;
+                    
+                    return  '<a href="'+p_url+'" class="text-linked" target="_blank">'+row.poetry_title+'</a>';
+                }},
+                {data: null, render: function(data, type, row) {
+                  
+                  var spanHtml = '';
+                  
+                  spanHtml +='<div id="langs_'+data.id+'" class="avail-langs" data-poetry="'+row.poetry_slug+'"></div>'
+                  return spanHtml;
+                 
+                }},
+                { "data": "poet.details.poet_laqab" },
+                { data: 'actions', name: 'actions', orderable: false, searchable: false },
+            ],
+            order: [[0, 'desc']],
+            createdRow: function(row, data, dataIndex) {
+              console.log('======bf');
+                $(row).attr('id', data.id);
+            },
+            drawCallback: function(settings) {
+                // After the table is created, retrieve data('poetry') from .avail-langs
+                const avail_langs = $('.avail-langs').map(function() {
+                    return $(this).data('poetry');
+                }).get();
+                const avail_ids = $('.avail-langs').map(function() {
+                    return $(this).attr('id');
+                }).get();
+                availableLanguages(avail_langs, avail_ids);
+            }
+            
+        });
+    }
+
+    // show all other languages
+    var availableLanguages = function(slugs , ids)
+    {
+      console.log('------- availableLanguages ---------');
+      console.log(slugs);
+      console.log(ids);
+      $.ajax({
+        url:'{{ route('admin.poetry.languagesInPoetry') }}',
+        type:'post',
+        data:{slug: slugs},
+        headers: {
+          'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')
+        },
+        success: function (response){
+          console.log(response);
+        }
+      });
+    }
+</script>
+@endsection

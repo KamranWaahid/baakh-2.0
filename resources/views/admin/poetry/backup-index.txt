@@ -1,0 +1,166 @@
+@extends('adminlte::page')
+
+@section('title', 'Poetry')
+
+@section('content_header')
+    <h1 class="m-0 text-dark">Poetry</h1>
+@stop
+
+@section('content')
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Poetry</h3>
+                    <div class="float-right">
+                        <a href="{{ route('admin.poetry.trash') }}" class="btn btn-sm btn-warning float-right mr-1"><i class="fa fa-trash"></i> View Trashed</a>
+                        <a href="{{ route('admin.poetry.create') }}" class="btn btn-sm btn-success mr-1" ><i class="fa fa-plus mr-1"></i> New Poetry</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table id="example1" class="table table-bordered table-striped">
+                        <thead>
+                           <tr>
+                           <th>ID</th>
+                           <th>Title</th>
+                           <th>Information</th>
+                           <th>Languages</th>
+                           <th>Actions</th>
+                           </tr>
+                       </thead>
+                         <tfoot>
+                           <tr>
+                             <th>ID</th>
+                             <th>Title</th>
+                            <th>Information</th>
+                            <th>Languages</th>
+                             <th>Actions</th>
+                           </tr>
+                         </tfoot>
+                         <tbody>
+                             @foreach ($poetry as $key => $data)
+                                 
+                           <tr id="{{ $key }}">
+                               <td>{{ $data->id }}</td>
+                              
+                               <td>
+                                {{ $data->poetry_title }}
+                                <br>
+                                <a href="{{ url('poetry/'.$data->category->slug.'/'.$data->poetry_slug.'?lang='.$data->lang) }}" target="_blank"><i>{{ $data->poetry_slug }}</i></a>
+                               </td>
+                               <td>
+                                <span class="badge bg-info p-1 rounded"><i class="fa fa-folder mr-1"></i>{{ $data->category->slug }}</span>
+                                <span class="badge bg-success p-1 rounded"><i class="fa fa-user mr-1"></i>{{ $data->poet->details->poet_laqab }}</span>
+                               </td>
+                               <td>
+                                <span class="badge bg-success p-1 rounded"><i class="fa fa-globe mr-1"></i>{{ $data->language->lang_title }}</span>
+                               </td>
+                              
+                               
+                               <td width="15%" class="text-center">
+                                   <a href="{{ route('admin.media.create', $data->id) }}"  data-toggle="tooltip" data-placement="top" title="Poetry Media"  class="btn btn-xs btn-success"><i class="fa fa-video"></i></a>
+                                   <a href="{{ route('admin.poetry.edit', $data->id) }}"  data-toggle="tooltip" data-placement="top" title="Update Poetry"  class="btn btn-xs btn-warning"><i class="fa fa-edit"></i></a>
+                                   <a href="{{ route('admin.poetry.duplicate', $data->id) }}"  data-toggle="tooltip" data-placement="top" title="Duplicate Poetry"  class="btn btn-xs btn-default"><i class="fa fa-copy"></i></a>
+                                   <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.poetry.toggle-visibility', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="{{ $data->visibility == 1 ? 'Hide' : 'Show' }} Poetry" class="btn btn-xs btn-info btn-visible-poetry"><i class="fa fa-{{ $data->visibility == 1 ? 'eye' : 'eye-slash' }}"></i></button>
+                                   <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.poetry.destroy', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="Delete Poetry" class="btn btn-xs btn-danger btn-delete-poetry"><i class="fa fa-trash"></i></button>
+                               </td>
+                           </tr>
+                           @endforeach
+                         </tbody>
+                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('plugins.Datatables', true)
+@section('plugins.toastr', true)
+
+
+@section('js')
+
+<script>
+    $(function () {
+       
+      _delete('poetry', 'Poetry');
+      
+
+
+     $(document).on('click', '.btn-visible-poetry', function (e) {
+        e.preventDefault();
+        var button = $(this);
+        var row = button.closest('tr');
+        var itemId = button.data('id');
+        var itemUrl = button.data('url');
+        /// Ajax Request for Delete Poetry
+        $.ajax({
+          url: itemUrl,
+          type:'PUT',
+          headers: {
+              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // If you're using CSRF protection
+          },
+          beforeSend: function (){
+            /// do domthing
+            button.attr('disabled', true)
+            
+          },
+          success: function (response){
+            button.attr('disabled', false)
+
+            // change icon and data 
+            if(response.visibility === 1){
+              button.attr('title', 'Hide Poetry')
+              button.html('<i class="fa fa-eye"></i>')
+            }else{
+              button.attr('title', 'Show Poetry')
+              button.html('<i class="fa fa-eye-slash"></i>')
+            }
+            if(response.type === 'success'){
+              toastr.success(response.message)
+            }else{
+              toastr.error(response.message)
+            }
+            
+          },
+            error: function (xhr, ajaxOptions, thrownError){
+            console.error('error called on ajax request of Delete Poetry')
+            console.error(xhr.status)
+            console.error(thrownError)
+            toastr.error('error called on ajax request of Delete Poetry')
+          }
+        });
+     })
+
+      $('[data-toggle="tooltip"]').tooltip()
+    });
+  </script>
+
+<script>
+  $(document).ready(function() {
+        $('#example1').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": "{{ route('admin.poetry.datatable') }}",
+            "columns": [
+                { "data": "id" },
+                { "data": "poetry_title" },
+                { "data": "category.slug" },
+                { "data": "language.lang_title" },
+                { 
+                    "data": "actions",
+                    "orderable": false,
+                    "searchable": false,
+                    "render": function(data, type, row) {
+                        var editUrl = "{{ route('admin.poetry.edit', ['id' => ':id']) }}".replace(':id', row.id);
+                        var deleteUrl = "{{ route('admin.poetry.destroy', ['id' => ':id']) }}".replace(':id', row.id);
+
+                        return '<a href="' + editUrl + '" class="btn btn-xs btn-warning" data-toggle="tooltip" data-placement="top" title="Update Poetry"><i class="fa fa-edit"></i></a>' +
+                               '<button type="button" class="btn btn-xs btn-danger btn-delete-poetry" data-id="' + row.id + '" data-url="' + deleteUrl + '" data-toggle="tooltip" data-placement="top" title="Delete Poetry"><i class="fa fa-trash"></i></button>';
+                    }
+                },
+            ]
+        });
+    });
+</script>
+@endsection

@@ -1,0 +1,36 @@
+@font-face {
+    font-family: 'MB Lateefi Sans';
+    src: url('MBLateefiSans-Bold.woff2') format('woff2'),
+        url('MBLateefiSans-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MB Lateefi Sans';
+    src: url('MBLateefiSans-BoldItalic.woff2') format('woff2'),
+        url('MBLateefiSans-BoldItalic.woff') format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MB Lateefi Sans';
+    src: url('MBLateefiSans-Italic.woff2') format('woff2'),
+        url('MBLateefiSans-Italic.woff') format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'MB Lateefi Sans';
+    src: url('MBLateefiSans.woff2') format('woff2'),
+        url('MBLateefiSans.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+

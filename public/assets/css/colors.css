@@ -1,0 +1,54 @@
+/* Group 1: Shades of Night */
+[data-theme="dark"] {
+    --color-primary: #dc2f02 !important;
+    --color-theme-button: #dc2f02 !important;
+    --color-body: #18191A !important;
+    --text-primary-color: #E4E6EB !important;
+    --btn-baakh-search: #E4E6EB !important;
+    --color-sections: #242526 !important;
+    --color-poet-sections: #242526 !important;
+    --color-sections-light: #3f3f3f !important;
+    --text-color-dark: #242526 !important;
+    --color-body-light: #A7ABAF !important;
+    --text-color-light: #A7ABAF !important;
+    --btn-hover: #d8d8d8 !important;
+    --text-color-hover: #969799 !important;
+    --color-body-light-hover:  #5F6871 !important;
+    --color-spacer-dotted: #3f3f3f !important;
+    --carousel-btn: #A7ABAF !important;
+    --scroll-top: #E4E6EB !important;
+    --carousel-btn-hover: #f0f0f0 !important;
+    --couplet-tags-latter: #242526 !important;
+    --button-border-outline: #A7ABAF !important;
+    --button-border-hover: rgba(239, 243, 244, 0.1) !important;
+    --color-poetryofday: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)) !important;
+    --color-poetryofday-bg: #242526 !important;
+    --colog-logo-bg: #bd2029;
+}
+/* Group 1: Shades of Day */
+:root {
+    --color-primary: #dc2f02;
+    --color-theme-button: #d7d7d7;
+    --color-body: #F2F3F5;
+    --text-primary-color: #060606;
+    --btn-baakh-search: #E4E6EB;
+    --color-poet-sections: #FFFFFF;
+    --color-sections: #FFFFFF;
+    --color-sections-light: #f7f7f7;
+    --text-color-dark: #242526;
+    --color-body-light: #5F6871;
+    --scroll-top: #E4E6EB;
+    --btn-hover: #d8d8d8;
+    --color-body-light-hover: #5F6871;
+    --text-color-light: #5F6871;
+    --text-color-hover: #dc2f02;
+    --color-spacer-dotted: #CED1D5;
+    --carousel-btn: #242526;
+    --carousel-btn-hover: #f0f0f0;
+    --couplet-tags-latter: #f0f0f0;
+    --button-border-outline: #5F6871;
+    --button-border-hover: rgba(61, 61, 61, 0.2);
+    --color-poetryofday: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+    --color-poetryofday-bg: #ffffff;
+    --colog-logo-bg: #bd2029;
+}

@@ -1,0 +1,3461 @@
+@import url('colors.css');
+@font-face {
+  font-family: 'MB Lateefi Sans';
+  src: url('../fonts/MBLateefiSans-Bold.woff2') format('woff2'),
+      url('../fonts/MBLateefiSans-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MB Lateefi Sans';
+  src: url('../fonts/MBLateefiSans-BoldItalic.woff2') format('woff2'),
+      url('../fonts/MBLateefiSans-BoldItalic.woff') format('woff');
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MB Lateefi Sans';
+  src: url('../fonts/MBLateefiSans-Italic.woff2') format('woff2'),
+      url('../fonts/MBLateefiSans-Italic.woff') format('woff');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MB Lateefi Sans';
+  src: url('../fonts/MBLateefiSans.woff2') format('woff2'),
+      url('../fonts/MBLateefiSans.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+
+/* Fonts */
+:root {
+  --font-default: "MB Lateefi Sans";
+  /* --font-default: "MB Lateefi Sans" "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; */
+  --font-primary:  "MB Lateefi Sans", sans-serif,;
+  --font-secondary:  "MB Lateefi Sans", sans-serif;
+
+  --poetry-content-size-lg:1.2rem;
+  --poetry-heading-size-lg: 1.5rem;
+  --poetry-content-size-sm:0.9rem;
+  --poetry-heading-size-sm: 1.5rem;
+}
+ 
+
+
+/* Smooth scroll behavior */
+:root {
+  scroll-behavior: smooth;
+}
+
+/*--------------------------------------------------------------
+# General
+--------------------------------------------------------------*/
+body {
+  font-family: var(--font-default);
+  color: var(--text-color-light);
+  background-color: var(--color-body);
+
+}
+
+
+.text-baakh {
+  color: var(--color-primary);  
+}
+
+.bg-primary
+{
+  background: var(--color-primary) !important;
+  color: var(--color-sections) !important;
+}
+
+
+a {
+  color: var(--text-color-light);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--text-color-hover);
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-default);
+}
+
+.text-primary {
+  color: var(--text-primary-color) !important;
+}
+/*--------------------------------------------------------------
+# Sections & Section Header
+--------------------------------------------------------------*/
+section {
+  overflow: hidden;
+  padding: 40px 0;
+}
+
+.section-header {
+  padding-bottom: 50px;
+  text-align: center;
+}
+
+.section-header h2 {
+  font-size: 1.8rem;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary-color);
+  text-transform: uppercase;
+  font-family: var(--font-default);
+}
+
+.section-header p {
+  margin: 0;
+  color: var(--text-primary-color);
+  font-size: 30px;
+  font-weight: 400;
+  font-family: var(--font-primary);
+}
+.section-header p span {
+  color: var(--text-primary-color);
+}
+
+/*--------------------------------------------------------------
+# Breadcrumbs
+--------------------------------------------------------------*/
+.breadcrumbs {
+  padding: 15px 0;
+  background: rgba(55, 55, 63, 0.05);
+  margin-top: 90px;
+}
+
+@media (max-width: 575px) {
+  .breadcrumbs {
+    margin-top: 70px;
+  }
+}
+
+.breadcrumbs h2 {
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0;
+}
+
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+}
+
+.breadcrumbs ol li+li {
+  padding-right: 10px;
+}
+
+.breadcrumbs ol li+li::before {
+  display: inline-block;
+  padding-left: 10px;
+  color: var(--color-gray1);
+  content: "/";
+}
+
+@media (max-width: 992px) {
+  .breadcrumbs .d-flex {
+    display: block !important;
+  }
+
+  .breadcrumbs h2 {
+    margin-bottom: 10px;
+  }
+
+  .breadcrumbs ol {
+    display: block;
+  }
+
+  .breadcrumbs ol li {
+    display: inline-block;
+  }
+}
+
+/*--------------------------------------------------------------
+# Scroll top button
+--------------------------------------------------------------*/
+.scroll-top {
+  position: fixed;
+  visibility: hidden;
+  opacity: 0;
+  left: 15px;
+  bottom: 15px;
+  z-index: 99999;
+  background: var(--color-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50px;
+  transition: all 0.4s;
+}
+
+.scroll-top i {
+  font-size: 24px;
+  color: var(--scroll-top);
+  line-height: 0;
+}
+
+.scroll-top:hover {
+  background: var(--color-body-light);
+  color: var(--color-sections-light);
+}
+
+.scroll-top.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+/*--------------------------------------------------------------
+# Preloader
+--------------------------------------------------------------*/
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  background: var(--color-white);
+  transition: all 0.6s ease-out;
+  width: 100%;
+  height: 100vh;
+}
+
+#preloader:before,
+#preloader:after {
+  content: "";
+  position: absolute;
+  border: 4px solid var(--color-primary);
+  border-radius: 50%;
+  animation: animate-preloader 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+#preloader:after {
+  animation-delay: -0.5s;
+}
+
+@keyframes animate-preloader {
+  0% {
+    width: 10px;
+    height: 10px;
+    top: calc(50% - 5px);
+    right: calc(50% - 5px);
+    opacity: 1;
+  }
+
+  100% {
+    width: 72px;
+    height: 72px;
+    top: calc(50% - 36px);
+    right: calc(50% - 36px);
+    opacity: 0;
+  }
+}
+.carousel-container {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 90px;
+}
+
+/* Media query for mobile screens */
+@media (max-width: 767px) {
+  .carousel-container {
+    padding-top: 60px; /* Adjusted margin for mobile screens */
+  }
+}
+
+
+.carousel {
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel img {
+  width: 100%;
+  display: none;
+  animation: fade-in 1s ease-in-out;
+}
+
+.carousel img.active {
+  display: block;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--carousel-btn);
+  padding-top: 90px;
+  padding-right: 60px;
+  padding-left: 60px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.carousel-btn-prev {
+  left: 10px;
+}
+
+.carousel-btn-next {
+  right: 10px;
+}
+
+.carousel-btn:hover {
+  color: var(--color-gray2);
+}
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/*--------------------------------------------------------------
+# Disable aos animation delay on mobile devices
+--------------------------------------------------------------*/
+@media screen and (max-width: 768px) {
+  [data-aos-delay] {
+    transition-delay: 0 !important;
+  }
+  .carousel img {
+    min-height: 300px;
+    object-fit: cover;
+  }
+}
+
+/*--------------------------------------------------------------
+# Header
+--------------------------------------------------------------*/
+.header {
+  background: var(--color-sections);
+  transition: all 0.5s;
+  z-index: 997;
+  height: 90px;
+  border-bottom: 1px solid var(--color-spacer-dotted);
+}
+
+@media (max-width: 575px) {
+  .header {
+    height: 70px;
+  }
+  
+}
+
+.header.sticked {
+  border-color: var(--color-white);
+  border-color: var(--color-spacer-dotted);
+}
+
+.header .logo img {
+  max-height: 40px;
+  margin-right: 6px;
+  margin: 0;
+}
+
+.header .logo h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: transparent;
+  margin: 0;
+  font-family: var(--font-secondary);
+}
+.header .logo h1 span {
+  color: transparent;
+}
+/* Basic styles for the search button */
+/* Sticky search bar */
+.sticky-search {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-body);
+  padding: 10px 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for the search button */
+.header .btn-baakh-search {
+  font-size: 14px;
+  color: var(--color-body-light);
+  background: transparent;
+  border: 1px solid var(--color-body-light);
+  padding: 8px 20px;
+  border-radius: 50px;
+  transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  height: 36px;
+  outline: none;
+  margin-right: 10px;
+}
+
+/* Hover effect for the button */
+.header .btn-baakh-search:hover {
+  background: var(--color-body-light);
+  transform: scale(1.05);
+  color: var(--text-primary-color);
+}
+
+.header .btn-baakh-search.active {
+  color: var(--btn-baakh-search);
+  background: transparent;
+}
+
+
+.header .btn-baakh-search:hover,
+.header .btn-baakh-search:focus:hover {
+  background: var(--color-primary);
+  color: var(--btn-baakh-search);
+  border: 1px solid transparent;
+}
+.btn-baakh-theme{
+  font-size: 14px;
+  color: var(--color-body-light);
+  background: transparent;
+  border: 1px solid var(--color-body-light);
+  padding: 8px 20px;
+  border-radius: 50px;
+  transition: background 0.1s, transform 0.1s;
+  cursor: pointer;
+  user-select: none;
+  height: 36px;
+  outline: none;
+}
+.btn-baakh-theme{
+  color: var(--color-body-light);
+  background: transparent;
+  border: 1px solid var(--color-body-light);
+}
+.btn-baakh-theme:hover{
+  background: var(--color-primary);
+  color: var(--btn-baakh-search);
+  border: 1px solid transparent;
+}
+.btn-baakh-theme .active{
+  background: var(--text-color-hover);
+  color: var(--text-primary-color);
+  border: none;
+}
+section {
+  scroll-margin-top: 90px;
+}
+
+/*--------------------------------------------------------------
+# Desktop Navigation
+--------------------------------------------------------------*/
+@media (min-width: 1280px) {
+  .navbar {
+    padding: 0;
+  }
+
+  .navbar ul {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    /* padding-right: 600px; */
+    list-style: none;
+    align-items: center;
+  }
+
+  .navbar li {
+    position: relative;
+  }
+
+  .navbar>ul>li {
+    white-space: nowrap;
+    padding: 10px 0 10px 28px;
+  }
+
+  .navbar a,
+  .navbar a:focus {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 3px;
+    font-family: var(--font-secondary);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary-color);
+    white-space: nowrap;
+    transition: 0.3s;
+    position: relative;
+  }
+
+  .navbar a i,
+  .navbar a:focus i {
+    font-size: 12px;
+    line-height: 0;
+    margin-right: 5px;
+  }
+
+  .navbar>ul>li>a:before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -6px;
+    left: 0;
+    background-color: var(--color-primary);
+    visibility: hidden;
+    width: 0px;
+    transition: all 0.3s ease-in-out 0s;
+  }
+
+  .navbar a:hover:before,
+  .navbar li:hover>a:before,
+  .navbar .active:before {
+    visibility: visible;
+    width: 100%;
+  }
+
+  .navbar a:hover,
+  .navbar .active,
+  .navbar .active:focus,
+  .navbar li:hover>a {
+    color: var(--text-color-hover);
+  }
+
+  .navbar .dropdown ul {
+    display: block;
+    position: absolute;
+    right: 28px;
+    top: calc(100% + 30px);
+    margin: 0;
+    padding: 10px 0;
+    z-index: 99;
+    opacity: 0;
+    visibility: hidden;
+    background: var(--color-white);
+    box-shadow: 0px 0px 30px rgba(127, 137, 161, 0.25);
+    transition: 0.3s;
+    border-radius: 4px;
+  }
+
+  .navbar .dropdown ul li {
+    min-width: 200px;
+  }
+
+  .navbar .dropdown ul a {
+    padding: 10px 20px;
+    font-size: 15px;
+    text-transform: none;
+    font-weight: 600;
+  }
+
+  .navbar .dropdown ul a i {
+    font-size: 12px;
+  }
+
+  .navbar .dropdown ul a:hover,
+  .navbar .dropdown ul .active:hover,
+  .navbar .dropdown ul li:hover>a {
+    color: var(--color-primary);
+  }
+
+  .navbar .dropdown:hover>ul {
+    opacity: 1;
+    top: 100%;
+    visibility: visible;
+  }
+
+  .navbar .dropdown .dropdown ul {
+    top: 0;
+    right: calc(100% - 30px);
+    visibility: hidden;
+  }
+
+  .navbar .dropdown .dropdown:hover>ul {
+    opacity: 1;
+    top: 0;
+    right: 100%;
+    visibility: visible;
+  }
+
+}
+
+@media (min-width: 1280px) and (max-width: 1366px) {
+  .navbar .dropdown .dropdown ul {
+    right: -90%;
+  }
+
+  .navbar .dropdown .dropdown:hover>ul {
+    right: -100%;
+    
+  }
+  .navbar ul {
+    margin: 0;
+    padding: 0;
+    padding-right: 500px;
+    list-style: none;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1280px) {
+
+  .mobile-nav-show,
+  .mobile-nav-hide {
+    display: none;
+  }
+
+}
+
+/*------------------------------------------------------------
+# Left Side Menus Language Chooser
+--------------------------------------------------------------*/
+.left-menus {
+  margin-top: 28px;
+}
+.left-menus .dropdown-toggle::after {
+  content: none; /* Hide the arrow content */
+}
+.left-menus>ul>li {
+  white-space: nowrap;
+  padding: 8px 0 8px 10px;
+}
+
+.left-menus .dropdown-menu{
+  background-color: var(--color-sections-light);
+}
+.left-menus .dropdown-menu *{
+  color: var(--text-primary-color);
+}
+.left-menus .dropdown-menu *:hover{
+  color: var(--color-sections);
+  background-color: var(--text-primary-color);
+  transition: all 0.4s;
+  cursor: pointer;
+}
+
+.left-menus .user img{
+  width:40px;
+  height:auto;
+  cursor: pointer;
+}
+.left-menus .user img:hover{
+  filter:  grayscale(50%);
+  -webkit-filter: grayscale(50%);
+  transition: all 0.3s;
+}
+.left-menus .user a{
+  color: var(--color-body-light);
+}
+
+.left-menus .bi-globe{
+  color: var(--color-body-light);
+}
+/*--------------------------------------------------------------
+# Mobile Navigation
+--------------------------------------------------------------*/
+@media (max-width: 1279px) {
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    max-width: 400px;
+    border-right: 1px solid var(--color-gray7);
+    bottom: 0;
+    transition: 0.3s;
+    z-index: 9997;
+  }
+
+  .navbar ul {
+    position: absolute;
+    inset: 0;
+    padding: 50px 0 10px 0;
+    margin: 0;
+    background-color: var(--color-body);
+    overflow-y: auto;
+    transition: 0.3s;
+    z-index: 9998;
+  }
+
+  .navbar a,
+  .navbar a:focus {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    font-family: var(--font-secondary);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-hover);
+    white-space: nowrap;
+    transition: 0.3s;
+  }
+
+  .navbar a i,
+  .navbar a:focus i {
+    font-size: 12px;
+    line-height: 0;
+    margin-right: 5px;
+  }
+
+  .navbar a:hover,
+  .navbar li:hover>a {
+    color: var(--text-color-hover);
+    background-color: var(--button-border-hover);
+    transition: all 0.3s;
+  }
+
+  .navbar .active,
+  .navbar .active:focus {
+    color: var(--color-sections);
+    border-color: var(--color-primary);
+  }
+
+  .navbar .dropdown ul,
+  .navbar .dropdown .dropdown ul {
+    position: static;
+    display: none;
+    padding: 10px 0;
+    margin: 10px 20px;
+    transition: all 0.5s ease-in-out;
+    border: 1px solid var(--color-header-border);
+  }
+
+  .navbar .dropdown>.dropdown-active,
+  .navbar .dropdown .dropdown>.dropdown-active {
+    display: block;
+  }
+
+  .mobile-nav-show {
+    color: var(--color-secondary);
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 0;
+    transition: 0.5s;
+    z-index: 9999;
+    margin: 0 10px 0 20px;
+  }
+
+  .mobile-nav-hide {
+    color: var(--color-secondary);
+    font-size: 32px;
+    cursor: pointer;
+    line-height: 0;
+    transition: 0.5s;
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 9999;
+  }
+
+  .mobile-nav-active {
+    overflow: hidden;
+  }
+
+  .mobile-nav-active .navbar {
+    left: 0;
+  }
+
+  .mobile-nav-active .navbar:before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 9996;
+  }
+
+  /* left side*/
+  .left-menus {
+    margin-right: 5px;
+    margin-top: 18px;
+  }
+  .left-menus .dropdown-toggle::after {
+    content: none;
+  }
+  
+  .left-menus>ul>li {
+    white-space: nowrap;
+    padding: 4px 0 4px 5px;
+  }
+  
+  /** Navbar bars */
+  .mobile-nav-toggle{
+    float: left;
+    left: 0;
+    position: absolute;
+  }
+
+  .left-menus .btn-baakh-theme, .left-menus .btn-baakh-search{
+    padding: 5px 8px;
+  }
+  .left-menus .dropdown-toggle{
+     padding: 5px 8px;
+  }
+
+  .header .logo img {
+    margin-left: 38px !important;
+  }
+}
+.carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.carousel-slide {
+  display: flex;
+  width: 100%;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: auto;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.carousel-slide img.active {
+  opacity: 1;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  color: white;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.prev-btn {
+  right: 10px;
+}
+
+.next-btn {
+  left: 10px;
+}
+
+/*--------------------------------------------------------------
+# Today's Poet - Picture
+--------------------------------------------------------------*/
+.poet-left-icon ul li {
+  display: inline-block;
+}
+
+.poet-left-icon ul li a:hover {
+  background: var(--color-white);
+  border: 2px solid var(--color-white);
+}
+
+.poet-left-icon ul li a {
+  border: 2px solid var(--color-white);
+  color: var(--color-white);
+  display: block;
+  font-size: 16px;
+  height: 40px;
+  line-height: 37px;
+  margin: 0 3px;
+  width: 40px;
+}
+
+.single-poet {
+  overflow: hidden;
+  width: 100%;
+  background-color: var(--color-sections);
+  width: 100%;
+  border-bottom: 5px var(--color-primary) solid;
+}
+
+
+.poet-img {
+  
+  position: relative;
+}
+
+.poet-img>a {
+ 
+  display: block;
+}
+
+.poet-img>a::after {
+  background: rgba(0, 0, 0, 0.7);
+  bottom: 0;
+  content: "";
+  height: 100%;
+  right: 0;
+  position: absolute;
+  transition: all 0.5s ease 0s;
+  width: 100%;
+  opacity: 0;
+}
+
+.poet-social-icon {
+  right: 50%;
+  margin-right: -61px;
+  opacity: 0;
+  position: absolute;
+  top: 30%;
+  transition: 1.3s;
+}
+
+.poet-social-icon ul li {
+  display: inline-block;
+}
+
+.poet-social-icon ul li a {
+  border: 1px solid var(--color-white);
+  border-radius: 50%;
+  color: var(--color-white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  height: 34px;
+  width: 34px;
+  margin: 0 3px;
+}
+
+.poet-social-icon ul li a i {
+  line-height: 0;
+}
+
+.poet-social-icon ul li a:hover {
+  color: var(--color-white);
+  border: 1px solid var(--color-default);
+  background: var(--color-primary);
+}
+
+.poet-content {
+  padding: 10px 0px;
+}
+.modal-content{
+  background-color: var(--color-sections);
+}
+.left-buttons .btn-share{
+  color: var(--color-body-light);
+
+}
+.left-buttons .btn-share:hover{
+  color: var(--color-body-light-hover);
+
+}
+.poet-content>h4,
+.poet-content>p {
+  color: var(--text-color-light);
+  margin-bottom: 5px;
+}
+
+.poet-content.head-team p {
+  margin-bottom: 0;
+}
+
+.poet-left-icon.text-center {
+  margin-bottom: 20px;
+}
+
+.head-team h4 {
+  display: inline-block;
+  font-size: 25px;
+  font-weight: 600;
+  padding-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/*--------------------------------------------------------------
+# Today's Poet - Poetry
+--------------------------------------------------------------*/
+.poet-left{
+  padding-left: 50px;
+  padding-top: 40px;
+}
+.Todays-Poet-Content{
+  background: var(--color-sections); 
+  width: 955px;
+  height: 250px;
+  position: relative;
+  overflow: hidden;
+}
+
+#SeeMoreTodaysPoetrybtn{
+  width: 100%;
+  bottom: 25%;
+  height: 25%;
+  padding-left: 740px;
+  z-index: 9999999;
+  position: absolute;
+}
+/*
+.TodaysPoetrybtn,
+.TodaysPoetrybtn:focus {
+  font-size: 14px;
+  color: var(--color-default);
+  background: var(--color-gray10);
+  padding: 8px 20px;
+  margin-right: 30px;
+  border-radius: 50px;
+  transition: 0.3s;
+}
+
+.TodaysPoetrybtn:hover,
+.TodaysPoetrybtn:focus:hover {
+  color: var(--color-body-light);
+  background: var(--color-default);
+}
+*/
+#overlay_todays_poetry{
+  width: 100%;
+  bottom: 0;
+  height: 60%;
+  position: absolute;
+  background-image: linear-gradient(to bottom, transparent 0, transparent 20px, rgba(255, 255, 255, 0.904) 10px);
+background-position: top, bottom;
+}
+.poet-content{
+  bottom: 0;
+  width: 100%;  background-repeat: no-repeat;
+  opacity: 0;
+  transform: translateY(100%);
+  animation: fade-in-slide-up 1s ease-in-out forwards;
+}
+@keyframes fade-in-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*--------------------------------------------------------------
+# Poet List
+--------------------------------------------------------------*/
+
+.cards-wrapper {
+  display: flex;
+  justify-content: center;
+  
+}
+.card img {
+  max-width: 100%;
+  max-height: 100%;
+}
+.card {
+  margin: 0 0.5em;
+  border: none;
+  border-radius: 0;
+}
+.carousel-inner {
+  padding: 1em;
+}
+
+.carousel-2-control-prev,
+.carousel-control-next {
+  background-color: var(--color-header-border);
+  width: 5vh;
+  height: 5vh;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+@media (min-width: 768px) {
+  .card img {
+    height: 11em;
+  }
+}
+.carousel-2-btn-prev {
+  left: 10px;
+}
+
+.carousel-2-btn-next {
+  right: 10px;
+}
+
+
+
+/*--------------------------------------------------------------
+# Poet List END
+--------------------------------------------------------------*/
+.about .azam-card{
+  background-color: var(--colog-logo-bg);
+  min-height: 370px;
+}
+.about .azam-card p{
+  color: var(--btn-baakh-search);
+  font-size: 1.5rem;
+}
+.about .azam-card .title{
+  color: var(--text-primary-color);
+  background-color: var(--color-poetryofday-bg);
+  border-radius: 50px;
+  padding-bottom: 6px;
+  width: 50%;
+  margin: auto;
+  margin-bottom: 30px;
+}
+
+.about .social-baakh-card{
+  max-height: 370px;
+}
+
+.about .social-baakh-card img.logo{
+  width: 120px;
+}
+.about .social-baakh-card .btn{
+  border-radius: 50px;
+  background-color: var(--btn-hover);
+  height: 50px;
+  width: 50px;
+  padding-top: 8px;
+}
+.about .social-baakh-card .btn i{
+  font-size: 1.5rem;
+}
+
+.about .sath-card {
+  position: relative;
+  min-height: 394px; /* Added "px" unit */
+  min-width: 312px;
+  background-color: var(--text-primary-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Ensure the image doesn't overflow the container */
+}
+
+.sath-card img {
+  position: absolute;
+  object-fit: cover; /* Crop and center the image */
+  width: 100%;
+  height: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .about .sath-card {
+    min-height: 250px; /* Adjust as needed for mobile layout */
+    min-width: auto; /* Adjust as needed for mobile layout */
+  }
+}
+
+.about .sath-card .banner{
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  margin: auto;
+}
+.about .sath-card .banner .banner-inner{
+  background: #fff;
+  width: 90%;
+  align-items: center;
+  margin: auto;
+  padding-right: 20px;
+  padding-left: 20px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.about .about-img {
+  min-height: 500px;
+}
+
+.about h3 {
+  font-weight: 700;
+  font-size: 36px;
+  margin-bottom: 30px;
+  font-family: var(--font-secondary);
+}
+
+.about .call-us {
+  right: 10%;
+  left: 10%;
+  bottom: 10%;
+  background-color: var(--color-sections);
+  box-shadow: 0px 2px 25px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  text-align: center;
+}
+
+.about .call-us h4 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  font-family: var(--font-default);
+}
+
+.about .call-us p {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.about .content ul {
+  list-style: none;
+  padding: 0;
+}
+
+.about .content ul li {
+  padding: 0 0 8px 26px;
+  position: relative;
+}
+
+.about .content ul i {
+  position: absolute;
+  font-size: 20px;
+  right: 0;
+  top: -3px;
+  color: var(--color-primary);
+}
+
+.about .content p:last-child {
+  margin-bottom: 0;
+}
+
+.about .play-btn {
+  width: 94px;
+  height: 94px;
+  background: radial-gradient(var(--color-primary) 50%, rgba(206, 18, 18, 0.4) 52%);
+  border-radius: 50%;
+  display: block;
+  position: absolute;
+  right: calc(50% - 47px);
+  top: calc(50% - 47px);
+  overflow: hidden;
+}
+
+.about .play-btn:before {
+  content: "";
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  animation-delay: 0s;
+  animation: pulsate-btn 2s;
+  animation-direction: forwards;
+  animation-iteration-count: infinite;
+  animation-timing-function: steps;
+  opacity: 1;
+  border-radius: 50%;
+  border: 5px solid rgba(206, 18, 18, 0.7);
+  top: -15%;
+  right: -15%;
+  background: rgba(198, 16, 0, 0);
+}
+
+.about .play-btn:after {
+  content: "";
+  position: absolute;
+  right: 50%;
+  top: 50%;
+  transform: translateX(-40%) translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 15px solid var(--color-white);
+  z-index: 100;
+  transition: all 400ms cubic-bezier(0.55, 0.055, 0.675, 0.19);
+}
+
+.about .play-btn:hover:before {
+  content: "";
+  position: absolute;
+  right: 50%;
+  top: 50%;
+  transform: translateX(-40%) translateY(-50%);
+  width: 0;
+  height: 0;
+  border: none;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 15px solid var(--color-white);
+  z-index: 200;
+  animation: none;
+  border-radius: 0;
+}
+
+.about .play-btn:hover:after {
+  border-right: 15px solid var(--color-primary);
+  transform: scale(20);
+}
+
+@keyframes pulsate-btn {
+  0% {
+    transform: scale(0.6, 0.6);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1, 1);
+    opacity: 0;
+  }
+}
+
+/*--------------------------------------------------------------
+# SHAIRN G FARHSAT
+--------------------------------------------------------------*/
+
+/*--------------------------------------------------------------
+# SHAIRN G FARHSAT
+--------------------------------------------------------------*/
+
+
+
+/*--------------------------------------------------------------
+# QUIZ
+--------------------------------------------------------------*/
+.section-header-quiz {
+  text-align: center;
+}
+.section-header-quiz p {
+  margin: 0;
+  color: var(--color-sections);
+  font-size: 30px;
+  font-weight: 400;
+  font-family: var(--font-primary);
+}
+.quiz-box .quiz-question-body {
+  padding: 30px;
+  background: var(--color-sections);
+  color: var(--color-white);
+  min-height: 250px;
+  height: auto;
+}
+
+.quiz-box .quiz-question-body h3 {
+  font-weight: 700;
+  font-size: 34px;
+  padding-bottom: 50px;
+  margin-bottom: 30px;
+}
+
+.quiz-box .quiz-question-body h4 {
+  padding-top: 10px;
+}
+.quiz-box .quiz-question-body .more-btn {
+  display: inline-block;
+  color: var(--text-color-light);
+  background: transparent;
+  border: 1px solid var(--button-border-outline);
+  padding: 6px 30px 8px 30px;
+  margin-top: 50px;
+  border-radius: 50px;
+  transition: all ease-in-out 0.4s;
+}
+.btn-load-more {
+  font-size: 14px;
+  padding: 5px 20px;
+  border-radius: 6px;
+  transition: 0.3s;
+  margin-top: 18px;
+  font-size: medium;
+}
+.quiz-box .quiz-question-body .more-btn i {
+  font-size: 14px;
+}
+
+.quiz-box .quiz-question-body .more-btn:hover {
+  color: var(--color-white);
+  background: var(--button-border-hover);
+  border: 1px solid var(--button-border-outline);
+}
+
+.quiz-box .icon-box {
+  text-align: center;
+  background: var(--color-sections);
+  cursor: pointer;
+  padding: 40px 30px;
+  width: 100%;
+  height: 250px;
+  transition: 0.3s;
+}
+.quiz-box .icon-bo:hover {
+  background: var(--color-primary);
+  color: white;
+
+}
+#quiz-header-title{
+margin-bottom: -60px;
+}
+
+.quiz-box .icon-box i img {
+  color: var(--color-primary);
+  margin-bottom: 30px;
+  font-size: 32px;
+  margin-bottom: 30px;
+  background: rgba(206, 18, 18, 0.1);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+}
+
+.quiz-box .icon-box h4 {
+  font-size: 20px;
+  font-weight: 400;
+  margin: 0 0 30px 0;
+  font-family: var(--font-secondary);
+}
+
+.quiz-box .icon-box p {
+  font-size: 15px;
+  color: var(--color-gray12);
+}
+
+@media (min-width: 1200px) {
+  .quiz-box .icon-bo:hover {
+    transform: scale(1.1);
+  }
+}
+@media (max-width: 767px) {
+
+  .quiz-box .icon-box {
+    padding: 20px 10px;
+    width: 100%;
+    height: 180px;
+    margin-top: 20px;
+  }
+
+  .quiz-box .quiz-question-body h4{
+    font-size: var(--poetry-heading-size-sm);
+  }
+  .quiz-box .quiz-question-body p{
+    font-size: var(--poetry-content-size-sm);
+  }
+}
+/*--------------------------------------------------------------
+# Stats Counter Section
+--------------------------------------------------------------*/
+.stats-counter {
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../img/stats-bg.jpg") center center;
+  background-size: cover;
+  padding: 100px 0;
+}
+
+@media (min-width: 1365px) {
+  .stats-counter {
+    background-attachment: fixed;
+  }
+}
+
+.stats-counter .stats-item {
+  padding: 30px;
+  width: 100%;
+}
+
+.stats-counter .stats-item span {
+  font-size: 48px;
+  display: block;
+  color: var(--color-sections);
+  font-weight: 700;
+}
+
+.stats-counter .stats-item p {
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-secondary);
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/*--------------------------------------------------------------
+# Menu Section
+--------------------------------------------------------------*/
+.menu .nav-tabs {
+  border: 0;
+}
+
+.menu .nav-link {
+  margin: 0 10px;
+  padding: 10px 5px;
+  transition: 0.3s;
+  color: var(--color-secondary);
+  border-radius: 0;
+  cursor: pointer;
+  height: 100%;
+  border: 0;
+  border-bottom: 2px solid var(--color-spacer-dotted);
+}
+
+@media (max-width: 575px) {
+  .menu .nav-link {
+    margin: 0 10px;
+    padding: 10px 0;
+  }
+}
+
+.menu .nav-link i {
+  padding-left: 15px;
+  font-size: 48px;
+}
+
+.menu .nav-link h4 {
+  font-size: 18px;
+  font-weight: 400;
+  margin: 0;
+  font-family: var(--font-secondary);
+}
+
+@media (max-width: 575px) {
+  .menu .nav-link h4 {
+    font-size: 16px;
+  }
+}
+
+.menu .nav-link:hover {
+  color: var(--color-primary);
+}
+
+.menu .nav-link.active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.menu .tab-content .tab-header {
+  padding: 30px 0;
+}
+
+.menu .tab-content .tab-header p {
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--color-gray1);
+  margin-bottom: 0;
+}
+
+.menu .tab-content .tab-header h3 {
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.menu .tab-content .menu-item {
+  -moz-text-align-last: center;
+  text-align-last: center;
+}
+
+.menu .tab-content .menu-item .menu-img {
+  padding: 0 60px;
+  margin-bottom: 15px;
+}
+
+.menu .tab-content .menu-item h4 {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-secondary);
+  font-family: var(--font-secondary);
+  font-weight: 30px;
+  margin-bottom: 5px;
+}
+
+.menu .tab-content .menu-item .ingredients {
+  font-family: var(--font-secondary);
+  color: var(--color-gray2);
+  margin-bottom: 5px;
+}
+
+.menu .tab-content .menu-item .price {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/*--------------------------------------------------------------
+# Todays top 10 poetries
+--------------------------------------------------------------*/
+#top10poetry{
+  background: var(--color-sections);
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+.top10poetry .section-header {
+  margin-bottom: -20px;
+  
+}
+.top10poetry .section-header p {
+  font-size: 1.8rem;
+}
+
+
+.top10poetry .top10poetry-carousel,
+.top10poetry .top10poetry-slider {
+  overflow: hidden;
+}
+
+
+
+.top10poetry .testimonial-item h3 {
+  font-size: 1rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 10px 0 5px 0;
+  color: var(--color-default);
+  font-family: var(--font-secondary);
+}
+
+.top10poetry .testimonial-item h4 {
+  font-size: 14px;
+  color: var( --text-color-light);
+  margin: 0 0 10px 0;
+  font-family: var(--font-secondary);
+}
+
+.top10poetry .testimonial-item .stars i {
+  color: var(--color-rating-star);
+  margin: 0 1px;
+}
+
+
+.top10poetry .testimonial-item p {
+  text-align: center;
+  font-size:25px;
+  z-index: 9999;
+}
+
+.top10poetry .swiper-pagination {
+  margin-top: 40px;
+  position: relative;
+}
+
+.top10poetry .carousel-btn{
+  padding-bottom: 90px;
+}
+
+.top10poetry .swiper-pagination .swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-body-light);
+  opacity: 1;
+}
+
+.top10poetry .swiper-pagination .swiper-pagination-bullet-active {
+  background-color: var(--color-primary);
+}
+.top10poetry .carousel-btn{
+  color: var(--carousel-btn);
+}
+.top10poetry .carousel-btn:hover{
+  color: var(--carousel-btn-hover);
+}
+
+@media only screen and (max-width: 768px) {
+  /* Media query for screens with a maximum width of 768px (mobile) */
+  .top10poetry .testimonial-item p {
+    font-size: 1.2rem; /* Font size for mobile */
+  }
+  .top10poetry .testimonial-item h3 {
+    font-size: 0.9rem;
+    margin: 10px 0 5px 0;
+  }
+  .top10poetry .carousel-btn{
+    padding-bottom: 0px;
+    top: 30px;
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+  .top10poetry .buttons .label{
+    display: none !important;
+  }
+  .top10poetry .swiper-pagination{
+    margin-top: 15px !important;
+  }
+
+  #poetry-list-btn {
+    padding-top: 10px;
+    height: auto !important;
+    padding-bottom: 20px;
+    overflow-x: scroll;
+  }
+  .TodaysPoetrybtn, .TodaysPoetrybtn {
+    margin-left:10px !important;
+  }
+
+  .section-header p, .section-header .section-title{
+    font-size: var(--poetry-heading-size-sm);
+  }
+  .top10poetry .section-header p {
+    font-size: var(--poetry-heading-size-sm);
+  }
+}
+
+/*--------------------------------------------------------------
+# Events Section
+--------------------------------------------------------------*/
+.events .container-fluid {
+  padding: 0;
+}
+
+.events .event-item {
+  background-size: cover;
+  background-position: cente;
+  min-height: 600px;
+  padding: 30px;
+}
+
+@media (max-width: 575px) {
+  .events .event-item {
+    min-height: 500px;
+  }
+}
+
+.events .event-item:before {
+  content: "";
+  background: rgba(0, 0, 0, 0.6);
+  position: absolute;
+  inset: 0;
+}
+
+.events .event-item h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var( --text-color-light);
+  position: relative;
+}
+
+.events .event-item .price {
+  color: var( --text-color-light);
+  border-bottom: 2px solid var(--color-primary);
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.events .event-item .description {
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+@media (min-width: 1200px) {
+  .events .swiper-slide-active+.swiper-slide {
+    border-right: 1px solid rgba(255, 255, 255, 0.5);
+    border-left: 1px solid rgba(255, 255, 255, 0.5);
+    z-index: 1;
+  }
+}
+
+.events .swiper-pagination {
+  margin-top: 20px;
+  position: relative;
+}
+
+.events .swiper-pagination .swiper-pagination-bullet {
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-gray14);
+  opacity: 1;
+}
+
+.events .swiper-pagination .swiper-pagination-bullet-active {
+  background-color: var(--color-primary);
+}
+
+/*--------------------------------------------------------------
+# Poets Section
+--------------------------------------------------------------*/
+.poets .poet-info {
+  overflow: hidden;
+  position: relative;
+  text-align: left;
+  background: var(--color-sections);
+}
+
+.poets .poet-info .poet-img {
+  position: relative;
+  overflow: hidden;
+}
+
+.poets .poet-info .poet-img:after {
+  position: absolute;
+  content: "";
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  background-size: contain;
+  z-index: 1;
+}
+
+.poets .poet-info .social {
+  position: absolute;
+  left: -100%;
+  top: 30px;
+  opacity: 0;
+  border-radius: 4px;
+  transition: 0.5s;
+  background: rgba(255, 255, 255, 0.3);
+  z-index: 2;
+}
+
+.poets .poet-info .social a {
+  transition: color 0.3s;
+  color: rgba(55, 55, 63, 0.4);
+  margin: 15px 12px;
+  display: block;
+  line-height: 0;
+  text-align: center;
+}
+
+.poets .poet-info .social a:hover {
+  color: rgba(55, 55, 63, 0.9);
+}
+
+.poets .poet-info .social i {
+  font-size: 18px;
+}
+
+.poets .poet-info .member-info {
+  padding: 10px 15px 20px 15px;
+}
+
+.poets .poet-info .member-info h4 {
+  font-weight: 700;
+  margin-bottom: 5px;
+  font-size: 20px;
+  color: var(--text-color-light);
+}
+
+.poets .poet-info .member-info span {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(33, 37, 41, 0.4);
+}
+
+.poets .poet-info .member-info p {
+  font-style: italic;
+  font-size: 14px;
+  padding-top: 15px;
+  line-height: 26px;
+  color: rgba(33, 37, 41, 0.7);
+}
+.poets .poet-info:hover .social {
+  left: 8px;
+  opacity: 1;
+}
+
+#author-picture{
+  margin-top:-50px;
+}
+/*#author-picture img {
+  border-radius: var(--bs-border-radius);
+}
+*/
+.poets-stuff-col {
+  min-height:100px;
+}
+.poets-stuff-col .category-buttons {
+  white-space: nowrap;
+  overflow-: auto; 
+}
+/* Optionally, you can hide the horizontal scrollbar when it's not in use for a cleaner appearance */
+.category-buttons::-webkit-scrollbar {
+  height: 5px; /* Height of the scrollbar */
+  display: none; /* Hide by default */
+}
+
+.category-buttons:hover::-webkit-scrollbar {
+  display: block; /* Show scrollbar on hover */
+}
+
+.category-buttons::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbars); /* Color of the scrollbar thumb */
+  border-radius: 5px; /* Rounded corners for the thumb */
+}
+
+#poet-info .info-box {
+  display: flex;
+  justify-content: space-between;
+}
+.poets-stuff-col .poetry-list{
+  background-color:var(--color-sections);
+  margin-bottom: 5px;
+}
+.poets-stuff-col .poetry-list .poetry-list-body{
+  padding-bottom: 10px;
+  color: var(--text-primary-color);
+ }
+ .poets-stuff-col .poetry-list .poetry-list-body .btn{
+  color: var(--text-primary-color);
+  border: none;
+ }
+ .poets-stuff-col .poetry-list .poetry-list-body .btn:hover{
+  border: none;
+  transition: top 0.3s;
+ }
+.poetry-list h5{
+  color: var(--text-primary-color);
+}
+ .poets-stuff-col .poetry-list:hover{
+  background-color:var(--color-sections-light);
+  margin-bottom: 5px;
+}
+.spacer-dotted.h
+{
+  border-bottom:1px solid var(--color-spacer-dotted);
+  
+}
+/* Media query for mobile screens */
+@media (max-width: 767px) {
+  #author-picture {
+    text-align: center;
+    display: flex;
+    margin-top:-90px;
+    justify-content: center; /* Horizontally center the content */
+    align-items: center; /* Vertically center the content */
+  }
+
+  #author-picture img {
+    width: 150px; /* Set the desired width */
+    height: 150px; /* Set the desired height */
+    border-radius: 50%; /* Make the image rounded */
+  }
+ 
+  #poet-info .info-box {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  #poet-info .info-box .basic-info {
+    text-align: center;
+  }
+
+  #poet-info .info-box .buttons {
+    margin-top: -30px;
+  }
+  
+}
+
+ 
+/*--------------------------------------------------------------
+# Book A Table Section
+--------------------------------------------------------------*/
+.book-a-table .reservation-img {
+  min-height: 500px;
+  background-size: cover;
+  background-position: center;
+}
+
+.book-a-table .reservation-form-bg {
+  background: rgba(55, 55, 63, 0.04);
+}
+
+.book-a-table .php-email-form {
+  padding: 40px;
+}
+
+@media (max-width: 575px) {
+  .book-a-table .php-email-form {
+    padding: 20px;
+  }
+}
+
+.book-a-table .php-email-form h3 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.book-a-table .php-email-form h4 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 20px 0 0 0;
+}
+
+.book-a-table .php-email-form p {
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.book-a-table .php-email-form .error-message {
+  display: none;
+  color: var(--color-white);
+  background: var(--color-red3);
+  text-align: right;
+  padding: 15px;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+.book-a-table .php-email-form .sent-message {
+  display: none;
+  color: var(--color-white);
+  background: var(--color-success);
+  text-align: center;
+  padding: 15px;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+.book-a-table .php-email-form .loading {
+  display: none;
+  background: var(--color-white);
+  text-align: center;
+  padding: 15px;
+  margin-bottom: 24px;
+}
+
+.book-a-table .php-email-form .loading:before {
+  content: "";
+  display: inline-block;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  margin: 0 10px -6px 0;
+  border: 3px solid var(--color-success);
+  border-top-color: var(--color-white);
+  animation: animate-loading 1s linear infinite;
+}
+
+.book-a-table .php-email-form input,
+.book-a-table .php-email-form textarea {
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 14px;
+  border-radius: 0;
+}
+
+.book-a-table .php-email-form input:focus,
+.book-a-table .php-email-form textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.book-a-table .php-email-form input {
+  padding: 12px 15px;
+}
+
+.book-a-table .php-email-form textarea {
+  padding: 12px 15px;
+}
+
+.book-a-table .php-email-form button[type=submit] {
+  background: var(--color-primary);
+  border: 0;
+  padding: 14px 60px;
+  color: var(--color-white);
+  transition: 0.4s;
+  border-radius: 50px;
+}
+
+.book-a-table .php-email-form button[type=submit]:hover {
+  background: var(--color-red2);
+}
+
+@keyframes animate-loading {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/*--------------------------------------------------------------
+# Gallery Section
+--------------------------------------------------------------*/
+.gallery {
+  overflow: hidden;
+  text-align: left;
+}
+#poets-slider{
+  padding: 15px;
+  font-size: 20px;
+  background: var(--color-sections);
+
+}
+.gallery .swiper-pagination {
+  margin-top: 20px;
+  position: relative;
+}
+
+.gallery .swiper-pagination .swiper-pagination-bullet {
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-gray14);
+  opacity: 1;
+}
+
+.gallery .swiper-pagination .swiper-pagination-bullet-active {
+  background-color: var(--color-primary);
+}
+
+.carousel-btn-3 {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--carousel-btn);
+  padding-top: 90px;
+  padding-right: 60px;
+  padding-left: 60px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.carousel-3-control-prev,
+.carousel-3-control-next {
+  background-color: var(--color-gray2);
+  width: 5vh;
+  height: 5vh;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+
+@media (min-width: 768px) {
+  .card img {
+    height: 11em;
+  }
+}
+.carousel-3-btn-prev {
+  left: 10px;
+}
+
+.carousel-3-btn-next {
+  right: 10px;
+}
+@media (min-width: 992px) {
+  .gallery .swiper-wrapper {
+    padding: 40px 0;
+  }
+
+ 
+}
+
+  #Poetry-List-btn{
+    width: 100%;
+    height: 25%;
+    position: relative;
+  }
+  #Poetry-List{
+    color: var( --text-color-light);
+  }
+  .TodaysPoetrybtn,
+  .TodaysPoetrybtn:focus {
+    font-size: 14px;
+    color: var( --text-color-light);
+    background: transparent;
+    border: 1px solid var(--button-border-outline);
+    padding: 8px 20px;
+    margin-right: 30px;
+    border-radius: 50px;
+    transition: 0.3s;
+  }
+  
+  .TodaysPoetrybtn:hover,
+  .TodaysPoetrybtn:focus:hover {
+    color: var(--text-color-light);
+    background: var(--button-border-hover);
+    border: 1px solid var(--color-body-light-hover);
+  }
+  .btn-gol,
+  .btn-gol:focus {
+    font-size: 14px;
+    color: var( --text-color-light);
+    background: transparent;
+    border: 1px solid var(--color-body-light-hover);
+    padding: 2px 20px;
+    border-radius: 50px;
+    transition: 0.3s;
+  }
+  
+  .btn-gol:hover, 
+  .btn-gol:focus:hover {
+    color: var(--text-color-light);
+    background: var(--button-border-hover);
+  }
+  .btn-gol.active {
+    background: var(--color-primary) !important;
+    border: 1px solid transparent;
+  }
+  .btn-gol.active:hover {
+    color: var(--btn-hover) !important;
+    transform: scale(1.03);
+    border: 1px solid transparent;
+  }
+  #overlay_todays_poetry{
+    width: 100%;
+    bottom: 0;
+    height: 60%;
+    position: absolute;
+    background-image: linear-gradient(to bottom, transparent 0, transparent 20px, rgba(255, 255, 255, 0.904) 10px);
+    background-position: top, bottom;
+  }
+  .poet-content{
+    bottom: 0;
+    width: 100%;  background-repeat: no-repeat;
+    opacity: 0;
+    transform: translateY(100%);
+    animation: fade-in-slide-up 1s ease-in-out forwards;
+  }
+  @keyframes fade-in-slide-up {
+    0% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+/*--------------------------------------------------------------
+# Contact Section
+--------------------------------------------------------------*/
+.contact .info-item {
+  background: var(--color-body);
+  padding: 30px;
+  height: 100%;
+}
+
+.contact .info-item .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  line-height: 0;
+  color: var(--color-white);
+  background: var(--color-primary);
+  border-radius: 50%;
+  margin-left: 15px;
+}
+
+.contact .info-item h3 {
+  font-size: 20px;
+  color: var(--color-gray12);
+  font-weight: 700;
+  margin: 0 0 5px 0;
+}
+
+.contact .info-item p {
+  padding: 0;
+  margin: 0;
+  line-height: 24px;
+  font-size: 14px;
+}
+
+.contact .info-item .social-links a {
+  font-size: 24px;
+  display: inline-block;
+  color: rgba(55, 55, 63, 0.7);
+  line-height: 1;
+  margin: 4px 6px 0 0;
+  transition: 0.3s;
+}
+
+.contact .info-item .social-links a:hover {
+  color: var(--color-primary);
+}
+
+.contact .php-email-form {
+  width: 100%;
+  margin-top: 30px;
+  background: var(--color-white);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+}
+
+.contact .php-email-form .form-group {
+  padding-bottom: 20px;
+}
+
+.contact .php-email-form .error-message {
+  display: none;
+  color: var(--color-white);
+  background: var(--color-red3);
+  text-align: right;
+  padding: 15px;
+  font-weight: 600;
+}
+
+.contact .php-email-form .error-message br+br {
+  margin-top: 25px;
+}
+
+.contact .php-email-form .sent-message {
+  display: none;
+  color: var(--color-white);
+  background: var(--color-success);
+  text-align: center;
+  padding: 15px;
+  font-weight: 600;
+}
+
+.contact .php-email-form .loading {
+  display: none;
+  background: var(--color-white);
+  text-align: center;
+  padding: 15px;
+}
+
+.contact .php-email-form .loading:before {
+  content: "";
+  display: inline-block;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  margin: 0 10px -6px 0;
+  border: 3px solid var(--color-success);
+  border-top-color: var(--color-white);
+  animation: animate-loading 1s linear infinite;
+}
+
+.contact .php-email-form input,
+.contact .php-email-form textarea {
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 14px;
+}
+
+.contact .php-email-form input:focus,
+.contact .php-email-form textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.contact .php-email-form input {
+  height: 48px;
+}
+
+.contact .php-email-form textarea {
+  padding: 10px 12px;
+}
+
+.contact .php-email-form button[type=submit] {
+  background: var(--color-primary);
+  border: 0;
+  padding: 12px 40px;
+  color: var(--color-white);
+  transition: 0.4s;
+  border-radius: 50px;
+}
+
+.contact .php-email-form button[type=submit]:hover {
+  background: var(--color-red2);
+}
+
+@keyframes animate-loading {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/*--------------------------------------------------------------
+# Hero Section
+--------------------------------------------------------------*/
+.hero {
+  width: 100%;
+  background-size: cover;
+  position: relative;
+  min-height: 60vh;
+  padding: 160px 0 60px 0;
+}
+
+.hero h2 {
+  font-size: 64px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--color-secondary);
+  font-family: var(--font-primary);
+}
+
+.hero h2 span {
+  color: var(--color-primary);
+}
+
+.hero p {
+  color: var(--color-gray8);
+  font-weight: 400;
+  margin-bottom: 30px;
+}
+
+/* .hero .btn-baakh-search {
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 1px;
+  display: inline-block;
+  border-radius: 50px;
+  transition: 0.5s;
+  color: var(--color-white);
+  background: var(--color-primary);
+  box-shadow: 0 8px 28px rgba(206, 18, 18, 0.2);
+}
+
+.hero .btn-baakh-search:hover {
+  background: rgba(206, 18, 18, 0.8);
+  box-shadow: 0 8px 28px rgba(206, 18, 18, 0.45);
+} */
+
+.hero .btn-watch-video {
+  font-size: 16px;
+  transition: 0.5s;
+  margin-right: 25px;
+  color: var(--font-secondary);
+  font-weight: 600;
+}
+
+.hero .btn-watch-video i {
+  color: var(--color-primary);
+  font-size: 32px;
+  transition: 0.3s;
+  line-height: 0;
+  margin-left: 8px;
+}
+
+.hero .btn-watch-video:hover {
+  color: var(--color-primary);
+}
+
+.hero .btn-watch-video:hover i {
+  color: rgba(206, 18, 18, 0.8);
+}
+
+@media (max-width: 640px) {
+  .hero h2 {
+    font-size: 36px;
+  }
+
+  .hero .btn-get-started,
+  .hero .btn-watch-video {
+    font-size: 14px;
+  }
+}
+
+/*--------------------------------------------------------------
+# Footer
+--------------------------------------------------------------*/
+.footer {
+  font-size: 14px;
+  background-color: var(--color-body);
+  padding: 50px 0;
+  border-top: 1px solid var(--color-sections);
+}
+
+.footer .icon {
+  margin-left: 15px;
+  font-size: 24px;
+  line-height: 0;
+}
+
+.footer h4 {
+  font-size: 16px;
+  font-weight: bold;
+  position: relative;
+  padding-bottom: 5px;
+  color: var(--color-white);
+}
+
+.footer .footer-links {
+  margin-bottom: 30px;
+}
+
+.footer .footer-links ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer .footer-links ul li {
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+}
+
+.footer .footer-links ul li:first-child {
+  padding-top: 0;
+}
+
+.footer .footer-links ul a {
+  color: rgba(255, 255, 255, 0.6);
+  transition: 0.3s;
+  display: inline-block;
+  line-height: 1;
+}
+
+.footer .footer-links ul a:hover {
+  color: var(--color-white);
+}
+
+.footer .social-links a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 16px;
+  color: var(--carousel-btn);
+  margin-left: 10px;
+  transition: 0.3s;
+}
+
+.footer .social-links a:hover {
+  color: var(--color-white);
+  border-color: var(--color-white);
+}
+
+.footer .copyright {
+  text-align: center;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer .credits {
+  padding-top: 4px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.footer .credits a {
+  color: var(--color-white);
+}
+
+/**
+* Updated Code By Ubed Thaheem
+**/
+
+.today-ghazal-card{
+  position: relative;
+  min-height: 100px;
+  border-bottom: 5px var(--color-primary) solid;
+}
+.today-ghazal-card h2{
+  padding-left: 10px;
+}
+.poetry-faded{
+  position: relative;
+  font-size:larger;
+  max-height: 190px; 
+  overflow-y: hidden;  
+}
+.poetry-faded p{
+  padding-left: 20px;
+}
+
+.left-button-overly {
+  position: absolute; 
+  margin-top:-50px; 
+  right:0; 
+  z-index: 2
+}
+
+
+/* today ghazal Styles for mobile */
+@media screen and (max-width: 768px) {
+  .today-ghazal-card h2 {
+    padding-right: 5px; /* Adjust padding for smaller screens */
+    font-size: 1.3rem;
+  }
+ 
+  
+  .today-ghazal-card{    
+    max-height: 210px;
+    overflow: hidden;
+  }
+
+  .poetry-faded p{
+    max-height: 150px;
+    padding-right: 10px;
+    font-size: var(----poetry-content-size-sm);
+  }
+
+  .left-button-overly {
+    margin-top: -80px; /* Adjust margin for smaller screens */
+  }
+  #ghazal-of-the-day .single-poet{
+    min-height: 210px;
+  }
+  .trending-poets-slider p, .poetry-bundles-slider p{
+    font-size: 0.9rem !important;
+  }
+}
+
+
+.btn-baakh{
+  font-size: 14px;
+  color: var( --text-color-light);
+  background: transparent;
+  border: 1px solid var(--button-border-outline);
+  padding: 8px 20px;
+  /* margin-right: 30px; */
+  border-radius: 50px;
+  transition: 0.3s;
+}
+.btn-baakh:hover{
+  color: var(--color-light);
+  border: 1px solid var(--button-border-outline);
+  background: var(--button-border-hover);
+}
+
+.btn-baakh-reverse{
+  font-size: 14px;
+  color: var(--text-color-light);
+  background: transparent;
+  border: 1px solid var(--button-border-outline);
+  padding: 8px 20px;
+  /* margin-right: 30px; */
+  border-radius: 50px;
+  transition: 0.3s;
+}
+.btn-baakh-reverse:hover{
+  color: var(--color-white);
+  background: var(--button-border-hover);
+  border: 1px solid var(--button-border-outline);
+
+}
+
+.btn-load-more {
+  font-size: 14px;
+  color: var(--text-color-light);
+  background: transparent;
+  border: 1px solid var(--button-border-outline);
+  padding: 5px 20px;
+  border-radius: 6px;
+  transition: 0.3s;
+  margin-top: 18px;
+  font-size: medium;
+}
+.btn-load-more:hover{ 
+  color: var(--color-body-light);
+  background: var(--button-border-hover);
+  border: 1px solid var(--button-border-outline);
+
+}
+
+.container-overlay {
+  position: relative;
+  width: 100%;
+  height: 30px; /* Adjust the height as needed */
+}
+ 
+.poetry-shade-overly{
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--color-poetryofday);  
+  z-index: 1;
+}
+ .today-ghazal-card h2{
+  color: var(--text-primary-color);
+ }
+ .today-ghazal-card{
+  background: var(--color-poetryofday-bg);
+ }
+.slide-1 {
+  -webkit-touch-callout: initial !important;
+  -webkit-user-select: text !important;
+  -khtml-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  color: var(--color-primary);
+}
+
+#book-name{
+  padding: 15px;
+  font-size: 20px;
+  background-color: white;
+}
+
+.book-item img:hover{
+  -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+  filter: grayscale(100%);
+  transition: .5s ease;
+}
+
+.top-spacer{
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 90px;
+}
+
+
+/**
+* Search Box
+**/
+.search-box {
+  display: flex;
+  align-items: center;
+  margin: 0 auto;
+  background-color: var(--color-body);
+  border-radius: 2px; /* Added 'px' unit here */
+  padding: 5px;
+  border: 1px solid transparent; /* Set a transparent border */
+}
+
+.search-bo:hover {
+  border-color: var(--color-body-light); /* Change the border color on hover */
+}
+
+.search-icon {
+  padding: 9px;
+  color: var(--color-scrollbars);
+}
+.search-input {
+  fle: 1;
+  border: none;
+  outline: none;
+  background: none;
+  padding: 9px;
+  font-size: 16px;
+  color: var(--text-color-light);
+}
+
+.search-options .list-inline-item:not(:last-child) {
+  margin-right: 2.5rem;
+}
+.search-options li {
+  padding-bottom: 10px;
+}
+.search-options li a:hover {
+  text-decoration: underline;
+  transition: all 0.3s ease-in-out 0s;
+}
+
+.btn-alphabet {
+  margin:0px !important;
+  border-radius: 0px;
+}
+
+
+/* *
+* Poetry page
+**/
+.poets-with-name:hover{
+  background-color:var(--color-gray24);
+}
+.baakh-list-divider {
+  background-color:var(--color-body);
+  height:2px;
+  width:80%;
+  margin:auto;
+  
+}
+
+.text-italic{
+  font-style: italic;
+}
+
+/* Couplets Page */
+#cplts_tgs {
+  background-color: var(--color-sections);
+  padding-right: 8px;
+}
+
+
+#cplts_tgs .letter {
+  background: var(--color-body-light);
+  padding: 8px;
+  font-size: larger;
+  margin: 0;
+  color: var(--couplet-tags-latter);
+}
+
+#cplts_tgs:hover .letter {
+  background-color: var(--color-primary);
+  color: var(--couplet-tags-latter);
+}
+/*
+#cplts_tgs:hover .icon {
+  background-color: var(--color-primary);
+  color: var(--text-color-light);
+}*/
+
+#cplts_tgs .word {
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: larger;
+  text-align: start !important;
+  color: var(--text-color-light);
+}
+#cplts_tgs:hover .word {
+  color: var(--color-primary);
+}
+
+#cplts_tgs .icon {
+  border-radius: 50%;
+  padding: 3px;
+  text-align: center;
+  background-color: var(--color-sections);
+  height: 30px;
+  width: 30px;
+  color: var(--text-color-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#cplts_tgs:hover .icon {
+  color: var(--color-primary);
+}
+#cplts_tgs_container {
+  margin-top: 20px;
+}
+
+/* Add margin-top: 20px for screens larger than mobile size */
+@media (max-width: 768px) {
+  #cplts_tgs_container {
+    margin-top: 5px;
+  }
+}
+
+.couplet-body {
+  background: var(--color-sections);
+  padding-top: 5%;
+  padding-bottom: 3%;
+  padding-right: 1%;
+  padding-left: 1%;
+  margin-top: 30px;
+  border-bottom: 5px solid var(--color-primary);
+}
+
+.couplet-body .poetry{
+  font-size: 1.5rem;
+}
+.couplet-body .poetry span.poet-name {
+  font-size: large;
+  color: var(--text-color-light);
+}
+
+.couplet-body .hr {
+  width: 80%;
+  margin: 0 auto;
+  margin-top: 10px;
+}
+
+.favorite-couplets #left-side-poetry {
+  margin-top:-90px;
+}
+.favorite-couplets #left-side-poetry .more-button{
+  display: flex;
+  flex-direction: row-reverse; /* Reverse direction for RTL */
+  justify-content: flex-start; /* Align content to the end */
+  padding-top: 40px;
+}
+
+.favorite-couplets h3.title{
+  margin-top: 60px !important;  
+}
+.buttons > .btn-default{
+  color: var(--text-primary-color);
+}
+.buttons > .btn-default:hover{
+  color: var(--text-color-hover);
+}
+.all-poetry-heading {
+  padding:5px;
+}
+
+/* Mobile Size favorite-couplets */
+@media (max-width:768px) {
+  .favorite-couplets h3.title{
+    margin-top: 0px !important;
+    text-align: center;  
+  }
+  .favorite-couplets #left-side-poetry {
+    margin-top:10px;
+  }
+
+  .couplet-body .buttons span.txt {
+    display: none;
+  }
+}
+
+
+/**
+* Poetry Page [Author's Poetry]
+* with-category-blade.php
+*/
+[lang="en"] .single-couplet p{
+  font-family: 'Bitter';
+  font-style: italic;
+  font-size: large;
+  color: var(--text-primary-color);
+}
+[lang="en"] .single-couplet p.start{
+  padding-right: 3%;
+  font-size: large;
+  color: var(--text-primary-color);
+}
+[lang="en"] h2.poetry-title{
+  font-family: 'Bitter';
+}
+.text-secondary{
+  color: var(--text-primary-color) !important;
+}
+.baakh-border-bottom {
+  border-bottom:5px solid var(--color-primary);
+}
+.baakh-border-both {
+  border-top:5px solid var(--color-primary);
+  border-bottom:5px solid var(--color-primary);
+}
+.single-couplet{
+    text-align:center;
+    padding:8px;
+}
+.single-couplet:hover{
+  color: var(--text-primary-color);
+}
+.w:hover{
+    cursor: pointer;
+    user-select: none;
+}
+
+.single-couplet p{
+    font-size:1.4em;
+    line-height:auto;
+}
+.single-couplet p.start {
+  text-align: start;
+}
+.single-couplet p.center {
+  text-align: center;
+}
+.poetry-title{
+  background-color: var(--color-sections);
+  color: var(--text-primary-color);
+}
+.spacer-dotted{
+  border-bottom:1px solid var(--color-spacer-dotted);
+}
+.couplets-list {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 20px;
+  background-color: var(--color-sections);
+}
+.video-content {
+  display: none;
+  border-top:1px dotted;
+  border-color:var(--color-body);
+  padding-top: 10px;
+  transition: all 1200ms ease;
+}
+.video-content li {
+  margin-top: 3px;
+  cursor: pointer;
+  user-select: none;
+}
+.video-content li:hover {
+  background: var(--color-body);
+  width: 100%;
+  transition: 0.2s
+}
+
+.video-content li.active {
+  background: var(--color-body);
+}
+
+.video-content  img.video-thumbnail {
+  height: 30px;
+  width: auto;
+}
+
+.btn-youtube.active {
+  color: var(--color-primary);
+}
+
+.about-poet {
+  margin-bottom: 20px;
+}
+
+.about-poet img {
+  border-bottom: 4px solid var(--color-primary);
+}
+
+p.paragraph {
+  margin: 0;
+  text-indent: 2rem;
+  text-align: justify;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  #left_div {
+      margin-top: 30px;
+  }
+  section.poetry-detail-page{
+    padding: 5px 0px;
+  }
+   
+  .couplets-list .single-couplet{
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .couplets-list .single-couplet p{
+    font-size: var(--poetry-content-size-sm);
+  }
+  #poetry-row .poetry-title h4 a{
+    font-size: var(--poetry-content-size-sm);
+  }
+
+  .poetry-detail-page .buttons-social {
+    background-color: var(--color-body);
+    border-radius: 5px;
+  }
+  .poetry-detail-page .buttons-social .btn i{
+    color: var(--btn-hover);
+  }
+
+  [data-theme="dark"] .poetry-detail-page .poetry-media .btn i{
+    color: var(--btn-hover);
+  }
+  .poetry-detail-page .author-image .poet-name{
+    display: none;
+  }
+ 
+
+  .poetry-detail-page .poetry-title .poetry-heading{
+    font-size: 1.2rem;
+  }
+
+  .poetry-detail-page .poetry-navigator .nav-title{
+    font-size: var(--poetry-content-size-sm);
+  }
+  .poetry-detail-page .poetry-navigator .nav-content{
+    font-size: 0.8rem;
+  }
+  .all-tags-page .tag-title{
+    font-size: var(--poetry-content-size-sm);
+  }
+  .poetry-list-body h5{
+    font-size: var(--poetry-content-size-sm);
+  }
+}
+ 
+
+p.nazam
+{
+  text-align: left;
+}
+
+
+/**
+* Audio
+*/
+.audio-content {
+  display: none;
+  border-top:1px dotted;
+  border-color:var(--color-body);
+  padding-top: 10px;
+  transition: all 1200ms ease;
+}
+.audio-content li {
+  margin-top: 3px;
+  cursor: pointer;
+  user-select: none;
+}
+.audio-content li:hover {
+  background: var(--color-body);
+  width: 100%;
+  transition: 0.2s
+}
+
+.audio-content li.active {
+  background: var(--color-body);
+}
+
+.audio-content  img.audio-thumbnail {
+  height: 30px;
+  width: auto;
+}
+
+.btn-youtube.active {
+  color: var(--color-primary);
+}
+
+
+.audio-player
+{
+  display: none;
+  position: sticky;
+  background: var(--color-primary);
+  bottom: 0;
+  color: var(--color-body);
+  padding-top: 8px;
+  padding-bottom: 8px;
+  text-align: center;
+}
+
+.audio-player .audio-range
+{
+  -webkit-appearance: none;  /* Override default CSS styles */
+  appearance: none;
+  width: 80vw;
+  height: 25px; /* Specified height */
+  background: var(--color-gray6); /* Grey background */
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
+  transition: opacity .2s;
+  border-radius: 30px;
+}
+
+.audio-player .audio-range {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+
+
+
+.audio-controller i{
+  color: var(--color-gray24);
+}
+
+.bi-2x {
+  font-size: 2.5rem;
+}
+
+
+/*
+* Comments Container on Poetry Page
+*/
+.comments-container {
+  margin-right: 15%;
+  margin-left: 15%;
+  padding-top: 20px;
+  padding: 30px;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border-bottom:5px solid var(--color-primary);
+  background-color: var(--color-sections);
+}
+.comments-container .user-inputs {
+  border: 1px solid var(--text-color-light);
+  padding: 8px;
+}
+#userCommentTextArea{
+  color: var(--text-color-light);
+}
+.comments-container .user-inputs .input-area{
+  background: var(--color-comment-input);
+  padding: 8px;
+  margin-top: 3px;
+}
+.comments-container .user-inputs textarea{
+  background: transparent;
+  padding: 8px;
+  width: 100%;
+  outline: none;
+  border: none;
+}
+.comments-container .remaining-letters p.message.red {
+  color: var(--color-primary);
+  
+}
+.comments-container .text-actions .btn {
+  padding: 5px;
+  font-size: larger;
+}
+
+.comments-container .user-comments .comment {
+  border-bottom: 0px solid var(--color-default);
+  background: var(--color-gray1); 
+  padding: 8px;
+}
+.comments-container .user-comments .comment .comment-text {
+  padding-right: 10px;
+  padding-left: 20px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.comment-time .message {
+  font-size: small;
+}
+@media (max-width:768px) {
+  .comments-container {
+    margin-right: 3%;
+    margin-left: 3%;
+    padding-top: 10px;
+    padding: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-bottom:5px solid var(--color-primary);
+  }
+}
+
+.me-20 {
+  margin-right: 20px;
+}
+.ms-20 {
+  margin-left: 20px;
+}
+
+
+/**
+* searchbox
+*/
+/* Default styles for screens larger than mobile */
+.search-container {
+  display: none;
+  background-color: var(--color-sections);
+  margin-top: 90px; /* Default margin for non-mobile screens */
+  opacity: 0;
+  border-bottom: 5px var(--color-primary) solid;
+  padding: 8px 20px;
+  transition: top 0.3s;
+  position: absolute;
+  width: 100%;
+  z-index: 999;
+  border-top: 1px solid var(--color-spacer-dotted);
+}
+
+/* Media query for mobile screens */
+@media (max-width: 767px) {
+  .search-container {
+    margin-top: 60px; /* Adjusted margin for mobile screens */
+  }
+}
+
+
+.search-container.show {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+}
+
+.searchbox
+{
+  z-index: 999;
+  height: 60px;
+  position: relative;
+}
+.searchbox form {
+  display: flex;
+  align-items: center;
+}
+
+.searchbox button.btn-submit {
+  position: absolute;
+  color: var(--color-body-light);
+}
+.searchbox input {
+  text-indent: 33px;
+  border-radius: 2px;
+  height: 50px;
+}
+.btn-baakh-search.active {
+  background: var(--color-primary) !important;
+  border: 1px solid transparent;
+}
+.searchbox input:focus {
+  outline: none;
+  outline-style: none;
+  box-shadow: none;
+  color: var(--color-body-light);
+  border-color: transparent;
+  background: var(--color-sections);
+}
+
+/*-------------------------------------------------------
+# Poet's Profile Page 
+--------------------------------------------------------*/
+.poet-item {
+  cursor: pointer;
+  transition: ease-in-out 0.3s;
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+.poet-item .image {
+  width: 50px;
+  height: auto;
+}
+.poet-item .image img {
+  border-radius: 100%;
+  transition: all 0.3s;
+}
+.poet-item:hover{
+  background: var(--color-sections);
+}
+.poet-item:hover img{
+  filter: grayscale(20%);
+  border-radius: 50px 0px 0px 50px;
+  transition: all 0.3s;
+}
+
+.poet-item .info {
+  padding-left: 10px;
+}
+
+.poet-item .info h4 {
+  font-size: 1.3rem;
+}
+.poet-item .tagline {
+  order: 3;
+  font-size: 0.8rem;
+}
+main.main-content {
+  padding-top:45px;
+}
+.bg-cover-bundle {
+  width: 100%;
+  height: 276px;
+  
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: center top;
+}
+.rt-5{
+  border-radius: 15px 15px 0px 0px;
+}
+.rb-5{
+  border-radius: 0px 0px 15px 15px;
+}
+
+.poetry-list:hover {
+  background:#fafafa;
+  transition: background-color 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.more-poets ul li {
+  padding:10px;
+}
+.more-poets ul li:hover{
+  background:#fafafa;
+  transition: background-color 0.1s ease-in-out;
+}
+
+.more-poets ul li a{
+  color:var(--color-secondary);
+}
+.more-poets ul li a:hover {
+  color:var(--color-primary)
+}
+
+
+
+/**
+* Button for Social Share
+*/
+.buttons-social {
+  display: none;
+}
+
+.couplet-content{
+  font-family: 'Bitter';
+}
+
+
+
+/*-------------------------------------------------------
+# Bundles's Single Page 
+--------------------------------------------------------*/
+.bundle-item {
+  cursor: pointer;
+  transition: ease-in-out 0.3s;
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+.bundle-item .image {
+  width: 100px;
+  height: auto;
+}
+.bundle-item .image img {
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+.bundle-item:hover{
+  background: var(--color-body);
+  transition: all 0.5s;
+}
+.bundle-item:hover img{
+  filter: grayscale(20%);
+  transition: all 0.3s;
+}
+
+.bundle-item .info {
+  padding-left: 10px;
+}
+
+.bundle-item .info h4 {
+  font-size: 1.3rem;
+}
+.bundle-item .tagline {
+  order: 3;
+  font-size: 0.8rem;
+}
+
+
+/**
+* Genre
+*/ 
+.genres-section .genre-card {
+  transition: transform ease-in-out .3s;
+  background-color: var(--color-poetryofday-bg);
+}
+
+.genres-section .genre-card:hover {
+  transform: scale(1.05);
+}
+
+.genres-section .genre-card:hover .genre-title{
+  color: var(--color-primary);
+  border: none;
+}
+
+.page-link.active, .active > .page-link{
+  background-color: var(--color-primary) !important;
+}
+
+
+.btn-share-on i.bi{
+  color: var(--color-body-light);
+}
+.btn-share-on i.bi:hover{
+  color: var(--color-body-light-hover);
+}

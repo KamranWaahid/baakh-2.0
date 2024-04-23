@@ -1,0 +1,6 @@
+<div class="buttons-social" id="{{ $componentId }}">
+    <button type="button" data-toggle="tooltip" title="Share on Facebook" class="btn btn-share-on btn-default" data-platform="fb" data-share_url="{{ $poetryUrl; }}" data-share_text="{{ $shareText }}"><i class="bi bi-facebook"></i></button>
+    <button type="button" data-toggle="tooltip" title="Share on Twitter" class="btn btn-share-on btn-default" data-platform="tw" data-share_url="{{ $poetryUrl; }}" data-share_text="{{ $shareText }}"><i class="bi bi-twitter"></i></button>
+    <button type="button" data-toggle="tooltip" title="Share on WhatsApp" class="btn btn-share-on btn-default" data-platform="wa" data-share_url="{{ $poetryUrl; }}" data-share_text="{{ $shareText }}"><i class="bi bi-whatsapp"></i></button>                        
+    <button type="button" data-toggle="tooltip" title="Copy" class="btn btn-share-on btn-default" data-platform="copy" data-share_url="{{ $poetryUrl; }}" data-share_text="{{ $shareText }}"><i class="bi bi-clipboard"></i></button>                        
+</div>

@@ -1,0 +1,10 @@
+  /* Colors for Dark Theme */
+  [data-theme="dark"] {
+    --color-default: #e4e6eb !important;
+    --color-primary: #e56b6b !important;
+    --color-secondary: #bbd1c8 !important;
+    --color-body: #2a2d3e !important;
+    --color-white: #181818 !important;
+    --color-light-gray: #676775 !important;
+    --color-default-light: #aaa;
+  }

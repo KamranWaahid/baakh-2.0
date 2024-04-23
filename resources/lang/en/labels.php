@@ -1,0 +1,57 @@
+<?php 
+// resources/lang/en/labels.php
+return [
+    'topic' => '{1}Topic|[2,*]Topics', //trans_choice
+    'bundle_of_10c' => 'Top 10 Couplets',
+    'poet_index' => 'Poets\' Index',
+    'ghazal_of_day' => 'Ghazal of the day',
+    'book_index' => 'Books\' Index',
+    'poetry_bundles' => 'Poetry Bundles',
+    'quiz_heading' => 'Quiz Couplet',
+    'quiz_sub_heading' => 'Choose correct choice from below',
+    'quiz_question' => 'Who\'s couplet is this?',
+    'most_liked_couplets' => 'Most Liked Couplets',
+    'couplets' => 'Couplets',
+    'couplet_bundles' => 'Couplets\' Bundle',
+    'names' => 'Names',
+    'famous_poets' => 'Famous Poets',
+    'reviews' => 'Reviews',
+    'review_can_write' => 'You can write :count more letters',
+    'review_remove_letters' => 'You have crossed limit, please remove :count letters',
+    'review_cant_write' => 'Its time to submit',
+    'need_help' => 'Need Help? Contact Us',
+    'our' => 'Our',
+    'email_us' => 'Email us',
+    'call_us' => 'Call Us',
+    'opening_hours' => 'Opening Hours',
+    'tag' => '{1} Tag|[2,*]Tags', //trans_choice
+    'tags' => 'Tags',
+    'best_poetry_on_title_category' => ':title :category | latest :category on :title',
+    'about_this_category' => 'About this :category',
+    'all_poets' => 'All Poets',
+    'total_poets_found' => '{0} No Poet |{1} Only :count Poet available|[2,*] Total :count Poets available',
+    'search_placeholder' => 'Search ...',
+
+    
+    // modal
+    'o_name' => 'Birth Name',
+    'p_name' => 'Pen Name',
+    'laqab' => 'Famous with',
+    'dob' => 'Born',
+    'dod' => 'Died',
+    'birth_place' => 'Birth Place',
+    'death_place' => 'Remains in',
+
+    'write_something_for_comment' => 'write your comment...',
+    'comments' => '{0} No Comments |{1} Total :count Comment|[2,*] Total :count Comments',
+    'bundles' => 'Bundles',
+    'likes' => 'Likes',
+    'user_comments' => 'Comments',
+
+    
+    'see-more' => 'See more',
+    'poetry' => 'Poetry',
+    'footer-notice' => 'You are using the beta version of Baakh, so some features are disabled, they will be enabled soon.',
+];
+
+?>
