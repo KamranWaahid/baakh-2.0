@@ -50,7 +50,7 @@ class HomeController extends UserController
 
         $this->SEO_General($title, $desc);
 
-        $ghazal_of_day_poet = $ghazal_of_day->poet;
+        $ghazal_of_day_poet = $ghazal_of_day?->poet;
         
         $compact = compact(
             'sliders', 'poet_tags', 'bundles', 
