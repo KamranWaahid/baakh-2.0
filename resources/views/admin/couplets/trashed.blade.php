@@ -44,18 +44,18 @@
                             <tr id="{{ $key+1 }}">
                                 <td><?php echo $key+1; ?></td>
                                 
-                                <td class="text-center" dir="{{ $data->language->lang_dir }}">
+                                <td class="text-center" dir="{{ $data->language?->lang_dir }}">
                                 {!! nl2br($data->couplet_text) !!}
                                 </td>
                                 <td>
-                                <span class="badge bg-success p-1 rounded" data-toggle="tooltip" data-placement="top" title="Poet Name"><i class="fa fa-user mr-1"></i>{{ $data->poet->details->poet_laqab }}</span>
+                                <span class="badge bg-success p-1 rounded" data-toggle="tooltip" data-placement="top" title="Poet Name"><i class="fa fa-user mr-1"></i>{{ $data->poet?->details?->poet_laqab }}</span>
                                 @if ($data->poetry_id != '0')
                                     <span class="badge bg-secondary p-1 rounded"  data-toggle="tooltip" data-placement="top" title="Linked with Main Poetry" ><i class="fas fa-link"></i></span>
                                 @endif
                                 </td>
                                 <td>{{ $data->couplet_tags }}</td>
                                 <td>
-                                <span class="badge bg-warning p-1 rounded" data-toggle="tooltip" data-placement="top" title="Available in Language"><i class="fa fa-globe mr-1"></i>{{ $data->language->lang_title }}</span>
+                                <span class="badge bg-warning p-1 rounded" data-toggle="tooltip" data-placement="top" title="Available in Language"><i class="fa fa-globe mr-1"></i>{{ $data->language?->lang_title }}</span>
                                 </td>
                                 
                                 
