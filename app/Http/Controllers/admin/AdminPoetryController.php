@@ -471,7 +471,7 @@ class AdminPoetryController extends Controller
 
         // for user's information who uploaded or edited
         ->addColumn('user_info', function ($row) {
-            return $row->user->name .'<br>' . $row->created_at;
+            return $row->user?->name .'<br>' . $row->created_at;
         })
         // for URL and titles
         ->addColumn('poetry_title', function ($row) {
@@ -492,19 +492,19 @@ class AdminPoetryController extends Controller
             }
             foreach ($row->translations as $translation) {
                
-                $btn_langs_title = $translation->language->lang_title;
-                $_lang_info .= '<a href="'.route('admin.poetry.edit-translation', ['id' => $row->id, 'language' => $translation->language->lang_code]).'"><span class="badge bg-success p-1 mr-1 rounded"><i class="fa fa-edit mr-1"></i>' . $btn_langs_title . '</span></a>'; //
+                $btn_langs_title = $translation->language?->lang_title;
+                $_lang_info .= '<a href="'.route('admin.poetry.edit-translation', ['id' => $row->id, 'language' => $translation->language?->lang_code]).'"><span class="badge bg-success p-1 mr-1 rounded"><i class="fa fa-edit mr-1"></i>' . $btn_langs_title . '</span></a>'; //
                 //$_lang_info .='<span class="badge bg-success p-1 mr-1 rounded"><i class="fa fa-globe mr-1"></i>'.$btn_langs_title.'</span>';
             }
         
-            $_lang_info .= '<span class="badge bg-info p-1 mr-1 rounded"><i class="fa fa-folder mr-1"></i>'.$row->category->detail->cat_name.'</span>';
+            $_lang_info .= '<span class="badge bg-info p-1 mr-1 rounded"><i class="fa fa-folder mr-1"></i>'.$row->category->detail?->cat_name.'</span>';
             return $_lang_info;
         })
         
 
         // for poets names
         ->addColumn('poets', function ($row) {
-            return $row->poet_details->poet_laqab;
+            return $row->poet_details?->poet_laqab;
         })
 
         // for buttons
