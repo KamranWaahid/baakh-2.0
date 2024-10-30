@@ -415,6 +415,7 @@ class AdminPoetryController extends Controller
         $poet = $request->input('poet_id');
         $columns = ['id'];
 
+       
         
 
         $query = Poetry::with([

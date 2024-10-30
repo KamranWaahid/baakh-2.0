@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class Poetry extends Model
 {
@@ -86,6 +87,17 @@ class Poetry extends Model
     // boot to add current user's ID as user_id
     
 
-  
+    protected static function booted()
+    {
+        static::creating(function ($poetry) {
+            $poetry->user_id = Auth::id();
+        });
+
+        static::updating(function ($poetry) {
+            if (empty($poetry->user_id)) {
+                $poetry->user_id = Auth::id();
+            }
+        });
+    }
 
 }
