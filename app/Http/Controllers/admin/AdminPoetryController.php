@@ -63,7 +63,7 @@ class AdminPoetryController extends Controller
     public function create()
     {
         $poets = Poets::with('details')->get();
-        $tags = Tags::limit(20)->get();
+        $tags = Tags::where('lang','sd')->get();
         $categories = Categories::all();
         $languages = Languages::all();
         $content_styles = ['justified','center','start','end'];

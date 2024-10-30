@@ -84,7 +84,7 @@ class AdminPoetryTranslationsController extends Controller
                 'poet_id' => $request->input('poet_id'),
                 'lang' => $request->input('lang'),
                 'couplet_slug' => $coupletSlugs[$index],
-                'couplet_tags' => $coupletTags[$index]
+                'couplet_tags' => $coupletTags[$index] ?? null
             ]);
         }
         $url = route('admin.poetry.index');
