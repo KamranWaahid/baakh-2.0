@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Cache;
 
 class AdminPoetryController extends Controller
 {
@@ -63,7 +64,10 @@ class AdminPoetryController extends Controller
     public function create()
     {
         $poets = Poets::with('details')->get();
-        $tags = Tags::where('lang','sd')->get();
+       //$tags = Tags::where('lang','sd')->get();
+       $tags = Cache::remember('tags_sd', 600, function () {
+        return Tags::where('lang', 'sd')->get();
+    });    
         $categories = Categories::all();
         $languages = Languages::all();
         $content_styles = ['justified','center','start','end'];
