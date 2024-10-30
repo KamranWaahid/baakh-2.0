@@ -73,7 +73,7 @@ class AdminPoetryController extends Controller
 
     public function store_old(Request $request)
     {
-        dd($request->all());
+       // dd($request->all());
         
         $request->validate([
             'poetry_slug' => ['required', new SlugRule($request->lang, Poetry::class, 'poetry_slug')],
