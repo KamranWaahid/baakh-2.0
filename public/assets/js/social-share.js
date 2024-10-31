@@ -47,42 +47,42 @@ $(document).ready(function () {
      
   });
 
-  $(document).on('click', '.btn-like', function (e) {
-    e.preventDefault();
-    var path = $(this).data('uri'); //item.like-dislike
-    var type = $(this).data('type');
-    var typeId = $(this).data('type_id');
-    var icon = $(this).find('i');
-    /// Ajax Request for Like Dislike
-    $.ajax({
-      url:path+'/comments/like-dislike',
-      type:'post',
-      data:{likableType:type, likableId:typeId},
-      headers: {
-        'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')
-      },
-      beforeSend: function (){
-        /// do domthing
-        console.log('---------- sent like request ----------');
-      },
-      success: function (response){
-        console.log('success called on ajax request of Like Dislike')
-        console.log(response);
-        $(icon).toggleClass('bi-heart bi-heart-fill text-baakh')
-        toastr.success('پسنديدہ ۾ شامل ٿي چُڪو')
+  // $(document).on('click', '.btn-like', function (e) {
+  //   e.preventDefault();
+  //   var path = $(this).data('uri'); //item.like-dislike
+  //   var type = $(this).data('type');
+  //   var typeId = $(this).data('type_id');
+  //   var icon = $(this).find('i');
+  //   /// Ajax Request for Like Dislike
+  //   $.ajax({
+  //     url:path+'/comments/like-dislike',
+  //     type:'post',
+  //     data:{likableType:type, likableId:typeId},
+  //     headers: {
+  //       'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')
+  //     },
+  //     beforeSend: function (){
+  //       /// do domthing
+  //       console.log('---------- sent like request ----------');
+  //     },
+  //     success: function (response){
+  //       console.log('success called on ajax request of Like Dislike')
+  //       console.log(response);
+  //       $(icon).toggleClass('bi-heart bi-heart-fill text-baakh')
+  //       toastr.success('پسنديدہ ۾ شامل ٿي چُڪو')
         
-      },
-      error: function (xhr, ajaxOptions, thrownError){
+  //     },
+  //     error: function (xhr, ajaxOptions, thrownError){
         
-        if(xhr.status == 401)
-        {
-          toastr.error('شعر کي پسند ڪرڻ لاءِ لاگ ان ٿيڻ ضروري آھي', {fadeAway: 3000})
-        }
-        console.error('error called on ajax request of Like Dislike')
-        console.error(xhr.status)
-        console.error(thrownError)
-      }
-    });
-  })
+  //       if(xhr.status == 401)
+  //       {
+  //         toastr.error('شعر کي پسند ڪرڻ لاءِ لاگ ان ٿيڻ ضروري آھي', {fadeAway: 3000})
+  //       }
+  //       console.error('error called on ajax request of Like Dislike')
+  //       console.error(xhr.status)
+  //       console.error(thrownError)
+  //     }
+  //   });
+  // })
 
 })

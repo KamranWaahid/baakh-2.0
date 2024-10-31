@@ -19,6 +19,7 @@ return [
     'likes' => 'Likes',
     'see_all' => 'See All :category',
     'like_it' => 'Like it',
+    'like_it_false' => 'Remove Like',
     'see_favorite_couplets' => 'See :count Most liked couplets',
     'send_message' => 'Send Message',
     'message' => 'Message',

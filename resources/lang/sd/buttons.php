@@ -19,6 +19,7 @@ return [
     'likes' => 'پسنديدگيون',
     'see_all' => 'سڀ :category ڏِسو',
     'like_it' => 'پسند ڪريو',
+    'like_it_false' => 'پسند ھٽايو',
     'see_favorite_couplets' => 'گهڻو پسند ڪيل :count شعر ڏِسو',
     'send_message' => 'پيغام اماڻيو',
     'message' => 'پيغام',

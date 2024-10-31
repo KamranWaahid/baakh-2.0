@@ -319,8 +319,7 @@ class PoetsController extends UserController
             // render couplets
             foreach ($couplets as $index =>  $item) {
                 // check if poetry is liked
-                $liked = $this->isLiked('Couplets', $item->couplet_slug);
-                $html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item, 'liked'=>$liked])->render();
+                $html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item])->render();
             }
 
             // View All Button Before
@@ -336,8 +335,14 @@ class PoetsController extends UserController
                         'info' => function ($query) use ($locale) {
                             $query->where('lang', $locale); // Load only one translation
                         },
-                        'category', 'media'
+                        'category:id,slug',
+                        'media' => function ($query) use ($locale) {
+                            $query->where('lang', $locale) // Filter by language
+                                  ->orderBy('id') // Order by ID or any other relevant column
+                                  ->take(1); // Take only the first media item
+                        }
                     ])
+                    ->where('category_id', $cat->id)
                     ->where('poet_id', $poetId)
                     ->take(5)->get();
 
@@ -347,8 +352,7 @@ class PoetsController extends UserController
 
             // load poetry of each category
             foreach ($items as $index =>  $item) {
-                $liked = $this->isLiked('Poetry', $item->poetry_slug);
-                $html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item, 'liked'=>$liked])->render();
+                $html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item])->render();
             }
             
             // View All Button Before

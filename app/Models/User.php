@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+/**
+ * @method \Illuminate\Database\Eloquent\Relations\MorphMany likes()
+ */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
@@ -85,6 +88,28 @@ class User extends Authenticatable
             }
         }
         return $hasPermission;
+    }
+
+    /**
+     * Get all likes for the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @property \Illuminate\Database\Eloquent\Collection|\App\Models\Like[] $likes
+     */
+    public function likes()
+    {
+        return $this->hasMany(UserLikes::class);
+    }
+
+    /**
+     * @method bool hasLiked(mixed $likeable) Check if the user has liked a given likeable entity
+     */
+    public function hasLiked($likeable)
+    {
+        return $this->likes()
+            ->where('likeable_id', $likeable->id)
+            ->where('likeable_type', get_class($likeable))
+            ->exists();
     }
 
 }

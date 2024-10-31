@@ -47,7 +47,7 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/swiper/swiper-bundle.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('vendor/toastr/toastr.min.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-
+    @livewireStyles
     @yield('css')
   </head>
   <body>
@@ -210,9 +210,12 @@
   <script src="{{ asset('assets/js/main.js') }}"></script>
   <script src="{{ asset('assets/js/social-share.js') }}"></script>
 
+  <script>
+    console.log(document.getElementById('loginModal')); // Should not be null
+  </script>
  
   @yield('js')
-  
+  @livewireScripts
   <script>
     $(function() {
       $('[data-toggle="tooltip"]').tooltip()

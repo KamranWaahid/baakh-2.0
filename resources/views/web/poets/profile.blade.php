@@ -57,7 +57,7 @@
                             
                             <x-baakh_share_buttons poetryUrl="{{ $profileUrl }}" shareText="" componentId="buttons_social_profile"  />
                             <button type="button" class="btn btn-share btn-default" data-id="buttons_social_profile"><i class="bi bi-share"></i></button>
-                            <button type="button" class="btn btn-like btn-default" data-uri="{{ url('/') }}" data-type="Poets" data-type_id="{{ $profile->id }}"><i class="bi-solid bi-heart{{ $liked }}"></i></button>
+                            <livewire:LikePoetButton :poet="$profile" />
                         </div>
                     </div>
                 </div>
@@ -230,6 +230,7 @@
 
 {{-- Java Script --}}
 @section('js')
+<livewire:LoginModal />
 <script>
     $(function () {
         var loadingData = false;

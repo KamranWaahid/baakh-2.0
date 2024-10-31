@@ -31,7 +31,7 @@
                     <button type="button" class="btn btn-share-on btn-default" data-platform="tw" data-share_url="{{ $couplet_url }}" data-share_text="{{ $text }}"><i class="bi bi-twitter"></i></button>
                     <button type="button" class="btn btn-share-on btn-default" data-platform="wa" data-share_url="{{ $couplet_url }}" data-share_text="{{ $text }}"><i class="bi bi-whatsapp"></i></button>
                 </div>
-                <button type="button" class="btn btn-like btn-default" data-uri="{{ url('/') }}" data-type="Couplets" data-type_id="{{ $item->id }}"><i class="bi-solid bi-heart{{ $liked }} me-2"></i>{{ trans('buttons.like_it') }}</button>
+                <livewire:LikeCoupletButton :couplet="$item" />
             </div>
         </div>
     </div>

@@ -1,7 +1,7 @@
 <div class="poetry-list poetry-item pt-3 loadMorePoetry">
     <div class="poetry-list-body">
         <div class="d-flex align-items-center">
-            <button type="button" class="btn btn-like btn-default" data-uri="{{ url('/') }}" data-type="Poetry" data-type_id="{{ $item->id }}"><i class="bi-solid bi-heart{{ $liked }}"></i></button>
+            <livewire:LikePoetryButton :poetry="$item" />
             <div class="flex-grow-1 ps-2">
 
                 <a href="{{ URL::localized(route('poetry.with-slug', ['category' => $item->category->slug, 'slug' => $item->poetry_slug ])) }}">
