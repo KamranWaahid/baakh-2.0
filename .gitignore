@@ -16,8 +16,4 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-<<<<<<< HEAD
 .env
-=======
-.env
->>>>>>> 71bec05 (updates)
