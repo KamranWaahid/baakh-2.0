@@ -446,14 +446,17 @@ class AdminPoetryController extends Controller
         // Implement search
         if ($request->has('search') && !empty($request->search['value'])) {
             $searchValue = '%' . $request->search['value'] . '%';
-
+        
             $query->where(function ($q) use ($searchValue) {
-                $q->orWhere('info.title', 'like', $searchValue)
-                  ->orWhereHas('poet_details', function ($q) use ($searchValue) {
-                      $q->where('poet_laqab', 'like', $searchValue);
-                  });
+                $q->orWhereHas('info', function ($q) use ($searchValue) {
+                    $q->where('title', 'like', $searchValue); // Adjusted to use 'title' directly
+                })
+                ->orWhereHas('poet_details', function ($q) use ($searchValue) {
+                    $q->where('poet_laqab', 'like', $searchValue);
+                });
             });
         }
+        
 
         
         // Implement filtering by language and poet_id
