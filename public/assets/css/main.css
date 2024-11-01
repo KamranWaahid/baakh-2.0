@@ -2769,7 +2769,9 @@ margin-bottom: -60px;
 .text-italic{
   font-style: italic;
 }
-
+.npoetry{
+  font-family: var(--font-heading-400-regular);
+}
 /* Couplets Page */
 #cplts_tgs {
   background-color: var(--color-sections);
@@ -2892,7 +2894,9 @@ margin-bottom: -60px;
   padding:5px;
 
 }
-
+.text-primary {
+  font-size: 25px;
+}
 /* Mobile Size favorite-couplets */
 @media (max-width:768px) {
   .favorite-couplets h3.title{
