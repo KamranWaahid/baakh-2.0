@@ -28,7 +28,7 @@
             <div class="info-box">
                 <!---= START basic info div =--->
                 <div class="basic-info">
-                    <h2 class="text-primary">
+                    <h2 class="text-primary baakh-font-heading-500-regular">
                         {{ $title; }}
                     </h2>
                 </div>

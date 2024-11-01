@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+
+
+/* latin */
+@font-face {
+    font-family: 'sohne';
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-300-italic.woff') format('woff');
+  }
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-300-normal.woff') format('woff');
+  }
+  
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-400-italic.woff') format('woff');
+  }
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-400-normal.woff') format('woff');
+  }
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-500-italic.woff') format('woff');
+  }
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-500-normal.woff') format('woff');
+  }
+  
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-700-italic.woff') format('woff');
+  }
+  
+  
+  /* latin */
+  @font-face {
+    font-family: 'sohne';
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+    src: url('../fonts/sohne-font/sohne-700-normal.woff') format('woff');
+  }
+
+
+
+/* Fonts */
+:root {
+    --font-heading-300-regular: 'sohne', normal;
+    --font-heading-300-italic: 'sohne', italic;
+    --font-heading-400-regular: 'sohne', normal;
+    --font-heading-400-italic: 'sohne', italic;
+    --font-heading-500-regular: 'sohne', normal;
+    --font-heading-500-italic: 'sohne',  italic;
+    --font-heading-700-regular: 'sohne',  normal;
+    --font-heading-700-italic: 'sohne', italic;
+  }
+/* 300 Weight */
+.baakh-font-heading-300-regular {
+    font-family: var(--font-heading-300-regular);
+    font-weight: 300;
+    font-style: normal;
+  }
+  
+  .baakh-font-heading-300-italic {
+    font-family: var(--font-heading-300-italic);
+    font-weight: 300;
+    font-style: italic;
+  }
+  
+  /* 400 Weight */
+  .baakh-font-heading-400-regular {
+    font-family: var(--font-heading-400-regular);
+    font-weight: 400;
+    font-style: normal;
+  }
+  
+  .baakh-font-heading-400-italic {
+    font-family: var(--font-heading-400-italic);
+    font-weight: 400;
+    font-style: italic;
+  }
+  
+  /* 500 Weight */
+  .baakh-font-heading-500-regular {
+    font-family: var(--font-heading-500-regular);
+    font-weight: 500;
+    font-style: normal;
+  }
+  
+  .baakh-font-heading-500-italic {
+    font-family: var(--font-heading-500-italic);
+    font-weight: 500;
+    font-style: italic;
+  }
+  
+  /* 700 Weight */
+  .baakh-font-heading-700-regular {
+    font-family: var(--font-heading-700-regular);
+    font-weight: 700;
+    font-style: normal;
+  }
+  
+  .baakh-font-heading-700-italic {
+    font-family: var(--font-heading-700-italic);
+    font-weight: 700;
+    font-style: italic;
+  }
+  

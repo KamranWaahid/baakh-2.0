@@ -1,48 +1,12 @@
+@import url('english_font.css');
 @import url('colors.css');
-@font-face {
-  font-family: 'MB Lateefi Sans';
-  src: url('../fonts/MBLateefiSans-Bold.woff2') format('woff2'),
-      url('../fonts/MBLateefiSans-Bold.woff') format('woff');
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'MB Lateefi Sans';
-  src: url('../fonts/MBLateefiSans-BoldItalic.woff2') format('woff2'),
-      url('../fonts/MBLateefiSans-BoldItalic.woff') format('woff');
-  font-weight: bold;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'MB Lateefi Sans';
-  src: url('../fonts/MBLateefiSans-Italic.woff2') format('woff2'),
-      url('../fonts/MBLateefiSans-Italic.woff') format('woff');
-  font-weight: normal;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'MB Lateefi Sans';
-  src: url('../fonts/MBLateefiSans.woff2') format('woff2'),
-      url('../fonts/MBLateefiSans.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 
 
 /* Fonts */
 :root {
-  --font-default: "MB Lateefi Sans";
-  /* --font-default: "MB Lateefi Sans" "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; */
-  --font-primary:  "MB Lateefi Sans", sans-serif,;
-  --font-secondary:  "MB Lateefi Sans", sans-serif;
+  --font-default: "Source Serif 4";
+  --font-primary:  "Source Serif 4",;
+  --font-secondary:  "Source Serif 4";
 
   --poetry-content-size-lg:1.2rem;
   --poetry-heading-size-lg: 1.5rem;
