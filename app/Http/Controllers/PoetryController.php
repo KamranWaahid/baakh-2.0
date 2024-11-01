@@ -102,11 +102,12 @@ class PoetryController extends UserController
         $poet_detail = $poet_info->details;
         $title = $poet_detail->poet_laqab. ' | '.$poetry->poetry_title;
         
-
-        // SEO 
-        // Generate SEO description without HTML tags and newline characters
-        $seo_desc = Str::limit(preg_replace('/\s+/', ' ', strip_tags($poetry->all_couplets[0]->couplet_text)), 160, '...');
-        $this->SEO_Poetry($title, $seo_desc, $poet_info->poet_pic);
+        if(count($poetry->all_couplets) > 0) {
+            // Generate SEO description without HTML tags and newline characters
+            $seo_desc = Str::limit(preg_replace('/\s+/', ' ', strip_tags($poetry->all_couplets[0]->couplet_text)), 160, '...');
+            $this->SEO_Poetry($title, $seo_desc, $poet_info->poet_pic);
+        }
+         
 
         if(Auth::user())
         {
