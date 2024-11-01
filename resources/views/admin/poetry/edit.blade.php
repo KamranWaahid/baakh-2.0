@@ -41,7 +41,7 @@ $config = [
                                 {{-- .poetry_title --}}
                                 <div class="form-group poetry_title">
                                     <label for="poetry_title">Poetry Title</label>
-                                    <input type="text" class="form-control  @error('poetry_title') is-invalid @enderror" value="{{ old('poetry_title') ?: $poetry->poetry_title }}"  name="poetry_title" id="poetry_title" placeholder="Enter Poetry Title">
+                                    <input type="text" class="form-control  @error('poetry_title') is-invalid @enderror" value="{{ old('poetry_title', $poetry->poetry_title) }}"  name="poetry_title" id="poetry_title" placeholder="Enter Poetry Title">
                                         
                                         @error('poetry_title')
                                             <span class="invalid-feedback" role="alert">
@@ -54,7 +54,7 @@ $config = [
                                 <div class="form-group poetry_slug">
                                     <label for="poetry_slug">Poetry Slug</label>
                                     <button type="button" onclick="convertText(this)" data-is-slug="1" data-sindhi-field="poetry_title" data-roman-field="poetry_slug" class="btn btn-xs btn-warning btn-roman-convert float-right"  id="btn-roman-convert"><i class="fa fa-plus mr-1"></i> Generate Roman</button>
-                                    <input type="text" class="form-control  @error('poetry_slug') is-invalid @enderror" value="{{ old('poetry_slug') ?: $poetry->poetry_slug  }}"  name="poetry_slug" id="poetry_slug" placeholder="Enter Poetry's Slug">
+                                    <input type="text" class="form-control  @error('poetry_slug') is-invalid @enderror" value="{{ old('poetry_slug', $poetry->poetry_slug)  }}"  name="poetry_slug" id="poetry_slug" placeholder="Enter Poetry's Slug">
                                     
                                     @error('poetry_slug')
                                         <span class="invalid-feedback" role="alert">
@@ -193,29 +193,30 @@ $config = [
                             @endphp
 
                             @if ($poetry->all_couplets && $poetry->all_couplets->count() > 0)
-                                @foreach ($poetry->all_couplets as $couplet)
-                                    <div class="row p-2 rounded mt-3" data-cusid="{{ $itemCounter }}" id="dyn_row{{ $itemCounter }}" style="background:#d1e9e4;">
-                                        <div class="form-group col-12">
-                                            <label for="couplet_slug_{{ $itemCounter }}">Couplet Slug</label>
-                                            <button type="button" onclick="convertText(this)" data-is-slug="1" data-sindhi-field="couplet_text_{{ $itemCounter }}" data-roman-field="couplet_slug_{{ $itemCounter }}" data-field-id="couplet_slug_{{ $itemCounter }}" class="btn btn-xs btn-warning float-right mr-2" id="generate_slug_button_{{ $itemCounter }}">
-                                                <i class="fas fa-sync-alt mr-1"></i> Generate Slug
-                                            </button>
-                                            <input type="text" class="form-control" value="{{ old('couplet_slug') ?: $couplet->couplet_slug }}" name="couplet_slug[]" id="couplet_slug_{{ $itemCounter }}" placeholder="Couplet Slug">
-                                        </div>
+    @foreach ($poetry->all_couplets as $couplet)
+        <div class="row p-2 rounded mt-3" data-cusid="{{ $itemCounter }}" id="dyn_row{{ $itemCounter }}" style="background:#d1e9e4;">
+            <div class="form-group col-12">
+                <label for="couplet_slug_{{ $itemCounter }}">Couplet Slug</label>
+                <button type="button" onclick="convertText(this)" data-is-slug="1" data-sindhi-field="couplet_text_{{ $itemCounter }}" data-roman-field="couplet_slug_{{ $itemCounter }}" data-field-id="couplet_slug_{{ $itemCounter }}" class="btn btn-xs btn-warning float-right mr-2" id="generate_slug_button_{{ $itemCounter }}">
+                    <i class="fas fa-sync-alt mr-1"></i> Generate Slug
+                </button>
+                <input type="text" class="form-control" value="{{ old('couplet_slug.' . $loop->index) ?? $couplet->couplet_slug }}" name="couplet_slug[]" id="couplet_slug_{{ $itemCounter }}" placeholder="Couplet Slug">
+            </div>
 
-                                        <div class="form-group col-12">
-                                            <label for="couplet_text_{{ $itemCounter }}">Details</label>
-                                            <textarea class="textarea form-control" name="couplet_text[]" rows="5" id="couplet_text_{{ $itemCounter }}" placeholder="Insert description...">{{ old('couplet_text') ?: $couplet->couplet_text }}</textarea>
-                                        </div>
-                                        <button type="button" onclick="deleteRow({{ $itemCounter }})" data-row-id="{{ $itemCounter }}" class="btn btn-danger btn-block">
-                                            <i class="fa fa-trash"></i> Delete This Information
-                                        </button>
-                                    </div>
-                                    @php
-                                        $itemCounter++;
-                                    @endphp
-                                @endforeach
-                            @endif
+            <div class="form-group col-12">
+                <label for="couplet_text_{{ $itemCounter }}">Details</label>
+                <textarea class="textarea form-control" name="couplet_text[]" rows="5" id="couplet_text_{{ $itemCounter }}" placeholder="Insert description...">{{ old('couplet_text.' . $loop->index) ?: $couplet->couplet_text }}</textarea>
+            </div>
+            <button type="button" onclick="deleteRow({{ $itemCounter }})" data-row-id="{{ $itemCounter }}" class="btn btn-danger btn-block">
+                <i class="fa fa-trash"></i> Delete This Information
+            </button>
+        </div>
+        @php
+            $itemCounter++;
+        @endphp
+    @endforeach
+@endif
+
                         </div>
                         
                         <!-- ========== End Other Section for Dynamic Values ========== -->
