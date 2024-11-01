@@ -55,6 +55,10 @@ return [
 
     'quiz_msg_correct_answer' => 'Congrats! You are correct!',
     'quiz_msg_wrong_answer' => 'Oops! maybe you don\'t know, but answer is :poetName',
+    'welcome_to_poetry_page' => 'Welcome to our poetry page, where within the available couplets, you will explore the beauty of brevity and the power of connection. Each couplet, a collection of words, tells a story, expresses an emotion, or captures a moment in brief beauty. Join us on this journey through the world of words, where two lines can convey a universe of meaning. Whether you seek inspiration, reflection, or simply the joy of poetic connection, our couplets await to enchant your senses and uplift your spirit.',
+    'section_header' => 'A Unique and Beautiful Platform for Poetry in Sindhi Language',
+    'subtitle' => 'Baakh - How long will this darkness remain? A dawn must eventually break',
+    
 ];
 
 ?>

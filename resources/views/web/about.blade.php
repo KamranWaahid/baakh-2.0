@@ -8,11 +8,10 @@
 <section id="about" class="about">
     <div class="container aos-init aos-animate" data-aos="fade-up">
 
-      <div class="section-header">
-        <h2 style="font-size: 2rem;letter-spacing:0px;">سنڌي ٻوليءَ ۾ شاعريءَ جو منفرد ۽ سھڻو پليٽفارم</h2>
-        <p style="font-size: 1.5em;color:var(--primary)" class="mt-2">باک - ھِي اُونده ڪيسين رھڻي آ؟ ڪا باک نيٺ تہ ڦُٽڻِي آ</p>
-      </div>
-
+    <div class="section-header">
+    <h2 style="font-size: 2rem; letter-spacing: 0px;">{{ trans('labels.section_header') }}</h2>
+    <p style="font-size: 1.5em; color: var(--primary)" class="mt-2">{{ trans('labels.subtitle') }}</p>
+</div>
       <div class="row gy-4">
         <div class="col-lg-4 position-relative about-img aos-init aos-animate" style="background-image: url({{ asset('assets/img/Baakh-beta.svg'); }});    background-repeat: no-repeat;background-position: center;" data-aos="fade-up" data-aos-delay="150">
            

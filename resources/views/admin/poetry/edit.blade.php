@@ -18,6 +18,7 @@ $config = [
     "placeholder" => "Select multiple options...",
     "allowClear" => true,
 ];
+dd($poetry);
 @endphp
  
 

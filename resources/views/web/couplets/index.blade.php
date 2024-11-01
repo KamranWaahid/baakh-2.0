@@ -11,10 +11,11 @@
 <section class="section-bg" id="couplet_page">
     <div class="container">
         <h3 class="text-baakh">{{ trans('labels.couplets') }}</h3>
-        <p class="text-justify">
-            ڀليڪار اسان جي شعرن واري صفحي تي، موجود شعرن جي جي اندر، توهان کي اختصار جي خوبصورتي ۽ جوڙي جي طاقت کي ڳوليندا. هر ڪوپٽ، لفظن جو هڪ مجموعو، هڪ ڪهاڻي ٺاهي ٿو، هڪ جذبات جو اظهار ڪري ٿو، يا مختصر خوبصورتي ۾ هڪ لمحو قبضو ڪري ٿو. اسان سان شامل ٿيو هن سفر تي ٻولن جي دنيا ذريعي، جتي ٻه سٽون معنيٰ جي ڪائنات کي پهچائي سگهن ٿيون. چاهي توهان الهام، عڪاسي، يا صرف شاعراڻي رابطي جي خوشي ڳوليو، اسان جا شعر توهان جي حواس کي جادو ڪرڻ ۽ توهان جي روح کي ڦهلائڻ لاء انتظار ڪندا آهن.
+        <p class="text-justify" id="text-baakh-welcome">
+            {{ trans('labels.welcome_to_poetry_page') }}
         </p>
     </div>
+</section>
 
     <div class="container mt-5">
         <div class="d-flex justify-content-between">
