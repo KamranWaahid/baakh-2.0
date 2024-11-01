@@ -146,20 +146,47 @@
 
                     <!---start[Select Poet]--->
                     <div class="mt-2">
-                        <x-adminlte-select2 id="poet_id" name="poet_id" class="select2-poets" data-ajax-path="{{ route('admin.poets.by-name') }}" data-option-value="id" data-option-text="poet_laqab" label="Poets" igroup-size="sm">
-                            
-                        </x-adminlte-select2>
+                  
+                        <!--= start[Poets] =-->
+                        <div class="form-group">
+                            <label for="poet_id">Poets</label>
+                                <select name="poet_id" id="poet_id" class="form-control select2 @error('poet_id') is-invalid @enderror">
+                                    <option value="0">Select Poets</option>
+                                    @foreach ($poets as $item)
+                                        <option value="{{ $item->id }}">{{ $item->shortDetail->poet_laqab }}</option>
+                                    @endforeach
+                                </select>
+                        
+                            @error('poet_id')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+                        <!--= end[Poets] =-->
                     </div>
                     <!---end[Select Poet]--->
 
                     <!---start[Select Category]--->
                     <div class="mt-2">
-                        <x-adminlte-select2 id="category_id" name="category_id" label="Categories" igroup-size="sm">
-                            <option value="">Select Category</option>                                    
-                            @foreach ($categories as $item)
-                                <option value="{{ $item->id }}" data-cstyle="{{ $item->content_style }}">{{ $item->detail->cat_name }}</option>
-                            @endforeach
-                        </x-adminlte-select2>
+                     
+                        <!--= start[Category] =-->
+                        <div class="form-group">
+                            <label for="category_id">Category</label>
+                                <select name="category_id" id="category_id" class="form-control select2 @error('category_id') is-invalid @enderror" required>
+                                    <option value="">Select Category</option>
+                                    @foreach ($categories as $item)
+                                        <option value="{{ $item->id }}" data-cstyle="{{ $item->content_style }}">{{ $item->shortDetail->cat_name }}</option>
+                                    @endforeach
+                                </select>
+                        
+                            @error('category_id')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+                        <!--= end[Category] =-->
                     </div>
                     <!---end[Select Category]--->
 
@@ -187,7 +214,7 @@
                             </x-slot>
                             
                             @foreach ($tags as $item)
-                                <option value="{{ $item->slug }}">{{ $item->tag }}</option>
+                                <option value="{{ $item['slug'] }}">{{ $item['tag'] }}</option>
                             @endforeach
                             
                         </x-adminlte-select2>
@@ -229,12 +256,14 @@
         $(function(){
             $("[name='is_visible']").bootstrapSwitch();
             $("[name='is_featured']").bootstrapSwitch();
+            $('#category_id').select2();
+            $('#poet_id').select2();
         })
 
         /**
          * Dynamic Select2 for Poets and Tags 
         **/
-        _select2Dynamic('select2-poets') // poets
+        // _select2Dynamic('select2-poets') // poets
         
         // change category and set poetry style
         $(document).on('change', '#category_id', function () {

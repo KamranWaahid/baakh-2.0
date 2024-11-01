@@ -63,13 +63,20 @@ class AdminPoetryController extends Controller
 
     public function create()
     {
-        $poets = Poets::with('details')->get();
-       //$tags = Tags::where('lang','sd')->get();
-       $tags = Cache::remember('tags_sd', 600, function () {
-        return Tags::where('lang', 'sd')->get();
-    });    
-        $categories = Categories::all();
-        $languages = Languages::all();
+        $poets = Cache::rememberForever('admin_all_poets_sd', function () {
+            return Poets::select('id', 'poet_slug')->with('shortDetail')->get();
+        });
+        
+        $tags = Cache::rememberForever('admin_all_tags_sd', function () {
+            return Tags::select('id', 'tag', 'slug')->where('lang', 'sd')->get()->toArray();
+        });
+ 
+        // Cache::forget('admin_all_categories_sd');
+        $categories = Cache::rememberForever('admin_all_categories_sd', function () {
+            return Categories::select(['id', 'slug', 'content_style'])->with('shortDetail:cat_id,cat_name')->get();
+        });
+
+        $languages = Languages::get();
         $content_styles = ['justified','center','start','end'];
         return view('admin.poetry.create',  compact('poets', 'categories', 'languages', 'tags', 'content_styles'));
     }
@@ -135,7 +142,7 @@ class AdminPoetryController extends Controller
             'poet_id' => $request->input('poet_id'),
             'category_id' => $request->input('category_id'),
             'poetry_slug' => $request->input('poetry_slug'),
-            'poetry_tags' => $request->input('poetry_tags'),
+            'poetry_tags' => json_encode($request->input('poetry_tags')) ?? null ,
             'visibility' => $request->input('is_visible'),
             'is_featured' => $request->input('is_featured'),
             'content_style' => $request->input('content_style')
@@ -187,13 +194,24 @@ class AdminPoetryController extends Controller
      */
     public function edit($id)
     {
-        $poetry = Poetry::with('poet', 'category', 'all_couplets')->find($id);
-        $poets = Poets::with('details')->get();
+        $poetry = Poetry::findOrFail($id);
+        $poets = Cache::rememberForever('admin_all_poets_sd', function () {
+            return Poets::select('id', 'poet_slug')->with('shortDetail')->get();
+        });
+        
+        $tags = Cache::rememberForever('admin_all_tags_sd', function () {
+            return Tags::select('id', 'tag', 'slug')->where('lang', 'sd')->get()->toArray();
+        });
+ 
+        // Cache::forget('admin_all_categories_sd');
+        $categories = Cache::rememberForever('admin_all_categories_sd', function () {
+            return Categories::select(['id', 'slug', 'content_style'])->with('shortDetail:cat_id,cat_name')->get();
+        });
 
-        $tags = Tags::all();
-        $categories = Categories::with('detail')->get();
         $languages = Languages::all();
         $content_styles = ['justified','center','start','end'];
+
+        $poetry = Poetry::findOrFail($id);
         return view('admin.poetry.edit', compact('poetry', 'poets',  'categories', 'languages', 'tags', 'content_styles'));
     }
 
@@ -209,42 +227,24 @@ class AdminPoetryController extends Controller
         // Validation rules similar to the store method
         $request->validate([
             'poetry_slug' => ['required', new SlugRule($request->lang, Poetry::class, 'poetry_slug', $id)],
-            'poetry_title' => 'required',
             'poet_id' => 'required',
             'content_style' => 'required',
-            'lang' => 'required',
-            'category_id' => 'required'
+            'category_id' => 'required',
         ]);
+
+      
 
         // Update poetry information
         $poetry->update([
-            'poetry_slug' => $request->poetry_slug,
-            'poetry_title' => $request->poetry_title,
             'poet_id' => $request->poet_id,
-            'lang' => $request->lang,
             'category_id' => $request->category_id,
-            'content_style' => $request->content_style,
+            'poetry_slug' => $request->poetry_slug,
             'poetry_tags' => json_encode($request->poetry_tags) ?? null,
-            'poetry_info' => $request->poetry_info ?? null,
+            'visibility' => $request->is_visible,
+            'is_featured' => $request->is_featured,
+            'content_style' => $request->content_style,
         ]);
-
-        
-        
-        $count = count($request->input('couplet_slug')); // count new Couplets
-        if($count > 0){
-            $poetry->couplets()->delete(); // Delete existing associated Couplets
-            for ($i = 0; $i < $count; $i++) {
-                $details = [
-                    'couplet_slug' => $request->input('couplet_slug')[$i] ?? null,
-                    'couplet_text' => $request->input('couplet_text')[$i] ?? null,
-                    'poet_id' => $request->poet_id,
-                    'lang' => $request->lang
-                ];
-                $poetry->couplets()->create($details);
-            }
-        }
-        
-
+  
         return redirect()->route('admin.poetry.index')
         ->with('success', 'Poetry information updated successfully.');
     }
@@ -390,15 +390,21 @@ class AdminPoetryController extends Controller
      */
     public function check_slug(Request $request)
     {
-        $poetry = Poetry::where(['poetry_slug' => $request->slug])->withTrashed()->get();
-        if(count($poetry) == 0)
-        {
+        $poetry = Poetry::where('poetry_slug', $request->slug);
+
+        if ($request->previous_id) {
+            $poetry->where('id', '!=', $request->previous_id);
+        }
+
+        $exists = $poetry->withTrashed()->exists();
+        // Check if the slug exists
+        if (!$exists) {
             $message = [
                 'message' => 'You can add poetry',
                 'type' => 'success',
                 'icon' => ''
             ];
-        }else{
+        } else {
             $message = [
                 'message' => 'Sorry! slug already exists',
                 'type' => 'error',
