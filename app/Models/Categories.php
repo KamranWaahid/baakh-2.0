@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models;
+
+use App\Observers\CategoryObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -14,6 +16,8 @@ class Categories extends Model
         'is_featured',
         'content_style',
     ];
+
+    // protected $appends = ['sindhi_name'];
 
     public function user()
     {
@@ -35,4 +39,12 @@ class Categories extends Model
         return $this->hasOne(CategoryDetails::class, 'cat_id');
     }
 
+    public function shortDetail() {
+        return $this->hasOne(CategoryDetails::class, 'cat_id', 'id')->where('lang', 'sd');
+    }
+
+    protected static function booted()
+    {
+        static::observe(CategoryObserver::class);
+    }
 }
