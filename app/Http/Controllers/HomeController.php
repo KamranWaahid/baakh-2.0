@@ -140,7 +140,6 @@ class HomeController extends UserController
 
     private function showRandomPoetry($limit, $locale)
     {
-        
         // get all peotry couplets
         $random_poetry = Couplets::where('lang', $locale)
                         ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
@@ -150,11 +149,7 @@ class HomeController extends UserController
                         ->inRandomOrder()
                         ->limit($limit)
                         ->get();
-        if ($random_poetry) {
-            $random_poetry->load(['poet.details' => function ($query) use ($locale) {
-                $query->where('poets_detail.lang', $locale);
-            }]);
-        }
+       
         $html = '';
         foreach ($random_poetry as $item) {
             $liked = $this->isLiked('Couplets', $item->id);
@@ -185,7 +180,7 @@ class HomeController extends UserController
         if($post_data['poet'] == $correct_poet->poet_id){
             // answer yes
             $message = [
-                'message' => 'مبارڪون! توھان جو جواب بلڪل صحيح آھي',
+                'message' => trans('labels.quiz_msg_correct_answer'),
                 'correct_poet' => $correct_poet->poet_id,
                 'type' => 'success'
             ];
@@ -193,7 +188,7 @@ class HomeController extends UserController
             // answer no
             $poet_name = $correct_poet->poet->details->poet_laqab;
             $message = [
-                'message' =>  'اوھ! توھان کي شايد خبر ناھي پر انھي شعر جو شاعر '.$poet_name.'  آھي',
+                'message' => trans_choice('labels.quiz_msg_wrong_answer', 1, ['poetName' => $poet_name], app()->getLocale()),
                 'correct_poet' => $correct_poet->poet_id,
                 'type' => 'error'
             ];

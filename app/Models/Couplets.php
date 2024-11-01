@@ -47,6 +47,11 @@ class Couplets extends Model
         return $this->hasMany(Media::class, 'poetry_id');
     }
 
+    public function getPoetLaqabAttribute() {
+        return PoetsDetail::where('poet_id', $this->poet_id)
+                ->where('lang', app()->getLocale())
+                ->value('poet_laqab');
+    }
    
     /**
      * New For Poet Details Only

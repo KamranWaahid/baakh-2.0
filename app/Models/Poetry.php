@@ -24,7 +24,11 @@ class Poetry extends Model
         'content_style',
     ];
 
-    
+    public function getPoetLaqabAttribute() {
+        return PoetsDetail::where('poet_id', $this->poet_id)
+        ->where('lang', app()->getLocale())
+        ->value('poet_laqab');
+    }
 
     public function user()
     {

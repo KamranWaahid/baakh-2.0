@@ -34,6 +34,5 @@ class Categories extends Model
     {
         return $this->hasOne(CategoryDetails::class, 'cat_id');
     }
- 
 
 }

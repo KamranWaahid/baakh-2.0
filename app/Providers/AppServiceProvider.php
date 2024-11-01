@@ -26,21 +26,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
-        
-        // Create a new localized routed
-        Blade::directive('localizedRoute', function ($expression) {
-            list($routeName, $parameters) = explode(',', $expression, 2);
-        
-            $currentLanguage = app()->getLocale();
-        
-            if ($currentLanguage !== 'sd') {
-                $parameters .= ", 'lang' => '$currentLanguage'";
-            }
-        
-            return "<?php echo route($routeName, [$parameters]); ?>";
-        });
-        
-    
+         
         URL::macro('localized', function ($url) {
             $l = app()->getLocale();
             if($l == 'sd')

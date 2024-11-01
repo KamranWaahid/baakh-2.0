@@ -26,7 +26,7 @@ return [
     'opening_hours' => 'Opening Hours',
     'tag' => '{1} Tag|[2,*]Tags', //trans_choice
     'tags' => 'Tags',
-    'best_poetry_on_title_category' => ':title :category | latest :category on :title',
+    'best_poetry_on_title_category' => 'Best :category on :title',
     'about_this_category' => 'About this :category',
     'all_poets' => 'All Poets',
     'total_poets_found' => '{0} No Poet |{1} Only :count Poet available|[2,*] Total :count Poets available',
@@ -52,6 +52,9 @@ return [
     'see-more' => 'See more',
     'poetry' => 'Poetry',
     'footer-notice' => 'You are using the beta version of Baakh, so some features are disabled, they will be enabled soon.',
+
+    'quiz_msg_correct_answer' => 'Congrats! You are correct!',
+    'quiz_msg_wrong_answer' => 'Oops! maybe you don\'t know, but answer is :poetName',
 ];
 
 ?>

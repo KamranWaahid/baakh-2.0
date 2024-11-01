@@ -70,13 +70,11 @@ class TagsController extends UserController
         $locale = app()->getLocale();
 
         // get tags information
-        $profile = Tags::where('slug', $tag)->where('lang', $locale)->firstOrFail();
-        // language 
-        $locale = app()->getLocale();
+        $profile = Tags::where('slug', $tag)->where('lang', $locale)->first();
          
         
         if(!$profile){
-            return redirect(route('poets.all'));
+            return redirect(URL::localized(route('web.tags')));
         }
         
         // fetch category
@@ -113,11 +111,11 @@ class TagsController extends UserController
             $title = trans_choice('labels.best_poetry_on_title_category', 1, ['title' => $profile->tag, 'category' => $category->detail->cat_name]);
         }
         else{
-            $category_name = ' | شعر';
+            $category_name = ' | ' . trans('labels.poetry');
             $active_category = 'couplets';
-            $title = trans_choice('labels.best_poetry_on_title_category', 1, ['title' => $profile->tag, 'category' => 'شعر']);
+            $title = trans_choice('labels.best_poetry_on_title_category', 1, ['title' => $profile->tag, 'category' => trans('labels.poetry')]);
         }
-        
+
         $famous_poets = Poets::with(['details' => function ($query) use ($locale) {
             $query->where('lang', $locale);
         }])
@@ -133,14 +131,9 @@ class TagsController extends UserController
         $poet_url = url('/tags').'/'.$tag;
         
         
-        // SEO
-        //$title = trans_choice('labels.tag', 1, ['count' => 1]).' | '. $profile->tag.$category_name;
         $this->SEO_General($title, 'This is description');
 
-        
-        $liked = $this->isLiked('Tags', $profile->slug);
-
-        return view('web.poetry.with-tags', compact('profile', 'title', 'famous_poets', 'total_couplets',  'active_category', 'poet_url', 'categoriesWithCounts', 'liked'));
+        return view('web.poetry.with-tags', compact('profile', 'title', 'famous_poets', 'total_couplets',  'active_category', 'poet_url', 'categoriesWithCounts'));
  
         
     }
@@ -158,8 +151,6 @@ class TagsController extends UserController
     */
     public function load_more_poetry(Request $request)
     {
-        $user = Auth::user();
-        // validate request fetch all parameters
         $request->validate([
             'tag' => 'required',
             'category' => 'required',
@@ -197,15 +188,14 @@ class TagsController extends UserController
             if($request->category === 'couplets'){
                 // use foreach loop to load couplets HTML elements
                 foreach ($poetry as $index =>  $item) {
-                    $liked = $this->isLiked('Couplets', $item->couplet_slug);
-                    $poetName = $item->poet->details->poet_laqab;
+                    $poetName = $item->poet_laqab;
                     if($item->couplet_tags != NULL)
                     {
                         $decodeTags = json_decode($item->couplet_tags);
                         $usedTags = Tags::where('lang', $item->lang)->whereIn('slug', $decodeTags)->pluck('tag', 'slug')->toArray();
-                        $html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item, 'usedTags' => $usedTags, 'liked'=> $liked, 'poetName'=>$poetName])->render();
+                        $html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item, 'usedTags' => $usedTags,  'poetName'=>$poetName])->render();
                     }else{
-                        $html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item, 'liked' => $liked, 'poetName'=>$poetName])->render();
+                        $html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item, 'poetName'=>$poetName])->render();
                     }
                     
                     ///$html .= view('web.poets.couplets-list', ['index' => $index, 'item'=> $item, 'liked' => $liked])->render();
@@ -214,16 +204,15 @@ class TagsController extends UserController
                 // requested category is not couplet
                 // use foreach loop to load couplets HTML elements of non-couplets
                 foreach ($poetry as $index =>  $item) {
-                    $liked = $this->isLiked('Poetry', $item->poetry_slug);
                     //$html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item, 'liked' => $liked])->render();
-                    $poetName = $item->poet->details->poet_laqab;
+                    $poetName = $item->poet_laqab;
                     if($item->poetry_tags != NULL)
                     {
                         $decodeTags = json_decode($item->poetry_tags);
                         $usedTags = Tags::where('lang', $item->lang)->whereIn('slug', $decodeTags)->pluck('tag', 'slug')->toArray();
-                        $html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item, 'usedTags' => $usedTags, 'liked' => $liked, 'poetName' => $poetName])->render();
+                        $html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item, 'usedTags' => $usedTags, 'poetName' => $poetName])->render();
                     }else{
-                        $html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item, 'liked' => $liked, 'poetName' => $poetName])->render();
+                        $html .= view('web.poets.poetry-list', ['index' => $index, 'item'=> $item, 'poetName' => $poetName])->render();
                     }
                 }
             }

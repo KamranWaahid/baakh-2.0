@@ -14,7 +14,7 @@
           <div class="col-lg-6">
           <div class="testimonial-content">
               <p>{!! nl2br($item->couplet_text) !!}</p>
-              <h3>{{ $item->poet->details->poet_laqab }}</h3>
+              <h3>{{ $item->poet_laqab }}</h3>
           </div>
           <div class="buttons">
               <hr>

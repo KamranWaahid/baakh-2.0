@@ -11,7 +11,6 @@ use App\Models\Tags;
 use App\Traits\BaakhSeoTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 
 class PoetsController extends UserController
@@ -126,7 +125,7 @@ class PoetsController extends UserController
                     ->first();
         
         if(!$profile){
-            return redirect(route('poets.all'));
+            return redirect(URL::localized(route('poets.all')));
         }
         
         // fetch category
@@ -139,17 +138,16 @@ class PoetsController extends UserController
         $poetId = $profile->id;
 
         // count poetry
-        $categoriesWithCounts = Categories::withCount(['poetry' => function ($query) use ($poetId, $locale) {
+        $categoriesWithCounts = Categories::select(['id', 'slug'])->withCount(['poetry' => function ($query) use ($poetId, $locale) {
             $query->where(['poet_id' => $poetId]);
         }])
         ->whereHas('poetry', function ($query) use ($poetId, $locale) {
             $query->where(['poet_id' => $poetId]);
         })
         ->with(['detail' => function($q) use ($locale) {
-            $q->where('lang', $locale);
+            $q->where('lang', $locale)->select('id', 'cat_id', 'cat_name');
         }])
-        ->get(['slug', 'cat_name', 'poetry_count']);
-        //dd($categoriesWithCounts);
+        ->get(['slug']);
         
         $total_couplets = Couplets::where(['poet_id' => $poetId, 'lang' => $locale, 'poetry_id' => 0])->count();
         
@@ -324,7 +322,7 @@ class PoetsController extends UserController
 
             // View All Button Before
             $html .='<div class="text-center mt-4 mb-4">';
-            $html .='<a href="'.route('poets.slug', ['name' => $name, 'category' => 'couplets']).'" class="btn btn-block btn-secondary btn-gol">'.trans('buttons.see_all', ['category' => trans('menus.couplets')]).'</a>';
+            $html .='<a href="'.URL::localized(route('poets.slug', ['name' => $name, 'category' => 'couplets'])).'" class="btn btn-block btn-secondary btn-gol">'.trans('buttons.see_all', ['category' => trans('menus.couplets')]).'</a>';
             $html .='</div>';
         }
         
@@ -357,7 +355,7 @@ class PoetsController extends UserController
             
             // View All Button Before
             $html .='<div class="text-center mt-4 mb-4">';
-            $html .='<a href="'.route('poets.slug', ['name' => $name, 'category' => $cat->slug]).'" class="btn btn-block btn-secondary btn-gol">'.trans('buttons.see_all', ['category' => ucfirst($cat->detail->cat_name)]).'</a>';
+            $html .='<a href="'.URL::localized(route('poets.slug', ['name' => $name, 'category' => $cat->slug])).'" class="btn btn-block btn-secondary btn-gol">'.trans('buttons.see_all', ['category' => ucfirst($cat->detail->cat_name)]).'</a>';
             $html .='</div>';
         }
         return $html;
