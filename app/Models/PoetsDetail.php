@@ -38,4 +38,54 @@ class PoetsDetail extends Model
     {
         return $this->belongsTo(Poets::class, 'poet_id');
     }
+
+    public function birthCityCurrentLang()
+    {
+        return $this->belongsTo(Cities::class, 'birth_place')
+                    ->where('lang', app()->getLocale());
+    }
+
+    public function deathCityCurrentLang()
+    {
+        return $this->belongsTo(Cities::class, 'death_place')
+                    ->where('lang', app()->getLocale());
+    }
+
+    /**
+     * Birth Places 
+     * CityName, ProvinceName, CountryName
+     * relation from birth_place
+     */
+    public function birthPlaceComplete()
+    {
+        // Load birth city with related province and country, applying language filter
+        $city = $this->birthCityCurrentLang()->with(['province' => function($query) {
+            $query->where('lang', app()->getLocale())
+                  ->with(['country' => function($query) {
+                      $query->where('lang', app()->getLocale());
+                  }]);
+        }])->first();
+
+        return [
+            'cityName' => $city->city_name ?? null,
+            'provinceName' => $city->province->province_name ?? null,
+            'countryName' => $city->province->country->countryName ?? null,
+        ];
+    }
+
+    public function deathPlaceComplete()
+    {
+        $city = $this->deathCityCurrentLang()->with(['province' => function($query) {
+            $query->where('lang', app()->getLocale())
+                  ->with(['country' => function($query) {
+                      $query->where('lang', app()->getLocale());
+                  }]);
+        }])->first();
+
+        return [
+            'cityName' => $city->city_name ?? null,
+            'provinceName' => $city->province->province_name ?? null,
+            'countryName' => $city->province->country->countryName ?? null,
+        ];
+    }
 }

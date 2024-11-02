@@ -12,18 +12,6 @@
 
 @section('content')
 <!-- ========== Start except main body ========== -->
-<<<<<<< HEAD
-{{-- With multiple slots, and plugin config parameter --}}
-@php
-$config = [
-    "placeholder" => "Select multiple options...",
-    "allowClear" => true,
-];
-dd($poetry);
-@endphp
- 
-
-=======
 <div class="col-4 d-none" id="all_tags_div">
      
 </div>
@@ -34,7 +22,6 @@ dd($poetry);
       "allowClear" => true,
   ];
   @endphp
->>>>>>> origin/main
 <!-- ========== End except main body ========== -->
 <form action="{{ route('admin.poetry.update', $poetry) }}" id="poetry_update_form" method="post" enctype="multipart/form-data">
     @csrf

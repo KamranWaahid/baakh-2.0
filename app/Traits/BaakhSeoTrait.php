@@ -1,12 +1,18 @@
 <?php 
 namespace App\Traits;
 
+use App\Models\Couplets;
+use App\Models\Poetry;
 use App\Models\Poets;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Artesaos\SEOTools\Facades\JsonLd;
 use Artesaos\SEOTools\Facades\SEOTools;
+use Illuminate\Database\Eloquent\Casts\Json;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use League\OAuth1\Client\Server\Twitter;
 
@@ -130,150 +136,300 @@ trait BaakhSeoTrait {
     /**
      * SEO Author
      */
-    public function SEO_Author(Poets $author) {
-        $author_image = $author->thumbnail; // Use the thumbnail method for the image URL
-        $name_sd = $author->name_sd; // Author's name in Sindhi
-        $name_en = $author->name_en; // Author's name in English
-        $bio = strip_tags($author->auth_info); // Get the author's information
-        $short_bio = Str::limit($bio, 161); // Shorten bio for SEO description
-        $url = route('web.author.single', $author->id); // Assuming this route exists and uses the slug
-        $birth_date = $author->birth_date;
-        $death_date = $author->death_date;
+    public function SEO_Poet(Poets $poetModel, $category) {
+        $poetIdWithLang = $poetModel->id . '_lng_'.app()->getLocale();
+        $cacheKeyLocations = 'cache_poet_'.$poetIdWithLang.'_locations';
 
+        $poet = $poetModel;
 
-         // Collecting books authored for SEO
-        $books = $author->books; // Assuming the relationship is defined
-        $bookTitles = $books->pluck('name_sd')->toArray(); // Collecting titles
-        $bookTitlesString = implode(', ', $bookTitles);
+        $poetDetails = $poet->details;
+        $locations = Cache::rememberForever($cacheKeyLocations, function () use ($poetDetails) {
+            return [
+                'birth' => $poetDetails->birthPlaceComplete(),
+                'death' => $poetDetails->deathPlaceComplete()
+            ];
+        });
+
+        $poetImage = $poet->poet_pic; 
+        $poetLaqab = $poetDetails->poet_laqab; 
+        $poet_name = $poetDetails->poet_name;
+        $tagline = $poetDetails->tagline;
+        $currentLang = app()->getLocale();
+
+        if($category !='') {
+            $title = trans('labels.seo_title_poet_category', [ 'categoryName' => $category , 'poetLaqab' => $poetLaqab]);
+        }else{
+            $title = trans('labels.seo_title_poet', ['poetLaqab' => $poetLaqab]);
+        }
+        
+
+        // $name_en = $author->name_en; // Author's name in English
+        $bio = strip_tags($poet->details->poet_bio);
+        $shortBio = Str::limit($bio, 161); // Shorten bio for SEO description
+        $url = URL::localized(route('poets.slug', ['category' => $category, 'name' => $poet->poet_slug])); // Assuming this route exists and uses the slug
+        
+        $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
+       
+        if(request()->query('lang')) {
+            $alternateUrl = route('poets.slug', [
+                'category' => $category, 
+                'name' => $poet->poet_slug,
+            ]);
+        }else{
+            $alternateUrl = route('poets.slug', [
+                'category' => $category, 
+                'name' => $poet->poet_slug,
+                'lang' => $alternateLang,
+            ]);
+        }
+        
+
+        $birthDate = $poet->date_of_birth;
+        $deathDate = $poet->date_of_death;
 
         // Keywords
-        $keywords = $this->appendKeywords([$name_sd, $name_en . '\'s Books']);
+        $keywords = $this->appendKeywords([$poet_name, $poetLaqab . '\'s Poetry']);
 
         // SEO metadata
-        SEOTools::addImages(asset($author_image));
-        SEOMeta::setTitle($name_sd); // Set title in Sindhi
-        SEOMeta::setDescription($short_bio);
+        SEOTools::addImages(asset($poetImage));
+        SEOMeta::setTitle($title); // Set title in Sindhi
+        SEOMeta::setDescription($shortBio);
         SEOMeta::setCanonical($url);
+        SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
         SEOMeta::addKeyword($keywords);
 
-        // OpenGraph SEO
-        SEOMeta::setTitle($name_sd); // Set title in Sindhi
-        OpenGraph::setDescription($short_bio);
+        // OpenGraph Metadata
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($shortBio);
         OpenGraph::setType('profile');
         OpenGraph::setUrl($url);
-        OpenGraph::addImage(asset($author_image), ['height' => 600, 'width' => 400]);
+        OpenGraph::addImage(asset($poetImage), ['height' => 600, 'width' => 400]);
         OpenGraph::setArticle([
-            'author' => $name_sd,
+            'author' => $poetLaqab,
             'section' => 'Authors',
             'tag' => $keywords,
-            'books' => $bookTitlesString,
         ]);
+
+        TwitterCard::setType('summary_large_image');
+        TwitterCard::addValue('twitter:domain', 'baakh.com');
+        TwitterCard::setTitle($poetLaqab);
+        TwitterCard::setImage($poetImage);
+        TwitterCard::setDescription($shortBio);
+        TwitterCard::setUrl($url);
+        TwitterCard::setSite('@BaakhConnect');
 
         // JSON-LD structured data for authors
-        JsonLd::setTitle($name_sd);
-        JsonLd::setDescription($short_bio);
+        JsonLd::setTitle($poetLaqab);
+        JsonLd::setDescription($shortBio);
         JsonLd::setType('Person');
-        JsonLd::addImage(asset($author_image));
+        JsonLd::addImage(asset($poetImage));
         JsonLd::setUrl($url);
-
-        JsonLd::addValue('name', $name_sd);
-        JsonLd::addValue('alternateName', $name_en); // Adding English name
-        JsonLd::addValue('birthDate', $birth_date);
-        JsonLd::addValue('deathDate', $death_date);
-        JsonLd::addValue('sameAs', [
-            // Assuming you might have social links
-            $author->facebook_profile,
-            $author->twitter_profile,
-            $author->linkedin_profile,
-        ]);
+        JsonLd::addValue('inLanguage', app()->getLocale());
+        JsonLd::addValue('name', $poetLaqab);
+        JsonLd::addValue('alternateName', $poet_name); // Adding English name
+        JsonLd::addValue('birthDate', $birthDate);
+        JsonLd::addValue('knowsAbout', 'poetry,poems');
+        if($deathDate) {
+            JsonLd::addValue('deathDate', $deathDate);
+        }
         
         $jsonLdData = [
             '@context' => 'https://schema.org',
             '@type' => 'Person',
-            'name' => $author->name_sd, // Your person's name
-            'url' => route('web.author.single', $author->id), // Optional: person's URL
-            'sameAs' => $author->wikipedia, // Optional: links to social profiles
-             
-            'mainEntityOfPage' => array_map(function ($book) use ($author) {
-                return [
-                    '@type' => 'Book',
-                    'name' => $book['name_sd'],
-                    'url' => route('web.book.view', $book['id']),
-                    'author' => [
-                        '@type' => 'Person',
-                        'name' => $author->name_sd, // Author info here
-                    ],
-                ];
-            }, $books->toArray()),
+            'givenName' => $poetLaqab,
+            'familyName' => $poet_name,
+            'additionalName' => $tagline,
+            'birthDate' => $poetLaqab,
         ];
-        
-        // Add this JSON-LD structure to your response
-        JsonLd::addValue('person', $jsonLdData);
 
-        return SEOTools::generate();
-    }
-
-
-    public function SEO_General__s($title, $content, $image = null, $keywords = null)
-    {
-    $desc = $this->shortDesc($content);
-    $image = (!is_null($image) && file_exists($image)) ? asset($image) : asset('assets/img/Baakh-beta.svg');
-    SEOMeta::setTitle($title);
-    SEOMeta::setDescription($desc);
-    if(!is_null($keywords)){
-        SEOMeta::addKeyword($keywords);
-    }
-
-    OpenGraph::setDescription($desc);
-    OpenGraph::setTitle($title);
-    OpenGraph::setUrl(url()->current());
-    OpenGraph::addImage($image);
-
-    TwitterCard::setType('summary_large_image');
-    TwitterCard::addValue('twitter:domain', 'baakh.com');
-    TwitterCard::setTitle($title);
-    TwitterCard::setImage($image);
-    TwitterCard::setDescription($desc);
-    TwitterCard::setUrl(url()->current());
-    TwitterCard::setSite('@BaakhConnect');
-
-    JsonLd::setTitle($title);
-    JsonLd::setDescription($desc);
-    JsonLd::setType('Corporate');
-    }
-
-    public function SEO_Poet(){
-
-    }
-
-    public function SEO_Poetry($title, $content, $image = null, $keywords = null)
-    {
-        $desc = $this->shortDesc($content);
-        $image = (!is_null($image) && file_exists($image)) ? asset($image) : asset('assets/img/Baakh-beta.svg');
-        SEOMeta::setTitle($title);
-        SEOMeta::setDescription($desc);
-        if(!is_null($keywords)){
-            SEOMeta::addKeyword($keywords);
+        // death place
+        if($locations['birth']['cityName']) {
+            $jsonLdData['birthDate'] = $birthDate;
+            $_add_birth = $locations['birth'];
+            $_brth_city = $_add_birth['cityName'];
+            $_brth_prov = $_add_birth['provinceName'];
+            $_brth_cntry = $_add_birth['countryName'];
+            $_complete_addr_brth = $_brth_city . ', ' . $_brth_prov . ', ' . $_brth_cntry;
+            $jsonLdData['birthPlace'] = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Place',
+                'address' => $_complete_addr_brth
+            ];
         }
 
-        OpenGraph::setDescription($desc);
-        OpenGraph::setTitle($title);
-        OpenGraph::setUrl(url()->current());
-        OpenGraph::addImage($image);
+        if($locations['death']['cityName']) {
+            $jsonLdData['deathDate'] = $deathDate;
+            $_add_death = $locations['birth'];
+            $_ddth_city = $_add_death['cityName'];
+            $_ddth_prov = $_add_death['provinceName'];
+            $_ddth_cntry = $_add_death['countryName'];
+            $_complete_addr_ddth = $_ddth_city . ', ' . $_ddth_prov . ', ' . $_ddth_cntry;
 
+            $jsonLdData['deathPlace'] = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Place',
+                'address' => $_complete_addr_ddth
+            ];
+        }
         
+        JsonLd::addValues($jsonLdData);
+
+        // return SEOTools::generate();
+    }
+
+    /**
+     * SEO Poetry page
+     */
+    public function SEO_Poetry(Poetry $poetry, $poetryCategory, Poets $poetModel)
+    {
+        // dd($poetry, $couplets, $poetModel);
+        $poetIdWithLang = $poetModel->id . '_lng_'.app()->getLocale();
+        $cacheKeyLocations = 'cache_poet_'.$poetIdWithLang.'_locations';
+        $poetryInfo = $poetry->info;
+        $poetDetails = $poetModel->details;
+
+        $couplets = $poetry->all_couplets;
+
+        $title =  trans('labels.seo_custom_bio_poetry', ['category' => $poetry->category->category_name, 'poetName' => $poetDetails->poet_laqab, 'title' => $poetryInfo->title]);
+        $stanzas = [];
+        // if there is no info then make it from couplets
+        if($poetryInfo->info != null || $poetryInfo->info != '') {
+            $shortBio = $poetryInfo->info . ' '. $poetryInfo->source ?? ''; 
+        }else{
+            if(count($couplets) > 0) {
+                foreach ($couplets as $couplet) {
+                    $stanzas[] = [
+                        '@type' => 'CreativeWork',
+                        'text' => $couplet->couplet_text
+                    ];
+                }
+                $shortBio = Str::limit(preg_replace('/\s+/', ' ', strip_tags($couplets[0]->couplet_text)),  160, '...');
+            }else{
+                $shortBio = $title;
+            }
+        }
+
+        $poetImage = $poetModel->poet_pic;
+        $keywords = $this->appendKeywords(json_decode($poetry->poetry_tags)); // ["ishq", "love", "rain"]
+        $currentLang = app()->getLocale();
+        $url = URL::localized(route('poetry.with-slug', ['category' => $poetryCategory, 'slug' => $poetry->poetry_slug ]));
+
+        $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
+        // Check if the current URL already has a ?lang parameter
+        if (request()->query('lang')) {
+            $alternateUrl = route('poetry.with-slug', [
+                'category' => $poetryCategory,
+                'slug' => $poetry->poetry_slug,
+            ]);
+        } else {
+            $alternateUrl = route('poetry.with-slug', [
+                'category' => $poetryCategory,
+                'slug' => $poetry->poetry_slug,
+                'lang' => $alternateLang,
+            ]);
+        }
+
+        SEOTools::addImages(asset($poetImage));
+        SEOMeta::setTitle($title); // Set title in Sindhi
+        SEOMeta::setDescription($shortBio);
+        SEOMeta::setCanonical($url);
+        SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
+        SEOMeta::addKeyword($keywords);
+
+        // OpenGraph Metadata
+        OpenGraph::setTitle($title);
+        OpenGraph::setDescription($shortBio);
+        OpenGraph::setType('webpage');
+        OpenGraph::setUrl($url);
+        OpenGraph::addImage(asset($poetImage), ['height' => 600, 'width' => 400]);
+        
+
         TwitterCard::setType('summary_large_image');
         TwitterCard::addValue('twitter:domain', 'baakh.com');
         TwitterCard::setTitle($title);
-        TwitterCard::setImage($image);
-        TwitterCard::setDescription($desc);
-        TwitterCard::setUrl(url()->current());
+        TwitterCard::setImage($poetImage);
+        TwitterCard::setDescription($shortBio);
+        TwitterCard::setUrl($url);
         TwitterCard::setSite('@BaakhConnect');
 
-        JsonLd::setTitle($title);
-        JsonLd::setDescription($desc);
-        JsonLd::setType('article');
+        // SEO for Poet in the Poetry
+        $locations = Cache::rememberForever($cacheKeyLocations, function () use ($poetDetails) {
+            return [
+                'birth' => $poetDetails->birthPlaceComplete(),
+                'death' => $poetDetails->deathPlaceComplete()
+            ];
+        });
+
+        $poetLaqab = $poetDetails->poet_laqab; 
+        $poet_name = $poetDetails->poet_name;
+        $tagline = $poetDetails->tagline;
+        $birthDate = $poetModel->date_of_birth;
+        $deathDate = $poetModel->date_of_death;
+
+        // main info
+        JsonLd::setTitle($poetLaqab);
+        JsonLd::setDescription($shortBio);
+        JsonLd::setType('CreativeWork');
+        JsonLd::addImage(asset($poetImage));
+        JsonLd::setUrl($url);
+        JsonLd::addValue('inLanguage', app()->getLocale());
+        
+          
+        $jsonLdPoetData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Person',
+            'givenName' => $poetLaqab,
+            'familyName' => $poet_name,
+            'additionalName' => $tagline,
+            'name' => $poetLaqab,
+            'url' => URL::localized(route('poets.slug', ['category' => '', 'name' => $poetModel->poet_slug])),
+            'image' => asset($poetImage),
+        ];
+
+       
+        // death place
+        if($locations['birth']['cityName']) {
+            $jsonLdPoetData['birthDate'] = $birthDate;
+            $_add_birth = $locations['birth'];
+            $_brth_city = $_add_birth['cityName'];
+            $_brth_prov = $_add_birth['provinceName'];
+            $_brth_cntry = $_add_birth['countryName'];
+            $_complete_addr_brth = $_brth_city . ', ' . $_brth_prov . ', ' . $_brth_cntry;
+            $jsonLdPoetData['birthPlace'] = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Place',
+                'address' => $_complete_addr_brth
+            ];
+        }
+
+        if($locations['death']['cityName']) {
+            $jsonLdPoetData['deathDate'] = $deathDate;
+            $_add_death = $locations['birth'];
+            $_ddth_city = $_add_death['cityName'];
+            $_ddth_prov = $_add_death['provinceName'];
+            $_ddth_cntry = $_add_death['countryName'];
+            $_complete_addr_ddth = $_ddth_city . ', ' . $_ddth_prov . ', ' . $_ddth_cntry;
+
+            $jsonLdPoetData['deathPlace'] = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Place',
+                'address' => $_complete_addr_ddth
+            ];
+        } 
+
+
+        $jsonLdPoetryWork = [
+            '@context' => 'https://schema.org',
+            '@type' => 'CreativeWork',
+            'name' => $title,
+            'author' => $jsonLdPoetData,
+            'hasPart' => $stanzas 
+        ];
+        JsonLd::addValues($jsonLdPoetryWork);
+        
     }
+
+
 
     public function SEO_lyrics()
     {
@@ -286,6 +442,7 @@ trait BaakhSeoTrait {
         return preg_replace('/\n+/', ' ', $content);
     }
 
+    
  
 
     

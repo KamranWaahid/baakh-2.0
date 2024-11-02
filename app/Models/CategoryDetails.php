@@ -12,6 +12,7 @@ class CategoryDetails extends Model
     protected $fillable = [
         'cat_id',
         'cat_name',
+        'cat_name_plural',
         'cat_detail',
         'lang',
     ];

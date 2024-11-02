@@ -48,7 +48,19 @@ class AdminPoetryController extends Controller
                         })
                         ->get();
         $languages = Languages::all();
-        return view('admin.poetry.index', compact('poetry', 'languages'));
+
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poetry',
+                'url' => '#',
+                'active' => true,
+            ]
+        ];
+        return view('admin.poetry.index', compact('poetry', 'languages', 'breadcrumbs'));
     }
 
   
@@ -58,7 +70,22 @@ class AdminPoetryController extends Controller
     public function trashed()
     {
         $poetry = Poetry::with('poet', 'category')->onlyTrashed()->get();
-        return view('admin.poetry.trashed', compact('poetry'));
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poetry',
+                'url' => route('admin.poetry.index'),
+            ],
+            [
+                'label' => 'Trashed Poetry',
+                'url' => '#',
+                'active' => true,
+            ],
+        ];
+        return view('admin.poetry.trashed', compact('poetry', 'breadcrumbs'));
     }
 
     public function create()
@@ -78,7 +105,22 @@ class AdminPoetryController extends Controller
 
         $languages = Languages::get();
         $content_styles = ['justified','center','start','end'];
-        return view('admin.poetry.create',  compact('poets', 'categories', 'languages', 'tags', 'content_styles'));
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poetry',
+                'url' => route('admin.poetry.index'),
+            ],
+            [
+                'label' => 'Create Poetry',
+                'url' => route('admin.poetry.create'),
+                'active' => true,
+            ]
+        ];
+        return view('admin.poetry.create',  compact('poets', 'categories', 'languages', 'tags', 'breadcrumbs', 'content_styles'));
     }
  
 
@@ -211,8 +253,22 @@ class AdminPoetryController extends Controller
         $languages = Languages::all();
         $content_styles = ['justified','center','start','end'];
 
-        $poetry = Poetry::findOrFail($id);
-        return view('admin.poetry.edit', compact('poetry', 'poets',  'categories', 'languages', 'tags', 'content_styles'));
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poetry',
+                'url' => route('admin.poetry.index'),
+            ],
+            [
+                'label' => 'Edit Poetry',
+                'url' => route('admin.poetry.edit', $id),
+                'active' => true,
+            ]
+        ];
+        return view('admin.poetry.edit', compact('poetry', 'poets',  'categories', 'languages', 'tags', 'content_styles', 'breadcrumbs'));
     }
 
    

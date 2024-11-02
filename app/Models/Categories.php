@@ -43,6 +43,10 @@ class Categories extends Model
         return $this->hasOne(CategoryDetails::class, 'cat_id', 'id')->where('lang', 'sd');
     }
 
+    public function getCategoryNameAttribute() {
+        return $this->hasOne(CategoryDetails::class, 'cat_id', 'id')->where('lang', app()->getLocale())->value('cat_name');
+    }
+
     protected static function booted()
     {
         static::observe(CategoryObserver::class);

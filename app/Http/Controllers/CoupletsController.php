@@ -81,7 +81,6 @@ class CoupletsController extends UserController
         // SEO 
         // Generate SEO description without HTML tags and newline characters
         $seo_desc = Str::limit(preg_replace('/\s+/', ' ', strip_tags($couplet->couplet_text)), 160, '...');
-        $this->SEO_Poetry($title, $seo_desc, $poet_info->poet_pic);
 
         
         $liked = $this->isLiked('Couplet', $couplet->couplet_slug);

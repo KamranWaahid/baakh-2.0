@@ -119,6 +119,19 @@
                                             </span>
                                         @enderror
                                     </div>
+
+                                    <!--= start[Category Plural] =-->
+                                    <div class="form-group col-12">
+                                        <label for="cat_name_plural_{{ $i }}">Category Plural</label>
+                                        <input type="text" name="cat_name_plural[]" class="form-control @error('cat_name_plural') is-invalid @enderror" id="cat_name_plural_{{ $i }}" value="{{ old('cat_name_plural') }}"  placeholder="Insert Category Plural">
+                                    
+                                        @error('cat_name_plural')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
+                                    </div>
+                                    <!--= end[Category Plural] =-->
  
                                     <input type="hidden" name="lang[]" class="form-control" value="{{ $lang->lang_code }}">
 
