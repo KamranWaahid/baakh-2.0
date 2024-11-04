@@ -61,7 +61,7 @@ return [
     'title' => 'Baakh',
 
     // SEO system 
-    'seo_title_poet' =>  'Couplets, Ghazals and other poetry of Ishaq Samejo :poetLaqab | Baakh',
+    'seo_title_poet' =>  'Couplets, Ghazals and other poetry of :poetLaqab | Baakh',
     'seo_title_poet_category' => ':categoryName of :poetLaqab | Baakh',
     'seo_custom_bio_poetry' => ':poetName\'s :category , :title | Baakh',
 ];
