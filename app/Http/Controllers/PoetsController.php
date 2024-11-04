@@ -199,13 +199,11 @@ class PoetsController extends UserController
         
         $title = ($locale == 'sd') ? trans('menus.poets').' | '. $laqab . $jo_ja.$category_name : ucfirst($category_name) . $jo_ja . $laqab . ' | ' . trans('menus.poets');
 
-        $this->SEO_General($title, $full_desc, $profile->poet_pic);
-
+        $this->SEO_Poet($profile, $category?->detail->cat_name_plural);
         
-        $liked = $this->isLiked('Poets', $profile->poet_slug); //'Poets',
-
+        
         $totalLikes = LikeDislike::where(['likable_type' => 'Poets', 'likable_id' =>  $profile->id])->count();// count total likes
-        return view('web.poets.profile', compact('profile', 'famous_poets', 'total_couplets', 'poetry_limited', 'active_category', 'active_category_id', 'poet_url', 'categoriesWithCounts', 'liked', 'totalLikes'));
+        return view('web.poets.profile', compact('profile', 'famous_poets', 'total_couplets', 'poetry_limited', 'active_category', 'active_category_id', 'poet_url', 'categoriesWithCounts', 'totalLikes'));
     }
 
 

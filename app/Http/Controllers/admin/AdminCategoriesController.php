@@ -137,6 +137,7 @@ class AdminCategoriesController extends Controller
         for ($i=0; $i < $total; $i++) { 
             $data = [
                 'cat_name' => $request->input('cat_name')[$i],
+                'cat_name_plural' => $request->input('cat_name_plural')[$i],
                 'cat_detail' => $request->input('cat_detail')[$i],
                 'lang' => $request->input('lang')[$i],
             ];
@@ -175,6 +176,7 @@ class AdminCategoriesController extends Controller
         for ($i=0; $i < $total; $i++) { 
             $data = [
                 'cat_name' => $request->input('cat_name')[$i],
+                'cat_name_plural' => $request->input('cat_name_plural')[$i],
                 'cat_detail' => $request->input('cat_detail')[$i],
                 'lang' => $request->input('lang')[$i],
             ];

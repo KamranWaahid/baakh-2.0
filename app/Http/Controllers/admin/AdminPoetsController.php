@@ -23,23 +23,61 @@ class AdminPoetsController extends Controller
         $poets = Poets::with(['details' => function ($query)  {
             $query->where('poets_detail.lang', 'sd');
         }])->get();
-        
-        return view('admin.poets.index', compact('poets'));
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poets',
+                'url' => '#',
+                'active' => true,
+            ],
+        ];
+        return view('admin.poets.index', compact('poets', 'breadcrumbs'));
     }
 
     // for soft deleted items
     public function trashed()
     {
         $poets = Poets::with('details')->onlyTrashed()->get();
-        return view('admin.poets.trashed', compact('poets'));
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poets',
+                'url' => route('admin.poets.index'),
+            ],
+            [
+                'label' => 'Trashed Poets',
+                'url' => '#',
+                'active' => true,
+            ],
+        ];
+        return view('admin.poets.trashed', compact('poets', 'breadcrumbs'));
     }
 
     public function create()
     {
-        $cities = Cities::all();
-        $languages = Languages::all();
-        $tags = Tags::where('type', 'poets')->get();
-        return view('admin.poets.create', compact('cities', 'languages', 'tags'));
+        $tags = Tags::where(['type' => 'poets', 'lang' => 'sd'])->get();
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poets',
+                'url' => route('admin.poets.index'),
+            ],
+            [
+                'label' => 'Creat Poet Profile',
+                'url' => '#',
+                'active' => true,
+            ],
+        ];
+        return view('admin.poets.create', compact( 'tags', 'breadcrumbs'));
     }
     
 
@@ -105,7 +143,22 @@ class AdminPoetsController extends Controller
         $details = PoetsDetail::with('birthPlace', 'deathPlace')->where('poet_id', $id)->get();
         $languages = Languages::all();
         $tags = Tags::where('type', 'poets')->get();
-        return view('admin.poets.edit', compact('poet', 'details',  'languages', 'tags'));
+        $breadcrumbs = [
+            [
+                'label' => 'Home',
+                'url' => route('dashboard'),
+            ],
+            [
+                'label' => 'Poets',
+                'url' => route('admin.poets.index'),
+            ],
+            [
+                'label' => 'Edit Poet Profile',
+                'url' => '#',
+                'active' => true,
+            ],
+        ];
+        return view('admin.poets.edit', compact('poet', 'details',  'languages', 'tags', 'breadcrumbs'));
     }
 
     /**

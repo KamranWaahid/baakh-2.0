@@ -46,7 +46,7 @@
                     </div>
                     <div class="left-buttons">
                       <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-like btn-default" data-uri="{{ url('/') }}" data-type="Poetry" data-type_id="{{ $couplet->id }}"><i class="bi bi-heart{{ $liked }}"></i></button>
+                        {{-- <button type="button" class="btn btn-like btn-default" data-uri="{{ url('/') }}" data-type="Poetry" data-type_id="{{ $couplet->id }}"><i class="bi bi-heart{{ $liked }}"></i></button> --}}
                           <x-baakh_share_buttons poetryUrl="{{ $poetryUrl }}" shareText="" componentId="buttons_social_poetry"  />
                         <button type="button" class="btn btn-share btn-default" data-id="buttons_social_poetry"><i id="share-icon" class="bi bi-share"></i></button>
                       </div>

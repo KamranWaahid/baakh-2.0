@@ -186,9 +186,9 @@ class HomeController extends UserController
             ];
         }else{
             // answer no
-            $poet_name = $correct_poet->poet->details->poet_laqab;
+            $poet_name = $correct_poet->poet->poet_laqab;
             $message = [
-                'message' => trans_choice('labels.quiz_msg_wrong_answer', 1, ['poetName' => $poet_name], app()->getLocale()),
+                'message' => trans('labels.quiz_msg_wrong_answer', ['poetName' => $poet_name]),
                 'correct_poet' => $correct_poet->poet_id,
                 'type' => 'error'
             ];

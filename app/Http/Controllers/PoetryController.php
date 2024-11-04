@@ -102,28 +102,9 @@ class PoetryController extends UserController
         $poet_detail = $poet_info->details;
         $title = $poet_detail->poet_laqab. ' | '.$poetry->poetry_title;
         
-        if(count($poetry->all_couplets) > 0) {
-            // Generate SEO description without HTML tags and newline characters
-            $seo_desc = Str::limit(preg_replace('/\s+/', ' ', strip_tags($poetry->all_couplets[0]->couplet_text)), 160, '...');
-            $this->SEO_Poetry($title, $seo_desc, $poet_info->poet_pic);
-        }
-         
+       
 
-        if(Auth::user())
-        {
-            $currentUserId = Auth::user()->id;
-            $already_commented = UserComments::where(['poetry_id' => $poetry->id, 'user_id' => $currentUserId])->first();
-        }else{
-            $currentUserId = 0;
-            $already_commented = NULL;
-        }
-
-        $user_comments = $this->getUserComments($poetry->id, $locale, $currentUserId);
-        $total_comments = UserComments::where('poetry_id', $poetry->id)->count();
-
-        $liked = $this->isLiked('Poetry', $poetry->poetry_slug);
-        
-
+        $this->SEO_Poetry($poetry, $category, $poet_info);
         $compact_views = [
             'poetry',
             'poet_info',
@@ -134,10 +115,6 @@ class PoetryController extends UserController
             'next_poetry',
             'previous_poetry',
             'poetryUrl',
-            'user_comments',
-            'total_comments',
-            'already_commented',
-            'liked'
         ];
 
         return view('web.poetry.with-category', compact($compact_views));
