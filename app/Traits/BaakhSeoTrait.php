@@ -94,8 +94,10 @@ trait BaakhSeoTrait {
      */
     public function appendKeywords($array) {
         $keywords = ['Books on Literature', 'Sindhi Books', 'Poetry', 'History Books', 'Fiction Books', 'Sheikh Ayaz',  'Sindh Salamat Kitab Ghar', 'Sindhi Novel'];
-        $keywords = array_merge($keywords, $array);
-        $keywords = array_slice($keywords, 0, 10);
+        if($array && is_array($array)) {
+            $keywords = array_merge($keywords, $array);
+            $keywords = array_slice($keywords, 0, 10);
+        }
         return implode(', ', $keywords);
     }
     /**
