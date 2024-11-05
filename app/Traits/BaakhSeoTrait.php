@@ -26,10 +26,23 @@ trait BaakhSeoTrait {
         // Set default image if SEO image is not provided or doesn't exist
         $image = ($seo_image && file_exists($seo_image)) ? asset($seo_image) : asset('assets/placeholder.png');
         
-        // Set SEO meta tags
-        SEOMeta::setTitle($title);
-        SEOMeta::setDescription($desc);
-        SEOMeta::setCanonical(url()->current());
+        $currentLang = app()->getLocale();
+        $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
+
+        // Check if the 'lang' query parameter exists in the request
+        $langParam = request()->query('lang');
+
+        // Build the base URL (without any query parameters)
+        $baseUrl = url()->current();
+
+        // Determine the alternate URL
+        if ($langParam) {
+            // If the 'lang' query parameter exists, modify it to the alternate language
+            $alternateUrl = url()->current() . '?' . http_build_query(array_merge(request()->query(), ['lang' => $alternateLang]));
+        } else {
+            // If there's no 'lang' query parameter, add it to the URL
+            $alternateUrl = $baseUrl . '?' . http_build_query(array_merge(request()->query(), ['lang' => $alternateLang]));
+        }
         
         // Handle keywords
         if (!is_null($keywords)) {
@@ -37,6 +50,14 @@ trait BaakhSeoTrait {
         } else {
             SEOMeta::addKeyword($this->extractKeywords($desc));
         }
+
+        // Set SEO meta tags
+        SEOMeta::setTitle($title);
+        SEOMeta::setDescription($desc);
+        SEOMeta::setCanonical(url()->current());
+        SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
+
+       
 
         // Set OpenGraph data
         OpenGraph::setDescription($desc);

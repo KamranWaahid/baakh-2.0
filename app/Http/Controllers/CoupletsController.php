@@ -9,6 +9,7 @@ use App\Models\Poetry;
 use App\Models\Poets;
 use App\Models\Tags;
 use App\Models\UserComments;
+use App\Models\UserLikes;
 use App\Traits\BaakhLikedTrait;
 use App\Traits\BaakhSeoTrait;
 use Illuminate\Support\Facades\URL;
@@ -32,16 +33,36 @@ class CoupletsController extends UserController
         $tags = Tags::where('lang', $locale)->limit(18)->get(); // get all tags
         $bundles = Bundles::where('is_featured', true)->get();
         
-        $leftSideCouplets = $this->getFavoritedCouplets($locale, 'left');
-        $rightSideCouplets = $this->getFavoritedCouplets($locale, 'right');
-
+        $topCouplets = $this->getFavoritedCouplets();
+         
+  
         // SEO 
         $title = trans('labels.couplets');
         $desc = ($locale == 'sd') ? 'Sindhi Description' : 'English Description';
         $this->SEO_General($title, 'Here is couplets page description of Baakh');
+
+    //    dd($topCouplets);
  
 
-        return view('web.couplets.index', compact('bundles', 'leftSideCouplets', 'rightSideCouplets', 'tags'));
+        return view('web.couplets.index', compact('bundles', 'topCouplets', 'tags'));
+    }
+
+    /**
+     * Most Liked couplets
+     */
+    public function mostLikedCouplets()
+    {
+        $couplets = Couplets::with(['poet:id,poet_slug'])
+                ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
+                ->withCount('likes')
+                ->where(['lang' => app()->getLocale(), 'poetry_id' => 0])
+                ->orderByDesc('likes_count')
+                ->limit(400)
+                ->paginate(14);
+        
+        $title = trans('labels.most_liked_couplets') . ' - ' . trans('labels.title');
+        $this->SEO_General($title, trans('labels.most_liked_couplets_desc'));
+        return view('web.couplets.most_liked_couplets', compact('couplets'));
     }
 
     /**
@@ -97,33 +118,28 @@ class CoupletsController extends UserController
 
     
 
-    private function getFavoritedCouplets($locale, $side = 'right')
+    private function getFavoritedCouplets()
     {
-        $couplets = LikeDislike::select('likable_id', 'likable_type')
-            ->selectRaw('COUNT(id) as like_count')
-            ->groupBy('likable_id', 'likable_type')
-            ->where('likable_type', 'Couplets')
-            ->orderByDesc('like_count')
-            ->limit(8)
-            ->get();
-
+        $couplets = Couplets::with(['poet:id,poet_slug'])
+                ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
+                ->withCount('likes')
+                ->where(['lang' => app()->getLocale(), 'poetry_id' => 0])
+                ->orderByDesc('likes_count')
+                ->limit(8)
+                ->get();
         
-        $couplets->load(['couplets', 'couplets.poet.details' => function ($query) use ($locale) {
-            $query->where('lang', $locale);
-        }]);
-        $html = '';
+                
+        $result = [];
         foreach ($couplets as $k => $items) {
-            $liked = $this->isLikedItem('Couplets', $items->id);
-            if($side == 'left' && $k <=3){
-                $html .= view('web.couplets.liked_couplets', ['item' => $items, 'liked' => $liked]);
+            if($k <= 3) {
+                $result['left'][] = $items;
             }
-            if($side == 'right' && $k > 3)
-            {
-                $html .= view('web.couplets.liked_couplets', ['item' => $items, 'liked' => $liked]);
+
+            if($k > 3) {
+                $result['right'][] = $items;
             }
-            
         }
-        return $html;
+        return $result;
     }
 
     /**

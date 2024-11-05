@@ -44,6 +44,11 @@ class Poetry extends Model
     {
         return $this->belongsTo(Categories::class, 'category_id');
     }
+
+    public function getCategorySlugAttribute() 
+    {
+        return $this->belongsTo(Categories::class, 'category_id')->value('slug');
+    }
     
     public function language(){
         return $this->belongsTo(Languages::class, 'lang', 'lang_code');
@@ -88,7 +93,6 @@ class Poetry extends Model
         return $this->hasOne(CategoryDetails::class, 'cat_id', 'category_id');
     }
 
-    // boot to add current user's ID as user_id
     
 
     protected static function booted()

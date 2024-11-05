@@ -57,15 +57,48 @@
         <div class="row">
             <h3 class="text-baakh mt-2 title">{{ trans('labels.most_liked_couplets') }}</h3>
             <div class="col-lg-6 col-md-6 col-sm-12" id="right-side-poetry">
-                {!! $leftSideCouplets !!}
-                
+                @foreach ($topCouplets['left'] as $item)
+                    <div class="couplet-body text-center">
+                        <div class="poetry text-center">
+                            <p class="m-0 p-0">{!! nl2br($item->couplet_text) !!}</p>
+                            <span class="poet-name">
+                                <a href="{{ URL::localized(route('poets.slug', ['name' => $item->poet->poet_slug])) }}">{{ $item->poet_laqab }}</a>
+                            </span>
+                        </div>
+                        <hr class="hr">
+                        <div class="buttons mt-2 d-flex justify-content-center">
+                            <livewire:LikeCoupletButton :couplet="$item" />
+                            @if ($item->poetry)
+                                <a href="{{ URL::localized(route('poetry.with-slug', ['category' => $item->poetry->category_slug , 'slug' => $item->poetry->poetry_slug])) }}" class="btn btn-default"><i class="bi bi-list me-2"></i><span class="txt">{{ trans('buttons.ghazal_parho') }}</span></a>
+                            @endif
+                            <button type="button" class="btn btn-default"><i class="bi bi-share me-2"></i><span class="txt">{{ trans('buttons.share') }}</span></button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
             <div class="col-lg-6 col-md-6 col-sm-12" id="left-side-poetry">
-                
-                {!! $rightSideCouplets !!}
+                @foreach ($topCouplets['right'] as $item)
+                    <div class="couplet-body text-center">
+                        <div class="poetry text-center">
+                            <p class="m-0 p-0">{!! nl2br($item->couplet_text) !!}</p>
+                            <span class="poet-name">
+                                <a href="{{ URL::localized(route('poets.slug', ['name' => $item->poet->poet_slug])) }}">{{ $item->poet_laqab }}</a>
+                            </span>
+                        </div>
+                        <hr class="hr">
+                        <div class="buttons mt-2 d-flex justify-content-center">
+                            <livewire:LikeCoupletButton :couplet="$item" />
+                            @if ($item->poetry)
+                                <a href="{{ URL::localized(route('poetry.with-slug', ['category' => $item->poetry->category_slug , 'slug' => $item->poetry->poetry_slug])) }}" class="btn btn-default"><i class="bi bi-list me-2"></i><span class="txt">{{ trans('buttons.ghazal_parho') }}</span></a>
+                            @endif
+                            {{-- <button type="button" class="btn btn-default"><i class="bi bi-list me-2"></i><span class="txt">{{ trans('buttons.ghazal_parho') }}</span></button> --}}
+                            <button type="button" class="btn btn-default"><i class="bi bi-share me-2"></i><span class="txt">{{ trans('buttons.share') }}</span></button>
+                        </div>
+                    </div>
+                @endforeach
                 <div class="more-button">
-                    <a href="#" class="btn btn-baakh">{{ trans('buttons.see_favorite_couplets', ['count'=> 400]) }}<i class="bi bi-chevron-{{ trans('buttons.i_left') }}" style="margin-{{ trans('buttons.i_right') }}:8px;"></i></a>
+                    <a href="{{ URL::localized(route('web.couplets.most-liked')) }}" class="btn btn-baakh">{{ trans('buttons.see_favorite_couplets', ['count'=> 400]) }}<i class="bi bi-chevron-{{ trans('buttons.i_left') }}" style="margin-{{ trans('buttons.i_right') }}:8px;"></i></a>
                 </div>
             </div>
         </div>

@@ -11,6 +11,7 @@ return [
     'quiz_sub_heading' => 'ھيٺين مان صحيح جواب جي چونڊ ڪريو',
     'quiz_question' => 'ھي شعر ڪنھن جو آھي؟',
     'most_liked_couplets' => 'گهڻو پسند ڪيل شعر',
+    'most_liked_couplets_desc' => 'سنڌي شاعريءَ ۾‌ باک تي سڀ کان وڌيڪ پسند ڪيل ٻِن سِٽن وارا شعر ڏِسو ۽ پڙھو',
     'couplets' => 'شعر',
     'couplet_bundles' => 'شعرن جي ڳوڻ',
     'names' => 'نالا',

@@ -11,6 +11,7 @@ return [
     'quiz_sub_heading' => 'Choose correct choice from below',
     'quiz_question' => 'Who\'s couplet is this?',
     'most_liked_couplets' => 'Most Liked Couplets',
+    'most_liked_couplets_desc' => 'Checkout Most liked couplets of Sindhi poetry available at Baakh',
     'couplets' => 'Couplets',
     'couplet_bundles' => 'Couplets\' Bundle',
     'names' => 'Names',

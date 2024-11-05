@@ -68,6 +68,7 @@ Route::prefix('/bundles')->group(function(){
 
  Route::prefix('couplets')->group(function () {
     Route::get('', [CoupletsController::class, 'index'])->name('web.couplets');
+    Route::get('most-liked', [CoupletsController::class, 'mostLikedCouplets'])->name('web.couplets.most-liked');
     Route::get('/{slug}', [CoupletsController::class, 'show'])->name('web.couplets.single');
  });
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,6 +58,10 @@ class Couplets extends Model
     public function poet_details()
     {
         return $this->hasOne(PoetsDetail::class, 'poet_id', 'poet_id');
+    }
+
+    public function likes() {
+        return $this->morphMany(UserLikes::class, 'likeable');
     }
  
 
