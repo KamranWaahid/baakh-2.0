@@ -37,7 +37,8 @@ class HomeController extends UserController
         $sliders = Sliders::where(['lang' => $locale, 'visibility' => 1])->get();
         $famous_poet = $this->getFamousPoets($locale);
         $ghazal_of_day = $this->getGhazalOfDay($locale);
-        $bundles = Bundles::where('is_featured', true)->get();
+        // $bundles = Bundles::where('is_featured', true)->get();
+        $bundles = null;
         $quiz_couplet = $this->getQuizCouplet($locale);
         $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
         $random_poetry = $this->showRandomPoetry(10, $locale);
@@ -53,7 +54,7 @@ class HomeController extends UserController
         $ghazal_of_day_poet = $ghazal_of_day?->poet;
         
         $compact = compact(
-            'sliders', 'poet_tags', 'bundles', 
+            'sliders', 'poet_tags',
             'ghazal_of_day', 'ghazal_of_day_poet', 'famous_poet', 'random_poetry', 
             'quiz_couplet', 'quiz_poets', 'tags');
         

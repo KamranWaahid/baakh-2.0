@@ -31,7 +31,7 @@ class CoupletsController extends UserController
     {
         $locale = app()->getLocale();
         $tags = Tags::where('lang', $locale)->limit(18)->get(); // get all tags
-        $bundles = Bundles::where('is_featured', true)->get();
+        // $bundles = Bundles::where('is_featured', true)->get();
         
         $topCouplets = $this->getFavoritedCouplets();
          
@@ -44,7 +44,7 @@ class CoupletsController extends UserController
     //    dd($topCouplets);
  
 
-        return view('web.couplets.index', compact('bundles', 'topCouplets', 'tags'));
+        return view('web.couplets.index', compact('topCouplets', 'tags'));
     }
 
     /**
