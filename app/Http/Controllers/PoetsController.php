@@ -80,6 +80,7 @@ class PoetsController extends UserController
         $poet_tags = Tags::where(['type' => 'poets', 'lang' => $locale])->get();
 
         $alphabets = $this->listOfAlphabet($locale);
+
        
         return view('web.poets.index', compact('poets', 'alphabets', 'poet_tags', 'total_poets'));
     }
@@ -401,8 +402,9 @@ class PoetsController extends UserController
             $active = ($alphabets[$i] == $alphabetId) ? 'active' : '';
             if($alphabets[$i] != 'x')
             {
-                $html = '<li class="list-inline-item">
-                            <a href="'.URL::localized(route('poets.all'), ['startsWith' => $alphabets[$i], 'lang' => $lang]).'" class="btn btn-secondary '.$active.' btn-alphabet">'.$alphabets[$i].'</a>
+                $alphabetsss[] = $alphabets[$i];
+                $html .= '<li class="list-inline-item">
+                            <a href="'.URL::localized(route('poets.all', ['startsWith' => $alphabets[$i]])).'" class="btn btn-secondary '.$active.' btn-alphabet">'.$alphabets[$i].'</a>
                         </li>';
             }
         }
