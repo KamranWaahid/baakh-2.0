@@ -54,3 +54,7 @@
 
 
 @endsection
+
+@section('js')
+<livewire:LoginModal /> 
+@endsection
