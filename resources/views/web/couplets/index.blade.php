@@ -136,3 +136,7 @@
 <!-- ========== End Couplet Bundles ========== -->
 
 @endsection
+
+@section('js')
+<livewire:LoginModal /> 
+@endsection
