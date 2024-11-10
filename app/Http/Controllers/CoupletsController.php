@@ -84,6 +84,9 @@ class CoupletsController extends UserController
         ->where(['couplet_slug' => $slug, 'lang' => $locale])
         ->first();
         
+        if(!$couplet) {
+            abort(404);
+        }
         $poet_id = $couplet->poet_id;
         $poet_info = Poets::with(['details' => function ($query) use ($locale) {
                                 $query->where('lang', $locale);
