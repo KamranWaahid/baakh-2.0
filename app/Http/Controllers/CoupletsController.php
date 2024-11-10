@@ -59,6 +59,9 @@ class CoupletsController extends UserController
                 ->orderByDesc('likes_count')
                 ->limit(400)
                 ->paginate(14);
+        if(!$couplets) {
+            abort(404);
+        }
         
         $title = trans('labels.most_liked_couplets') . ' - ' . trans('labels.title');
         $this->SEO_General($title, trans('labels.most_liked_couplets_desc'));
