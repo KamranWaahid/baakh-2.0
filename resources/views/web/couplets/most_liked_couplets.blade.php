@@ -52,9 +52,9 @@
 <!-- ========== End Pasand Kayal Shaer ========== -->
 
 
+<livewire:LoginModal /> 
 
 @endsection
 
 @section('js')
-<livewire:LoginModal /> 
 @endsection
