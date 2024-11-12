@@ -65,6 +65,9 @@ return [
     'seo_title_poet' =>  'Couplets, Ghazals and other poetry of :poetLaqab | Baakh',
     'seo_title_poet_category' => ':categoryName of :poetLaqab | Baakh',
     'seo_custom_bio_poetry' => ':poetName\'s :category , :title | Baakh',
+
+    // doodles
+    'from_date_to_date' => 'from :fromDate to :toDate',
 ];
 
 ?>

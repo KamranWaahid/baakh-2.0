@@ -55,5 +55,6 @@ class PoetObserver
     protected function forgetPoetsCache()
     {
         Cache::forget('admin_all_poets_sd'); // AdminPoetryController used
+        Cache::forget('admin_poets_ids');
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\admin\AdminPoetsController;
 use App\Http\Controllers\admin\AdminProvincesController;
 use App\Http\Controllers\admin\AdminRomanizerController;
 use App\Http\Controllers\admin\AdminSlidersController;
+use App\Http\Controllers\admin\DoodlesController as AdminDoodles;
 use App\Http\Controllers\admin\AdminTagsController;
 use App\Http\Controllers\admin\AdminUsersController;
 use App\Http\Controllers\Admin\HesudharController;
@@ -89,6 +90,13 @@ Route::prefix('sliders')->group(function () {
     Route::delete('{id}/hard-delete', [AdminSlidersController::class, 'hardDelete'])->name('admin.sliders.hard-delete')->middleware('permission:sliders.delete');
     Route::put('{id}/restore', [AdminSlidersController::class, 'restore'])->name('admin.sliders.restore')->middleware('permission:sliders.edit');
     Route::put('{id}/toggle-visibility', [AdminSlidersController::class, 'toggleVisibility'])->name('admin.sliders.toggle-visibility')->middleware('permission:sliders.edit');
+});
+
+Route::name('admin.')->group(function () {
+    Route::get('doodles/trashed', [AdminDoodles::class, 'trashed'])->name('doodles.trash');
+    Route::put('{id}/restore', [AdminDoodles::class, 'restore'])->name('doodles.restore');
+    Route::delete('{id}/hard-delete', [AdminDoodles::class, 'hardDelete'])->name('doodles.hard-delete');
+    Route::resource('doodles', AdminDoodles::class);
 });
 
 // For Poetry

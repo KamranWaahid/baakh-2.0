@@ -64,6 +64,8 @@ return [
     'seo_title_poet_category' => ':poetLaqab جا لکيل :categoryName | باک',
     'seo_custom_bio_poetry' => ':poetName جي :category ، :title | باک',
 
+    // doodles
+    'from_date_to_date' => ':fromDate کان :toDate تائين',
 ];
 
 ?>

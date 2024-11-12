@@ -2,20 +2,44 @@
 
 @section('body')
 
-@if ($sliders)
-    <!-- ========== Start Main Slider ========== -->
-    <div class="carousel-container">
-        <div class="carousel">
-            @foreach ($sliders as $slider)
-            
-            <img src="{{ file_exists($slider->image) ? asset($slider->image) : asset('assets/img/placeholder-slider.jpg') }}" class="main-slider-img" alt="Image 1">
-            @endforeach
-        </div>
-        <button class="carousel-btn carousel-btn-prev">&#8249;</button>
-        <button class="carousel-btn carousel-btn-next">&#8250;</button>
-      </div>
-  <!-- ========== End Main Slider ========== -->
-@endif
+<section class="hero">
+  <div class="container">
+    <div class="col-md-9 col-12 m-auto">
+        @if (isset($doodles) && $doodles->reference)
+          @php
+              $ref=  $doodles->reference;
+              $dateOfBirth = $ref->date_of_birth ? \Carbon\Carbon::parse($ref->date_of_birth)->locale(app()->getLocale()) : null;
+              $dateOfDeath = $ref->date_of_death ? \Carbon\Carbon::parse($ref->date_of_death)->locale(app()->getLocale()) : null;
+          @endphp
+
+          <a href="{{ URL::localized(route('poets.slug', $ref->poet_slug)) }}">
+            <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh-beta.svg') }}" 
+            class="main-slider-img" 
+            alt="{{ $doodles->title }}">
+          </a>
+            <h2 class="text-center">{{ $ref->poet_laqab }}</h2>
+            <p class="text-center">
+                {{ trans('labels.from_date_to_date', [
+                    'fromDate' => $dateOfBirth ? $dateOfBirth->translatedFormat('d F, Y') : '',
+                    'toDate' => $dateOfDeath ? $dateOfDeath->translatedFormat('d F, Y') : ''
+                ]) }}
+            </p>
+
+        @elseif (isset($doodles))
+          <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh-beta.svg') }}" 
+          class="main-slider-img" 
+          alt="{{ $doodles->title }}">
+
+        @else
+          <img src="{{ asset('assets/img/Baakh-beta.svg') }}" 
+          class="center" 
+          height="300px"
+          alt="Baakh Poetry">
+          <h2 class="text-center">{{ trans('labels.title') }}</h2>
+        @endif
+    </div>
+  </div>
+</section>
 
 {{-- random poetry --}}
 @if (isset($random_poetry))

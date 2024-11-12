@@ -317,8 +317,8 @@ return [
 
         // Sliders
         [
-            'text'        => 'sliders',
-            'url'         => 'admin/sliders',
+            'text'        => 'doodles',
+            'url'         => 'admin/doodles',
             'icon'        => 'fas fa-sliders-h',
             'b_can'       => 'sliders.menu'
         ],

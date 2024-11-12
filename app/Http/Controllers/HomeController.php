@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bundles;
 use App\Models\Couplets;
+use App\Models\Doodle;
 use App\Models\Languages;
 use App\Models\Poetry;
 use App\Models\Poets;
@@ -32,8 +33,12 @@ class HomeController extends UserController
      */
     public function index()
     {
+        $today = Carbon::today();
         $locale = app()->getLocale();
-        
+        $doodles = Doodle::with('reference')->get()->filter(function ($doodle) use ($today) {
+            return $doodle->shouldBeDisplayedToday();
+        })->first();
+
         $sliders = Sliders::where(['lang' => $locale, 'visibility' => 1])->get();
         $famous_poet = $this->getFamousPoets($locale);
         $ghazal_of_day = $this->getGhazalOfDay($locale);
@@ -54,7 +59,7 @@ class HomeController extends UserController
         $ghazal_of_day_poet = $ghazal_of_day?->poet;
         
         $compact = compact(
-            'sliders', 'poet_tags',
+            'doodles', 'poet_tags',
             'ghazal_of_day', 'ghazal_of_day_poet', 'famous_poet', 'random_poetry', 
             'quiz_couplet', 'quiz_poets', 'tags');
         

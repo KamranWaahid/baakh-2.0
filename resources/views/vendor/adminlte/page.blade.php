@@ -71,6 +71,22 @@
         })
        </script>
     @endif
+
+    @if (session()->has('error'))
+       <script>
+        $(function () {
+            toastr.error('{{ session('error') }}')
+        })
+       </script>
+    @endif
+
+    @if (session()->has('success'))
+       <script>
+        $(function () {
+            toastr.success('{{ session('success') }}')
+        })
+       </script>
+    @endif
     <script>
         function _delete(buttonClass, itemName, confirmFirst = false) 
         {
