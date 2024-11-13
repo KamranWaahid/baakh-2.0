@@ -2,7 +2,7 @@
 
 @section('body')
 
-<section class="hero">
+<section class="hero" style="height: 100vh !important;">
   <div class="container">
     <div class="col-md-9 col-12 m-auto">
         @if (isset($doodles) && $doodles->reference)
@@ -37,6 +37,7 @@
           alt="Baakh Poetry">
           <h2 class="text-center">{{ trans('labels.title') }}</h2>
         @endif
+        @include('web.home.search_box')
     </div>
   </div>
 </section>

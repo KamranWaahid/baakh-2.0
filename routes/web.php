@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BaakhSearchController;
 use App\Http\Controllers\BundlesController;
 use App\Http\Controllers\CoupletsController;
 use App\Http\Controllers\GenreController;
@@ -105,7 +106,11 @@ Route::prefix('prosody/')->group(function(){
     Route::post('result', [ProsodyController::class, 'result'])->name('prosody.result');
 });
 
+// Search
+Route::prefix('search')->name('web.search.')->controller(BaakhSearchController::class)->group(function () {
+    Route::get('/', 'index')->name('query');
+    Route::get('/generate-json', 'generateJson')->name('generate-json');
+});
 
  Auth::routes();
  require __DIR__.'/auth.php';
- 

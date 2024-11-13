@@ -1,0 +1,150 @@
+[
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ahmed-shakir",
+        "keyword": "احمد شاڪر"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/sheikh-ayaz",
+        "keyword": "شيخ اياز"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ustad-bukhari",
+        "keyword": "استاد بخاري"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/masroor-pirzado",
+        "keyword": "مسرور پيرزادو"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/hassan-dars",
+        "keyword": "حسن درس"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/juman-darbadar",
+        "keyword": "جمن دربدر"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ayaz-gul",
+        "keyword": "اياز گُل"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/adal-soomro",
+        "keyword": "ادل سومرو"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/haleem-baaghi",
+        "keyword": "حليم باغي"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ayoub-gul",
+        "keyword": "ايوب گُل"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/sajid-soomro",
+        "keyword": "ساجد سومرو"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/imdad-hussaini",
+        "keyword": "امداد حسيني"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/jahangeer-dahri",
+        "keyword": "جھانگير ڏاهري"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/sardar-shah",
+        "keyword": "سردار شاھ"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ayoob-khoso",
+        "keyword": "ايوب کوسو"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ubaid-thaheem",
+        "keyword": "عبيد ٿھيم"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/faqeer-janan-chan",
+        "keyword": "جانڻ چن"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/mirkaloi",
+        "keyword": "مير ڪلوئي"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/rohal-faqir",
+        "keyword": "روحل فقير"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/data-wilayat-shah",
+        "keyword": "داتا ولايت شاھ"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/asim-nathan-shahi",
+        "keyword": "آثم ناٿن شاهي"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ahmed-khan-madhosh",
+        "keyword": "احمد خان مدھوش"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/hamal-faqir",
+        "keyword": "حمل فقير"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/AyazJani",
+        "keyword": "اياز جاني"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/QadirBuxBedil",
+        "keyword": "بيدل فقير"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/Khawaja-Muhammad-Zaman-of-Luari",
+        "keyword": "خواجہ محمد زمان"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/aakash-ansari",
+        "keyword": "آڪاش انصاري"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/pir-aijaz-ali-shah",
+        "keyword": "پير اعجاز"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ishaq-samejo",
+        "keyword": "اسحاق سميجو"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/anwar-ali-shah",
+        "keyword": "انور سائين"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ali-akash",
+        "keyword": "علي آڪاش"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/manjhi-faqeer",
+        "keyword": "مانجهي فقير"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/khalil-kumbhar",
+        "keyword": "خليل ڪنڀار"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/sajid-sindhi",
+        "keyword": "ساجد سنڌي"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/ibrahim-munshi",
+        "keyword": "ابراھيم منشي"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/salman-jakhro",
+        "keyword": "سلمان جاکرو"
+    },
+    {
+        "route": "http:\/\/127.0.0.1:8000\/poets\/rubina-abro",
+        "keyword": "روبينہ ابڙو"
+    }
+]
