@@ -14,6 +14,7 @@ class Categories extends Model
         'user_id',
         'slug',
         'is_featured',
+        'gender',
         'content_style',
     ];
 

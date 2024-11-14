@@ -89,47 +89,37 @@ class AdminCategoriesController extends Controller
         return view('admin.categories.trashed', compact('languages', 'categories'));
     }
 
-
     /**
-     * Restore the current deleted categroy
+     * Create Category
      */
-    public function restore($id)
+    public function create()
     {
-        try {
-            $category = Categories::withTrashed()->findOrFail($id);
-            $category->restore();
-
-            // array for message
-            $message = [
-                'message' => 'Category restored successfully',
-                'type' => 'success',
-                'icon' => ''
-            ];
-    
-            return response()->json($message);
-
-        } catch (ModelNotFoundException $e) {
-            $message = [
-                'message' => 'Category not found',
-                'type' => 'error',
-                'icon' => ''
-            ];
-            return response()->json($message);
-        }
+        $languages = Languages::get();
+        $content_styles = ['justified','center','start','end'];
+        return view('admin.categories.create', compact('content_styles', 'languages'));
     }
 
 
+    /**
+     * Store a new category
+     */
     public function store(Request $request)
     {
+        
         $request->validate([
             'slug' => ['required', new SlugRuleCategory()], // Ensure the slug is unique
+            'content_style' => 'required|string',
+            'cat_name.*' => 'required|string',
+            'cat_name_plural.*' => 'required|string',
+            'lang.*' => 'required|string'
         ]);
-
+        dd($request->all());
 
         $category = Categories::create([
             'user_id' => $request->user_id,
             'slug' => $request->slug,
             'content_style' => $request->content_style,
+            'gender' => $request->gender,
             'is_featured' => ($request->is_featured) ? 1 : 0
         ]);
 
@@ -148,6 +138,9 @@ class AdminCategoriesController extends Controller
             ->with('success', 'Category created successfully.');
     }
 
+    /**
+     * Update Category
+     */
     public function edit($id)
     {
         $category = Categories::with('details')->findOrFail($id);
@@ -156,6 +149,9 @@ class AdminCategoriesController extends Controller
         return view('admin.categories.edit', compact('category', 'languages', 'content_styles'));
     }
 
+    /**
+     * Update Category
+     */
     public function update(Request $request, $id)
     {
         $category = Categories::findOrFail($id);
@@ -167,6 +163,7 @@ class AdminCategoriesController extends Controller
         $category->update([
             'content_style' => $request->content_style,
             'slug' => $request->slug,
+            'gender' => $request->gender,
             'is_featured' => ($request->is_featured) ? 1 : 0
         ]);
 
@@ -189,9 +186,11 @@ class AdminCategoriesController extends Controller
             ->with('success', 'Category updated successfully.');
     }
 
-    public function destroy($id)
+    /**
+     * Move to trash
+     */
+    public function destroy(Categories $category)
     {
-        $category = Categories::findOrFail($id);
         $category->delete();
         
         $message = [
@@ -235,4 +234,31 @@ class AdminCategoriesController extends Controller
         }
     }
 
+    /**
+     * Restore the current deleted categroy
+     */
+    public function restore($id)
+    {
+        try {
+            $category = Categories::withTrashed()->findOrFail($id);
+            $category->restore();
+
+            // array for message
+            $message = [
+                'message' => 'Category restored successfully',
+                'type' => 'success',
+                'icon' => ''
+            ];
+    
+            return response()->json($message);
+
+        } catch (ModelNotFoundException $e) {
+            $message = [
+                'message' => 'Category not found',
+                'type' => 'error',
+                'icon' => ''
+            ];
+            return response()->json($message);
+        }
+    }
 }

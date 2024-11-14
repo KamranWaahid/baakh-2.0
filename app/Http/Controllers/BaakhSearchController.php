@@ -4,15 +4,50 @@ namespace App\Http\Controllers;
 
 use App\Models\Categories;
 use App\Models\Poets;
+use App\Models\Search\UnifiedPoetry;
 use Illuminate\Http\Request;
 
 class BaakhSearchController extends Controller
 {
     public function index()
     {
-        dd(request()->query());
+        $query = request()->query('search');
+        $lang = request()->query('lang');
+      
+        $resp = $this->getResults($query, $lang);
+
+        return view('web.home.search_box');
     }
 
+
+    /**
+     * Search from DB
+     */
+    public function getResults($query, $lang)
+    {
+        $results = [];
+        $poetry = UnifiedPoetry::where([
+            'title' =>  '%'.$query.'%',
+            'lang' => $lang
+        ]);
+
+        if($poetry)
+        {
+            $results['poetry'] = $poetry;
+        }
+    }
+
+
+    /**
+     * Suggestions
+     */
+    public function getSuggestions($query, $lang)
+    {
+        // $poetry = UnifiedPoetry::;
+    }
+
+
+    
     /**
      * Generate JSON files
      */
@@ -29,10 +64,15 @@ class BaakhSearchController extends Controller
         $content = [];
 
         foreach ($categories as $cat) {
-                $content[] = [
-                    'route' => $cat->slug,
-                    'keyword' => ' جا ' . $cat->shortDetail->cat_name_plural
-                ];
+            $content[] = [
+                'singular' => $cat->shortDetail->cat_name ,
+                'plural' => $cat->shortDetail->cat_name_plural,
+                'gender' => ''
+            ];
+                // $content[] = [
+                //     'route' => $cat->slug,
+                //     'keyword' => ' جا ' . $cat->shortDetail->cat_name_plural
+                // ];
                 // $content[] = ['slug' => $cat->slug, 'name' => $cat->shortDetail->cat_name, 'name_plural' => $cat->shortDetail->cat_name_plural];
             }
 
@@ -47,7 +87,7 @@ class BaakhSearchController extends Controller
         //     //         'keyword' => $poet->shortDetail->poet_laqab . ' جا ' . $cat->shortDetail->cat_name_plural
         //     //     ];
         //     //     // $content[] = ['slug' => $cat->slug, 'name' => $cat->shortDetail->cat_name, 'name_plural' => $cat->shortDetail->cat_name_plural];
-        //     // }
+        //     // }ٔ
         // }
 
         

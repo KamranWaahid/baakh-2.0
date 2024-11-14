@@ -13,6 +13,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Categories</h3>
                     <a href="{{ route('admin.categories.trash') }}" class="btn btn-sm btn-warning float-right mr-1"><i class="fa fa-trash"></i> View Trashed</a>
+                    <a href="{{ route('admin.categories.create') }}" class="btn btn-sm btn-success float-right mr-1"><i class="fa fa-plus"></i> Add Category</a>
                 </div>
                 <div class="card-body">
                     <table id="example1" class="table table-bordered table-striped">
@@ -54,7 +55,7 @@
                                 
                                 <td width="12%" class="text-center">
                                     <a href="{{ route('admin.categories.edit', $data->id) }}" class="btn btn-xs btn-warning"><i class="fa fa-edit"></i></a>
-                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.categories.destroy', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="Delete Category" class="btn btn-xs btn-danger btn-delete-category"><i class="fa fa-trash"></i></button>
+                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.categories.destroy', $data->id) }}" data-toggle="tooltip" data-placement="top" title="Delete Category" class="btn btn-xs btn-danger btn-delete-category"><i class="fa fa-trash"></i></button>
                                 </td>
                             </tr>
                            @endforeach

@@ -146,17 +146,19 @@ Route::prefix('languages')->group(function () {
 });
 
 // Categories
-Route::prefix('categories')->group(function () {
-    Route::get('', [AdminCategoriesController::class, 'index'])->name('admin.categories.index')->middleware('permission:categories.menu');
-    Route::get('trashed', [AdminCategoriesController::class, 'trashed'])->name('admin.categories.trash')->middleware('permission:categories.menu');
-    Route::post('', [AdminCategoriesController::class, 'store'])->name('admin.categories.store')->middleware('permission:categories.add');
-    Route::get('{id}', [AdminCategoriesController::class, 'show'])->name('admin.categories.show')->middleware('permission:categories.add');
-    Route::get('{id}/edit', [AdminCategoriesController::class, 'edit'])->name('admin.categories.edit')->middleware('permission:categories.edit');
-    Route::put('{id}', [AdminCategoriesController::class, 'update'])->name('admin.categories.update')->middleware('permission:categories.edit');
-    Route::delete('{id}', [AdminCategoriesController::class, 'destroy'])->name('admin.categories.destroy')->middleware('permission:categories.delete');
-    Route::delete('{id}/hard-delete', [AdminCategoriesController::class, 'hardDelete'])->name('admin.categories.hard-delete')->middleware('permission:categories.delete');
-    Route::put('{id}/restore', [AdminCategoriesController::class, 'restore'])->name('admin.categories.restore')->middleware('permission:categories.edit');
-    Route::get('{id},{language}/duplicate', [AdminCategoriesController::class, 'duplicate'])->name('admin.categories.duplicate')->middleware('permission:categories.add');
+Route::name('admin.')->group(function () {
+    // Route::get('', [AdminCategoriesController::class, 'index'])->name('admin.categories.index')->middleware('permission:categories.menu');
+    Route::get('trashed', [AdminCategoriesController::class, 'trashed'])->name('categories.trash')->middleware('permission:categories.menu');
+    // Route::post('', [AdminCategoriesController::class, 'store'])->name('admin.categories.store')->middleware('permission:categories.add');
+    // Route::get('{id}', [AdminCategoriesController::class, 'show'])->name('admin.categories.show')->middleware('permission:categories.add');
+    // Route::get('{id}/edit', [AdminCategoriesController::class, 'edit'])->name('admin.categories.edit')->middleware('permission:categories.edit');
+    // Route::put('{id}', [AdminCategoriesController::class, 'update'])->name('admin.categories.update')->middleware('permission:categories.edit');
+    // Route::delete('{id}', [AdminCategoriesController::class, 'destroy'])->name('admin.categories.destroy')->middleware('permission:categories.delete');
+    Route::delete('{id}/hard-delete', [AdminCategoriesController::class, 'hardDelete'])->name('categories.hard-delete')->middleware('permission:categories.delete');
+    Route::put('{id}/restore', [AdminCategoriesController::class, 'restore'])->name('categories.restore')->middleware('permission:categories.edit');
+    // Route::get('{id},{language}/duplicate', [AdminCategoriesController::class, 'duplicate'])->name('admin.categories.duplicate')->middleware('permission:categories.add');
+
+    Route::resource('categories', AdminCategoriesController::class);
 });
 
 // Countries

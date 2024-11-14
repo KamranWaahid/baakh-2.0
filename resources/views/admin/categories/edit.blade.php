@@ -88,9 +88,6 @@
                                            
                                            <input type="text" 
                                                 class="form-control  @error('cat_name') is-invalid @enderror" 
-                                                @if (isset($details[$i]) && $details[$i]->lang == $lang->lang_code)
-                                                    value="{{ $details[$i]->cat_name }}"
-                                                @endif  
                                                 name="cat_name[]" 
                                                 id="cat_name_{{ $i }}" 
                                                 placeholder="Enter Category Name">
@@ -108,9 +105,6 @@
                                        <div class="form-group col-12">
                                            <label for="cat_detail">Details</label>
                                            <x-adminlte-textarea name="cat_detail[]" placeholder="Insert description...">
-                                            @if (isset($details[$i]) && $details[$i]->lang == $lang->lang_code)
-                                            {{ $details[$i]->cat_detail }}
-                                            @endif 
                                            </x-adminlte-textarea>
                                            
                                            @error('cat_detail')
