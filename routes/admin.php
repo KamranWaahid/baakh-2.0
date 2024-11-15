@@ -20,6 +20,7 @@ use App\Http\Controllers\admin\LanguagesController;
 use App\Http\Controllers\admin\PermissionController;
 use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\RoleController;
+use App\Http\Controllers\Admin\SqliteController;
 use Illuminate\Support\Facades\Route;
  
 
@@ -79,23 +80,27 @@ Route::patch('profile', [ProfileController::class, 'update'])->name('profile.upd
 Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy')->middleware('permission:profile.delete');
 
 // For Sliders
-Route::prefix('sliders')->group(function () {
-    Route::get('', [AdminSlidersController::class, 'index'])->name('admin.sliders.index')->middleware('permission:sliders.menu');
-    Route::get('trashed', [AdminSlidersController::class, 'trashed'])->name('admin.sliders.trash')->middleware('permission:sliders.menu');
-    Route::get('create', [AdminSlidersController::class, 'create'])->name('admin.sliders.create')->middleware('permission:sliders.add');
-    Route::post('sliders', [AdminSlidersController::class, 'store'])->name('admin.sliders.store')->middleware('permission:sliders.add');
-    Route::get('{id}/edit', [AdminSlidersController::class, 'edit'])->name('admin.sliders.edit')->middleware('permission:sliders.edit');
-    Route::put('{id}', [AdminSlidersController::class, 'update'])->name('admin.sliders.update')->middleware('permission:sliders.edit');
-    Route::delete('{id}', [AdminSlidersController::class, 'destroy'])->name('admin.sliders.destroy')->middleware('permission:sliders.delete');
-    Route::delete('{id}/hard-delete', [AdminSlidersController::class, 'hardDelete'])->name('admin.sliders.hard-delete')->middleware('permission:sliders.delete');
-    Route::put('{id}/restore', [AdminSlidersController::class, 'restore'])->name('admin.sliders.restore')->middleware('permission:sliders.edit');
-    Route::put('{id}/toggle-visibility', [AdminSlidersController::class, 'toggleVisibility'])->name('admin.sliders.toggle-visibility')->middleware('permission:sliders.edit');
+Route::name('admin.')->group(function () {
+    Route::get('sliders/trashed', [AdminSlidersController::class, 'trashed'])->name('sliders.trash')->middleware('permission:sliders.menu');
+    Route::delete('sliders/{id}/hard-delete', [AdminSlidersController::class, 'hardDelete'])->name('sliders.hard-delete')->middleware('permission:sliders.delete');
+    Route::put('sliders/{id}/restore', [AdminSlidersController::class, 'restore'])->name('sliders.restore')->middleware('permission:sliders.edit');
+    Route::put('sliders/{id}/toggle-visibility', [AdminSlidersController::class, 'toggleVisibility'])->name('sliders.toggle-visibility')->middleware('permission:sliders.edit');
+
+    Route::resource('sliders', AdminSlidersController::class)->middleware([
+        'index' => 'permission:sliders.menu',    // For index
+        'create' => 'permission:sliders.add',    // For create
+        'store' => 'permission:sliders.add',     // For store
+        'show' => 'permission:sliders.view',     // For show
+        'edit' => 'permission:sliders.edit',     // For edit
+        'update' => 'permission:sliders.edit',   // For update
+        'destroy' => 'permission:sliders.delete' // For destroy
+    ]);;
 });
 
 Route::name('admin.')->group(function () {
     Route::get('doodles/trashed', [AdminDoodles::class, 'trashed'])->name('doodles.trash');
-    Route::put('{id}/restore', [AdminDoodles::class, 'restore'])->name('doodles.restore');
-    Route::delete('{id}/hard-delete', [AdminDoodles::class, 'hardDelete'])->name('doodles.hard-delete');
+    Route::put('doodles/{id}/restore', [AdminDoodles::class, 'restore'])->name('doodles.restore');
+    Route::delete('doodles/{id}/hard-delete', [AdminDoodles::class, 'hardDelete'])->name('doodles.hard-delete');
     Route::resource('doodles', AdminDoodles::class);
 });
 
@@ -139,9 +144,9 @@ Route::prefix('languages')->group(function () {
     Route::get('create', [LanguagesController::class, 'create'])->name('languages.create');
     Route::post('', [LanguagesController::class, 'store'])->name('languages.store');
     Route::get('{id}', [LanguagesController::class, 'show'])->name('languages.show');
-    Route::get('{id}/edit', [LanguagesController::class, 'edit'])->name('languages.edit');
+    Route::get('{id}/edit', [LanguagesController::class, 'edit'])->name('admin.languages.edit');
     Route::put('{id}', [LanguagesController::class, 'update'])->name('languages.update');
-    Route::delete('{id}', [LanguagesController::class, 'destroy'])->name('languages.destroy');
+    Route::delete('{id}', [LanguagesController::class, 'destroy'])->name('admin.languages.destroy');
 
 });
 
@@ -299,4 +304,12 @@ Route::prefix('media')->group(function(){
     Route::get('edit/{id}', [AdminMediaController::class, 'edit'])->name('admin.media.edit')->middleware('permission:media.edit');
     Route::put('store', [AdminMediaController::class, 'store'])->name('admin.media.store')->middleware('permission:media.add');
     Route::delete('delete/{id}', [AdminMediaController::class, 'destroy'])->name('admin.media.delete')->middleware('permission:media.delete');
+});
+
+
+// SQLite Handler
+Route::prefix('settings/sqlite')->name('admin.sqlite.')->group(function() {
+    Route::get('', [SqliteController::class, 'index']);
+    Route::get('sync', [SqliteController::class, 'syncDataBase'])->name('sync');
+    Route::get('recreate-table/{table_name}', [SqliteController::class, 'generateTable'])->name('gen-table');
 });

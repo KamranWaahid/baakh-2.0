@@ -48,8 +48,8 @@
                                 <span class="p-1 bg-success rounded"><i class="fa fa-code"></i> {{ $data->lang_code }}</span>
                                </td>
                                <td width="12%" class="text-center">
-                                   <a href="{{ route('admin.sliders.edit', $data->id) }}" class="btn btn-xs btn-warning"><i class="fa fa-edit"></i></a>
-                                   <a href="{{ route('admin.sliders.destroy', $data->id) }}" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>
+                                   <a href="{{ route('admin.languages.edit', $data->id) }}" class="btn btn-xs btn-warning"><i class="fa fa-edit"></i></a>
+                                   <a href="{{ route('admin.languages.destroy', $data) }}" class="btn btn-xs btn-danger"><i class="fa fa-trash"></i></a>
                                </td>
                            </tr>
                            @endforeach

@@ -464,6 +464,12 @@ return [
             'icon' => 'fas fa-language',
             'b_can'       => 'users.menu'
         ],
+        [
+            'text' => 'databases',
+            'url'  => 'admin/settings/sqlite',
+            'icon' => 'fas fa-database',
+            'b_can'       => 'users.menu'
+        ],
         
         
     ],

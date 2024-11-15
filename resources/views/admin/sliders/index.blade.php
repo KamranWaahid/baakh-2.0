@@ -52,7 +52,7 @@
                                <td width="12%" class="text-center">
                                    <a href="{{ route('admin.sliders.edit', $data->id) }}" class="btn btn-xs btn-warning"><i class="fa fa-edit"></i></a>
                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.sliders.toggle-visibility', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="{{ $data->visibility == 1 ? 'Hide' : 'Show' }} Slider" class="btn btn-xs btn-info btn-visible-sliders"><i class="fa fa-{{ $data->visibility == 1 ? 'eye' : 'eye-slash' }}"></i></button>
-                                   <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.sliders.destroy', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="Delete Slider" class="btn btn-xs btn-danger btn-delete-sliders"><i class="fa fa-trash"></i></button>
+                                   <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.sliders.destroy', $data) }}" data-toggle="tooltip" data-placement="top" title="Delete Slider" class="btn btn-xs btn-danger btn-delete-sliders"><i class="fa fa-trash"></i></button>
                                </td>
                            </tr>
                            @endforeach

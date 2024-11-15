@@ -12,5 +12,21 @@ class UnifiedPoetry extends Model
 
     protected $table = 'unified_poetry';
 
-    protected $fillable = ['word', 'correct'];
+    protected $fillable = ['poetry_id', 'category_id' , 'poet_id', 'title', 'lang'];
+
+    public function poet()
+    {
+        $this->belongsTo(UnifiedPoets::class, 'poet_id', 'poet_id')->where('lang', $this->lang);
+    }
+
+    public function category()
+    {
+        $this->belongsTo(UnifiedCategories::class, 'category_id', 'category_id')->where('lang', $this->lang);
+    }
+
+    public function category_name()
+    {
+        $this->belongsTo(UnifiedCategories::class, 'category_id', 'category_id')->where('lang', $this->lang)
+        ->pluck('cat_name');
+    }
 }
