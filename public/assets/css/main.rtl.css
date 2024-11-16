@@ -389,6 +389,47 @@ section {
 .header .logo h1 span {
   color: transparent;
 }
+.main-slider-img {
+  display: flex;
+  justify-content: center;  /* Center horizontally */
+  align-items: center;      /* Center vertically */
+  width: 90%;               /* Full width of the parent */
+  padding-right: 100px;
+  height: 100%;             /* Full height of the parent */
+  position: relative;       /* Positioning context for proper centering */
+}
+
+.main-slider-img img {
+  max-width: 50%;           /* Scale down the image to 50% of its original size */
+  width: auto;              /* Allow the width to scale naturally */
+  height: auto;             /* Keep the aspect ratio intact */
+  object-fit: contain;      /* Ensure the image is contained within its box */
+  position: absolute;       /* Position it absolutely within the container */
+  top: 50%;                 /* Vertically center */
+  left: 50%;                /* Horizontally center */
+  transform: translate(-50%, -50%); /* Adjust for true centering */
+}
+
+/* Media Queries for Mobile */
+@media (max-width: 768px) {
+  .main-slider-img {
+    padding-right: 50px;     /* Reduce padding on smaller screens */
+  }
+
+  .main-slider-img img {
+    max-width: 80%;          /* Allow the image to take up more space */
+    width: 100%;             /* Ensure the image fills the container */
+    height: auto;            /* Keep the aspect ratio intact */
+    transform: translate(-50%, -50%); /* Keep centering for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .main-slider-img img {
+    max-width: 90%;          /* Allow the image to take up 90% of the width on very small screens */
+    transform: translate(-50%, -50%); /* Keep centering for mobile */
+  }
+}
 /* Basic styles for the search button */
 /* Sticky search bar */
 .sticky-search {
@@ -1592,100 +1633,134 @@ margin-bottom: -60px;
 /*--------------------------------------------------------------
 # Todays top 10 poetries
 --------------------------------------------------------------*/
-#top10poetry{
+#top10poetry {
   background: var(--color-sections);
   position: relative;
   width: 100%;
   margin: 0 auto;
+  padding: 20px 0; /* Added padding for a clean look */
 }
+
 .top10poetry .section-header {
-  margin-bottom: -20px;
-  
+  margin-bottom: 20px; /* Adjusted margin for better spacing */
+  text-align: center; /* Center the section header */
 }
+
 .top10poetry .section-header p {
   font-size: 1.8rem;
+  color: var(--color-primary);
+  font-weight: bold;
+  text-transform: uppercase;
 }
- 
+
 .top10poetry .top10poetry-carousel,
 .top10poetry .top10poetry-slider {
   overflow: hidden;
 }
 
-
 .top10poetry .testimonial-item h3 {
   font-size: 1rem;
   font-weight: bold;
   text-align: center;
-  margin: 10px 0 5px 0;
+  margin: 10px 0;
   color: var(--color-default);
   font-family: var(--font-secondary);
 }
 
 .top10poetry .testimonial-item h4 {
-  font-size: 14px;
-  color: var( --text-color-light);
+  font-size: 0.9rem;
+  color: var(--text-color-light);
   margin: 0 0 10px 0;
   font-family: var(--font-secondary);
 }
 
 .top10poetry .testimonial-item .stars i {
   color: var(--color-rating-star);
-  margin: 0 1px;
+  margin: 0 2px;
 }
-
 
 .top10poetry .testimonial-item p {
   text-align: center;
-  font-size:25px;
+  font-size: 1.2rem;
+  line-height: 1.5;
   z-index: 9999;
 }
 
 .top10poetry .swiper-pagination {
-  margin-top: 25px;
+  margin-top: 30px;
   position: relative;
-}
-
-.top10poetry .carousel-btn{
-  padding-bottom: 90px;
+  text-align: center;
 }
 
 .top10poetry .swiper-pagination .swiper-pagination-bullet {
   width: 12px;
   height: 12px;
   background-color: var(--color-body-light);
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .top10poetry .swiper-pagination .swiper-pagination-bullet-active {
   background-color: var(--color-primary);
 }
-.top10poetry .carousel-btn{
+
+.top10poetry .carousel-btn {
+  padding-bottom: 90px;
+  text-align: center;
   color: var(--carousel-btn);
 }
-.top10poetry .carousel-btn:hover{
+
+.top10poetry .carousel-btn:hover {
   color: var(--carousel-btn-hover);
 }
 
-@media only screen and (max-width: 768px) {
-  /* Media query for screens with a maximum width of 768px (mobile) */
+@media only screen and (max-width: 1024px) {
+  /* Tablet and smaller screen sizes */
   .top10poetry .testimonial-item p {
-    font-size: 1.2rem; /* Font size for mobile */
+    font-size: 1.5rem; /* Adjusted font size for readability */
   }
+
   .top10poetry .testimonial-item h3 {
-    font-size: 0.9rem;
-    margin: 10px 0 5px 0;
+    font-size: 1.1rem;
   }
-  .top10poetry .carousel-btn{
-    padding-bottom: 0px;
+
+  .top10poetry .section-header p {
+    font-size: 1.6rem;
+  }
+
+  .top10poetry .carousel-btn {
+    padding-bottom: 20px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  /* Mobile and smaller screens */
+  .top10poetry .testimonial-item p {
+    font-size: 1.2rem;
+    line-height: 1.4;
+  }
+
+  .top10poetry .testimonial-item h3 {
+    font-size: 1rem;
+    margin: 5px 0;
+  }
+
+  .top10poetry .testimonial-item h4 {
+    font-size: 0.8rem;
+  }
+
+  .top10poetry .carousel-btn {
+    padding-bottom: 0;
     top: 30px;
     padding-right: 5px;
     padding-left: 5px;
   }
-  .top10poetry .buttons .label{
-    display: none !important;
-  }
-  .top10poetry .swiper-pagination{
+
+  .top10poetry .swiper-pagination {
     margin-top: 15px !important;
+  }
+
+  .top10poetry .buttons .label {
+    display: none !important;
   }
 
   #poetry-list-btn {
@@ -1694,15 +1769,36 @@ margin-bottom: -60px;
     padding-bottom: 20px;
     overflow-x: scroll;
   }
+
   .TodaysPoetrybtn {
-    margin-left:10px !important;
+    margin-left: 10px !important;
   }
 
-  .section-header p, .section-header .section-title{
+  .section-header p, .section-header .section-title {
     font-size: var(--poetry-heading-size-sm);
   }
+
   .top10poetry .section-header p {
     font-size: var(--poetry-heading-size-sm);
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  /* For very small mobile screens */
+  .top10poetry .testimonial-item p {
+    font-size: 1rem;
+  }
+
+  .top10poetry .testimonial-item h3 {
+    font-size: 0.9rem;
+  }
+
+  .top10poetry .section-header p {
+    font-size: 1.4rem;
+  }
+
+  .top10poetry .testimonial-item h4 {
+    font-size: 0.7rem;
   }
 }
 
@@ -1715,15 +1811,17 @@ margin-bottom: -60px;
 
 .events .event-item {
   background-size: cover;
-  background-position: cente;
+  background-position: center; /* Fixed the typo from 'cente' to 'center' */
   min-height: 600px;
-  padding: 30px;
+  padding: 20px;
+  position: relative;
+  transition: transform 0.3s ease; /* Added smooth transition for hover effect */
+  border-radius: 10px; /* Rounded corners for a modern look */
+  overflow: hidden; /* Prevents content from overflowing */
 }
 
-@media (max-width: 575px) {
-  .events .event-item {
-    min-height: 500px;
-  }
+.events .event-item:hover {
+  transform: scale(1.05); /* Slight zoom effect on hover */
 }
 
 .events .event-item:before {
@@ -1731,42 +1829,108 @@ margin-bottom: -60px;
   background: rgba(0, 0, 0, 0.6);
   position: absolute;
   inset: 0;
+  z-index: 1;
 }
 
 .events .event-item h3 {
-  font-size: 24px;
+  font-size: 1.5rem; /* Adjusted for better readability */
   font-weight: 700;
   margin-bottom: 5px;
-  color: var( --text-color-light);
+  color: var(--text-color-light);
   position: relative;
+  z-index: 2;
 }
 
 .events .event-item .price {
-  color: var( --text-color-light);
+  color: var(--text-color-light);
   border-bottom: 2px solid var(--color-primary);
-  font-size: 32px;
+  font-size: 1.8rem; /* Adjusted font size */
   font-weight: 700;
   margin-bottom: 15px;
   position: relative;
+  z-index: 2;
 }
 
 .events .event-item .description {
   margin-bottom: 0;
   color: rgba(255, 255, 255, 0.9);
   position: relative;
+  z-index: 2;
 }
 
-@media (min-width: 1200px) {
-  .events .swiper-slide-active+.swiper-slide {
-    border-left: 1px solid rgba(255, 255, 255, 0.5);
-    border-right: 1px solid rgba(255, 255, 255, 0.5);
-    z-index: 1;
+@media (max-width: 1200px) {
+  /* For large devices (like desktops) */
+  .events .event-item {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 992px) {
+  /* For tablets */
+  .events .event-item {
+    min-height: 450px;
+  }
+
+  .events .event-item h3 {
+    font-size: 1.2rem; /* Slightly smaller text for tablets */
+  }
+
+  .events .event-item .price {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* For mobile devices */
+  .events .event-item {
+    min-height: 400px;
+  }
+
+  .events .event-item h3 {
+    font-size: 1rem; /* Adjusted font size for smaller screens */
+  }
+
+  .events .event-item .price {
+    font-size: 1.4rem;
+  }
+
+  .events .event-item .description {
+    font-size: 0.9rem; /* Adjusted font size for mobile */
+  }
+
+  .events .swiper-pagination {
+    margin-top: 15px;
+  }
+
+  .events .swiper-pagination .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+@media (max-width: 575px) {
+  /* For very small mobile devices */
+  .events .event-item {
+    min-height: 350px;
+  }
+
+  .events .event-item h3 {
+    font-size: 0.9rem; /* Smaller text for very small screens */
+  }
+
+  .events .event-item .price {
+    font-size: 1.2rem;
+  }
+
+  .events .event-item .description {
+    font-size: 0.8rem; /* Reduced font size for readability */
   }
 }
 
 .events .swiper-pagination {
   margin-top: 20px;
   position: relative;
+  text-align: center;
 }
 
 .events .swiper-pagination .swiper-pagination-bullet {
@@ -2403,6 +2567,31 @@ margin-bottom: -60px;
   min-height: 60vh;
   padding: 160px 0 60px 0;
 }
+
+/* Media query for tablets (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .hero {
+    padding: 120px 0 40px 0;
+    min-height: 50vh;
+  }
+}
+
+/* Media query for mobile devices (max-width: 768px) */
+@media (max-width: 768px) {
+  .hero {
+    padding: 100px 0 30px 0;
+    min-height: 45vh;
+  }
+}
+
+/* Media query for smaller mobile devices (max-width: 480px) */
+@media (max-width: 480px) {
+  .hero {
+    padding: 80px 0 20px 0;
+    min-height: 40vh;
+  }
+}
+
 
 .hero h2 {
   font-size: 64px;

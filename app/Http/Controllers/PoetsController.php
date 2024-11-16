@@ -362,60 +362,54 @@ class PoetsController extends UserController
     }
 
 
-    /**
-     * List of Alphabets in Poets Page
-     */
     public function listOfAlphabet($lang = 'sd')
     {
         $html = '';
-        if (isset($_GET['startsWith'])) {
-            $alphabetId = $_GET['startsWith'];
+        $alphabetId = $_GET['startsWith'] ?? 'x';
+    
+        if ($lang == 'sd') {
+            $alphabets = ['x', 'ا', 'ب', 'ٻ', 'ڀ', 'ت', 'ٿ', 'ٽ', 'ٺ', 'ث', 'ج', 'ڄ', 'جهہ', 'ڃ', 'چ', 'ڇ', 'ح', 'خ', 'د', 'ڌ', 'ڏ', 'ڊ', 'ڍ', 'ذ', 'ر', 'ڙ', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ڦ', 'ق', 'ڪ', 'ک', 'گ', 'ڳ', 'گهہ', 'ڱ', 'ل', 'م', 'ن', 'ڻ', 'و', 'ھہ', 'ء', 'ي'];
         } else {
-            $alphabetId = 'x';
+            $alphabets = ['x', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
         }
-
-        
-        if($lang == 'sd')
-        {
-            $alphabets = ['x','ا','ب','ٻ','ڀ','ت','ٿ','ٽ','ٺ','ث','ج','ڄ','جهہ','ڃ','چ','ڇ','ح','خ','د','ڌ','ڏ','ڊ','ڍ','ذ','ر','ڙ','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ڦ','ق','ڪ','ک','گ','ڳ','گهہ','ڱ','ل','م','ن','ڻ','و','ھہ','ء','ي'];
-            $index = array_search($alphabetId, $alphabets);
-            if ($index !== false) {
-                $startIndex = max(0, $index - 8);
-                $endIndex = min(count($alphabets) - 1, $index + 8);
-            }
-        }else{
-            $alphabets = ['x','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
-            $index = array_search($alphabetId, $alphabets);
-            if ($index !== false) {
-                $startIndex = max(0, $index - 8);
-                $endIndex = min(count($alphabets) - 1, $index + 8);
-            }
+    
+        $index = array_search($alphabetId, $alphabets);
+        $index = $index !== false ? $index : 0; // Default to 0 if the character is not found
+    
+        $range = 8; // Number of alphabets to show before and after
+        $startIndex = max(0, $index - $range);
+        $endIndex = min(count($alphabets) - 1, $index + $range);
+    
+        // Previous button
+        if ($startIndex > 0) {
+            $prevIndex = max(0, $startIndex - $range - 1);
+            $prevLetter = $alphabets[$prevIndex];
+            $html .= '<li class="list-inline-item">
+                        <a href="'.URL::localized(route('poets.all', ['startsWith' => $prevLetter])).'" class="btn btn-secondary btn-alphabet">..</a>
+                      </li>';
         }
-
-        // logic starts
-        if($startIndex > 0) {
-            $html .='<li class="list-inline-item"><a href="#" class="btn btn-secondary btn-alphabet">..</a></li>';
-        }
-
-        // for loop to display alphabets
-        for ($i = $startIndex; $i <= $endIndex; $i++) { 
+    
+        // Alphabet buttons
+        for ($i = $startIndex; $i <= $endIndex; $i++) {
             $active = ($alphabets[$i] == $alphabetId) ? 'active' : '';
-            if($alphabets[$i] != 'x')
-            {
-                $alphabetsss[] = $alphabets[$i];
+            if ($alphabets[$i] != 'x') {
                 $html .= '<li class="list-inline-item">
                             <a href="'.URL::localized(route('poets.all', ['startsWith' => $alphabets[$i]])).'" class="btn btn-secondary '.$active.' btn-alphabet">'.$alphabets[$i].'</a>
-                        </li>';
+                          </li>';
             }
         }
-
-        if($endIndex <= count($alphabets) - 1) {
-            $html .= '<li class="list-inline-item"><a href="#" class="btn btn-secondary btn-alphabet">..</a></li>';
+    
+        // Next button
+        if ($endIndex < count($alphabets) - 1) {
+            $nextIndex = min(count($alphabets) - 1, $endIndex + 1);
+            $nextLetter = $alphabets[$nextIndex];
+            $html .= '<li class="list-inline-item">
+                        <a href="'.URL::localized(route('poets.all', ['startsWith' => $nextLetter])).'" class="btn btn-secondary btn-alphabet">..</a>
+                      </li>';
         }
-
+    
         return $html;
-        
     }
-
+    
     
 }

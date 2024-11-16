@@ -2,7 +2,7 @@
 
 @section('body')
 
-<section class="hero" style="height: 100vh !important;">
+<section class="hero">
   <div class="container">
     <div class="col-md-9 col-12 m-auto">
         @if (isset($doodles) && $doodles->reference)
@@ -15,6 +15,7 @@
           <a href="{{ URL::localized(route('poets.slug', $ref->poet_slug)) }}">
             <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh-beta.svg') }}" 
             class="main-slider-img" 
+            height="300px"
             alt="{{ $doodles->title }}">
           </a>
             <h2 class="text-center">{{ $ref->poet_laqab }}</h2>
@@ -28,6 +29,7 @@
         @elseif (isset($doodles))
           <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh-beta.svg') }}" 
           class="main-slider-img" 
+          height="300px"
           alt="{{ $doodles->title }}">
 
         @else

@@ -1,5 +1,5 @@
 <div class="hero-search-container">
-    <input type="text" id="hero-search-box" class="form-control hero-search-box" placeholder="Search...">
+    <input type="text" id="hero-search-box" class="form-control hero-search-box" placeholder="ڳولھا ڪريو.">
     <i class="bi bi-search hero-search-icon"></i>
     <div class="hero-suggestions-card" id="hero-suggestions-card">
         <!-- AJAX suggestion items will be inserted here -->
@@ -8,58 +8,111 @@
 
 @push('css')
 <style>
-    /* Custom search box styling */
-    .hero-search-container {
-        position: relative;
-        max-width: 500px;
-        margin: 20px auto;
-        border: 1px solid black;
-        z-index: 999;
-    }
+/* Search Container Styling */
+.hero-search-container {
+    position: relative;
+    max-width: 500px;
+    margin: 20px auto;
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    background-color: #fff;
+    /*box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);*/
+    display: flex;
+    align-items: center;
+    transition: box-shadow 0.3s ease;
+}
 
-    .hero-search-box {
-        padding-right: 40px;
-    }
+/* Search Box Styling */
+.hero-search-box {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    font-size: 16px;
+    border: none;
+    outline: none;
+    background: none;
+    color: #202124;
+    border-radius: 24px;
+    transition: box-shadow 0.2s ease;
+}
 
-    .hero-search-icon {
-        position: absolute;
-        top: 50%;
-        right: 10px;
-        transform: translateY(-50%);
-        color: #6c757d;
-        cursor: pointer;
-    }
+/* Remove blue outline and add subtle shadow on focus */
+.hero-search-box:focus {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
 
-    /* AJAX suggestions styling */
-    .hero-suggestions-card {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        z-index: 100;
-        border: 1px solid #ddd;
-        border-radius: 0 0 4px 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        background-color: #fff;
-        display: none;
-        max-height: 250px;
-        overflow-y: auto;
-    }
+/* Search Icon Styling */
+.hero-search-icon {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    color: #80868b;
+    font-size: 16px; /* Smaller search icon */
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
 
-    .hero-suggestion-item {
-        padding: 10px;
-        cursor: pointer;
-    }
+/* Suggestions Box Styling */
+.hero-suggestions-card {
+    position: absolute;
+    top: calc(100% + 4px); /* Place just below the search box */
+    left: 0;
+    right: 0;
+    border: 1px solid #dfe1e5;
+    border-radius: 12px; /* Subtler rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background-color: #fff;
+    display: none; /* This will be controlled by JavaScript */
+    max-height: 250px;
+    overflow-y: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
 
-    .hero-suggestion-item:hover {
-        background-color: #f8f9fa;
-    }
+/* Individual Suggestion Item */
+.hero-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #202124;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+}
+
+.hero-suggestion-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    flex-grow: 1;
+}
+
+/* Search icon for each suggestion */
+.hero-suggestion-item i {
+    font-size: 14px;
+    color: #80868b;
+}
+
+/* Hover effect on suggestion items */
+.hero-suggestion-item:hover {
+    background-color: #f1f3f4;
+}
+
+/* Show Suggestions Box */
+.hero-suggestions-card.show {
+    display: block;
+    opacity: 0.8; /* Reduced opacity for a more subtle effect */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Softer shadow */
+}
+
 </style>
 @endpush
 
 @push('js')
-    <script>
-      $(document).ready(function() {
+<script>
+$(document).ready(function() {
     let poets = [];
     let categories = [];
     let dataLoaded = false;
@@ -83,8 +136,6 @@
 
         if (query.length > 1 && dataLoaded) {
             let suggestions = [];
-            
-            // Split query by spaces to handle potential multi-word inputs
             const queryParts = query.split(" ");
             let poetMatch = null;
             let categoryMatch = null;
@@ -105,22 +156,18 @@
 
             // Generate suggestions based on matches
             if (poetMatch && categoryMatch) {
-                // If both a poet and category match, show combined result
                 suggestions.push({
-                    text: poetMatch.keyword + categoryMatch.keyword,
+                    text: poetMatch.keyword + ' ' + categoryMatch.keyword,
                     link: poetMatch.route.replace(/\/+$/, '') + '/' + categoryMatch.route
                 });
             } else if (poetMatch) {
-                // If only poet matches, show the poet's name suggestion
                 suggestions.push({
                     text: poetMatch.keyword,
                     link: poetMatch.route
                 });
-
-                // Also show concatenated suggestions for each category
                 categories.forEach(category => {
                     suggestions.push({
-                        text: poetMatch.keyword + category.keyword,
+                        text: poetMatch.keyword + ' ' + category.keyword,
                         link: poetMatch.route.replace(/\/+$/, '') + '/' + category.route
                     });
                 });
@@ -130,29 +177,27 @@
             let suggestionsHTML = '';
             suggestions.slice(0, 8).forEach(item => {
                 suggestionsHTML += `<div class="hero-suggestion-item">
-                    <a href="${item.link}">${item.text}</a>
+                    <i class="bi bi-search"></i> <a href="${item.link}">${item.text}</a>
                 </div>`;
             });
-            $('#hero-suggestions-card').html(suggestionsHTML).fadeIn();
+            $('#hero-suggestions-card').html(suggestionsHTML).addClass('show');
         } else {
-            $('#hero-suggestions-card').fadeOut();
+            $('#hero-suggestions-card').removeClass('show');
         }
     });
 
     // Hide suggestions when clicking outside
     $(document).on('click', function(event) {
         if (!$(event.target).closest('.hero-search-container').length) {
-            $('#hero-suggestions-card').fadeOut();
+            $('#hero-suggestions-card').removeClass('show');
         }
     });
 
     // Handle suggestion click
     $(document).on('click', '.hero-suggestion-item', function() {
         $('#hero-search-box').val($(this).text().trim());
-        $('#hero-suggestions-card').fadeOut();
+        $('#hero-suggestions-card').removeClass('show');
     });
 });
-
-
-    </script>
+</script>
 @endpush

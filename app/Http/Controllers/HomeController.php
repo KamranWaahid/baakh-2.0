@@ -35,10 +35,9 @@ class HomeController extends UserController
     {
         $today = Carbon::today();
         $locale = app()->getLocale();
-        $doodles = Doodle::with('reference')->get()->filter(function ($doodle) use ($today) {
-            return $doodle->shouldBeDisplayedToday();
-        })->first();
+        $doodles = Doodle::first();
 
+        //dd($doodles);
         $sliders = Sliders::where(['lang' => $locale, 'visibility' => 1])->get();
         $famous_poet = $this->getFamousPoets($locale);
         $ghazal_of_day = $this->getGhazalOfDay($locale);
