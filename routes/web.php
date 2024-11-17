@@ -108,8 +108,9 @@ Route::prefix('prosody/')->group(function(){
 
 // Search
 Route::prefix('search')->name('web.search.')->controller(BaakhSearchController::class)->group(function () {
-    Route::get('/', 'index')->name('query');
+    Route::get('/', 'index')->name('index');
     Route::get('/generate-json', 'generateJson')->name('generate-json');
+    Route::get('/suggestions/{q}/{lang}', 'getSuggestions')->name('suggestions');
 });
 
  Auth::routes();

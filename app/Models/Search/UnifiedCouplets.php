@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UnifiedCouplets extends Model
 {
-    protected $connection = 'slqite';
+    protected $connection = 'sqlite';
 
     protected $table = 'unified_couplets';
 
@@ -22,12 +22,11 @@ class UnifiedCouplets extends Model
 
     public function poet()
     {
-        return $this->belongsTo(UnifiedPoets::class, 'poet_id', 'poet_id')
-            ->where('lang', $this->lang);
+        return $this->belongsTo(UnifiedPoets::class, 'poet_id', 'poet_id');
     }
 
     public function poetry()
     {
-        $this->belongsTo(UnifiedPoetry::class, 'poetry_id', 'poetry_id')->where('lang', $this->lang);
+        return $this->belongsTo(UnifiedPoetry::class, 'poetry_id', 'poetry_id');
     }
 }

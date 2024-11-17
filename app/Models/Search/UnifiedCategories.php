@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UnifiedCategories extends Model
 {
-    protected $connection = 'slqite';
+    protected $connection = 'sqlite';
 
     protected $table = 'unified_categories';
 

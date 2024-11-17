@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UnifiedPoets extends Model
 {
-    protected $connection = 'slqite';
+    protected $connection = 'sqlite';
 
     protected $table = 'unified_poets';
 

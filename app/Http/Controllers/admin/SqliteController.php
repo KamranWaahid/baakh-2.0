@@ -38,7 +38,7 @@ class SqliteController extends Controller
         $connection = DB::connection('sqlite');
         // Check and create `unified_poetry` table
         if (!$connection->getSchemaBuilder()->hasTable('unified_poetry')) {
-            $$this->createPoetryTable($connection);
+            $this->createPoetryTable($connection);
         }
 
         // Check and create `unified_poets` table
@@ -111,6 +111,7 @@ class SqliteController extends Controller
                 'poetry_id' => $value->poetry_id,
                 'category_id' => $value->category_id,
                 'poet_id' => $value->poet_id,
+                'poetry_slug' => $value->poetry_slug,
                 'title' => $this->cleanText($value->title),
                 'lang' => $value->lang,
             ];
@@ -229,7 +230,7 @@ class SqliteController extends Controller
      * Clear content
      */
     protected function cleanText($text){
-        $garbadge = [];
+        $garbadge = ['َ', 'ِ', 'ُ', 'ّ', '،', '.'];
         $cleanGarbage = str_replace($garbadge, '', $text);
         $cleanText = preg_replace('/[^a-zA-Z0-9\s\p{Arabic}]/u', '', $cleanGarbage);
         return $cleanText;
@@ -247,7 +248,8 @@ class SqliteController extends Controller
             $table->string('poet_laqab')->nullable();
             $table->string('lang')->nullable();
 
-            $table->index('poet_id');
+            $table->index('poet_name', 'poet_name_index');
+            $table->index('poet_laqab', 'poet_laqab_index');
         });
     }
 
@@ -258,6 +260,7 @@ class SqliteController extends Controller
             $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('poet_id')->nullable();
             $table->string('title')->nullable();
+            $table->string('poetry_slug')->nullable();
             $table->string('lang')->nullable();
 
             $table->index('poetry_id');
