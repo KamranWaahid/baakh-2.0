@@ -17,6 +17,7 @@ class UnifiedCouplets extends Model
         'poetry_id',
         'couplet_slug',
         'couplet_text',
+        'couplet_text_original',
         'lang'
     ];
 

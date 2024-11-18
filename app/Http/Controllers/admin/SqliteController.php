@@ -7,9 +7,11 @@ use App\Models\Poetry;
 use App\Models\Search\UnifiedPoetry;
 use App\Models\Search\UnifiedPoets;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SqliteController extends Controller
 {
+
     public function index()
     {
         $this->touchSQlite();
@@ -122,6 +124,7 @@ class SqliteController extends Controller
                 'poet_id' => $value->poet_id,
                 'poetry_slug' => $value->poetry_slug,
                 'title' => $this->cleanText($value->title),
+                'title_original' => $value->title,
                 'lang' => $value->lang,
             ];
         }, $poetry_data);
@@ -158,32 +161,48 @@ class SqliteController extends Controller
     }
 
     /**
-     * Generate Couplets
+     * Generate Couplets in Paginated Format
      */
     protected function generateCouplets($recreate = true, $min_id = 0) {
         $connection = DB::connection('sqlite');
-        if($recreate) {
+    
+        // Recreate the table if specified
+        if ($recreate) {
             if ($connection->getSchemaBuilder()->hasTable('unified_couplets')) {
-                $connection->getSchemaBuilder()->dropIfExists('unified_couplets'); // drop previous table
+                $connection->getSchemaBuilder()->dropIfExists('unified_couplets'); // Drop previous table
             }
             $this->createCoupletsTable($connection);
         }
-        
+    
+        DB::table('poetry_couplets')
+            ->where('id', '>', $min_id)
+            ->orderBy('id') // Ensure consistent ordering
+            ->chunkById(1000, function ($poet_data, $chunkNumber) use ($connection) {
+                Log::info("Processing chunk #{$chunkNumber}, records: " . count($poet_data));
+                $insertData = $poet_data->map(function ($value) {
+                    $text = $value->couplet_text;
+                    return [
+                        'couplet_id' => $value->id,
+                        'poet_id' => $value->poet_id,
+                        'poetry_id' => $value->poetry_id,
+                        'couplet_slug' => $value->couplet_slug,
+                        'couplet_text' => $this->cleanText($text),
+                        'couplet_text_original' => $text,
+                        'lang' => $value->lang,
+                    ];
+                })->toArray();
 
-        $poet_data = DB::select('SELECT id as couplet_id, poet_id, poetry_id, couplet_slug, couplet_text, lang  FROM poetry_couplets WHERE id > :min_id', ['min_id' => $min_id]);
-        $insertData = array_map(function ($value) {
-            return [
-                'couplet_id' => $value->couplet_id,
-                'poet_id' => $value->poet_id,
-                'poetry_id' => $value->poetry_id,
-                'couplet_slug' => $value->couplet_slug,
-                'couplet_text' => $this->cleanText($value->couplet_text),
-                'lang' => $value->lang,
-            ];
-        }, $poet_data);
+                try {
+                    $connection->table('unified_couplets')->insert($insertData);
+                } catch (\Exception $e) {
+                    Log::error("Insert failed: " . $e->getMessage());
+                }
+                
+            });
 
-        $connection->table('unified_couplets')->insert($insertData);
     }
+    
+
 
     protected function generateTags($recreate = true, $min_id = 0) {
         $connection = DB::connection('sqlite');
@@ -287,6 +306,7 @@ class SqliteController extends Controller
             $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('poet_id')->nullable();
             $table->string('title')->nullable();
+            $table->string('title_original')->nullable();
             $table->string('poetry_slug')->nullable();
             $table->string('lang')->nullable();
             
@@ -306,6 +326,7 @@ class SqliteController extends Controller
 
             $table->string('couplet_slug')->nullable();
             $table->text('couplet_text')->nullable();
+            $table->text('couplet_text_original')->nullable();
             $table->string('lang')->nullable();
             
 

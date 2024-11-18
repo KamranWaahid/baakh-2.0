@@ -9,6 +9,7 @@ use App\Models\Search\UnifiedPoetry;
 use App\Models\Search\UnifiedPoets;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class BaakhSearchController extends Controller
 {
@@ -114,6 +115,7 @@ class BaakhSearchController extends Controller
 
                 $title = $item->title . ' ('.$category->cat_name.')';
 
+                $link = $link . '#:~:text=' . Str::words($item->title_original, 5, '');
                 $html .= view('web.home.search_suggestion_list', [
                     'link' => $link,
                     'text' => $title
@@ -127,6 +129,7 @@ class BaakhSearchController extends Controller
                 $categorySlug = $item->poetry->category->slug ?? 'uncategorized'; // Fallback for missing category
                 $link = route('poetry.with-slug', ['category' => $categorySlug, 'slug' => $item->poetry->poetry_slug]);
                 
+                
                 $lines = explode("\n", $item->couplet_text);
                 $result = '';
 
@@ -137,6 +140,7 @@ class BaakhSearchController extends Controller
                     }
                 }
 
+                $link = $link . '#:~:text=' . Str::words($item->couplet_text_original, 5, '');
                 $html .= view('web.home.search_suggestion_list', [
                     'link' => $link,
                     'text' => $result
@@ -167,35 +171,6 @@ class BaakhSearchController extends Controller
         ])->with('shortDetail:id,cat_id,cat_name,cat_name_plural')->get();
 
         $content = [];
-
-        foreach ($categories as $cat) {
-            $content[] = [
-                'singular' => $cat->shortDetail->cat_name ,
-                'plural' => $cat->shortDetail->cat_name_plural,
-                'gender' => ''
-            ];
-                // $content[] = [
-                //     'route' => $cat->slug,
-                //     'keyword' => ' جا ' . $cat->shortDetail->cat_name_plural
-                // ];
-                // $content[] = ['slug' => $cat->slug, 'name' => $cat->shortDetail->cat_name, 'name_plural' => $cat->shortDetail->cat_name_plural];
-            }
-
-        // foreach ($poets as $poet) {
-        //     $content[] = [
-        //         'route' => route('poets.slug', ['category' => null, 'name' => $poet->poet_slug]),
-        //         'keyword' => $poet->shortDetail->poet_laqab
-        //     ];
-        //     // foreach ($categories as $cat) {
-        //     //     $content[] = [
-        //     //         'route' => route('poets.slug', ['category' => $cat->slug, 'name' => $poet->poet_slug]),
-        //     //         'keyword' => $poet->shortDetail->poet_laqab . ' جا ' . $cat->shortDetail->cat_name_plural
-        //     //     ];
-        //     //     // $content[] = ['slug' => $cat->slug, 'name' => $cat->shortDetail->cat_name, 'name_plural' => $cat->shortDetail->cat_name_plural];
-        //     // }ٔ
-        // }
-
-        
 
         return response()->json($content, 200, ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }

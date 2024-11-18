@@ -10,7 +10,7 @@ class UnifiedPoetry extends Model
 
     protected $table = 'unified_poetry';
 
-    protected $fillable = ['poetry_id', 'category_id' , 'slug', 'poet_id', 'title', 'lang'];
+    protected $fillable = ['poetry_id', 'category_id' , 'slug', 'poet_id', 'title', 'title_original' ,  'lang'];
 
     public function poet()
     {
