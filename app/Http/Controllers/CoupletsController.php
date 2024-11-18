@@ -80,17 +80,17 @@ class CoupletsController extends UserController
             'info' => function ($query) use ($locale) {
                 $query->where('lang', $locale)->take(1);
             }
+            
         ])
         ->where(['couplet_slug' => $slug, 'lang' => $locale])
         ->first();
+
+        $couplet->load('poet');
         
         if(!$couplet) {
             abort(404);
         }
-        $poet_id = $couplet->poet_id;
-        $poet_info = Poets::with(['details' => function ($query) use ($locale) {
-                                $query->where('lang', $locale);
-                            }])->where('id', $poet_id)->first();
+        
         
         // Poetry Tags
         if(!is_null($couplet->couplet_tags) && $couplet->couplet_tags !='null'){
@@ -99,27 +99,15 @@ class CoupletsController extends UserController
         }else{
             $used_tags = null;
         }
-
-         /**
-         * Poetry Meta
-         */
-        $poet_detail = $poet_info->details;
-        $title = $poet_detail->poet_laqab. ' | '.$couplet->couplet_title;
-        // SEO 
-        // Generate SEO description without HTML tags and newline characters
-        $seo_desc = Str::limit(preg_replace('/\s+/', ' ', strip_tags($couplet->couplet_text)), 160, '...');
-
-        
-        $liked = $this->isLiked('Couplet', $couplet->couplet_slug);
+ 
 
         if(!isNull($couplet->poetry_id) || $couplet->poetry_id > 0) {
             $haveMainPoetry = $this->getMainPoetryUrl($couplet->poetry_id);
         }else{
             $haveMainPoetry = null;
         }
-
         
-        return view('web.couplets.show', compact('couplet','poet_info','poet_detail','used_tags','poetryUrl','liked'));
+        return view('web.couplets.show', compact('couplet','used_tags','poetryUrl'));
     }
 
     

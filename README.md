@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://baakh.com" target="_blank">
-<img src="https://baakh.com/assets/img/Baakh-beta.svg" width="400" alt="Baakh Logo">
+<img src="https://baakh.com/assets/img/Baakh.svg" width="400" alt="Baakh Logo">
 </a>
 </p>
  

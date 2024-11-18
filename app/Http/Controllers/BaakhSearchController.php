@@ -131,21 +131,33 @@ class BaakhSearchController extends Controller
                 
                 
                 $lines = explode("\n", $item->couplet_text);
+                $couplet_text_original = explode("\n", $item->couplet_text_original);
                 $result = '';
+                $highlight_line = '';
 
-                foreach ($lines as $line) {
+                foreach ($lines as $k => $line) {
                     if (strpos($line, $query) !== false) {
                         $result = $line;
+                        $highlight_line = $couplet_text_original[$k];
                         break; // Stop after finding the first match
                     }
                 }
 
-                $link = $link . '#:~:text=' . Str::words($item->couplet_text_original, 5, '');
+                $link = $link . '#:~:text=' . $highlight_line;
                 $html .= view('web.home.search_suggestion_list', [
                     'link' => $link,
                     'text' => $result
                 ])->render();
             }
+        }
+
+        if($html === "") {
+            $gotoLink = URL::localized(route('web.search.index', ['what' => urlencode($query)]));
+            $gotoTitle = $query . ' - ڳوڙھي ڳولا ڪريو';
+            $html .= view('web.home.search_suggestion_list', [
+                'link' => $gotoLink,
+                'text' => $gotoTitle
+            ])->render();
         }
 
         return response()->json([

@@ -199,13 +199,8 @@ class AdminCoupletsController extends Controller
         $query = Couplets::with(['poet.details', 'language'])->where('lang', $lang);
 
         // Implement search
-        
         if ($request->has('search') && !empty($request->search['value'])) {
-            $query->where(function ($q) use ($columns, $request) {
-                foreach ($columns as $column) {
-                    $q->orWhere($column, 'like', '%' . $request->search['value'] . '%');
-                }
-            });
+            $query->where('couplet_text', 'like', '%' . $request->search['value'] . '%');
         }
 
         // Implement ordering

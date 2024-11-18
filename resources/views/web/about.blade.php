@@ -13,7 +13,7 @@
     <p style="font-size: 1.5em; color: var(--primary)" class="mt-2">{{ trans('labels.subtitle') }}</p>
 </div>
       <div class="row gy-4">
-        <div class="col-lg-4 position-relative about-img aos-init aos-animate" style="background-image: url({{ asset('assets/img/Baakh-beta.svg'); }});    background-repeat: no-repeat;background-position: center;" data-aos="fade-up" data-aos-delay="150">
+        <div class="col-lg-4 position-relative about-img aos-init aos-animate" style="background-image: url({{ asset('assets/img/Baakh.svg'); }});    background-repeat: no-repeat;background-position: center;" data-aos="fade-up" data-aos-delay="150">
            
         </div>
         <div class="col-lg-8 d-flex align-items-center aos-init aos-animate" style="font-size: 1.2em;" data-aos="fade-up" data-aos-delay="300">

@@ -154,11 +154,10 @@
                   lang: lang,
               }
           },
-          
           search: {regex: true},
           columns: [
               { data: 'id', name: 'id' }, // Replace 'id' with your actual column name
-              { data: 'couplet_text', name: 'couplet_text' },
+              { data: 'couplet_text', name: 'couplet_text' , searchable: true},
               { data: null, render: function (data, type, row) {
                   var information = '<span class="badge bg-success p-1 rounded" data-toggle="tooltip" data-placement="top" title="Poet Name"><i class="fa fa-user mr-1"></i>' + row.poet.details.poet_laqab + '</span>';
                   if (row.poetry_id != '0') {

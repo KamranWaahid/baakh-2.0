@@ -64,7 +64,7 @@
 
       <div class="right-side-menus d-flex justify-content-between">
         <a href="{{ URL::localized(url('/')) }}" class="logo d-flex align-items-center me-auto me-lg-0">
-          <img src="{{ asset('assets/img/Baakh-beta.svg') }}" alt="Baakh Logo">
+          <img src="{{ asset('assets/img/Baakh.svg') }}" alt="Baakh Logo">
           <h1>baakh</h1>
           </a>
         <nav id="navbar" class="navbar d-flex justify-content-between">
@@ -159,12 +159,7 @@
     
   <!-- ======= Footer ======= -->
   <footer id="footer" class="footer">
-    <div class="container">
-      <div class="alert alert-success" style="font-size: 1rem" role="alert">
-        <i class="bi bi-info"></i>
-        {{ trans('labels.footer-notice') }}
-      </div>
-    </div>
+     
     <div class="container">
       <div class="row">
         

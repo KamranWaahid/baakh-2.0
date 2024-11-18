@@ -13,7 +13,7 @@
           @endphp
 
           <a href="{{ URL::localized(route('poets.slug', $ref->poet_slug)) }}">
-            <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh-beta.svg') }}" 
+            <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh.svg') }}" 
             class="main-slider-img" 
             height="300px"
             alt="{{ $doodles->title }}">
@@ -27,13 +27,13 @@
             </p>
 
         @elseif (isset($doodles))
-          <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh-beta.svg') }}" 
+          <img src="{{ file_exists($doodles->image) ? asset($doodles->image) : asset('assets/img/Baakh.svg') }}" 
           class="main-slider-img" 
           height="300px"
           alt="{{ $doodles->title }}">
 
         @else
-          <img src="{{ asset('assets/img/Baakh-beta.svg') }}" 
+          <img src="{{ asset('assets/img/Baakh.svg') }}" 
           class="center" 
           height="300px"
           alt="Baakh Poetry">
@@ -100,8 +100,9 @@
             <div class="swiper-slide" id="slider_item">
               <a href="{{ URL::localized(route('poets.slug', ['name' => $p->poet_slug])) }}">
                 <img src="{{ file_exists($p->poet_pic) ? asset($p->poet_pic) : asset('assets/img/placeholder290x293.jpg') }}" class="img-fluid center-cropped" alt="{{ $p->details->poet_laqab }}">
+              
+                <p id="poets-slider">{{ $p->details->poet_laqab }}</p>
               </a>
-              <p id="poets-slider">{{ $p->details->poet_laqab }}</p>
             </div>
             <!--- /.swiper-slider #slide_item --->
             @endforeach

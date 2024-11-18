@@ -55,7 +55,7 @@
     <div class="container d-flex align-items-center justify-content-between">
 
       <a href="{{ url('/') }}" class="logo d-flex align-items-center me-auto me-lg-0">
-      <img src="{{ asset('assets//img/Baakh-beta.svg') }}">
+      <img src="{{ asset('assets//img/Baakh.svg') }}">
         <h1>بيٽا<span>.</span></h1>
       </a>
 

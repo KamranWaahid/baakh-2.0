@@ -211,7 +211,7 @@
               @if ($poetry->info)
               <!-- ========== Start about poetry section ========== -->
               <div class="about-poetry mt-2">
-                <h3 class="text-primary">ھِن {{ $poetry->category->detail->cat_name }} بابت</h3>
+                <h3 class="text-primary">{{ trans('labels.about_this_category', ['category' => Str::ucfirst($poetry->category->category_name)]) }}</h3>
                 <div class="spacer-dotted mt-1" style="border-bottom:2px solid;border-color:#DDDDDD;"></div>
                 <p class="paragraph">
                   {{ strip_tags($poetry->info->info) }}
