@@ -94,7 +94,7 @@ class PoetsDetail extends Model
     protected static function booted()
     {
         static::updated(function ($model) {
-            $this->updatePoet($model->poet_id); // coming from SQLiteTrait
+            $model->updatePoet($model->poet_id); // coming from SQLiteTrait
         });
     }
 }

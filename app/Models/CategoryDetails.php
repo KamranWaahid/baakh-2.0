@@ -30,7 +30,7 @@ class CategoryDetails extends Model
     protected static function booted()
     {
         static::updated(function ($model) {
-            $this->updateCategory($model->cat_id); // coming from SQLiteTrait
+            $model->updateCategory($model->cat_id); // coming from SQLiteTrait
         });
     }
 }

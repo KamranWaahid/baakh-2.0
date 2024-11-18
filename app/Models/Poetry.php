@@ -110,7 +110,7 @@ class Poetry extends Model
         });
 
         static::updated(function ($poetry) {
-            $this->updatePoetry($poetry); // coming from SQLiteTrait
+            $poetry->updatePoetry($poetry); // coming from SQLiteTrait
         });
     }
 

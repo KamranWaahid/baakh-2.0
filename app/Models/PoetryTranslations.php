@@ -24,7 +24,7 @@ class PoetryTranslations extends Model
     protected static function booted()
     {
         static::updated(function ($model) {
-            $this->updatePoetry($model->poetry_id); // coming from SQLiteTrait
+            $model->updatePoetry($model->poetry_id); // coming from SQLiteTrait
         });
     }
 }
