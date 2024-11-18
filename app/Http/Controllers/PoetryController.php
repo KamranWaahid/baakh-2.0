@@ -60,6 +60,9 @@ class PoetryController extends UserController
                 ->where(['poetry_slug' => $slug, 'visibility' => 1])
                 ->first();
 
+        if(empty($poetry)) {
+            abort(404);
+        }
        
         // media
         $media_videos = Media::where(['lang' => $locale, 'media_type'=>'video', 'poetry_id' => $poetry->id])->get();
