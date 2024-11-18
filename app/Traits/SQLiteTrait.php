@@ -128,6 +128,7 @@ trait SQLiteTrait
                     'poetry_id' => $data->poetry_id,
                     'couplet_slug' => $data->couplet_slug,
                     'couplet_text' => $this->cleanText($data->couplet_text),
+                    'couplet_text_original' => $data->couplet_text
                 ]
             );
         }
