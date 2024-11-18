@@ -220,7 +220,7 @@ class SqliteController extends Controller
         }
         
 
-        $categories = DB::select('SELECT c.id as category_id, c.slug, c.gender, cd.cat_name, cd.cat_name_plural, cd.lang FROM categories c INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id > :min_id', ['min_id', $min_id]);
+        $categories = DB::select('SELECT c.id as category_id, c.slug, c.gender, cd.cat_name, cd.cat_name_plural, cd.lang FROM categories c INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id > :min_id', ['min_id' => $min_id]);
         $insertData = array_map(function ($value) {
             return [
                 'category_id' => $value->category_id,
@@ -273,7 +273,7 @@ class SqliteController extends Controller
             $table->string('poet_name')->nullable();
             $table->string('poet_laqab')->nullable();
             $table->string('lang')->nullable();
-            $table->timestamps();
+            
 
             $table->index('poet_name', 'poet_name_index');
             $table->index('poet_laqab', 'poet_laqab_index');
@@ -289,7 +289,7 @@ class SqliteController extends Controller
             $table->string('title')->nullable();
             $table->string('poetry_slug')->nullable();
             $table->string('lang')->nullable();
-            $table->timestamps();
+            
 
             $table->index('poetry_id');
             $table->index('category_id');
@@ -307,7 +307,7 @@ class SqliteController extends Controller
             $table->string('couplet_slug')->nullable();
             $table->text('couplet_text')->nullable();
             $table->string('lang')->nullable();
-            $table->timestamps();
+            
 
             $table->index('couplet_id');
             $table->index('poet_id');
@@ -322,7 +322,7 @@ class SqliteController extends Controller
             $table->string('type')->nullable();
             $table->string('slug')->nullable();
             $table->string('lang')->nullable();
-            $table->timestamps();
+            
         });
     }
 
@@ -335,7 +335,7 @@ class SqliteController extends Controller
             $table->string('cat_name')->nullable();
             $table->string('cat_name_plural')->nullable();
             $table->string('lang')->nullable();
-            $table->timestamps();
+            
 
             $table->index('category_id');
             $table->index('cat_name');

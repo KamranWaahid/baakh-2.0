@@ -34,14 +34,15 @@ class BaakhSearchController extends Controller
         $term =  '%'.$query.'%';
         $poetry = UnifiedPoetry::where('lang', $lang)
             ->where('title', 'like', "%$term%")
-            ->limit(5)
-            ->orderBy('title', 'asc')
-            ->with(['category' => function ($query) use ($lang) {
-                $query->where('lang', $lang);
-            }, 'poet' => function ($query) use ($lang) {
-                $query->where('lang', $lang);
-            }])
-            ->get();
+            ->with([
+                'category' => function ($query) use ($lang) {
+                    $query->where('lang', $lang);
+                }, 
+                'poet' => function ($query) use ($lang) {
+                    $query->where('lang', $lang);
+                }
+            ])
+            ->limit(5)->orderBy('title', 'asc')->get();
 
         $poets = UnifiedPoets::where('lang', $lang)
         ->where(function($query) use ($term) {

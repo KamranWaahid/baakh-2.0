@@ -74,7 +74,7 @@
                             <div class="icon-container"><i class="fa fa-sync icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.sync') }}" class="title btn-sqlite-table">Sync Database</a>
+                            <a href="javascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.sync') }}" class="title btn-sqlite-table">Sync Database</a>
                             <p class="desc">This will watch new records and Sync to sqlite, can take upto 6 minutes</p>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
                             <div class="icon-container"><i class="fa fa-align-justify icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'poetry') }}" class="title btn-sqlite-table">Re-create Poetry</a>
+                            <a href="javascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'poetry') }}" class="title btn-sqlite-table">Re-create Poetry</a>
                             <p class="desc">Recreating will drop previous table in SQLite and re-create new with fresh data</p>
                         </div>
                     </div>
@@ -110,7 +110,7 @@
                             <div class="icon-container"><i class="fa fa-indent icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'couplets') }}" class="title btn-sqlite-table">Re-create Couplets</a>
+                            <a href="javascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'couplets') }}" class="title btn-sqlite-table">Re-create Couplets</a>
                             <p class="desc">Recreating will drop previous table in SQLite and re-create new with fresh data</p>
                         </div>
                     </div>
@@ -123,7 +123,7 @@
                             <div class="icon-container"><i class="fa fa-users icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'poets') }}" class="title btn-sqlite-table">Re-create Poets</a>
+                            <a href="javascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'poets') }}" class="title btn-sqlite-table">Re-create Poets</a>
                             <p class="desc">Recreating will drop previous table in SQLite and re-create new with fresh data</p>
                         </div>
                     </div>
@@ -136,7 +136,7 @@
                             <div class="icon-container"><i class="fa fa-tags icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'tags') }}" class="title btn-sqlite-table">Re-create Tags</a>
+                            <a href="javascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'tags') }}" class="title btn-sqlite-table">Re-create Tags</a>
                             <p class="desc">Recreating will drop previous table in SQLite and re-create new with fresh data</p>
                         </div>
                     </div>
@@ -149,7 +149,7 @@
                             <div class="icon-container"><i class="fa fa-folder icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'categories') }}" class="title btn-sqlite-table">Re-create Categories</a>
+                            <a href="javascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.gen-table', 'categories') }}" class="title btn-sqlite-table">Re-create Categories</a>
                             <p class="desc">Recreating will drop previous table in SQLite and re-create new with fresh data</p>
                         </div>
                     </div>
