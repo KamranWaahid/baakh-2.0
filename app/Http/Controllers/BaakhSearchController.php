@@ -108,11 +108,15 @@ class BaakhSearchController extends Controller
         if (!empty($result['poetry'])) {
             $error = false;
             foreach ($result['poetry'] as $item) {
-                $categorySlug = $item->category->slug ?? 'uncategorized'; // Fallback for missing category
+                $category = $item->category;
+                $categorySlug = $category->slug ?? 'uncategorized'; // Fallback for missing category
                 $link = route('poetry.with-slug', ['category' => $categorySlug, 'slug' => $item->poetry_slug]);
+
+                $title = $item->title . ' ('.$category->cat_name.')';
+
                 $html .= view('web.home.search_suggestion_list', [
                     'link' => $link,
-                    'text' => $item->title
+                    'text' => $title
                 ])->render();
             }
         }
