@@ -74,7 +74,7 @@
                             <div class="icon-container"><i class="fa fa-sync icon"></i></div>
                         </div>
                         <div class="col-10">
-                            <a href="{{ route('admin.sqlite.sync') }}" class="title">Sync Database</a>
+                            <a href="avascript:void(0)" data-method="get" data-route="{{ route('admin.sqlite.sync') }}" class="title btn-sqlite-table">Sync Database</a>
                             <p class="desc">This will watch new records and Sync to sqlite, can take upto 6 minutes</p>
                         </div>
                     </div>

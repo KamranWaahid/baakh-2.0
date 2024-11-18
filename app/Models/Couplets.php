@@ -1,13 +1,14 @@
 <?php
 namespace App\Models;
 
+use App\Traits\SQLiteTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Couplets extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SQLiteTrait;
 
     protected $table = "poetry_couplets";
 
@@ -65,6 +66,12 @@ class Couplets extends Model
     }
  
 
+    protected static function booted()
+    {
+        static::updated(function ($model) {
+            $this->updateCouplet($model->id); // coming from SQLiteTrait
+        });
+    }
 
     
 }

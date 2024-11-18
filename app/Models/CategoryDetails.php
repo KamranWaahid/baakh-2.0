@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\SQLiteTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CategoryDetails extends Model
 {
-    use HasFactory;
+    use HasFactory, SQLiteTrait;
     protected $table = "category_details";
     protected $fillable = [
         'cat_id',
@@ -24,6 +25,13 @@ class CategoryDetails extends Model
 
     public function language(){
         return $this->belongsTo(Languages::class, 'lang', 'lang_code');
+    }
+
+    protected static function booted()
+    {
+        static::updated(function ($model) {
+            $this->updateCategory($model->cat_id); // coming from SQLiteTrait
+        });
     }
 }
 

@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\SQLiteTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use PDO;
 
 class Poetry extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SQLiteTrait;
     protected $table = 'poetry_main';
 
     protected $fillable = [
@@ -105,6 +107,10 @@ class Poetry extends Model
             if (empty($poetry->user_id)) {
                 $poetry->user_id = Auth::id();
             }
+        });
+
+        static::updated(function ($poetry) {
+            $this->updatePoetry($poetry); // coming from SQLiteTrait
         });
     }
 

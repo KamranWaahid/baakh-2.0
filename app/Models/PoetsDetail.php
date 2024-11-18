@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\SQLiteTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PoetsDetail extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SQLiteTrait;
 
     protected $table = 'poets_detail';
 
@@ -87,5 +88,13 @@ class PoetsDetail extends Model
             'provinceName' => $city->province->province_name ?? null,
             'countryName' => $city->province->country->countryName ?? null,
         ];
+    }
+
+
+    protected static function booted()
+    {
+        static::updated(function ($model) {
+            $this->updatePoet($model->poet_id); // coming from SQLiteTrait
+        });
     }
 }

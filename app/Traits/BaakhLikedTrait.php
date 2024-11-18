@@ -12,6 +12,9 @@ trait BaakhLikedTrait
      */
     public function isLikedItem($type, $slug)
     {
+        /**
+         * @var App\Models\User $user
+         */
         $user = Auth::user();
         $table_name = ''; // Initialize the table name variable
 

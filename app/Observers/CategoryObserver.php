@@ -3,10 +3,14 @@
 namespace App\Observers;
 
 use App\Models\Categories;
+use App\Models\Search\UnifiedCategories;
+use App\Traits\SQLiteTrait;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class CategoryObserver
 {
+    use SQLiteTrait;
     /**
      * Handle the Categories "created" event.
      */
@@ -20,6 +24,7 @@ class CategoryObserver
      */
     public function updated(Categories $categories): void
     {
+        $this->updateCategory($categories->id);
         $this->forgetCache();
     }
 
@@ -44,6 +49,11 @@ class CategoryObserver
      */
     public function forceDeleted(Categories $categories): void
     {
+        try {
+            UnifiedCategories::find($categories->id)->delete();
+        } catch (\Throwable $th) {
+            Log::warning("Error while deleting category \n $th");
+        }
         $this->forgetCache();
     }
 

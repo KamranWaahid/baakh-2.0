@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\SQLiteTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PoetryTranslations extends Model
 {
-    use HasFactory;
+    use HasFactory, SQLiteTrait;
     protected $fillable = ['poetry_id', 'title', 'info', 'source', 'lang'];
 
     public function all_couplets() : HasMany
@@ -20,4 +21,10 @@ class PoetryTranslations extends Model
         return $this->hasOne(Languages::class, 'lang_code' , 'lang'); 
     }
 
+    protected static function booted()
+    {
+        static::updated(function ($model) {
+            $this->updatePoetry($model->poetry_id); // coming from SQLiteTrait
+        });
+    }
 }

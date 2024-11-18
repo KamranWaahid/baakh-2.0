@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Poetry;
 use App\Models\Search\UnifiedPoetry;
+use App\Models\Search\UnifiedPoets;
 use Illuminate\Support\Facades\DB;
 
 class SqliteController extends Controller
@@ -73,7 +74,7 @@ class SqliteController extends Controller
                 $response = ['error' => false, 'message' => 'ReCreated Poets table along with fresh data'];
                 break;
             case 'tags':
-                $this->generateTags(true);
+                $this->generateTags();
                 $response = ['error' => false, 'message' => 'ReCreated Tags table along with fresh data'];
                 break;
             case 'couplets':
@@ -95,17 +96,25 @@ class SqliteController extends Controller
     /**
      * Regenrate Poetry
      */
-    public function generatePoetry()
+    public function generatePoetry($recreate = true, $min_id = 0)
     {
         $connection = DB::connection('sqlite');
 
-        if ($connection->getSchemaBuilder()->hasTable('unified_poetry')) {
-             $connection->getSchemaBuilder()->dropIfExists('unified_poetry'); // drop previous table
+        if($recreate) {
+            if ($connection->getSchemaBuilder()->hasTable('unified_poetry')) {
+                $connection->getSchemaBuilder()->dropIfExists('unified_poetry'); // drop previous table
+           }
+           $this->createPoetryTable($connection); // re-create table
         }
 
-        $this->createPoetryTable($connection);
-
-        $poetry_data = DB::select('SELECT pm.id as poetry_id, pm.category_id, pm.poet_id, pm.poetry_slug,  pt.title,  pt.lang  FROM  poetry_main pm   INNER JOIN  poetry_translations pt  ON pt.poetry_id = pm.id;' );
+        $poetry_data = DB::select(
+            'SELECT pm.id as poetry_id, pm.category_id, pm.poet_id, pm.poetry_slug,  pt.title,  pt.lang  
+             FROM  poetry_main pm 
+             INNER JOIN  poetry_translations pt  ON pt.poetry_id = pm.id
+             WHERE pm.id > :min_id', 
+             ['min_id' => $min_id]
+        );
+        
         $insertData = array_map(function ($value) {
             return [
                 'poetry_id' => $value->poetry_id,
@@ -124,15 +133,17 @@ class SqliteController extends Controller
     /**
      * Regenrate Poets
      */
-    protected function generatePoets(){
+    protected function generatePoets($recreate = true, $min_id = 0){
         $connection = DB::connection('sqlite');
-        if ($connection->getSchemaBuilder()->hasTable('unified_poets')) {
+
+        if($recreate) {
+            if ($connection->getSchemaBuilder()->hasTable('unified_poets')) {
                 $connection->getSchemaBuilder()->dropIfExists('unified_poets'); // drop previous table
+                $this->createPoetsTable($connection); // create poets table
+            }
         }
 
-        $this->createPoetsTable($connection); // create poets table
-
-        $poet_data = DB::select('SELECT p.id as poet_id, p.poet_slug , pd.poet_name, pd.poet_laqab, pd.lang FROM poets p INNER JOIN poets_detail pd ON pd.poet_id=p.id ORDER BY p.id ASC');
+        $poet_data = DB::select('SELECT p.id as poet_id, p.poet_slug , pd.poet_name, pd.poet_laqab, pd.lang FROM poets p INNER JOIN poets_detail pd ON pd.poet_id=p.id WHERE p.id > :min_id ORDER BY p.id ASC', ['min_id' => $min_id]);
         $insertData = array_map(function ($value) {
             return [
                 'poet_id' => $value->poet_id,
@@ -149,15 +160,17 @@ class SqliteController extends Controller
     /**
      * Generate Couplets
      */
-    protected function generateCouplets() {
+    protected function generateCouplets($recreate = true, $min_id = 0) {
         $connection = DB::connection('sqlite');
-        if ($connection->getSchemaBuilder()->hasTable('unified_couplets')) {
+        if($recreate) {
+            if ($connection->getSchemaBuilder()->hasTable('unified_couplets')) {
                 $connection->getSchemaBuilder()->dropIfExists('unified_couplets'); // drop previous table
+            }
+            $this->createCoupletsTable($connection);
         }
+        
 
-        $this->createCoupletsTable($connection);
-
-        $poet_data = DB::select('SELECT id as couplet_id, poet_id, poetry_id, couplet_slug, couplet_text, lang  FROM poetry_couplets');
+        $poet_data = DB::select('SELECT id as couplet_id, poet_id, poetry_id, couplet_slug, couplet_text, lang  FROM poetry_couplets WHERE id > :min_id', ['min_id' => $min_id]);
         $insertData = array_map(function ($value) {
             return [
                 'couplet_id' => $value->couplet_id,
@@ -172,14 +185,17 @@ class SqliteController extends Controller
         $connection->table('unified_couplets')->insert($insertData);
     }
 
-    protected function generateTags() {
+    protected function generateTags($recreate = true, $min_id = 0) {
         $connection = DB::connection('sqlite');
-        if ($connection->getSchemaBuilder()->hasTable('unified_tags')) {
-            $connection->getSchemaBuilder()->dropIfExists('unified_tags'); // drop previous table
-        }
-        $this->createTagsTable($connection);
 
-        $tag_data = DB::select('SELECT `id`, `tag`, `slug`, `type`, `lang` FROM baakh_tags');
+        if($recreate) {
+            if ($connection->getSchemaBuilder()->hasTable('unified_tags')) {
+                $connection->getSchemaBuilder()->dropIfExists('unified_tags'); // drop previous table
+            }
+            $this->createTagsTable($connection);
+        }
+
+        $tag_data = DB::select('SELECT `id`, `tag`, `slug`, `type`, `lang` FROM baakh_tags WHERE id > :min_id', ['min_id' => $min_id]);
         $insertData = array_map(function ($value) {
             return [
                 'id' => $value->id,
@@ -193,15 +209,18 @@ class SqliteController extends Controller
         $connection->table('unified_tags')->insert($insertData);
     }
 
-    protected function generateCategories() {
+    protected function generateCategories($recreate = true, $min_id = 0) {
         $connection = DB::connection('sqlite');
-        if ($connection->getSchemaBuilder()->hasTable('unified_categories')) {
+
+        if($recreate) {
+            if ($connection->getSchemaBuilder()->hasTable('unified_categories')) {
                 $connection->getSchemaBuilder()->dropIfExists('unified_categories'); // drop previous table
+            }
+            $this->createCategoriesTable($connection);
         }
+        
 
-        $this->createCategoriesTable($connection);
-
-        $categories = DB::select('SELECT c.id as category_id, c.slug, c.gender, cd.cat_name, cd.cat_name_plural, cd.lang FROM categories c INNER JOIN category_details cd ON cd.cat_id=c.id;');
+        $categories = DB::select('SELECT c.id as category_id, c.slug, c.gender, cd.cat_name, cd.cat_name_plural, cd.lang FROM categories c INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id > :min_id', ['min_id', $min_id]);
         $insertData = array_map(function ($value) {
             return [
                 'category_id' => $value->category_id,
@@ -223,7 +242,14 @@ class SqliteController extends Controller
      */
     public function syncDataBase()
     {
+        $connection = DB::connection('sqlite');
+        $this->syncPoetryTable($connection);
+        $this->syncCategoriesTable($connection);
+        $this->syncCoupletsTable($connection);
+        $this->syncPoetsTable($connection);
+        $this->syncTagsTable($connection);
 
+        return response()->json(['error' => false, 'message' => 'Synced all table\'s data']);
     }
 
     /**
@@ -247,6 +273,7 @@ class SqliteController extends Controller
             $table->string('poet_name')->nullable();
             $table->string('poet_laqab')->nullable();
             $table->string('lang')->nullable();
+            $table->timestamps();
 
             $table->index('poet_name', 'poet_name_index');
             $table->index('poet_laqab', 'poet_laqab_index');
@@ -262,6 +289,7 @@ class SqliteController extends Controller
             $table->string('title')->nullable();
             $table->string('poetry_slug')->nullable();
             $table->string('lang')->nullable();
+            $table->timestamps();
 
             $table->index('poetry_id');
             $table->index('category_id');
@@ -294,6 +322,7 @@ class SqliteController extends Controller
             $table->string('type')->nullable();
             $table->string('slug')->nullable();
             $table->string('lang')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -306,6 +335,58 @@ class SqliteController extends Controller
             $table->string('cat_name')->nullable();
             $table->string('cat_name_plural')->nullable();
             $table->string('lang')->nullable();
+            $table->timestamps();
+
+            $table->index('category_id');
+            $table->index('cat_name');
         });
+    }
+
+    /**
+     * Sync database tables
+     */
+    protected function syncPoetryTable($connection) {
+        if ($connection->getSchemaBuilder()->hasTable('unified_poetry')) {
+            $maxId = $connection->table('unified_poetry')->max('poetry_id'); 
+            $this->generatePoetry(false, $maxId); // add new records 
+        }else{
+            $this->generatePoetry(); // re-create table and populate data
+        }
+    }
+
+    protected function syncPoetsTable($connection) {
+        if ($connection->getSchemaBuilder()->hasTable('unified_poets')) {
+            $maxId = $connection->table('unified_poets')->max('poet_id'); 
+            $this->generatePoets(false, $maxId); // add new records 
+        }else{
+            $this->generatePoets(); // re-create table and populate data
+        }
+    }
+    
+    protected function syncCoupletsTable($connection) {
+        if ($connection->getSchemaBuilder()->hasTable('unified_couplets')) {
+            $maxId = $connection->table('unified_couplets')->max('couplet_id'); 
+            $this->generateCouplets(false, $maxId); // add new records 
+        }else{
+            $this->generateCouplets(); // re-create table and populate data
+        }
+    }
+    
+    protected function syncTagsTable($connection) {
+        if ($connection->getSchemaBuilder()->hasTable('unified_tags')) {
+            $maxId = $connection->table('unified_tags')->max('id'); 
+            $this->generateTags(false, $maxId); // add new records 
+        }else{
+            $this->generateTags(); // re-create table and populate data
+        }
+    }
+    
+    protected function syncCategoriesTable($connection) {
+        if ($connection->getSchemaBuilder()->hasTable('unified_categories')) {
+            $maxId = $connection->table('unified_categories')->max('category_id'); 
+            $this->generateCategories(false, $maxId); // add new records 
+        }else{
+            $this->generateCategories(); // re-create table and populate data
+        }
     }
 }

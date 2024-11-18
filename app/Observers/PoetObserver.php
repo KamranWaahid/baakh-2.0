@@ -3,10 +3,13 @@
 namespace App\Observers;
 
 use App\Models\Poets;
+use App\Models\Search\UnifiedPoets;
+use App\Traits\SQLiteTrait;
 use Illuminate\Support\Facades\Cache;
 
 class PoetObserver
 {
+    use SQLiteTrait;
     /**
      * Handle the Poets "created" event.
      */
@@ -20,6 +23,7 @@ class PoetObserver
      */
     public function updated(Poets $poets): void
     {
+        $this->updatePoet($poets->id);
         $this->forgetPoetsCache();
     }
 
@@ -44,6 +48,7 @@ class PoetObserver
      */
     public function forceDeleted(Poets $poets): void
     {
+        UnifiedPoets::where('poet_id', $poets->id)->delete();
         $this->forgetPoetsCache();
     }
 

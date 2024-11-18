@@ -2,11 +2,15 @@
 
 namespace App\Observers;
 
+use App\Models\Search\UnifiedTags;
 use App\Models\Tags;
+use App\Traits\SQLiteTrait;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class TagObserver
 {
+    use SQLiteTrait;
     /**
      * Handle the Tags "created" event.
      */
@@ -20,6 +24,7 @@ class TagObserver
      */
     public function updated(Tags $tags): void
     {
+        $this->updateTag($tags->id);
         $this->forgetCache();
     }
 
@@ -44,6 +49,11 @@ class TagObserver
      */
     public function forceDeleted(Tags $tags): void
     {
+        try {
+            UnifiedTags::find($tags)->delete();
+        } catch (\Throwable $th) {
+            Log::warning("Error while deleting Tag from SQLite \n $th");
+        }
         $this->forgetCache();
     }
 
