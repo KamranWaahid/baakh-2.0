@@ -10,6 +10,7 @@ use App\Http\Controllers\PeriodsController;
 use App\Http\Controllers\PoetryController;
 use App\Http\Controllers\PoetsController;
 use App\Http\Controllers\ProsodyController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TagsController;
 use App\Http\Controllers\Users\UserCommentsController;
 use Illuminate\Support\Facades\Auth;
@@ -112,6 +113,23 @@ Route::prefix('search')->name('web.search.')->controller(BaakhSearchController::
     Route::get('/generate-json', 'generateJson')->name('generate-json');
     Route::get('/suggestions/{q}/{lang}', 'getSuggestions')->name('suggestions');
 });
+
+/**
+ * Sitemap files
+ */
+Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
+Route::get('sitemap/poets.xml', [SitemapController::class, 'poets'])->name('sitemap.poets');
+Route::get('sitemap/poets/{year}/{month}.xml', [SitemapController::class, 'poetsByMonth'])->name('sitemap.poets.month');
+Route::get('sitemap/poetry.xml', [SitemapController::class, 'poetry'])->name('sitemap.poetry');
+Route::get('sitemap/poetry/{year}/{month}.xml', [SitemapController::class, 'poetryByMonth'])->name('sitemap.poetry.month');
+Route::get('sitemap/couplets.xml', [SitemapController::class, 'couplets'])->name('sitemap.couplets');
+Route::get('sitemap/couplets/{year}/{month}.xml', [SitemapController::class, 'coupletsByMonth'])->name('sitemap.couplets.month');
+Route::get('sitemap/tags.xml', [SitemapController::class, 'tags'])->name('sitemap.tags');
+Route::get('sitemap/tags/{year}/{month}.xml', [SitemapController::class, 'tagsByMonth'])->name('sitemap.tags.month');
+
+Route::get('sitemap/pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');
+Route::get('sitemap/categories.xml', [SitemapController::class, 'categories'])->name('sitemap.categories');
+
 
  Auth::routes();
  require __DIR__.'/auth.php';
