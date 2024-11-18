@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use PDO;
 
 class Poetry extends Model
@@ -110,7 +111,7 @@ class Poetry extends Model
         });
 
         static::updated(function ($poetry) {
-            $poetry->updatePoetry($poetry); // coming from SQLiteTrait
+            $poetry->updatePoetry($poetry->id); // coming from SQLiteTrait
         });
     }
 

@@ -1,11 +1,6 @@
 <?php 
 namespace App\Traits;
 
-use App\Models\Search\UnifiedCategories;
-use App\Models\Search\UnifiedCouplets;
-use App\Models\Search\UnifiedPoetry;
-use App\Models\Search\UnifiedPoets;
-use App\Models\Search\UnifiedTags;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -19,29 +14,33 @@ trait SQLiteTrait
      */
     protected function updatePoetry($model)
     {
-        $poetry_data = DB::selectOne(
+        $poetry_data = DB::select(
             'SELECT pm.id as poetry_id, pm.category_id, pm.poet_id, pm.poetry_slug,  pt.title,  pt.lang  
              FROM  poetry_main pm 
              INNER JOIN  poetry_translations pt  ON pt.poetry_id = pm.id
              WHERE pm.id = :main_id', 
              ['main_id' => $model]
         );
+        DB::connection('sqlite')->enableQueryLog();
 
         if(empty($poetry_data)) {
             Log::warning('No poetry data found for model ID '. $model);
             return;
         }
- 
+
         foreach ($poetry_data as $data) {
-            UnifiedPoetry::updateOrCreate(
+            DB::connection('sqlite')->table('unified_poetry')->updateOrInsert
+            (
                 ['poetry_id' => $data->poetry_id, 'lang' => $data->lang],
                 [
                     'category_id' => $data->category_id,
                     'poet_id' => $data->poet_id,
                     'poetry_slug' => $data->poetry_slug,
                     'title' => $this->cleanText($data->title),
+                    'title_original' => $data->title,
                 ]
             );
+    
         }
     }
 
@@ -65,7 +64,8 @@ trait SQLiteTrait
         }
  
         foreach ($poet_data as $data) {
-            UnifiedPoets::updateOrCreate(
+            DB::connection('sqlite')->table('unified_poets')->updateOrInsert
+            (
                 ['poet_id' => $data->poet_id, 'lang' => $data->lang],
                 [
                     'poet_slug' => $data->poet_slug,
@@ -91,7 +91,8 @@ trait SQLiteTrait
         }
 
         foreach ($tag_data as $data) {
-            UnifiedTags::updateOrCreate(
+            DB::connection('sqlite')->table('unified_tags')->updateOrInsert
+            (
                 ['id' => $data->id, 'lang' => $data->lang],
                 [
                     'tag' => $data->tag,
@@ -119,7 +120,8 @@ trait SQLiteTrait
         }
  
         foreach ($couplets_data as $data) {
-            UnifiedCouplets::updateOrCreate(
+            DB::connection('sqlite')->table('unified_couplets')->updateOrInsert
+            (
                 ['couplet_id' => $data->couplet_id, 'lang' => $data->lang],
                 [
                     'poet_id' => $data->poet_id,
@@ -148,7 +150,8 @@ trait SQLiteTrait
         }
 
         foreach ($categories as $data) {
-            UnifiedCategories::updateOrCreate(
+            DB::connection('sqlite')->table('unified_categories')->updateOrInsert
+            (
                 ['category_id' => $data->category_id, 'lang' => $data->lang],
                 [
                     'slug' => $data->slug,

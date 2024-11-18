@@ -237,6 +237,7 @@ class AdminPoetryController extends Controller
     public function edit($id)
     {
         $poetry = Poetry::findOrFail($id);
+        // Cache::forget('admin_all_poets_sd');
         $poets = Cache::rememberForever('admin_all_poets_sd', function () {
             return Poets::select('id', 'poet_slug')->with('shortDetail')->get();
         });
