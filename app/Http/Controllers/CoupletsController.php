@@ -145,6 +145,5 @@ class CoupletsController extends UserController
                 $query->where('id', $id)->take(1); // Load category with the specified language
             }
         ])->first();
-        return dd($poetryIs);
     }
 }
