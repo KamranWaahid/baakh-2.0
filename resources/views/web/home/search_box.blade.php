@@ -124,7 +124,7 @@ $(document).ready(function() {
         $('html').scrollTop(80)
     });
 
-
+    let errorShown = false
     // Handle input event for search suggestions
     $('#hero-search-box').on('input', function() {
         const query = $(this).val().trim();
@@ -133,6 +133,26 @@ $(document).ready(function() {
             
             var _lang = '{{ app()->getLocale() }}';
             var route = '{{ route('web.search.index') }}';
+
+            var hasEnglishLetters = /[a-zA-Z]/.test(query);
+
+            if (_lang !== 'en' && hasEnglishLetters) {
+                if (!errorShown) {
+                    toastr.error('انگريزيءَ ۾ ڳولا لاءِ باک جِي ٻولي مٽايو');
+                    errorShown = true;
+                }
+                return;
+            }
+
+            if(_lang === 'en' && !hasEnglishLetters) {
+                if (!errorShown) {
+                    toastr.error('To search in other language, switch Baakh\'s language');
+                    errorShown = true;
+                }
+                return;
+            }
+
+            errorShown = false;
 
             /// Ajax Request for Get Suggestions
             $.ajax({
@@ -162,6 +182,7 @@ $(document).ready(function() {
             $('#hero-suggestions-card').addClass('show');
 
         } else {
+            errorShown = false;
             $('#hero-suggestions-card').removeClass('show');
         }
     });

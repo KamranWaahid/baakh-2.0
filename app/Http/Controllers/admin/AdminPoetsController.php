@@ -10,13 +10,14 @@ use App\Models\PoetsDetail;
 use App\Models\Tags;
 use App\Rules\SlugRule;
 use App\Rules\SlugRulePoet;
+use App\Traits\HasMedia;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class AdminPoetsController extends Controller
 {
-
+    use HasMedia;
 
     public function index()
     {
@@ -90,17 +91,16 @@ class AdminPoetsController extends Controller
             'poet_laqab.*' => 'required|string|min:3',
             'lang.*' => 'required',
             'birth_place.*' => 'required',
-            'image' => 'required|image|mimes:jpeg,webp,jpg'
+            'image' => 'required|image|mimes:jpeg,webp,jpg,png'
         ]);
         
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName(); // Generate a unique name for the image
-            $imagePath = 'assets/images/poets/' . $imageName; // Specify the storage path
-    
-            // Move the uploaded image to the storage path
-            $image->move(public_path('assets/images/poets'), $imageName);
+            $uploadImage = $this->uploadImage($request->image, 'poets', $request->poet_slug, true);
+            if($uploadImage['error'] === true) {
+                return back()->withErrors(['image' => $uploadImage['message']]);
+            }
+            $imagePath = $uploadImage['full_path'];
         }
 
         // Create the poet's basic information
@@ -139,6 +139,7 @@ class AdminPoetsController extends Controller
 
     public function edit($id)
     {
+       
         $poet = Poets::findOrFail($id);
         $details = PoetsDetail::with('birthPlace', 'deathPlace')->where('poet_id', $id)->get();
         $languages = Languages::all();
@@ -175,7 +176,7 @@ class AdminPoetsController extends Controller
 
         $request->validate([
             'poet_slug' => ['required', new SlugRulePoet($poet->id)], // Ensure the slug is unique
-            'poet_pic' => 'image|mimes:jpeg,png,jpg',
+            'image' => 'image|mimes:jpeg,png,jpg,webp',
             'date_of_birth' => 'required',
             'poet_name.*' => 'required|string|min:3',
             'poet_laqab.*' => 'required|string|min:3',
@@ -185,17 +186,12 @@ class AdminPoetsController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName(); // Generate a unique name for the image
-            $imagePath = 'assets/images/poets/' . $imageName; // Specify the storage path
-    
-            // Move the uploaded image to the storage path
-            $image->move(public_path('assets/images/poets'), $imageName);
-    
-            if (file_exists($poet->poet_pic)) {
-                unlink($poet->poet_pic);
+            $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $request->poet_slug, true);
+
+            if($uploadImage['error'] === true) {
+                return back()->withErrors(['image' => $uploadImage['message']]);
             }
-            $poetsData['image'] = $imagePath;
+            $imagePath = $uploadImage['full_path'];
         }else{
             $imagePath = $poet->poet_pic;
         }
@@ -250,10 +246,14 @@ class AdminPoetsController extends Controller
 
     public function hardDelete($id){
         try {
-            $poetry = Poets::withTrashed()->findOrFail($id);
+            $poet = Poets::withTrashed()->findOrFail($id);
+
+            $poetPic = $poet->poet_pic;
+
+            $this->deleteImageFiles($poetPic, true); // delete image along with thumbnail
             
             // Then, force delete the poetry record
-            $poetry->forceDelete();
+            $poet->forceDelete();
 
             // array for message
             $message = [

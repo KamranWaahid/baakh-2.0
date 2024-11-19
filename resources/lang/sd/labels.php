@@ -67,7 +67,8 @@ return [
     // doodles
     'from_date_to_date' => ':fromDate کان :toDate تائين',
     'search_placeholder' => 'ڳولا ڪريو...',
-    'search_no_results' => 'نتيجا نہ‌ مليا'
+    'search_no_results' => 'نتيجا نہ‌ مليا',
+    'search_poet' => 'شاعر',
 ];
 
 ?>

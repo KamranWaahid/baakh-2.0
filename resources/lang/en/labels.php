@@ -69,7 +69,8 @@ return [
     // doodles
     'from_date_to_date' => 'from :fromDate to :toDate',
     'search_placeholder' => 'Search...',
-    'search_no_results' => 'No Results Found'
+    'search_no_results' => 'No Results Found',
+    'search_poet' => 'Poet',
 ];
 
 ?>

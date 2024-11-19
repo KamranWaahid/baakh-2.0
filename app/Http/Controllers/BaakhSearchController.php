@@ -61,9 +61,7 @@ class BaakhSearchController extends Controller
         $poets = UnifiedPoets::where('lang', $lang)
         ->where(function($query) use ($term, $queryWithoutLast) {
             $query->where('poet_laqab', 'like', $term)
-                ->orWhere('poet_name', 'like', $term)
-                ->orWhere('poet_laqab', 'like', '%' . $queryWithoutLast . '%')
-                ->orWhere('poet_name', 'like', '%' . $queryWithoutLast . '%');
+                ->orWhere('poet_name', 'like', $term);
         })
         ->limit(5)->orderBy('poet_laqab', 'asc')->get();
 
@@ -130,8 +128,9 @@ class BaakhSearchController extends Controller
      */
     public function getSuggestions($q, $lang)
     {
+        app()->setLocale($lang);
         $query = urldecode($q);
-        // dd($query);
+
         $result = $this->getResults($query, $lang);
         $html = '';
         $error = true;
@@ -139,22 +138,29 @@ class BaakhSearchController extends Controller
         // Process poets if available
         if (!empty($result['poets'])) {
             $error = false;
+            $currentLocale = app()->getLocale();
             foreach ($result['poets'] as $item) {
 
                 $poet = $item['poet'];
                 $link = route('poets.slug', ['category' => null, 'name' => $poet->poet_slug]);
-                $html .= view('web.home.search_suggestion_list', [
+                $html .= view('web.home.search_suggestion_list_poet', [
                     'link' => $link,
-                    'text' => $poet->poet_laqab . ' (' . $poet->poet_name . ')'
+                    'poet_name' => $poet->poet_name,
+                    'text' => $poet->poet_laqab
                 ])->render();
 
 
                 if(!empty($item['categories'])) {
                     foreach ($item['categories'] as $cat) {
-                        $link = route('poets.slug', ['category' => $cat->slug, 'name' => $poet->poet_slug]);
+                        $link = URL::localized(route('poets.slug', ['category' => $cat->slug, 'name' => $poet->poet_slug]));
 
                         $gender = CategoryGenderEnum::from($cat['gender']);
-                        $text = $poet->poet_laqab . ' ' . $gender->plural() . ' ' . $cat->cat_name_plural;
+
+                        if ($currentLocale === 'en') {
+                            $text = $poet->poet_laqab . "'s " . $cat->cat_name;
+                        } else {
+                            $text = $poet->poet_laqab . ' ' . $gender->plural() . ' ' . $cat->cat_name_plural;
+                        }
 
                         $html .= view('web.home.search_suggestion_list', [
                             'link' => $link,
