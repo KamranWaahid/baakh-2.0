@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CategoryGenderEnum;
 use App\Models\Categories;
 use App\Models\Poets;
+use App\Models\Search\UnifiedCategories;
 use App\Models\Search\UnifiedCouplets;
 use App\Models\Search\UnifiedPoetry;
 use App\Models\Search\UnifiedPoets;
@@ -31,8 +33,18 @@ class BaakhSearchController extends Controller
      */
     public function getResults($query, $lang)
     {
+        $conjunctions = ['جو','جا','جي','جون','جيون']; // get Sindhi omit words
+        $pattern = '/\b(' . implode('|', array_map('preg_quote', $conjunctions)) . ')\b/u';
+        $query = preg_replace($pattern, '', $query);
+        $query = preg_replace('/\s+/', ' ', trim($query));
         $results = [];
         $term =  '%'.$query.'%';
+        $explodeQuery = explode(' ', $query);
+        $lastTerm = count($explodeQuery) > 0 ? trim(end($explodeQuery)) : '';
+
+        // Split query to identify possible poet name and category term
+        $queryWithoutLast = trim(str_replace($lastTerm, '', $query));
+
         $poetry = UnifiedPoetry::where('lang', $lang)
             ->where('title', 'like', "%$term%")
             ->with([
@@ -45,10 +57,13 @@ class BaakhSearchController extends Controller
             ])
             ->limit(5)->orderBy('title', 'asc')->get();
 
+        // Poets 
         $poets = UnifiedPoets::where('lang', $lang)
-        ->where(function($query) use ($term) {
+        ->where(function($query) use ($term, $queryWithoutLast) {
             $query->where('poet_laqab', 'like', $term)
-                  ->orWhere('poet_name', 'like', $term);
+                ->orWhere('poet_name', 'like', $term)
+                ->orWhere('poet_laqab', 'like', '%' . $queryWithoutLast . '%')
+                ->orWhere('poet_name', 'like', '%' . $queryWithoutLast . '%');
         })
         ->limit(5)->orderBy('poet_laqab', 'asc')->get();
 
@@ -71,8 +86,36 @@ class BaakhSearchController extends Controller
         }
 
         if ($poets->isNotEmpty()) {
-            $results['poets'] = $poets;
+            $results['poets'] = $poets->map(function ($poet) use ($lang, $lastTerm) {
+                $categoryQuery = UnifiedCategories::whereIn('category_id', function ($query) use ($poet) {
+                    $query->select('category_id')->from('unified_poetry')->where('poet_id', $poet->poet_id);
+                })
+                ->where('lang', $lang);
+        
+                // Apply the cat_name condition only if $lastTerm is non-empty
+                if (!empty($lastTerm)) {
+                    $categoryQuery->where('cat_name', 'like', "%$lastTerm%");
+                }
+        
+                // Get the categories
+                $categories = $categoryQuery->get();
+        
+                // If no categories are fetched and $lastTerm was used, fetch all categories as a fallback
+                if ($categories->isEmpty() && !empty($lastTerm)) {
+                    $categories = UnifiedCategories::whereIn('category_id', function ($query) use ($poet) {
+                        $query->select('category_id')->from('unified_poetry')->where('poet_id', $poet->poet_id);
+                    })
+                    ->where('lang', $lang)
+                    ->get();
+                }
+        
+                return [
+                    'poet' => $poet,
+                    'categories' => $categories,
+                ];
+            });
         }
+        
         
         if($couplets) {
             $results['couplets'] = $couplets;
@@ -97,11 +140,29 @@ class BaakhSearchController extends Controller
         if (!empty($result['poets'])) {
             $error = false;
             foreach ($result['poets'] as $item) {
-                $link = route('poets.slug', ['category' => null, 'name' => $item->poet_slug]);
+
+                $poet = $item['poet'];
+                $link = route('poets.slug', ['category' => null, 'name' => $poet->poet_slug]);
                 $html .= view('web.home.search_suggestion_list', [
                     'link' => $link,
-                    'text' => $item->poet_laqab . ' (' . $item->poet_name . ')'
+                    'text' => $poet->poet_laqab . ' (' . $poet->poet_name . ')'
                 ])->render();
+
+
+                if(!empty($item['categories'])) {
+                    foreach ($item['categories'] as $cat) {
+                        $link = route('poets.slug', ['category' => $cat->slug, 'name' => $poet->poet_slug]);
+
+                        $gender = CategoryGenderEnum::from($cat['gender']);
+                        $text = $poet->poet_laqab . ' ' . $gender->plural() . ' ' . $cat->cat_name_plural;
+
+                        $html .= view('web.home.search_suggestion_list', [
+                            'link' => $link,
+                            'text' => $text
+                        ])->render();
+                    }
+                }
+               
             }
         }
 
