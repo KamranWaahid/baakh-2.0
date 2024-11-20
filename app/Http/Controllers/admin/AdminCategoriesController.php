@@ -16,38 +16,11 @@ class AdminCategoriesController extends Controller
     
     public function index()
     {
-        $languages = Languages::all();
-        
-        $db_categories = Categories::with(['details.language'])
-        ->get();
+
+        $languages = ['sd' => 'Sindhi', 'en' => 'English'];
+        $categories = Categories::with(['details:id,cat_id,lang'])->get();
          
-        $categories = [];
-        foreach ($db_categories as $category) {
-            $categoryData = [];
-            $categoryData['id'] = $category->id;
-            $categoryData['slug'] = $category->slug;
-            $categoryData['is_featured'] = $category->is_featured;
-            $categoryData['content_style'] = $category->content_style;
-            $categoryData['deleted_at'] = $category->deleted_at;
-
-            // Get the first cat_name from category_details
-            $firstCatName = $category->details->first()->cat_name ?? '';
-
-            $categoryData['cat_name'] = $firstCatName;
-
-            $availableLanguages = $category->details->pluck('language.lang_title', 'language.lang_code')->unique()->toArray();
-
-            $categoryData['languages'] = $availableLanguages;
-        
-            $categories[] = $categoryData;
-        }
-
-        $categories = array_map(function ($category) {
-            return (object)$category;
-        }, $categories);
-        
-        $content_styles = ['justified','center','start','end'];
-        return view('admin.categories.index', compact('languages', 'categories', 'content_styles'));
+        return view('admin.categories.index', compact('categories', 'languages'));
     }
 
 
@@ -56,35 +29,8 @@ class AdminCategoriesController extends Controller
      */
     public function trashed()
     {
-        $languages = Languages::all();
-        
-        $db_categories = Categories::with(['details.language'])
-        ->onlyTrashed()->get();
-         
-        $categories = [];
-        foreach ($db_categories as $category) {
-            $categoryData = [];
-            $categoryData['id'] = $category->id;
-            $categoryData['slug'] = $category->slug;
-            $categoryData['is_featured'] = $category->is_featured;
-            $categoryData['content_style'] = $category->content_style;
-            $categoryData['deleted_at'] = $category->deleted_at;
-
-            // Get the first cat_name from category_details
-            $firstCatName = $category->details->first()->cat_name ?? '';
-
-            $categoryData['cat_name'] = $firstCatName;
-
-            $availableLanguages = $category->details->pluck('language.lang_title', 'language.lang_code')->unique()->toArray();
-
-            $categoryData['languages'] = $availableLanguages;
-        
-            $categories[] = $categoryData;
-        }
-
-        $categories = array_map(function ($category) {
-            return (object)$category;
-        }, $categories);
+        $languages = ['sd' => 'Sindhi', 'en' => 'English'];
+        $categories = Categories::with(['details:id,cat_id,lang'])->onlyTrashed()->get();
 
         return view('admin.categories.trashed', compact('languages', 'categories'));
     }
@@ -144,7 +90,7 @@ class AdminCategoriesController extends Controller
     public function edit($id)
     {
         $category = Categories::with('details')->findOrFail($id);
-        $languages = Languages::all();
+        $languages = Languages::get();
         $content_styles = ['justified','center','start','end'];
         return view('admin.categories.edit', compact('category', 'languages', 'content_styles'));
     }

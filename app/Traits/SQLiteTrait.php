@@ -144,7 +144,7 @@ trait SQLiteTrait
         $categories = DB::select(
             'SELECT c.id as category_id, c.slug, c.gender, cd.cat_name, cd.cat_name_plural, cd.lang 
              FROM categories c 
-             INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id = :main_id', ['main_id', $categoryId]);
+             INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id = :main_id', ['main_id' => $categoryId]);
         
         if(empty($categories)) {
             Log::warning('No Category data found for model ID '. $categoryId);

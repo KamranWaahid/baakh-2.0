@@ -8,7 +8,7 @@
 
 @section('content')
     <div class="row">
-        <div class="col-7">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Categories</h3>
@@ -40,18 +40,24 @@
                             <tr>
                                 <td>{{ $data->id }}</td>
                                 
-                                <td>{{ $data->cat_name }}</td>
-                                <td><span class="badge @if ($data->is_featured) bg-warning @else bg-info @endif rounded"><i class="fa fa-star"></i></span></td>
+                                <td>{{ $data->category_name }}</td>
+                                <td>
+                                    <span class="badge @if ($data->is_featured) bg-warning @else bg-info @endif rounded"><i class="fa fa-star"></i></span>
+                                    <span class="badge bg-primary p-1 rounded"><i class="fa fa-align-justify mr-1"></i>{{ $data->content_style }}</span>
+                                </td>
                                     
                                 <td>
-                                    @foreach ($data->languages as $langCode => $langTitle)
-                                        <span class="badge bg-success p-1 rounded"><i class="fa fa-globe mr-1"></i>{{ $langTitle }}</span>
+                                    @foreach ($data->details as $item)
+                                        @if (in_array($item->lang, array_keys($languages)))
+                                            <span class="badge bg-success p-1 rounded"><i class="fa fa-globe mr-1"></i>{{ $languages[$item->lang] }}</span>
+                                        @endif
+                                        
                                     @endforeach
                                 </td>
                                 
                                 <td width="12%" class="text-center">
-                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.categories.restore', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="Rollback Category" class="btn btn-xs btn-info btn-rollback-category"><i class="fa fa-undo"></i></button>
-                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.categories.hard-delete', ['id' => $data->id]) }}" data-toggle="tooltip" data-placement="top" title="Delete Category" class="btn btn-xs btn-danger btn-delete-category"><i class="fa fa-trash"></i></button>
+                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.categories.restore', $data->id) }}" data-toggle="tooltip" data-placement="top" title="Restore Category" class="btn btn-xs btn-primary btn-rollback-category"><i class="fa fa-undo"></i></button>
+                                    <button type="button" data-id="{{ $data->id }}" data-url="{{ route('admin.categories.destroy', $data->id) }}" data-toggle="tooltip" data-placement="top" title="Delete Category" class="btn btn-xs btn-danger btn-delete-category"><i class="fa fa-trash"></i></button>
                                 </td>
                             </tr>
                            @endforeach
@@ -61,82 +67,7 @@
             </div>
         </div>
 
-        {{-- create form --}}
-        <div class="col-5">
-            <div class="card">
-                <form action="{{ route('admin.categories.store') }}" method="post">
-                    <div class="card-header">
-                        <h3 class="card-title">Create New Category</h3>
-                    </div>
-                    <div class="card-body">
-                        @csrf
-                        
-                       <div class="row" id="rowForBasicInfo">
-                         {{-- Name field --}}
-                         <div class="form-group col-9">
-                            <label for="slug">Category Slug / URL</label>
-                            <input type="text" class="form-control  @error('slug') is-invalid @enderror" value="{{ old('slug') }}"  name="slug" id="slug" placeholder="Enter Category Slug">
-                            
-                            @error('slug')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
-                        </div>
-                        <div class="form-group col-3">
-                            <label for="is_featured">Is Featured?</label>
-                            <x-adminlte-input-switch name="is_featured" data-on-color="success" data-on-text="YES" data-off-text="NO" data-off-color="danger"/>
-                        </div>
-
-                       </div>
-                     
-                        <input type="hidden" name="user_id" value="{{ auth()->user()->id }}">
-
-                        <div class="dynamic_data" id="dynamic_data">
-                            
-                            @foreach ($languages as $i => $lang)
-                                <div class="row mt-1 rounded p-2" id="catrow_{{ $i }}" style="background: #9d9ddc2d">
-                                    {{-- Name field --}}
-                                    <div class="form-group col-12">
-                                        <label for="cat_name">Name</label>
-                                        <span class="float-right"><strong>{{ $lang->lang_title }}</strong></span>
-                                        <input type="text" class="form-control  @error('cat_name') is-invalid @enderror" value="{{ old('cat_name') }}"  name="cat_name[]" id="cat_name_{{ $i }}" placeholder="Enter Category Name">
-                                        
-                                        @error('cat_name')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
- 
-                                    <input type="hidden" name="lang[]" class="form-control" value="{{ $lang->lang_code }}">
-
-                                    {{-- details --}}
-                                    <div class="form-group col-12">
-                                        <label for="cat_detail">Details</label>
-                                        <x-adminlte-textarea name="cat_detail[]" placeholder="Insert description..."/>
-                                        
-                                        @error('cat_detail')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-                                    <button type="button" class="btn btn-block btn-sm btn-danger mr-3 ml-3" onclick="removeRow({{ $i }})" ><i class="fa fa-trash mr-2"></i>Delete this row</button>
-                                </div>
-                            @endforeach {{-- $foreach languages to display divs --}}
-                        </div>
-                        
-
-
-
-                    </div>
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-info"><i class="fa fa-save"></i> Save</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+       
     </div>
 @endsection
 
