@@ -143,9 +143,21 @@ class BaakhSearchController extends Controller
 
                 $poet = $item['poet'];
                 $link = route('poets.slug', ['category' => null, 'name' => $poet->poet_slug]);
+                
+                $path = asset('assets/images/poets/');
+                $userImage = glob($path.$poet->poet_slug . "_smasll.*", GLOB_ERR); 
+               
+                if(!empty($userImage)) {
+                   $image = $userImage[0];
+                }else{
+                   $image = asset('assets/img/baakh-logo-small.jpg');
+                }
+
+                
                 $html .= view('web.home.search_suggestion_list_poet', [
                     'link' => $link,
                     'poet_name' => $poet->poet_name,
+                    'image' => $image,
                     'text' => $poet->poet_laqab
                 ])->render();
 
