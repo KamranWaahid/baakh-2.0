@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CategoryGenderEnum;
 use App\Models\Categories;
 use App\Models\Couplets;
 use App\Models\LikeDislike;
 use App\Models\Poetry;
 use App\Models\Poets;
 use App\Models\Tags;
+use App\Models\UserLikes;
 use App\Traits\BaakhSeoTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -146,27 +148,38 @@ class PoetsController extends UserController
             $query->where(['poet_id' => $poetId]);
         })
         ->with(['detail' => function($q) use ($locale) {
-            $q->where('lang', $locale)->select('id', 'cat_id', 'cat_name');
+            $q->where('lang', $locale)->select('id', 'cat_id', 'cat_name', 'cat_name_plural');
         }])
         ->get(['slug']);
         
         $total_couplets = Couplets::where(['poet_id' => $poetId, 'lang' => $locale, 'poetry_id' => 0])->count();
         
         if($category !==null){
-            $category_name = ' '.$category->detail->cat_name;
+            $category_name = ' '.$category->detail->cat_name_plural;
             // active or selected category, pass this to profile and use in the tabls selection
             $active_category = $category->slug;
             $active_category_id = $category->id;
             $poetry_limited = null;
+
+            $gender = CategoryGenderEnum::from($category->gender);
+
+            if ($locale === 'sd') {
+                $pluralCategory = $gender->plural() . ' ' . $category->detail->cat_name_plural;
+            } else {
+                $pluralCategory = $category->detail->cat_name_plural;
+            }
+
         }elseif($category_get === 'couplets')
         {
             $category_name = ($locale == 'sd') ? ' شعر ' : ' Couplets ';
+            $pluralCategory = $category_name;
             $active_category = 'couplets';
             $poetry_limited = null;
             $active_category_id = 0;
         }
         else{
             $category_name = ($locale == 'sd') ? ' شعر، غزل، گيت ۽ وايون ' : ' Couplets, Ghazals and other poetry ';
+            $pluralCategory = $category_name;
             $active_category = 'all';
             $poetry_limited = $this->getAllPoetryLimited($name, $poetId, $categoriesWithCounts);
             $active_category_id = 0;
@@ -200,10 +213,11 @@ class PoetsController extends UserController
         
         $title = ($locale == 'sd') ? trans('menus.poets').' | '. $laqab . $jo_ja.$category_name : ucfirst($category_name) . $jo_ja . $laqab . ' | ' . trans('menus.poets');
 
-        $this->SEO_Poet($profile, $category?->detail->cat_name_plural);
+
+        $this->SEO_Poet($profile, $pluralCategory);
         
         
-        $totalLikes = LikeDislike::where(['likable_type' => 'Poets', 'likable_id' =>  $profile->id])->count();// count total likes
+        $totalLikes = UserLikes::where(['likeable_type' => Poets::class, 'likeable_id' =>  $profile->id])->count();// count total likes
         return view('web.poets.profile', compact('profile', 'famous_poets', 'total_couplets', 'poetry_limited', 'active_category', 'active_category_id', 'poet_url', 'categoriesWithCounts', 'totalLikes'));
     }
 

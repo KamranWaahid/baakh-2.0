@@ -28,7 +28,7 @@
                     @endif
 
                     @foreach ($categoriesWithCounts as $item)
-                    <a href="{{ URL::localized($poet_url.'/'.$item->slug) }}" class="btn btn-sm btn-secondary btn-gol {{ $active_category === $item->slug ? 'active' : '' }}" style="font-size:1.2rem;">{{ Str::ucfirst($item->detail->cat_name) }} <span style="font-size:0.8rem;">{{ $item->poetry_count }}</span></a>
+                    <a href="{{ URL::localized($poet_url.'/'.$item->slug) }}" class="btn btn-sm btn-secondary btn-gol {{ $active_category === $item->slug ? 'active' : '' }}" style="font-size:1.2rem;">{{ Str::ucfirst($item->detail->cat_name_plural) }} <span style="font-size:0.8rem;">{{ $item->poetry_count }}</span></a>
                     @endforeach
                     
                 </div>

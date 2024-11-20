@@ -61,7 +61,7 @@ return [
     
     // SEO system 
     'seo_title_poet' =>  ':poetLaqab جا غزل، گيت، وايون ۽‌ شعر | باک',
-    'seo_title_poet_category' => ':poetLaqab جا لکيل :categoryName | باک',
+    'seo_title_poet_category' => ':poetLaqab :categoryName | باک',
     'seo_custom_bio_poetry' => ':poetName :category - :title | باک',
 
     // doodles
