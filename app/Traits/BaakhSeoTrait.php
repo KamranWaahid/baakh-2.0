@@ -1,6 +1,7 @@
 <?php 
 namespace App\Traits;
 
+use App\Enums\CategoryGenderEnum;
 use App\Models\Couplets;
 use App\Models\Poetry;
 use App\Models\Poets;
@@ -170,14 +171,15 @@ trait BaakhSeoTrait {
 
         $poetImage = $poet->poet_pic; 
         $poetLaqab = $poetDetails->poet_laqab; 
+        $final_name = mb_substr($poetLaqab, -1) == 'و' ? mb_substr($poetLaqab, 0, -1) . 'ي' : $poetLaqab;
         $poet_name = $poetDetails->poet_name;
         $tagline = $poetDetails->tagline;
         $currentLang = app()->getLocale();
 
         if($category !='') {
-            $title = trans('labels.seo_title_poet_category', [ 'categoryName' => $category , 'poetLaqab' => $poetLaqab]);
+            $title = trans('labels.seo_title_poet_category', [ 'categoryName' => $category , 'poetLaqab' => $final_name]);
         }else{
-            $title = trans('labels.seo_title_poet', ['poetLaqab' => $poetLaqab]);
+            $title = trans('labels.seo_title_poet', ['poetLaqab' => $final_name]);
         }
         
 
@@ -301,14 +303,30 @@ trait BaakhSeoTrait {
     public function SEO_Poetry(Poetry $poetry, $poetryCategory, Poets $poetModel)
     {
         // dd($poetry, $couplets, $poetModel);
-        $poetIdWithLang = $poetModel->id . '_lng_'.app()->getLocale();
+        $currentLang = app()->getLocale();
+        $poetIdWithLang = $poetModel->id . '_lng_'.$currentLang;
         $cacheKeyLocations = 'cache_poet_'.$poetIdWithLang.'_locations';
         $poetryInfo = $poetry->info;
         $poetDetails = $poetModel->details;
 
+        $p_category = $poetry->category;
+
         $couplets = $poetry->all_couplets;
 
-        $title =  trans('labels.seo_custom_bio_poetry', ['category' => $poetry->category->category_name, 'poetName' => $poetDetails->poet_laqab, 'title' => $poetryInfo->title]);
+        $poetLaqab = $poetDetails->poet_laqab;
+
+        $final_name = mb_substr($poetLaqab, -1) == 'و' ? mb_substr($poetLaqab, 0, -1) . 'ي' : $poetLaqab;
+        
+        $gender = CategoryGenderEnum::from($p_category->gender);
+
+        if ($currentLang === 'en') {
+            $poetName = $poetLaqab . "'s";
+        } else {
+            $poetName = $final_name . ' ' . $gender->singular();
+        }
+
+
+        $title =  trans('labels.seo_custom_bio_poetry', ['category' => $p_category->category_name, 'poetName' => $poetName, 'title' => $poetryInfo->title]);
         $stanzas = [];
         // if there is no info then make it from couplets
         if($poetryInfo->info != null || $poetryInfo->info != '') {
@@ -329,7 +347,7 @@ trait BaakhSeoTrait {
 
         $poetImage = $poetModel->poet_pic;
         $keywords = $this->appendKeywords(json_decode($poetry->poetry_tags)); // ["ishq", "love", "rain"]
-        $currentLang = app()->getLocale();
+        
         $url = URL::localized(route('poetry.with-slug', ['category' => $poetryCategory, 'slug' => $poetry->poetry_slug ]));
 
         $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
