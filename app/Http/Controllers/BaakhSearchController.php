@@ -9,22 +9,22 @@ use App\Models\Search\UnifiedCategories;
 use App\Models\Search\UnifiedCouplets;
 use App\Models\Search\UnifiedPoetry;
 use App\Models\Search\UnifiedPoets;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
-class BaakhSearchController extends Controller
+class BaakhSearchController extends UserController
 {
     public function index()
     {
-        $query = request()->query('q');
+        $query = request()->query('query');
+        if(!$query) {
+            return redirect(route('web.index'));
+        }
         $lang = request()->query('lang');
-      
-        $resp = $this->getResults($query, $lang);
-        
-        return response()->json($resp, 200, ['Content-Type' => 'application/json;charset=UTF-8', 'Charset' => 'utf-8'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-        return view('web.home.search_box');
+        $results = $this->getAdvanceSearch($query, $lang);
+      
+        return view('web.search.serp_index', compact('query', 'results'));
     }
 
 
@@ -128,7 +128,6 @@ class BaakhSearchController extends Controller
      */
     public function getSuggestions($q, $lang)
     {
-        app()->setLocale($lang);
         $query = urldecode($q);
 
         $result = $this->getResults($query, $lang);
@@ -231,7 +230,7 @@ class BaakhSearchController extends Controller
         }
 
         if($html === "") {
-            $gotoLink = URL::localized(route('web.search.index', ['what' => urlencode($query)]));
+            $gotoLink = URL::localized(route('web.search.index', ['query' => $query]));
             $gotoTitle = $query . ' - ڳوڙھي ڳولا ڪريو';
             $html .= view('web.home.search_suggestion_list', [
                 'link' => $gotoLink,
@@ -243,6 +242,99 @@ class BaakhSearchController extends Controller
             'error' => $error,
             'data' => $html
         ], 200, ['Content-Type' => 'application/json;charset=UTF-8']);
+    }
+
+    /**
+     * Advance Search
+     */
+    protected function getAdvanceSearch($query, $lang) {
+        $conjunctions = ['جو','جا','جي','جون','جيون']; // get Sindhi omit words
+        $pattern = '/\b(' . implode('|', array_map('preg_quote', $conjunctions)) . ')\b/u';
+        $query = preg_replace($pattern, '', $query);
+        $query = preg_replace('/\s+/', ' ', trim($query));
+        $results = [];
+        $term =  '%'.$query.'%';
+        $explodeQuery = explode(' ', $query);
+        $lastTerm = count($explodeQuery) > 0 ? trim(end($explodeQuery)) : '';
+
+        // Split query to identify possible poet name and category term
+        $queryWithoutLast = trim(str_replace($lastTerm, '', $query));
+
+        $poetry = UnifiedPoetry::where('lang', $lang)
+            ->where('title', 'like', "%$term%")
+            ->with([
+                'category' => function ($query) use ($lang) {
+                    $query->where('lang', $lang);
+                }, 
+                'poet' => function ($query) use ($lang) {
+                    $query->where('lang', $lang);
+                }
+            ])
+            ->orderBy('title', 'asc')->get();
+
+        // Poets 
+        $poets = UnifiedPoets::where('lang', $lang)
+        ->where(function($query) use ($term, $queryWithoutLast) {
+            $query->where('poet_laqab', 'like', $term)
+                ->orWhere('poet_name', 'like', $term);
+        })
+        ->orderBy('poet_laqab', 'asc')->get();
+
+        // couplets
+        $couplets = UnifiedCouplets::where('lang', $lang)
+                ->with(['poet'=> function ($query) use ($lang) {
+                    $query->where('lang', $lang);
+                }, 'poetry' => function ($poetry_q) use ($lang) {
+                    $poetry_q->where('lang', $lang);
+                }, 'poetry.category' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }])
+                ->where('poetry_id' , '!=', 0)
+                ->where('couplet_text', 'like', $term)
+                ->groupBy('poetry_id')
+                ->get();
+
+        if ($poetry->isNotEmpty()) {
+            $results['poetry'] = $poetry;
+        }
+
+        if ($poets->isNotEmpty()) {
+            $results['poets'] = $poets->map(function ($poet) use ($lang, $lastTerm) {
+                $categoryQuery = UnifiedCategories::whereIn('category_id', function ($query) use ($poet) {
+                    $query->select('category_id')->from('unified_poetry')->where('poet_id', $poet->poet_id);
+                })
+                ->where('lang', $lang);
+        
+                // Apply the cat_name condition only if $lastTerm is non-empty
+                if (!empty($lastTerm)) {
+                    $categoryQuery->where('cat_name', 'like', "%$lastTerm%");
+                }
+        
+                // Get the categories
+                $categories = $categoryQuery->get();
+        
+                // If no categories are fetched and $lastTerm was used, fetch all categories as a fallback
+                if ($categories->isEmpty() && !empty($lastTerm)) {
+                    $categories = UnifiedCategories::whereIn('category_id', function ($query) use ($poet) {
+                        $query->select('category_id')->from('unified_poetry')->where('poet_id', $poet->poet_id);
+                    })
+                    ->where('lang', $lang)
+                    ->get();
+                }
+        
+                return [
+                    'poet' => $poet,
+                    'categories' => $categories,
+                ];
+            });
+        }
+        
+        
+        if($couplets) {
+            $results['couplets'] = $couplets;
+        }
+
+        return $results;
     }
 
 

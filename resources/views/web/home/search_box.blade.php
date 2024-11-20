@@ -1,5 +1,5 @@
 <div class="hero-search-container">
-    <input type="text" id="hero-search-box" class="form-control hero-search-box" placeholder="{{ trans('labels.search_placeholder') }}">
+    <input type="text" id="hero-search-box" class="form-control hero-search-box" autocomplete="off" aria-autocomplete="off" placeholder="{{ trans('labels.search_placeholder') }}">
     <i class="bi bi-search hero-search-icon"></i>
     <div class="hero-suggestions-card" id="hero-suggestions-card">
         <!-- AJAX suggestion items will be inserted here -->
@@ -196,7 +196,7 @@ $(document).ready(function() {
 
     // Handle suggestion click
     $(document).on('click', '.hero-suggestion-item', function() {
-        $('#hero-search-box').val($(this).text().trim());
+        // $('#hero-search-box').val($(this).text().trim());
         $('#hero-suggestions-card').removeClass('show');
     });
 });

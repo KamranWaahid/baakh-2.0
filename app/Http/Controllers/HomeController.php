@@ -146,7 +146,7 @@ class HomeController extends UserController
     private function showRandomPoetry($limit, $locale)
     {
         // get all peotry couplets
-        $random_poetry = Couplets::where('lang', $locale)
+        $random_poetry = Couplets::with('poetry')->where('lang', $locale)->whereNotNull('couplet_slug')
                         ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
                         ->whereHas('poet', function ($query) {
                             $query->whereNull('deleted_at');
