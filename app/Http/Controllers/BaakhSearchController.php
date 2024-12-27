@@ -4,54 +4,94 @@ namespace App\Http\Controllers;
 
 use App\Enums\CategoryGenderEnum;
 use App\Models\Categories;
-use App\Models\Couplets;
-use App\Models\Poetry;
 use App\Models\Poets;
 use App\Models\Search\UnifiedCategories;
 use App\Models\Search\UnifiedCouplets;
 use App\Models\Search\UnifiedPoetry;
 use App\Models\Search\UnifiedPoets;
-use Illuminate\Support\Facades\Request;
+use App\Traits\BaakhSeoTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 
 class BaakhSearchController extends UserController
 {
+
+    use BaakhSeoTrait;
+
     public function index(Request $request)
     {
-        $searchTerm = $request->input('query');
-        if(!$searchTerm) {
+        $searchTerm = $request->query('query');
+        if (!$searchTerm) {
             return redirect(route('web.index'));
         }
+
         $lang = $request->input('lang', app()->getLocale());
+       
 
-        // $results = $this->getAdvanceSearch($searchTerm, $lang);
+        // Fetch UnifiedPoetry
+        $poetry = UnifiedPoetry::select(['id', 'title', 'category_id', 'poet_id', 'lang'])
+           
+            ->with(['category' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }])
+            ->with(['poet' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }])
+            ->with(['category' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }])
+            ->where('title', 'like', '%' . $searchTerm . '%')
+            ->get()
+            ->map(function ($item) {
+                $item->type = 'poetry';
+                return $item;
+            });
 
-        $searchTerm = $request->input('search');
-        $lang = $request->input('lang', 'en');
-     
-    
-        $poetry = UnifiedPoetry::whereHas('category', function ($query) use ($searchTerm, $lang) {
-            $query->where('lang', $lang);
-        })
-        ->whereHas('poet', function ($q) use ($lang) {
-            $q->where('lang', $lang);
-        })
-        ->where('title', 'like', '%' . $searchTerm . '%');
-    
-        $couplets = UnifiedCouplets::whereHas('poet', function ($query) use ($searchTerm, $lang) {
-            $query->where('lang', $lang);
-        })->where('couplet_text', 'like', '%' . $searchTerm . '%');
-    
-        $results = $poetry->union($couplets)->paginate(10); // result combine
-    
-        // ajax call return
-        if ($request->ajax()) {
-            return view('web.search.partials.search_results', compact('results'));
-        }
-      
-        return view('web.search.serp_index', compact('query', 'results', 'lang'));
+        // Fetch UnifiedCouplets
+        $couplets = UnifiedCouplets::select(['id', 'couplet_text as title', 'poet_id', 'poetry_id', 'lang'])
+            ->with(['poet' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }])
+            ->with(['poetry' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }])
+            ->with(['poetry.category' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }])
+            ->where('couplet_text', 'like', '%' . $searchTerm . '%')
+            ->get()
+            ->map(function ($item) {
+                $item->type = 'couplets';
+                return $item;
+            });
+           
+
+        // Merge results
+        $mergedResults = $poetry->merge($couplets);
+
+        // Paginate merged results
+        $perPage = 10;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $currentPageResults = $mergedResults->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        $results = new LengthAwarePaginator(
+            $currentPageResults,
+            $mergedResults->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        $seo_title = trans('labels.search_results_for', ['query' => $searchTerm]);
+        $seo_desc = trans('labels.search_results_seo');
+        $this->SEO_General($seo_title, $seo_desc);
+
+        return view('web.search.serp_index', compact('results', 'lang', 'searchTerm'));
     }
+
 
 
     /**

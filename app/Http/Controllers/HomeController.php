@@ -160,7 +160,11 @@ class HomeController extends UserController
             $liked = $this->isLiked('Couplets', $item->id);
             if($item->couplet_tags != NULL){
                 $decodeTags = json_decode($item->couplet_tags);
-                $usedTags = Tags::whereIn('slug', $decodeTags)->where('lang', $locale)->pluck('tag', 'slug')->toArray();
+                if($decodeTags) {
+                    $usedTags = Tags::whereIn('slug', $decodeTags)->where('lang', $locale)->pluck('tag', 'slug')->toArray();
+                }else{
+                    $usedTags = null;
+                }
                 $html .= view('web.home.random-poetry', ['item' => $item, 'liked'=> $liked, 'usedTags' => $usedTags]);
             }else{
                 $html .= view('web.home.random-poetry', ['item' => $item, 'liked'=> $liked]);

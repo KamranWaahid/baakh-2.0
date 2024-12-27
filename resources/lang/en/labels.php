@@ -71,6 +71,8 @@ return [
     'search_placeholder' => 'Search...',
     'search_no_results' => 'No Results Found',
     'search_poet' => 'Poet',
+    'search_results_for' => 'Search results for :query',
+    'search_results_seo' => 'Search Poetry, Ghazal, Geet, Vaayu of Sindhi poets'
 ];
 
 ?>

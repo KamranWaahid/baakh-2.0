@@ -60,7 +60,8 @@
         <div class="row">
             <!-- Start [Col-8 for results] -->
             <div id="serp_content" class="col-md-8 col-sm-12">
-                <h4 class="mb-4">Search results for: "{{ $query }}"</h4>
+                <h4 class="mb-4">{{ trans('labels.search_results_for', ['query' => $searchTerm]) }}</h4>
+            
                 @include('web.search.partials.search_results', ['results' => $results])
             </div>
             <!-- End [Col-8 for results] -->
@@ -78,12 +79,13 @@
                 </div>
 
                 <div class="card card-body" id="matchedTags">
-
+                    
                 </div>
 
                 <div class="card card-body" id="matchedPoets">
                     
                 </div>
+
             </div>
             <!-- End [Col-4 for InfoBox] -->
         </div>
@@ -95,7 +97,7 @@
 @push('js')
     <script>
         $(function () {
-            var query = '{{ $query }}';
+            var query = '{{ $searchTerm }}';
             $('.btn-baakh-search').trigger('click');
             $('.btn-baakh-search').focus(false);
             $('.search-input').val(query);
@@ -103,24 +105,24 @@
     </script>
 
 <script>
-    $(document).ready(function() {
-        $(document).on('click', '.pagination a', function(e) {
-            e.preventDefault();
+    // $(document).ready(function() {
+    //     $(document).on('click', '.pagination a', function(e) {
+    //         e.preventDefault();
 
-            var page = $(this).attr('href').split('page=')[1];
-            var searchTerm = "{{ request()->input('search') }}"; // Get current search term
-            var lang = "{{ request()->input('lang', 'en') }}"; // Get current language, default to 'en'
+    //         var page = $(this).attr('href').split('page=')[1];
+    //         var searchTerm = "{{ request()->input('query') }}"; // Get current search term
+    //         var lang = "{{ request()->input('lang', 'en') }}"; // Get current language, default to 'en'
 
-            $.ajax({
-                url: "{{ url()->current() }}?query=" + searchTerm + "&lang=" + lang + "&page=" + page,
-                type: "GET",
-                success: function(data) {
-                    $('#search-results').html($(data).find('#search-results').html());
-                    window.history.pushState(null, null, '?query=' + searchTerm + '&lang=' + lang + '&page=' + page);
-                }
-            });
-        });
-    });
+    //         $.ajax({
+    //             url: "{{ url()->current() }}?query=" + searchTerm + "&lang=" + lang + "&page=" + page,
+    //             type: "GET",
+    //             success: function(data) {
+    //                 $('#search-results').html($(data).find('#search-results').html());
+    //                 window.history.pushState(null, null, '?query=' + searchTerm + '&lang=' + lang + '&page=' + page);
+    //             }
+    //         });
+    //     });
+    // });
 </script>
 
 @endpush

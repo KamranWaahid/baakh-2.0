@@ -1,7 +1,7 @@
 <div class="swiper-slide">
 @php
     if($item->poetry_id !==0){
-      $link = '<a href="'.URL::localized(route('poetry.with-slug', ['category' => $item->poetry->category->slug, 'slug' => $item->poetry->poetry_slug])).'" class="btn btn-default"><i class="lni lni-hourglass me-2"></i>'.trans('buttons.ghazal_parho').'</a>';
+      $link = '<a href="'.URL::localized(route('poetry.with-slug', ['category' => $item->poetry?->category?->slug, 'slug' => $item->poetry->poetry_slug])).'" class="btn btn-default"><i class="lni lni-hourglass me-2"></i>'.trans('buttons.ghazal_parho').'</a>';
     }else{
       $link = '';
     }

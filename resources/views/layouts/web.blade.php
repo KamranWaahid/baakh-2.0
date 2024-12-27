@@ -143,8 +143,15 @@
     <!-- ========== Start Search Box Block ========== -->
     <div class="search-container">
       <div class="searchbox container">
-        <form method="search">
+        <form method="search" action="{{ route('web.search.index') }}">
           <button type="submit" class="btn btn-submit m-0"><i class="bi bi-search"></i></button>
+          @if (request()->has('lang'))
+              <input 
+                  type="hidden" 
+                  name="lang" 
+                  value="{{ request('lang') }}"
+              >
+          @endif
           <input type="text" name="query" class="form-control search-input" placeholder="{{ trans('menus.search_placeholder') }}">
         </form>
       </div>
