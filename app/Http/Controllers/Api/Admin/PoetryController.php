@@ -76,4 +76,86 @@ class PoetryController extends Controller
             'is_featured' => $poetry->is_featured
         ]);
     }
+    public function create()
+    {
+        $poets = \App\Models\Poets::with(['details' => function($q) {
+            $q->where('lang', 'sd');
+        }])->select('id', 'poet_slug')->get()->map(function($poet) {
+            return [
+                'id' => $poet->id,
+                'name' => $poet->details->first()?->poet_laqab ?? $poet->poet_slug
+            ];
+        });
+
+        $categories = \App\Models\Categories::with(['detail' => function($q) {
+            $q->where('lang', 'sd');
+        }])->select('id', 'slug')->get()->map(function($cat) {
+            return [
+                'id' => $cat->id,
+                'name' => $cat->detail?->cat_name ?? $cat->slug
+            ];
+        });
+
+        $tags = \App\Models\Tags::where('lang', 'sd')->select('id', 'tag', 'slug')->get();
+
+        return response()->json([
+            'poets' => $poets,
+            'categories' => $categories,
+            'tags' => $tags,
+            'content_styles' => ['justified', 'center', 'start', 'end']
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'poet_id' => 'required|exists:poets,id',
+            'category_id' => 'required|exists:categories,id',
+            'poetry_slug' => 'required|unique:poetry_main,poetry_slug',
+            'poetry_title' => 'required|string|max:255',
+            'content_style' => 'required|string',
+            'visibility' => 'required|boolean',
+            'is_featured' => 'required|boolean',
+            'couplets' => 'required|array|min:1',
+            'couplets.*.couplet_text' => 'required|string',
+            'poetry_tags' => 'nullable|array',
+            'poetry_info' => 'nullable|string',
+            'source' => 'nullable|string'
+        ]);
+
+        \DB::beginTransaction();
+        try {
+            $poetry = Poetry::create([
+                'poet_id' => $validated['poet_id'],
+                'category_id' => $validated['category_id'],
+                'user_id' => \Auth::id(),
+                'poetry_slug' => $validated['poetry_slug'],
+                'poetry_tags' => json_encode($validated['poetry_tags'] ?? []),
+                'visibility' => $validated['visibility'],
+                'is_featured' => $validated['is_featured'],
+                'content_style' => $validated['content_style'],
+            ]);
+
+            $poetry->translations()->create([
+                'title' => $validated['poetry_title'],
+                'info' => $validated['poetry_info'] ?? null,
+                'source' => $validated['source'] ?? null,
+                'lang' => 'sd', // Default lang for creation
+            ]);
+
+            foreach ($validated['couplets'] as $index => $couplet) {
+                $poetry->couplets()->create([
+                    'couplet_text' => $couplet['couplet_text'],
+                    'poet_id' => $validated['poet_id'],
+                    'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1)
+                ]);
+            }
+
+            \DB::commit();
+            return response()->json(['message' => 'Poetry created successfully', 'id' => $poetry->id], 201);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to create poetry: ' . $e->getMessage()], 500);
+        }
+    }
 }

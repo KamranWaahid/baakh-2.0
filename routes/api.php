@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')
     ->prefix('admin')
     ->group(function () {
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
+        Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
         Route::patch('poetry/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleVisibility']);
         Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);

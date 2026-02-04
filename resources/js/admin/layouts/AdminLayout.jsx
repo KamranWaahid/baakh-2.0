@@ -20,7 +20,8 @@ import {
     Flag,
     Map,
     AlignCenter,
-    Book
+    Book,
+    Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -93,6 +94,7 @@ const Sidebar = () => {
 
                 <SidebarGroup icon={BookOpen} label="Poetry">
                     <SidebarLink to="/poetry" icon={Book}>Main Poetry</SidebarLink>
+                    <SidebarLink to="/poetry/create" icon={Plus}>Add Poetry</SidebarLink>
                     <SidebarLink to="/couplets" icon={AlignCenter}>Couplets</SidebarLink>
                 </SidebarGroup>
 

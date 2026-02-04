@@ -41,6 +41,7 @@ import PoetsList from './pages/Poets/PoetsList';
 import CreatePoet from './pages/Poets/CreatePoet';
 import EditPoet from './pages/Poets/EditPoet';
 import PoetryList from './pages/Poetry/PoetryList';
+import CreatePoetry from './pages/Poetry/CreatePoetry';
 
 const App = () => {
     return (
@@ -80,6 +81,13 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <PoetryList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/poetry/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreatePoetry />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
