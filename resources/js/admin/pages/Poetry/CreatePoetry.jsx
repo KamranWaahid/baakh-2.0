@@ -31,6 +31,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,6 +58,37 @@ const poetrySchema = z.object({
 const CreatePoetry = () => {
     const navigate = useNavigate();
     const [poetryContent, setPoetryContent] = useState('');
+    const [showTransliteration, setShowTransliteration] = useState(false);
+    const [transliteratedText, setTransliteratedText] = useState('');
+
+    // Sindhi to Roman transliteration mapping
+    const transliterateSindhi = (text) => {
+        const sindhiToRoman = {
+            'ا': 'a', 'ب': 'b', 'ٻ': 'bb', 'پ': 'p', 'ت': 't', 'ٿ': 'tt', 'ٽ': 'ṭ',
+            'ث': 's', 'ج': 'j', 'ڄ': 'jj', 'جھ': 'jh', 'ڃ': 'ñ', 'چ': 'ch', 'ڇ': 'chh',
+            'ح': 'h', 'خ': 'kh', 'د': 'd', 'ڌ': 'dh', 'ڊ': 'dd', 'ڏ': 'ḍ', 'ذ': 'z',
+            'ر': 'r', 'ڙ': 'rr', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'z',
+            'ط': 't', 'ظ': 'z', 'ع': "'", 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ڪ': 'k',
+            'گ': 'g', 'ڳ': 'gg', 'گھ': 'gh', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ڻ': 'nn',
+            'و': 'w', 'ه': 'h', 'ھ': 'h', 'ي': 'y', 'ي': 'i', 'ئ': "'",
+            'َ': 'a', 'ُ': 'u', 'ِ': 'i', 'ً': 'an', 'ٌ': 'un', 'ٍ': 'in',
+            'ّ': '', 'ْ': '', 'ٰ': 'ā', 'ء': "'",
+            '۽': 'ain', '۾': 'mein', '؟': '?', '،': ',', '۔': '.'
+        };
+
+        let result = '';
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            result += sindhiToRoman[char] || char;
+        }
+        return result;
+    };
+
+    const handleTransliterate = () => {
+        const transliterated = transliterateSindhi(poetryContent);
+        setTransliteratedText(transliterated);
+        setShowTransliteration(true);
+    };
 
     const { data: meta, isLoading: isMetaLoading } = useQuery({
         queryKey: ['poetry-meta'],
@@ -278,7 +316,12 @@ const CreatePoetry = () => {
                                         <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
                                     </div>
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
-                                        <button type="button" className="hover:text-muted-foreground transition-colors" title="Transliteration">
+                                        <button
+                                            type="button"
+                                            className="hover:text-muted-foreground transition-colors"
+                                            title="Transliteration"
+                                            onClick={handleTransliterate}
+                                        >
                                             <Languages className="h-3.5 w-3.5" />
                                         </button>
                                         <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
@@ -337,7 +380,7 @@ const CreatePoetry = () => {
                         {/* Sidebar */}
                         <div className="space-y-6">
                             {/* Publish Status Card */}
-                            <Card className="shadow-sm border-t-4 border-t-primary">
+                            <Card className="shadow-sm">
                                 <CardHeader className="py-3">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                                         <Settings className="h-4 w-4" /> Status & Visibility
@@ -357,6 +400,7 @@ const CreatePoetry = () => {
                                                     <Checkbox
                                                         checked={field.value}
                                                         onCheckedChange={field.onChange}
+                                                        className="transition-all duration-200 data-[state=checked]:animate-in data-[state=checked]:zoom-in-50"
                                                     />
                                                 </div>
                                             )}
@@ -373,6 +417,7 @@ const CreatePoetry = () => {
                                                 <Checkbox
                                                     checked={field.value}
                                                     onCheckedChange={field.onChange}
+                                                    className="transition-all duration-200 data-[state=checked]:animate-in data-[state=checked]:zoom-in-50"
                                                 />
                                             )}
                                         />
@@ -414,51 +459,12 @@ const CreatePoetry = () => {
                                 </CardFooter>
                             </Card>
 
-                            {/* Additional Information Card */}
+                            {/* Meta Info Card */}
                             <Card className="shadow-sm">
                                 <CardHeader className="py-3">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <Info className="h-4 w-4" /> Additional Info
+                                        <Folder className="h-4 w-4" /> Meta Info
                                     </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="poetry_info"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Background</FormLabel>
-                                                <FormControl>
-                                                    <textarea
-                                                        className="w-full min-h-[100px] p-2 text-sm border rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none"
-                                                        placeholder="Story..."
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="source"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Source</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Book name..." {...field} className="h-8 text-sm" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </CardContent>
-                            </Card>
-
-                            {/* Metadata Card */}
-                            <Card className="shadow-sm">
-                                <CardHeader className="py-3">
-                                    <CardTitle className="text-sm font-medium">Meta Data</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <FormField
@@ -580,8 +586,81 @@ const CreatePoetry = () => {
                                     />
                                 </CardContent>
                             </Card>
+
+                            {/* Additional Information Card */}
+                            <Card className="shadow-sm">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                        <Info className="h-4 w-4" /> Additional Info
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="poetry_info"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Background</FormLabel>
+                                                <FormControl>
+                                                    <textarea
+                                                        className="w-full min-h-[100px] p-2 text-sm border border-border/40 rounded-md focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all resize-none"
+                                                        placeholder="Story..."
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="source"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Source</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Book name..." {...field} className="h-8 text-sm" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
+
+                    {/* Transliteration Dialog */}
+                    <Dialog open={showTransliteration} onOpenChange={setShowTransliteration}>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>Romanized Transliteration</DialogTitle>
+                                <DialogDescription>
+                                    Sindhi text converted to Roman script
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="mt-4">
+                                <div className="bg-muted/30 rounded-lg p-6">
+                                    <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                                        {transliteratedText || 'No content to transliterate'}
+                                    </pre>
+                                </div>
+                                <div className="mt-4 flex justify-end gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(transliteratedText);
+                                        }}
+                                    >
+                                        Copy to Clipboard
+                                    </Button>
+                                    <Button onClick={() => setShowTransliteration(false)}>
+                                        Close
+                                    </Button>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </form>
             </Form>
         </div>
