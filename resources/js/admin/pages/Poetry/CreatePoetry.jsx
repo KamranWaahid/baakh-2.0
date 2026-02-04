@@ -31,7 +31,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote } from 'lucide-react';
+import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -271,19 +271,22 @@ const CreatePoetry = () => {
                                 </DropdownMenu>
                             </div>
 
-                            <div className="p-8 md:p-12 space-y-6 max-w-4xl mx-auto w-full">
+                            <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
                                 {/* Top Label Placeholder */}
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60 font-medium">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
                                         <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground/60 font-medium">
-                                        {poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
+                                        <button type="button" className="hover:text-muted-foreground transition-colors" title="Transliteration">
+                                            <Languages className="h-3.5 w-3.5" />
+                                        </button>
+                                        <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
                                     </div>
                                 </div>
 
                                 {/* Title Section */}
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     <FormField
                                         control={form.control}
                                         name="poetry_title"
@@ -291,8 +294,10 @@ const CreatePoetry = () => {
                                             <FormItem className="space-y-0">
                                                 <FormControl>
                                                     <textarea
-                                                        className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/20 resize-none min-h-[60px] leading-tight bg-transparent"
-                                                        placeholder="Title"
+                                                        dir="rtl"
+                                                        lang="sd"
+                                                        className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-right"
+                                                        placeholder="عنوان"
                                                         {...field}
                                                         onChange={(e) => {
                                                             field.onChange(e);
@@ -308,14 +313,16 @@ const CreatePoetry = () => {
                                 </div>
 
                                 {/* Single Poetry Canvas */}
-                                <div className="pt-8">
+                                <div className="pt-6">
                                     <textarea
                                         id="poetry-editor"
-                                        className={`w-full p-0 text-2xl font-serif border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/20 resize-none min-h-[500px] bg-transparent leading-relaxed ${form.watch('content_style') === 'center' ? 'text-center' :
-                                            form.watch('content_style') === 'start' ? 'text-left' :
-                                                form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
+                                        dir="rtl"
+                                        lang="sd"
+                                        className={`w-full p-0 text-2xl font-serif border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed ${form.watch('content_style') === 'center' ? 'text-center' :
+                                                form.watch('content_style') === 'start' ? 'text-right' :
+                                                    form.watch('content_style') === 'end' ? 'text-left' : 'text-justify'
                                             }`}
-                                        placeholder="Start writing your poem here... Use an empty line to separate couplets."
+                                        placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
                                         value={poetryContent}
                                         onChange={(e) => {
                                             setPoetryContent(e.target.value);
