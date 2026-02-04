@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +23,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+    DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -37,15 +45,12 @@ const poetrySchema = z.object({
     is_featured: z.boolean().default(false),
     poetry_info: z.string().optional(),
     source: z.string().optional(),
-    couplets: z.array(z.object({
-        couplet_text: z.string().min(1, 'Couplet text is required'),
-    })).min(1, 'At least one couplet is required'),
     poetry_tags: z.array(z.string()).optional(),
 });
 
 const CreatePoetry = () => {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
+    const [poetryContent, setPoetryContent] = useState('');
 
     const { data: meta, isLoading: isMetaLoading } = useQuery({
         queryKey: ['poetry-meta'],
@@ -67,14 +72,8 @@ const CreatePoetry = () => {
             is_featured: false,
             poetry_info: '',
             source: '',
-            couplets: [{ couplet_text: '' }],
             poetry_tags: [],
         },
-    });
-
-    const { fields, append, remove } = useFieldArray({
-        control: form.control,
-        name: "couplets",
     });
 
     // Auto-generate slug from title
@@ -100,7 +99,50 @@ const CreatePoetry = () => {
     });
 
     const onSubmit = (data) => {
-        mutation.mutate(data);
+        // Transform the single text block into couplets array
+        // Splits by one or more empty lines
+        const coupletTexts = poetryContent
+            .split(/\n\s*\n/)
+            .map(text => text.trim())
+            .filter(text => text.length > 0);
+
+        const transformedData = {
+            ...data,
+            couplets: coupletTexts.map(text => ({ couplet_text: text }))
+        };
+
+        if (transformedData.couplets.length === 0) {
+            alert('Please write some poetry first.');
+            return;
+        }
+
+        mutation.mutate(transformedData);
+    };
+
+    const applyFormat = (prefix, suffix = prefix) => {
+        const el = document.getElementById('poetry-editor');
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const text = el.value;
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        const newText = before + prefix + selection + suffix + after;
+        setPoetryContent(newText);
+
+        setTimeout(() => {
+            el.focus();
+            el.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 10);
+    };
+
+    const cycleAlignment = () => {
+        const styles = ['center', 'start', 'end', 'justified'];
+        const current = form.getValues('content_style');
+        const next = styles[(styles.indexOf(current) + 1) % styles.length];
+        form.setValue('content_style', next);
     };
 
     if (isMetaLoading) {
@@ -140,28 +182,104 @@ const CreatePoetry = () => {
                         <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
                             {/* Editor Toolbar */}
                             <div className="flex items-center gap-1 p-2 border-b bg-muted/5 sticky top-0 z-10 overflow-x-auto no-scrollbar">
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><Plus className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => setPoetryContent(prev => prev + '\n\n')} title="Add Couplet Space">
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-                                <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">Style <ChevronDown className="h-3 w-3" /></Button>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
+                                            Style <ChevronDown className="h-3 w-3" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-48">
+                                        <DropdownMenuLabel>Paragraph Style</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => applyFormat('# ', '')}>Heading 1</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => applyFormat('## ', '')}>Heading 2</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => applyFormat('> ', '')}><Quote className="h-4 w-4 mr-2" /> Blockquote</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => applyFormat('- ', '')}>Bullet List</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 font-bold text-xs">B</Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 italic text-xs font-serif italic">I</Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 line-through text-xs font-serif">S</Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 font-mono text-xs">{"</>"}</Button>
+
+                                <div className="flex items-center">
+                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('**')} title="Bold">
+                                        <Bold className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('*')} title="Italic">
+                                        <Italic className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('~~')} title="Strikethrough">
+                                        <Strikethrough className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('`')} title="Code">
+                                        <Code className="h-4 w-4" />
+                                    </Button>
+                                </div>
+
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><LinkIcon className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><TagIcon className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><AlignCenter className="h-4 w-4" /></Button>
+
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('[', '](url)')} title="Link">
+                                    <Link2 className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => {
+                                    document.querySelector('[name="poetry_tags"]')?.scrollIntoView({ behavior: 'smooth' });
+                                }} title="Tags">
+                                    <TagIcon className="h-4 w-4" />
+                                </Button>
+
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={cycleAlignment} title="Change Alignment">
+                                    {form.watch('content_style') === 'center' && <AlignCenter className="h-4 w-4" />}
+                                    {form.watch('content_style') === 'start' && <AlignLeft className="h-4 w-4" />}
+                                    {form.watch('content_style') === 'end' && <AlignRight className="h-4 w-4" />}
+                                    {form.watch('content_style') === 'justified' && <AlignJustify className="h-4 w-4" />}
+                                </Button>
+
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-                                <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">Button <ChevronDown className="h-3 w-3" /></Button>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
+                                            Button <ChevronDown className="h-3 w-3" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        <DropdownMenuItem>Primary Button</DropdownMenuItem>
+                                        <DropdownMenuItem>Outline Button</DropdownMenuItem>
+                                        <DropdownMenuItem>Link Button</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-                                <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">More <ChevronDown className="h-3 w-3" /></Button>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
+                                            More <ChevronDown className="h-3 w-3" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                        <DropdownMenuItem onClick={() => { setPoetryContent(''); form.reset(); }}>Clear All</DropdownMenuItem>
+                                        <DropdownMenuItem>Import from File</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => navigate('/poetry')}>View All Poetry</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
 
                             <div className="p-8 md:p-12 space-y-6 max-w-4xl mx-auto w-full">
                                 {/* Top Label Placeholder */}
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 mb-8 font-medium">
-                                    <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60 font-medium">
+                                        <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground/60 font-medium">
+                                        {poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets
+                                    </div>
                                 </div>
 
                                 {/* Title Section */}
@@ -173,7 +291,7 @@ const CreatePoetry = () => {
                                             <FormItem className="space-y-0">
                                                 <FormControl>
                                                     <textarea
-                                                        className="w-full text-5xl font-bold border-none focus:outline-none placeholder:text-muted-foreground/20 resize-none min-h-[60px] leading-tight"
+                                                        className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/20 resize-none min-h-[60px] leading-tight bg-transparent"
                                                         placeholder="Title"
                                                         {...field}
                                                         onChange={(e) => {
@@ -187,74 +305,24 @@ const CreatePoetry = () => {
                                             </FormItem>
                                         )}
                                     />
-
-
                                 </div>
 
-
-
-                                {/* Couplets Canvas */}
-                                <div className="pt-12 space-y-12">
-                                    {fields.map((field, index) => (
-                                        <div key={field.id} className="relative group animate-in slide-in-from-bottom-2 duration-300">
-                                            {fields.length > 1 && (
-                                                <div className="absolute -left-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                                                        onClick={() => remove(index)}
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                </div>
-                                            )}
-
-                                            <FormField
-                                                control={form.control}
-                                                name={`couplets.${index}.couplet_text`}
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-0 text-center">
-                                                        <FormControl>
-                                                            <textarea
-                                                                id={`couplet-${index}`}
-                                                                className={`w-full p-0 text-2xl font-serif border-none focus:outline-none placeholder:text-muted-foreground/20 resize-none min-h-[60px] bg-transparent ${form.watch('content_style') === 'center' ? 'text-center' :
-                                                                    form.watch('content_style') === 'start' ? 'text-left' :
-                                                                        form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
-                                                                    }`}
-                                                                placeholder={index === 0 ? "Start writing..." : `Couplet ${index + 1}...`}
-                                                                {...field}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' && e.shiftKey) {
-                                                                        e.preventDefault();
-                                                                        const nextIndex = index + 1;
-                                                                        if (fields.length <= nextIndex) {
-                                                                            append({ couplet_text: '' });
-                                                                            // Small timeout to allow the new field to render before focusing
-                                                                            setTimeout(() => {
-                                                                                document.getElementById(`couplet-${nextIndex}`)?.focus();
-                                                                            }, 50);
-                                                                        } else {
-                                                                            document.getElementById(`couplet-${nextIndex}`)?.focus();
-                                                                        }
-                                                                    }
-                                                                }}
-                                                                onChange={(e) => {
-                                                                    field.onChange(e);
-                                                                    e.target.style.height = 'auto';
-                                                                    e.target.style.height = e.target.scrollHeight + 'px';
-                                                                }}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                    ))}
-
-
+                                {/* Single Poetry Canvas */}
+                                <div className="pt-8">
+                                    <textarea
+                                        id="poetry-editor"
+                                        className={`w-full p-0 text-2xl font-serif border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/20 resize-none min-h-[500px] bg-transparent leading-relaxed ${form.watch('content_style') === 'center' ? 'text-center' :
+                                            form.watch('content_style') === 'start' ? 'text-left' :
+                                                form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
+                                            }`}
+                                        placeholder="Start writing your poem here... Use an empty line to separate couplets."
+                                        value={poetryContent}
+                                        onChange={(e) => {
+                                            setPoetryContent(e.target.value);
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = e.target.scrollHeight + 'px';
+                                        }}
+                                    />
                                 </div>
                             </div>
                         </div>
