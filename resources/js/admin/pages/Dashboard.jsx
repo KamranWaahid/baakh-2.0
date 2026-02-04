@@ -28,40 +28,131 @@ const Dashboard = () => {
         }
     });
 
-    const stats = [
+    // Map API stats to display format
+    const stats = data?.stats ? [
         {
             title: "Total Poets",
-            value: "1,248",
-            change: "+12%",
+            value: data.stats.total_poets.value,
+            change: data.stats.total_poets.change,
+            trend: data.stats.total_poets.trend,
+            icon: Feather,
+            description: "Active poets in database"
+        },
+        {
+            title: "Total Poetry",
+            value: data.stats.total_poetry.value,
+            change: data.stats.total_poetry.change,
+            trend: data.stats.total_poetry.trend,
+            icon: BookOpen,
+            description: "Published poems"
+        },
+        {
+            title: "Registered Users",
+            value: data.stats.total_users.value,
+            change: data.stats.total_users.change,
+            trend: data.stats.total_users.trend,
+            icon: Users,
+            description: "Active community members"
+        },
+        {
+            title: "Daily Views",
+            value: data.stats.daily_views.value,
+            change: data.stats.daily_views.change,
+            trend: data.stats.daily_views.trend,
+            icon: Activity,
+            description: "Page views in last 24h"
+        }
+    ] : [
+        {
+            title: "Total Poets",
+            value: "...",
+            change: "...",
             trend: "up",
             icon: Feather,
             description: "Active poets in database"
         },
         {
             title: "Total Poetry",
-            value: "14,503",
-            change: "+5%",
+            value: "...",
+            change: "...",
             trend: "up",
             icon: BookOpen,
             description: "Published poems"
         },
         {
             title: "Registered Users",
-            value: "8,942",
-            change: "+18%",
+            value: "...",
+            change: "...",
             trend: "up",
             icon: Users,
             description: "Active community members"
         },
         {
             title: "Daily Views",
-            value: "45.2K",
-            change: "-2%",
-            trend: "down",
+            value: "...",
+            change: "...",
+            trend: "up",
             icon: Activity,
             description: "Page views in last 24h"
         }
     ];
+
+    const actionCards = [
+        {
+            id: 'missing_en_poetry',
+            title: "Poetry Missing Translation",
+            description: "Poems needing English content",
+            icon: Languages,
+            color: "orange",
+            dataKey: 'missing_en_poetry',
+            dialogTitle: "Poetry Missing Translation",
+            dialogDescription: "Poems (Linked) that need English content."
+        },
+        {
+            id: 'missing_en_couplets',
+            title: "Couplets Missing Translation",
+            description: "Couplets needing English content",
+            icon: Languages,
+            color: "blue",
+            dataKey: 'missing_en_couplets',
+            dialogTitle: "Couplets Missing Translation",
+            dialogDescription: "Independent couplets needing English content."
+        },
+        {
+            id: 'missing_tags_couplets',
+            title: "Couplets Missing Tags",
+            description: "Couplets without tags",
+            icon: Tag,
+            color: "green",
+            dataKey: 'missing_tags_couplets',
+            dialogTitle: "Couplets Missing Tags",
+            dialogDescription: "All couplets that haven't been tagged yet."
+        }
+    ];
+
+    const getColorClasses = (color) => {
+        const colors = {
+            orange: {
+                bg: 'bg-orange-50',
+                text: 'text-orange-600',
+                border: 'border-orange-200',
+                hover: 'hover:bg-orange-100'
+            },
+            blue: {
+                bg: 'bg-blue-50',
+                text: 'text-blue-600',
+                border: 'border-blue-200',
+                hover: 'hover:bg-blue-100'
+            },
+            green: {
+                bg: 'bg-green-50',
+                text: 'text-green-600',
+                border: 'border-green-200',
+                hover: 'hover:bg-green-100'
+            }
+        };
+        return colors[color] || colors.orange;
+    };
 
     const ListItem = ({ item, link }) => (
         <div className="flex items-center justify-between py-2 border-b last:border-0">
