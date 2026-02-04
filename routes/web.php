@@ -1,5 +1,11 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
+Route::get('admin/new/{any?}', function () {
+    return view('admin.app');
+})->where('any', '.*')->name('admin.spa');
+
 use App\Http\Controllers\BaakhSearchController;
 use App\Http\Controllers\BundlesController;
 use App\Http\Controllers\CoupletsController;
@@ -14,7 +20,6 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TagsController;
 use App\Http\Controllers\Users\UserCommentsController;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

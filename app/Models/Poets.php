@@ -28,6 +28,11 @@ class Poets extends Model
         return $this->hasOne(PoetsDetail::class, 'poet_id', 'id');
     }
 
+    public function all_details()
+    {
+        return $this->hasMany(PoetsDetail::class, 'poet_id', 'id');
+    }
+
     public function shortDetail() {
         return $this->hasOne(PoetsDetail::class, 'poet_id', 'id')->where('lang', 'sd');
     }
