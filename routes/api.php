@@ -24,6 +24,8 @@ Route::middleware('auth:sanctum')
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
+        Route::get('couplets', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'index']);
+        Route::get('dashboard', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
         Route::patch('poetry/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleVisibility']);
         Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
     });

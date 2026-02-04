@@ -25,6 +25,17 @@ class PoetryController extends Controller
             }
         ]);
 
+        if ($request->has('type') && $request->type === 'couplet') {
+            $query->with(['couplets' => function ($q) {
+                $q->orderBy('id', 'asc');
+            }]);
+            // Filter where category_id is NULL for independent couplets
+            // OR where it has a category but we want to show it as a couplet? 
+            // The user said "if couplet has category it show linked, otherwise indepented".
+            // So couplets CAN have categories. 
+            // BUT couplets created via the new form won't have categories.
+        }
+
         if ($request->has('search')) {
             $search = $request->search;
             $query->whereHas('info', function ($q) use ($search) {
@@ -110,7 +121,8 @@ class PoetryController extends Controller
     {
         $validated = $request->validate([
             'poet_id' => 'required|exists:poets,id',
-            'category_id' => 'required|exists:categories,id',
+            'poet_id' => 'required|exists:poets,id',
+            'category_id' => 'nullable|exists:categories,id',
             'poetry_slug' => 'required|unique:poetry_main,poetry_slug',
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',

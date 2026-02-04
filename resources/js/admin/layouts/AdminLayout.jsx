@@ -95,6 +95,7 @@ const Sidebar = () => {
                 <SidebarGroup icon={BookOpen} label="Poetry">
                     <SidebarLink to="/poetry" icon={Book}>Main Poetry</SidebarLink>
                     <SidebarLink to="/poetry/create" icon={Plus}>Add Poetry</SidebarLink>
+                    <SidebarLink to="/couplet/create" icon={Plus}>Add Couplet</SidebarLink>
                     <SidebarLink to="/couplets" icon={AlignCenter}>Couplets</SidebarLink>
                 </SidebarGroup>
 

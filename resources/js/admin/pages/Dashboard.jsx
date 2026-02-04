@@ -1,21 +1,33 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/axios';
+import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Users,
     BookOpen,
     Feather,
-    TrendingUp,
     Activity,
     ArrowUpRight,
     ArrowDownRight,
+    Search,
     Plus,
-    Search
+    AlertCircle,
+    Tag,
+    Languages
 } from 'lucide-react';
 
 const Dashboard = () => {
-    // Static mock data for the dashboard
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['dashboard-stats'],
+        queryFn: async () => {
+            const response = await api.get('/api/admin/dashboard');
+            return response.data;
+        }
+    });
+
     const stats = [
         {
             title: "Total Poets",
@@ -51,36 +63,17 @@ const Dashboard = () => {
         }
     ];
 
-    const recentActivity = [
-        {
-            id: 1,
-            user: "Sarah Ahmed",
-            action: "Added new poem",
-            target: "Dreams of Sindh",
-            time: "2 mins ago"
-        },
-        {
-            id: 2,
-            user: "Ali Raza",
-            action: "Updated profile",
-            target: "Biography",
-            time: "15 mins ago"
-        },
-        {
-            id: 3,
-            user: "System",
-            action: "Generated sitemap",
-            target: "XML Sitemap",
-            time: "1 hour ago"
-        },
-        {
-            id: 4,
-            user: "Fatima Noor",
-            action: "Commented on",
-            target: "Shah Jo Risalo",
-            time: "3 hours ago"
-        }
-    ];
+    const ListItem = ({ item, link }) => (
+        <div className="flex items-center justify-between py-2 border-b last:border-0">
+            <div className="flex-1 truncate pr-4">
+                <span className="font-medium text-sm text-gray-700">{item.title}</span>
+                <span className="ml-2 text-xs text-gray-400">ID: {item.id}</span>
+            </div>
+            <Button variant="ghost" size="sm" asChild className="h-8">
+                <Link to={link}>Edit</Link>
+            </Button>
+        </div>
+    );
 
     return (
         <div className="flex flex-col gap-8 p-8 fade-in-bottom">
@@ -95,9 +88,11 @@ const Dashboard = () => {
                         <Search className="h-4 w-4" />
                         Search
                     </Button>
-                    <Button className="gap-2 bg-black hover:bg-gray-800 text-white">
-                        <Plus className="h-4 w-4" />
-                        New Entry
+                    <Button className="gap-2 bg-black hover:bg-gray-800 text-white" asChild>
+                        <Link to="/poetry/create">
+                            <Plus className="h-4 w-4" />
+                            New Entry
+                        </Link>
                     </Button>
                 </div>
             </div>
@@ -136,50 +131,84 @@ const Dashboard = () => {
                 })}
             </div>
 
-            {/* Main Content Area */}
-            <div className="grid gap-6 md:grid-cols-7 lg:grid-cols-7">
-                {/* Large Chart/Graph Section Placeholder */}
-                <Card className="col-span-4 transition-all">
+            {/* Content Tasks Section */}
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+                {/* 1. Missing EN Poetry */}
+                <Card className="col-span-1 shadow-sm border-orange-100 bg-orange-50/30">
                     <CardHeader>
-                        <CardTitle>Platform Growth</CardTitle>
-                        <CardDescription>User registration and content contribution trends.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pl-2">
-                        <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-md border border-dashed border-gray-200">
-                            <div className="text-center text-gray-400">
-                                <TrendingUp className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                                <p>Interactive Chart Visualization</p>
-                                <p className="text-xs">(To be integrated with Recharts or Chart.js)</p>
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <Languages className="h-5 w-5 text-orange-500" />
+                            <CardTitle className="text-lg">Poetry Missing Translation</CardTitle>
                         </div>
+                        <CardDescription>Poems (Linked) that need English content.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="space-y-2">
+                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                            </div>
+                        ) : data?.missing_en_poetry?.length > 0 ? (
+                            <div className="space-y-1">
+                                {data.missing_en_poetry.map(item => (
+                                    <ListItem key={item.id} item={item} link={`/poetry/${item.id}/edit`} />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground py-4">No pending items.</p>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Recent Activity Feed */}
-                <Card className="col-span-3 transition-all">
+                {/* 2. Missing EN Couplets */}
+                <Card className="col-span-1 shadow-sm border-blue-100 bg-blue-50/30">
                     <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                        <CardDescription>Latest actions performed across the system.</CardDescription>
+                        <div className="flex items-center gap-2">
+                            <Languages className="h-5 w-5 text-blue-500" />
+                            <CardTitle className="text-lg">Couplets Missing Translation</CardTitle>
+                        </div>
+                        <CardDescription>Independent couplets needing English content.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-8">
-                            {recentActivity.map((activity) => (
-                                <div key={activity.id} className="flex items-center">
-                                    <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
-                                        {activity.user.charAt(0)}
-                                    </div>
-                                    <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">{activity.user}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {activity.action} <span className="font-semibold text-gray-700">{activity.target}</span>
-                                        </p>
-                                    </div>
-                                    <div className="ml-auto font-medium text-xs text-gray-400">
-                                        {activity.time}
-                                    </div>
-                                </div>
-                            ))}
+                        {isLoading ? (
+                            <div className="space-y-2">
+                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                            </div>
+                        ) : data?.missing_en_couplets?.length > 0 ? (
+                            <div className="space-y-1">
+                                {data.missing_en_couplets.map(item => (
+                                    <ListItem key={item.id} item={item} link={`/poetry/${item.id}/edit`} />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground py-4">No pending items.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* 3. Missing Tags */}
+                <Card className="col-span-1 shadow-sm border-green-100 bg-green-50/30">
+                    <CardHeader>
+                        <div className="flex items-center gap-2">
+                            <Tag className="h-5 w-5 text-green-500" />
+                            <CardTitle className="text-lg">Couplets Missing Tags</CardTitle>
                         </div>
+                        <CardDescription>All couplets that haven't been tagged yet.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="space-y-2">
+                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                            </div>
+                        ) : data?.missing_tags_couplets?.length > 0 ? (
+                            <div className="space-y-1">
+                                {data.missing_tags_couplets.map(item => (
+                                    // Note: poetry_id is used for editing usually, check if null
+                                    <ListItem key={item.id} item={item} link={item.poetry_id ? `/poetry/${item.poetry_id}/edit` : '#'} />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground py-4">No pending items.</p>
+                        )}
                     </CardContent>
                 </Card>
             </div>

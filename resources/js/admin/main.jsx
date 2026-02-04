@@ -42,6 +42,8 @@ import CreatePoet from './pages/Poets/CreatePoet';
 import EditPoet from './pages/Poets/EditPoet';
 import PoetryList from './pages/Poetry/PoetryList';
 import CreatePoetry from './pages/Poetry/CreatePoetry';
+import CreateCouplet from './pages/Poetry/CreateCouplet';
+import CoupletsList from './pages/Poetry/CoupletsList';
 
 const App = () => {
     return (
@@ -88,6 +90,20 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreatePoetry />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/couplet/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateCouplet />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/couplets" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CoupletsList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
