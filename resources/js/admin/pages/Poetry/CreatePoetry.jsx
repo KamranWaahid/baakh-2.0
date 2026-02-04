@@ -23,7 +23,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter } from 'lucide-react';
+import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -123,137 +123,140 @@ const CreatePoetry = () => {
         <div className="pb-20">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-3xl font-bold tracking-tight">Create New Poetry</h2>
-                        <div className="flex items-center gap-2">
-                            <Button variant="outline" type="button" onClick={() => navigate('/poetry')}>Discard</Button>
-                            <Button type="submit" disabled={mutation.isPending}>
-                                <Send className="mr-2 h-4 w-4" /> {mutation.isPending ? 'Publishing...' : 'Publish'}
+                    <div className="flex items-center justify-between mb-8 border-b pb-4">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-semibold tracking-tight">Create New Poetry</h2>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Button variant="ghost" type="button" onClick={() => navigate('/poetry')}>Cancel</Button>
+                            <Button type="submit" disabled={mutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
+                                {mutation.isPending ? 'Publishing...' : 'Publish'}
                             </Button>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Main Content Area */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Title Section */}
-                            <Card className="border-none shadow-sm bg-white">
-                                <CardContent className="pt-6">
+                        {/* Main Content Area - Editor Canvas */}
+                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
+                            {/* Editor Toolbar */}
+                            <div className="flex items-center gap-1 p-2 border-b bg-muted/5 sticky top-0 z-10 overflow-x-auto no-scrollbar">
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><Plus className="h-4 w-4" /></Button>
+                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">Style <ChevronDown className="h-3 w-3" /></Button>
+                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 font-bold text-xs">B</Button>
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 italic text-xs font-serif italic">I</Button>
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 line-through text-xs font-serif">S</Button>
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8 font-mono text-xs">{"</>"}</Button>
+                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><LinkIcon className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><TagIcon className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8"><AlignCenter className="h-4 w-4" /></Button>
+                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">Button <ChevronDown className="h-3 w-3" /></Button>
+                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">More <ChevronDown className="h-3 w-3" /></Button>
+                            </div>
+
+                            <div className="p-8 md:p-12 space-y-6 max-w-4xl mx-auto w-full">
+                                {/* Top Label Placeholder */}
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 mb-8 font-medium">
+                                    <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
+                                </div>
+
+                                {/* Title Section */}
+                                <div className="space-y-4">
                                     <FormField
                                         control={form.control}
                                         name="poetry_title"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <input
-                                                        className="w-full text-4xl font-bold border-none focus:outline-none placeholder:text-muted-foreground/30"
-                                                        placeholder="Enter poetry title here"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </CardContent>
-                            </Card>
-
-                            {/* Couplets Editor Section */}
-                            <Card className="shadow-sm">
-                                <CardHeader className="border-b bg-muted/20 py-3">
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                            <AlignCenter className="h-4 w-4" /> Couplets
-                                        </CardTitle>
-                                        <div className="flex items-center gap-2">
-                                            <Button type="button" variant="ghost" size="sm" onClick={() => append({ couplet_text: '' })}>
-                                                <Plus className="h-4 w-4 mr-1" /> Add Couplet
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="pt-6 space-y-4">
-                                    {fields.map((field, index) => (
-                                        <div key={field.id} className="flex gap-4 group">
-                                            <div className="flex-1">
-                                                <FormField
-                                                    control={form.control}
-                                                    name={`couplets.${index}.couplet_text`}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <textarea
-                                                                    className="w-full min-h-[80px] p-4 text-lg border rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none"
-                                                                    placeholder={`Couplet ${index + 1}...`}
-                                                                    {...field}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            {fields.length > 1 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="mt-4 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity"
-                                                    onClick={() => remove(index)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </CardContent>
-                                <CardFooter className="border-t bg-muted/5 py-3 justify-center">
-                                    <Button type="button" variant="link" size="sm" onClick={() => append({ couplet_text: '' })}>
-                                        <Plus className="h-4 w-4 mr-1" /> Add another couplet
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-
-                            {/* Additional Information Section */}
-                            <Card className="shadow-sm">
-                                <CardHeader className="border-b py-3">
-                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <Info className="h-4 w-4" /> Additional Information
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-6 space-y-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="poetry_info"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Background / Information</FormLabel>
+                                            <FormItem className="space-y-0">
                                                 <FormControl>
                                                     <textarea
-                                                        className="w-full min-h-[120px] p-3 border rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all"
-                                                        placeholder="Provide some background story or information about this poetry..."
+                                                        className="w-full text-5xl font-bold border-none focus:outline-none placeholder:text-muted-foreground/20 resize-none min-h-[60px] leading-tight"
+                                                        placeholder="Title"
                                                         {...field}
+                                                        onChange={(e) => {
+                                                            field.onChange(e);
+                                                            e.target.style.height = 'auto';
+                                                            e.target.style.height = e.target.scrollHeight + 'px';
+                                                        }}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={form.control}
-                                        name="source"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Source (Book, etc.)</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="e.g. Shah Jo Risalo" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </CardContent>
-                            </Card>
+
+
+                                </div>
+
+
+
+                                {/* Couplets Canvas */}
+                                <div className="pt-12 space-y-12">
+                                    {fields.map((field, index) => (
+                                        <div key={field.id} className="relative group animate-in slide-in-from-bottom-2 duration-300">
+                                            {fields.length > 1 && (
+                                                <div className="absolute -left-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                                                        onClick={() => remove(index)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            )}
+
+                                            <FormField
+                                                control={form.control}
+                                                name={`couplets.${index}.couplet_text`}
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-0 text-center">
+                                                        <FormControl>
+                                                            <textarea
+                                                                id={`couplet-${index}`}
+                                                                className={`w-full p-0 text-2xl font-serif border-none focus:outline-none placeholder:text-muted-foreground/20 resize-none min-h-[60px] bg-transparent ${form.watch('content_style') === 'center' ? 'text-center' :
+                                                                    form.watch('content_style') === 'start' ? 'text-left' :
+                                                                        form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
+                                                                    }`}
+                                                                placeholder={index === 0 ? "Start writing..." : `Couplet ${index + 1}...`}
+                                                                {...field}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' && e.shiftKey) {
+                                                                        e.preventDefault();
+                                                                        const nextIndex = index + 1;
+                                                                        if (fields.length <= nextIndex) {
+                                                                            append({ couplet_text: '' });
+                                                                            // Small timeout to allow the new field to render before focusing
+                                                                            setTimeout(() => {
+                                                                                document.getElementById(`couplet-${nextIndex}`)?.focus();
+                                                                            }, 50);
+                                                                        } else {
+                                                                            document.getElementById(`couplet-${nextIndex}`)?.focus();
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                onChange={(e) => {
+                                                                    field.onChange(e);
+                                                                    e.target.style.height = 'auto';
+                                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                                }}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    ))}
+
+
+                                </div>
+                            </div>
                         </div>
 
                         {/* Sidebar */}
@@ -334,6 +337,47 @@ const CreatePoetry = () => {
                                         {mutation.isPending ? 'Publishing...' : 'Publish'}
                                     </Button>
                                 </CardFooter>
+                            </Card>
+
+                            {/* Additional Information Card */}
+                            <Card className="shadow-sm">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                        <Info className="h-4 w-4" /> Additional Info
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="poetry_info"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Background</FormLabel>
+                                                <FormControl>
+                                                    <textarea
+                                                        className="w-full min-h-[100px] p-2 text-sm border rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none"
+                                                        placeholder="Story..."
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="source"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Source</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Book name..." {...field} className="h-8 text-sm" />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </CardContent>
                             </Card>
 
                             {/* Metadata Card */}
@@ -447,7 +491,7 @@ const CreatePoetry = () => {
                                                 >
                                                     <FormControl>
                                                         <SelectTrigger className="h-8 text-xs">
-                                                            <SelectValue placeholder="Select Tags" />
+                                                            <SelectValue placeholder="Add Tags" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
