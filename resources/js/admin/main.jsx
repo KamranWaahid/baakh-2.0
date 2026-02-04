@@ -40,6 +40,7 @@ const queryClient = new QueryClient();
 import PoetsList from './pages/Poets/PoetsList';
 import CreatePoet from './pages/Poets/CreatePoet';
 import EditPoet from './pages/Poets/EditPoet';
+import PoetryList from './pages/Poetry/PoetryList';
 
 const App = () => {
     return (
@@ -72,6 +73,13 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <EditPoet />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/poetry" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <PoetryList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
