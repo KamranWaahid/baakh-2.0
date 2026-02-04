@@ -296,7 +296,7 @@ const CreatePoetry = () => {
                                                     <textarea
                                                         dir="rtl"
                                                         lang="sd"
-                                                        className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-right"
+                                                        className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-right font-arabic"
                                                         placeholder="عنوان"
                                                         {...field}
                                                         onChange={(e) => {
@@ -318,9 +318,9 @@ const CreatePoetry = () => {
                                         id="poetry-editor"
                                         dir="rtl"
                                         lang="sd"
-                                        className={`w-full p-0 text-2xl font-serif border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed ${form.watch('content_style') === 'center' ? 'text-center' :
-                                                form.watch('content_style') === 'start' ? 'text-right' :
-                                                    form.watch('content_style') === 'end' ? 'text-left' : 'text-justify'
+                                        className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-arabic ${form.watch('content_style') === 'center' ? 'text-center' :
+                                            form.watch('content_style') === 'start' ? 'text-right' :
+                                                form.watch('content_style') === 'end' ? 'text-left' : 'text-justify'
                                             }`}
                                         placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
                                         value={poetryContent}
