@@ -64,6 +64,7 @@ class SidebarController extends Controller
                     'id' => $poetry->id,
                     'title' => $title,
                     'author' => $poetName,
+                    'author_avatar' => $poetry->poet->author_avatar ?? null,
                     'date' => $date,
                     'slug' => $poetry->poetry_slug,
                     'poet_slug' => $poetry->poet->poet_slug ?? '',

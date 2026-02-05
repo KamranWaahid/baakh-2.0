@@ -23,7 +23,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
         <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'}`}>
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <Link to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'} className="flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity w-fit">
                         <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] shrink-0 overflow-hidden border border-gray-100">
                             <img
                                 src={author_avatar
@@ -33,8 +33,8 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                 className="w-full h-full object-cover"
                             />
                         </div>
-                        <span className="text-sm">{safeAuthor}</span>
-                    </div>
+                        <span className="text-sm hover:underline">{safeAuthor}</span>
+                    </Link>
 
                     <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}>
                         <div className="flex justify-between items-start gap-4">

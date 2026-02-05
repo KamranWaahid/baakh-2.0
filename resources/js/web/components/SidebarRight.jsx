@@ -93,14 +93,20 @@ const SidebarRight = ({ lang }) => {
                         ))
                     ) : (
                         staffPicks.map((pick, i) => (
-                            <div key={i} className="group cursor-pointer">
-                                <Link to={`/${lang}/poet/${pick.poet_slug}/${pick.cat_slug}/${pick.slug}`}>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden font-bold">
-                                            {pick.author ? pick.author.charAt(0) : 'A'}
-                                        </div>
-                                        <span className={`text-xs font-medium ${isRtl ? 'font-arabic' : ''}`}>{pick.author}</span>
+                            <div key={i} className="mb-6 last:mb-0">
+                                <Link to={`/${lang}/poet/${pick.poet_slug}`} className="flex items-center gap-2 mb-1 hover:opacity-80 transition-opacity w-fit">
+                                    <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden font-bold border border-gray-100">
+                                        <img
+                                            src={pick.author_avatar
+                                                ? (pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`)
+                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(pick.author)}&background=random&size=128`}
+                                            alt={pick.author}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
+                                    <span className={`text-xs font-medium hover:underline ${isRtl ? 'font-arabic' : ''}`}>{pick.author}</span>
+                                </Link>
+                                <Link to={`/${lang}/poet/${pick.poet_slug}/${pick.cat_slug}/${pick.slug}`} className="group block">
                                     <h4 className={`text-[14px] font-bold leading-snug group-hover:underline ${isRtl ? 'font-arabic' : ''}`}>{pick.title}</h4>
                                     <span className="text-xs text-gray-500 mt-1 block">{pick.date}</span>
                                 </Link>
