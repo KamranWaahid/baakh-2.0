@@ -1,10 +1,10 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { BookmarkPlus, MinusCircle, MoreHorizontal, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
 
-const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) => {
+const PostCard = ({ lang, title, excerpt, author, date, readTime, category, slug, poet_slug, cat_slug }) => {
     const isRtl = lang === 'sd';
     const { user } = useAuth();
 
@@ -25,9 +25,11 @@ const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) =>
                         <span className="text-sm">{author}</span>
                     </div>
 
-                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-4 leading-tight group-hover:opacity-80 transition-opacity ${isRtl ? 'font-arabic' : ''}`}>
-                        {title}
-                    </h2>
+                    <Link to={`/${lang}/poet/${poet_slug}/${cat_slug}/${slug}`}>
+                        <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-4 leading-tight group-hover:opacity-80 transition-opacity ${isRtl ? 'font-arabic' : ''}`}>
+                            {title}
+                        </h2>
+                    </Link>
 
                     <div className="flex items-center justify-between text-gray-500 text-sm">
                         <div className="flex items-center gap-3">
