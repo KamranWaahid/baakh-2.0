@@ -1,23 +1,20 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const SidebarRight = ({ lang }) => {
     const isRtl = lang === 'sd';
+    const [staffPicks, setStaffPicks] = React.useState([]);
+    const [topics, setTopics] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [stickyTop, setStickyTop] = React.useState(85);
     const sidebarRef = React.useRef(null);
 
     React.useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, []);
-
-    React.useEffect(() => {
         const updateSticky = () => {
+            // ... existing sticky logic ...
             if (!sidebarRef.current) return;
             const sidebarHeight = sidebarRef.current.offsetHeight;
             const windowHeight = window.innerHeight;
@@ -32,6 +29,7 @@ const SidebarRight = ({ lang }) => {
         };
 
         updateSticky();
+        // ... existing observers ...
         const observer = new ResizeObserver(updateSticky);
         if (sidebarRef.current) observer.observe(sidebarRef.current);
         window.addEventListener('resize', updateSticky);
@@ -39,16 +37,39 @@ const SidebarRight = ({ lang }) => {
             observer.disconnect();
             window.removeEventListener('resize', updateSticky);
         };
-    }, [loading]);
+    }, [staffPicks, topics, loading]);
 
-    const staffPicks = [
-        { title: isRtl ? 'مون ڪيئن پريشان ٿيڻ ڇڏي ڏنو ۽ ٽرمينل سان پيار ڪرڻ سکيو' : 'How I stopped worrying and learned to love the terminal', author: 'Pablo Stanley', date: 'Jan 23' },
-        { title: isRtl ? 'مان 2026 ۾ پاڻ کي ٻيهر ايجاد نه ڪري رهيو آهيان' : 'I\'m Not Reinventing Myself in 2026', author: 'Lou Chalmer', date: '3d ago' },
-    ];
+    React.useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Dynamically import axios
+                await import('../../admin/api/axios').then(async (module) => {
+                    const api = module.default;
 
-    const topics = [
-        'Programming', 'Writing', 'Sindhi Poetry', 'History', 'Culture', 'Literature', 'Sufism'
-    ];
+                    // Fetch Staff Picks
+                    const picksResponse = await api.get('/api/v1/sidebar/staff-picks', {
+                        headers: { 'Accept-Language': lang }
+                    });
+                    setStaffPicks(picksResponse.data);
+
+                    // Fetch Topics
+                    const topicsResponse = await api.get('/api/v1/sidebar/topics', {
+                        headers: { 'Accept-Language': lang }
+                    });
+                    setTopics(topicsResponse.data);
+                });
+            } catch (error) {
+                console.error("Failed to fetch sidebar data", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [lang]);
+
+
 
     return (
         <aside
@@ -73,12 +94,16 @@ const SidebarRight = ({ lang }) => {
                     ) : (
                         staffPicks.map((pick, i) => (
                             <div key={i} className="group cursor-pointer">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <div className="h-5 w-5 rounded-full bg-gray-100" />
-                                    <span className="text-xs font-medium">{pick.author}</span>
-                                </div>
-                                <h4 className="text-[14px] font-bold leading-snug group-hover:underline">{pick.title}</h4>
-                                <span className="text-xs text-gray-500 mt-1 block">{pick.date}</span>
+                                <Link to={`/${lang}/poet/${pick.poet_slug}/${pick.cat_slug}/${pick.slug}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden font-bold">
+                                            {pick.author ? pick.author.charAt(0) : 'A'}
+                                        </div>
+                                        <span className={`text-xs font-medium ${isRtl ? 'font-arabic' : ''}`}>{pick.author}</span>
+                                    </div>
+                                    <h4 className={`text-[14px] font-bold leading-snug group-hover:underline ${isRtl ? 'font-arabic' : ''}`}>{pick.title}</h4>
+                                    <span className="text-xs text-gray-500 mt-1 block">{pick.date}</span>
+                                </Link>
                             </div>
                         ))
                     )}

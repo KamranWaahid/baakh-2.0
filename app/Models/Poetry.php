@@ -27,10 +27,11 @@ class Poetry extends Model
         'content_style',
     ];
 
-    public function getPoetLaqabAttribute() {
+    public function getPoetLaqabAttribute()
+    {
         return PoetsDetail::where('poet_id', $this->poet_id)
-        ->where('lang', app()->getLocale())
-        ->value('poet_laqab');
+            ->where('lang', app()->getLocale())
+            ->value('poet_laqab');
     }
 
     public function user()
@@ -48,12 +49,13 @@ class Poetry extends Model
         return $this->belongsTo(Categories::class, 'category_id');
     }
 
-    public function getCategorySlugAttribute() 
+    public function getCategorySlugAttribute()
     {
         return $this->belongsTo(Categories::class, 'category_id')->value('slug');
     }
-    
-    public function language(){
+
+    public function language()
+    {
         return $this->belongsTo(Languages::class, 'lang', 'lang_code');
     }
 
@@ -67,7 +69,7 @@ class Poetry extends Model
         return $this->HasMany(Couplets::class, 'poetry_id', 'id');
     }
 
-    public function translations() 
+    public function translations()
     {
         return $this->hasMany(PoetryTranslations::class, 'poetry_id', 'id');
     }
@@ -76,14 +78,14 @@ class Poetry extends Model
     {
         return $this->hasOne(PoetryTranslations::class, 'poetry_id', 'id');
     }
-    
+
 
     public function media()
     {
         return $this->hasMany(Media::class, 'poetry_id');
     }
 
-   
+
     /**
      * New For Poet Details Only
      */
@@ -92,11 +94,12 @@ class Poetry extends Model
         return $this->hasOne(PoetsDetail::class, 'poet_id', 'poet_id');
     }
 
-    public function category_detail() {
+    public function category_detail()
+    {
         return $this->hasOne(CategoryDetails::class, 'cat_id', 'category_id');
     }
 
-    
+
 
     protected static function booted()
     {

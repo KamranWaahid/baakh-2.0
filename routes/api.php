@@ -38,6 +38,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     Route::get('poetry/{slug}', [App\Http\Controllers\PoetryController::class, 'apiShow']);
     Route::get('search', [App\Http\Controllers\Api\GlobalSearchController::class, 'search']);
+    Route::post('feedback', [App\Http\Controllers\Api\FeedbackController::class, 'store']);
+
+    // Sidebar Routes
+    Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
+    Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
 });
 
 

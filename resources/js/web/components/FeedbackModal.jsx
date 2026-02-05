@@ -14,10 +14,29 @@ const FeedbackModal = ({ trigger, isRtl = false }) => {
     const [rating, setRating] = React.useState(0);
     const [submitted, setSubmitted] = React.useState(false);
 
-    const handleSubmit = (e) => {
+    const [loading, setLoading] = React.useState(false);
+
+    // API Submit Logic
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setSubmitted(true);
-        // Add submit logic here
+        setLoading(true);
+        const message = e.target.message.value;
+
+        try {
+            await import('../../admin/api/axios').then(module => {
+                const api = module.default;
+                return api.post('/api/v1/feedback', {
+                    message,
+                    rating
+                });
+            });
+            setSubmitted(true);
+        } catch (error) {
+            console.error('Feedback failed:', error);
+            // Optionally show error state
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -60,8 +79,10 @@ const FeedbackModal = ({ trigger, isRtl = false }) => {
                         </div>
 
                         <Textarea
+                            name="message"
                             placeholder={isRtl ? 'پنهنجي راءِ هتي لکو...' : 'Tell us about your experience...'}
                             className={`min-h-[120px] resize-none bg-gray-50 border-gray-200 focus:border-black focus:ring-black rounded-xl p-4 text-base ${isRtl ? 'text-right font-arabic' : ''}`}
+                            required
                         />
 
                         <Button type="submit" className="rounded-full h-12 bg-black hover:bg-gray-800 text-white font-medium text-base mt-2">

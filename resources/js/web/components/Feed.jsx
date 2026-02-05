@@ -57,8 +57,8 @@ const Feed = ({ lang }) => {
     );
 
     return (
-        <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 py-6">
-            <Tabs defaultValue="for-you" className="w-full">
+        <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 py-6" dir={isRtl ? 'rtl' : 'ltr'}>
+            <Tabs defaultValue="for-you" className="w-full" dir={isRtl ? 'rtl' : 'ltr'}>
                 <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
                         <TabsTrigger

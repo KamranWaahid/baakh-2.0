@@ -153,8 +153,8 @@ const App = () => {
                         <Prosody />
                     </LanguageWrapper>
                 } />
-                <Route path="/" element={<Navigate to="/en" replace />} />
-                <Route path="*" element={<Navigate to="/en" replace />} />
+                <Route path="/" element={<Navigate to="/sd" replace />} />
+                <Route path="*" element={<Navigate to="/sd" replace />} />
             </Routes>
         </BrowserRouter>
     );
@@ -165,7 +165,7 @@ const LanguageWrapper = ({ children }) => {
     const validLangs = ['en', 'sd'];
 
     if (!validLangs.includes(lang)) {
-        return <Navigate to="/en" replace />;
+        return <Navigate to="/sd" replace />;
     }
 
     return <MainLayout lang={lang}>{children}</MainLayout>;
