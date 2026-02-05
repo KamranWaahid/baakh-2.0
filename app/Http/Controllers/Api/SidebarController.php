@@ -14,14 +14,29 @@ class SidebarController extends Controller
         $lang = $request->header('Accept-Language', 'en');
         App::setLocale($lang);
 
+        $monthMap = [
+            'Jan' => 'جنوري',
+            'Feb' => 'فيبروري',
+            'Mar' => 'مارچ',
+            'Apr' => 'اپريل',
+            'May' => 'مئي',
+            'Jun' => 'جون',
+            'Jul' => 'جولاءِ',
+            'Aug' => 'آگسٽ',
+            'Sep' => 'سيپٽمبر',
+            'Oct' => 'آڪٽوبر',
+            'Nov' => 'نومبر',
+            'Dec' => 'ڊسمبر',
+        ];
+
         // Fetch featured poetry (where is_featured = 1)
-        // Order by latest or random, taking 5 items
+        // Order by latest or random, taking 3 items
         $picks = Poetry::where('is_featured', 1)
             ->with(['translations', 'poet_details', 'poet'])
             ->latest()
-            ->take(5)
+            ->take(3)
             ->get()
-            ->map(function ($poetry) use ($lang) {
+            ->map(function ($poetry) use ($lang, $monthMap) {
                 // Determine title based on lang
                 $title = '';
                 $trans = $poetry->translations->where('lang', $lang)->first();
@@ -35,11 +50,21 @@ class SidebarController extends Controller
                 // Determine poet name
                 $poetName = $poetry->poet_details->poet_name ?? 'Unknown Poet';
 
+                $date = $poetry->created_at->format('M d');
+                if ($lang === 'sd') {
+                    foreach ($monthMap as $en => $sd) {
+                        if (str_contains($date, $en)) {
+                            $date = str_replace($en, $sd, $date);
+                            break;
+                        }
+                    }
+                }
+
                 return [
                     'id' => $poetry->id,
                     'title' => $title,
                     'author' => $poetName,
-                    'date' => $poetry->created_at->format('M d'),
+                    'date' => $date,
                     'slug' => $poetry->poetry_slug,
                     'poet_slug' => $poetry->poet->poet_slug ?? '',
                     'cat_slug' => $poetry->category->slug ?? 'ghazal', // default or fetch
