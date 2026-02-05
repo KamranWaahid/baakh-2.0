@@ -185,7 +185,7 @@ const Navbar = ({ lang }) => {
     return (
         <>
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
-            <nav className="h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50]">
+            <nav className="h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white z-[50]">
                 <div className="flex items-center gap-4 flex-1">
                     <Sheet>
                         <SheetTrigger asChild>

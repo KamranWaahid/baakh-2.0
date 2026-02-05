@@ -109,7 +109,7 @@ const Feed = ({ lang }) => {
                             return (
                                 <React.Fragment key={post.id || `${feedType}-${i}`}>
                                     <div ref={isLastElement ? lastPostElementRef : null}>
-                                        <PostCard lang={lang} {...post} />
+                                        <PostCard lang={lang} {...post} showStar={feedType === 'featured'} />
                                     </div>
                                     {i < feed.posts.length - 1 && <Separator className="bg-gray-100" />}
                                 </React.Fragment>
@@ -133,7 +133,7 @@ const Feed = ({ lang }) => {
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 py-6" dir={isRtl ? 'rtl' : 'ltr'}>
             <Tabs defaultValue="for-you" className="w-full" onValueChange={setActiveTab} dir={isRtl ? 'rtl' : 'ltr'}>
-                <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
+                <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
                         <TabsTrigger
                             value="for-you"

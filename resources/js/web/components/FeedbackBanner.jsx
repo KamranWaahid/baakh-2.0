@@ -10,7 +10,7 @@ const FeedbackBanner = ({ lang }) => {
     if (!isVisible) return null;
 
     return (
-        <div className="sticky top-[57px] left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 py-2 relative flex items-center justify-center min-h-[48px] font-sans">
+        <div className="bg-white border-b border-gray-100 px-4 py-2 relative flex items-center justify-center min-h-[48px] font-sans">
             <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
                 <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500 shrink-0" />
                 <p className={`text-sm text-gray-900 leading-none ${isRtl ? 'font-arabic' : ''} text-center`}>

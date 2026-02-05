@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
 
-const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '' }) => {
+const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true }) => {
     const isRtl = lang === 'sd';
     const { user } = useAuth();
 
@@ -24,12 +24,14 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] shrink-0 overflow-hidden">
-                            {author_avatar ? (
-                                <img src={author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`} alt={safeAuthor} className="w-full h-full object-cover" />
-                            ) : (
-                                safeAuthor[0]
-                            )}
+                        <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] shrink-0 overflow-hidden border border-gray-100">
+                            <img
+                                src={author_avatar
+                                    ? (author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`)
+                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor)}&background=random&size=128`}
+                                alt={safeAuthor}
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                         <span className="text-sm">{safeAuthor}</span>
                     </div>
@@ -60,7 +62,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
 
                     <div className="flex items-center justify-between text-gray-500 text-sm">
                         <div className="flex items-center gap-3">
-                            <Star className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />
+                            {showStar && <Star className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
                             <span>{isRtl ? safeDate.replace(/(\d+)d ago/, '$1 ڏينھن اڳ ۾') : safeDate}</span>
                             <span>·</span>
                             <span>{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
