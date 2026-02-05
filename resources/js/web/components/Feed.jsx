@@ -7,65 +7,85 @@ import PostCardSkeleton from './skeletons/PostCardSkeleton';
 
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
+    const [activeTab, setActiveTab] = React.useState('for-you');
 
-    const [posts, setPosts] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
-    const [page, setPage] = React.useState(1);
-    const [hasMore, setHasMore] = React.useState(true);
-    const [isFetchingMore, setIsFetchingMore] = React.useState(false);
+    // Separate states for each tab to preserve scroll and items
+    const [feeds, setFeeds] = React.useState({
+        'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
+        'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
+    });
+
+    const currentFeed = feeds[activeTab];
     const observer = React.useRef();
 
     const lastPostElementRef = React.useCallback(node => {
-        if (loading || isFetchingMore) return;
+        if (currentFeed.loading || currentFeed.isFetchingMore) return;
         if (observer.current) observer.current.disconnect();
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                setPage(prevPage => prevPage + 1);
+            if (entries[0].isIntersecting && currentFeed.hasMore) {
+                setFeeds(prev => ({
+                    ...prev,
+                    [activeTab]: { ...prev[activeTab], page: prev[activeTab].page + 1 }
+                }));
             }
         }, {
-            rootMargin: '100px', // Start loading 100px before reaching the bottom
+            rootMargin: '100px',
             threshold: 0.1
         });
         if (node) observer.current.observe(node);
-    }, [loading, isFetchingMore, hasMore]);
+    }, [activeTab, currentFeed.loading, currentFeed.isFetchingMore, currentFeed.hasMore]);
 
-    const fetchFeed = async (pageNumber, isInitial = false) => {
-        if (isInitial) setLoading(true);
-        else setIsFetchingMore(true);
+    const fetchFeedData = async (tab, pageNumber, isInitial = false) => {
+        if (isInitial) {
+            setFeeds(prev => ({ ...prev, [tab]: { ...prev[tab], loading: true } }));
+        } else {
+            setFeeds(prev => ({ ...prev, [tab]: { ...prev[tab], isFetchingMore: true } }));
+        }
 
         try {
             const module = await import('../../admin/api/axios');
             const api = module.default;
             const response = await api.get('/api/v1/feed', {
-                params: { lang, page: pageNumber }
+                params: {
+                    lang,
+                    page: pageNumber,
+                    filter: tab === 'featured' ? 'featured' : undefined
+                }
             });
 
             const newPosts = response.data.data;
-            setPosts(prev => isInitial ? newPosts : [...prev, ...newPosts]);
-
-            // Laravel paginator keys: current_page, last_page, next_page_url
-            const moreAvailable = response.data.current_page < response.data.last_page;
-            setHasMore(moreAvailable);
+            setFeeds(prev => ({
+                ...prev,
+                [tab]: {
+                    ...prev[tab],
+                    posts: isInitial ? newPosts : [...prev[tab].posts, ...newPosts],
+                    hasMore: response.data.current_page < response.data.last_page,
+                    loading: false,
+                    isFetchingMore: false
+                }
+            }));
         } catch (error) {
-            console.error("Failed to fetch feed", error);
-            setHasMore(false);
-        } finally {
-            if (isInitial) setLoading(false);
-            else setIsFetchingMore(false);
+            console.error(`Failed to fetch ${tab} feed`, error);
+            setFeeds(prev => ({ ...prev, [tab]: { ...prev[tab], loading: false, isFetchingMore: false, hasMore: false } }));
         }
     };
 
+    // Initial load and lang change
     React.useEffect(() => {
-        setPage(1);
-        setPosts([]);
-        fetchFeed(1, true);
+        setFeeds({
+            'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
+            'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
+        });
+        fetchFeedData('for-you', 1, true);
+        fetchFeedData('featured', 1, true);
     }, [lang]);
 
+    // Page change trigger
     React.useEffect(() => {
-        if (page > 1) {
-            fetchFeed(page);
+        if (currentFeed.page > 1) {
+            fetchFeedData(activeTab, currentFeed.page);
         }
-    }, [page]);
+    }, [currentFeed.page, activeTab]);
 
     const LoadingState = () => (
         <div className="space-y-8 mt-0">
@@ -78,30 +98,41 @@ const Feed = ({ lang }) => {
         </div>
     );
 
-    const FeedContent = ({ items }) => (
-        <>
-            {items.map((post, i) => {
-                const isLastElement = items.length === i + 1;
-                return (
-                    <React.Fragment key={post.id || i}>
-                        <div ref={isLastElement ? lastPostElementRef : null}>
-                            <PostCard lang={lang} {...post} />
-                        </div>
-                        {i < items.length - 1 && <Separator className="bg-gray-100" />}
-                    </React.Fragment>
-                );
-            })}
-            {isFetchingMore && (
-                <div className="py-8">
-                    <PostCardSkeleton />
-                </div>
-            )}
-        </>
-    );
+    const FeedContent = ({ feedType }) => {
+        const feed = feeds[feedType];
+        return (
+            <div className="space-y-8 mt-0">
+                {feed.loading ? <LoadingState /> : (feed.posts && feed.posts.length > 0) ? (
+                    <>
+                        {feed.posts.map((post, i) => {
+                            const isLastElement = feed.posts.length === i + 1;
+                            return (
+                                <React.Fragment key={post.id || `${feedType}-${i}`}>
+                                    <div ref={isLastElement ? lastPostElementRef : null}>
+                                        <PostCard lang={lang} {...post} />
+                                    </div>
+                                    {i < feed.posts.length - 1 && <Separator className="bg-gray-100" />}
+                                </React.Fragment>
+                            );
+                        })}
+                        {feed.isFetchingMore && (
+                            <div className="py-8">
+                                <PostCardSkeleton />
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <div className="py-20 text-center text-gray-500">
+                        {isRtl ? 'ڪوبه مواد نه مليو.' : 'No content found.'}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 py-6" dir={isRtl ? 'rtl' : 'ltr'}>
-            <Tabs defaultValue="for-you" className="w-full" dir={isRtl ? 'rtl' : 'ltr'}>
+            <Tabs defaultValue="for-you" className="w-full" onValueChange={setActiveTab} dir={isRtl ? 'rtl' : 'ltr'}>
                 <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
                         <TabsTrigger
@@ -119,24 +150,12 @@ const Feed = ({ lang }) => {
                     </TabsList>
                 </div>
 
-                <TabsContent value="for-you" className="space-y-8 mt-0">
-                    {loading ? <LoadingState /> : (posts && posts.length > 0) ? (
-                        <FeedContent items={posts} />
-                    ) : (
-                        <div className="py-20 text-center text-gray-500">
-                            {isRtl ? 'ڪوبه مواد نه مليو.' : 'No content found.'}
-                        </div>
-                    )}
+                <TabsContent value="for-you" className="mt-0">
+                    <FeedContent feedType="for-you" />
                 </TabsContent>
 
-                <TabsContent value="featured" className="space-y-8 mt-0">
-                    {loading ? <LoadingState /> : (posts && posts.length > 0) ? (
-                        <FeedContent items={posts.slice(0, 10)} />
-                    ) : (
-                        <div className="py-20 text-center text-gray-500">
-                            {isRtl ? 'ڪوبه مواد نه مليو.' : 'No content found.'}
-                        </div>
-                    )}
+                <TabsContent value="featured" className="mt-0">
+                    <FeedContent feedType="featured" />
                 </TabsContent>
             </Tabs>
         </div>

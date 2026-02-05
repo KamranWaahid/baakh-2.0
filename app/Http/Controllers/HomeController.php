@@ -339,9 +339,10 @@ class HomeController extends UserController
     {
         $lang = $request->get('lang', app()->getLocale());
         $page = $request->get('page', 1);
+        $filter = $request->get('filter');
         $perPage = 10;
 
-        $poetry = Poetry::with([
+        $query = Poetry::with([
             'info' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
             },
@@ -359,8 +360,13 @@ class HomeController extends UserController
                 $query->where('media_type', 'image')->where('lang', $lang)->limit(1);
             }
         ])
-            ->where('visibility', 1)
-            ->latest()
+            ->where('visibility', 1);
+
+        if ($filter === 'featured') {
+            $query->where('is_featured', 1);
+        }
+
+        $poetry = $query->latest()
             ->paginate($perPage);
 
         $transformed = $poetry->through(function ($p) use ($lang) {
