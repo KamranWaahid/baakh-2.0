@@ -14,12 +14,6 @@ const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) =>
                             {author[0]}
                         </div>
                         <span className="text-sm">{author}</span>
-                        {category && (
-                            <>
-                                <span className="text-gray-400">{isRtl ? '۾' : 'in'}</span>
-                                <span className="text-sm">{category}</span>
-                            </>
-                        )}
                     </div>
 
                     <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-4 leading-tight group-hover:opacity-80 transition-opacity ${isRtl ? 'font-arabic' : ''}`}>
