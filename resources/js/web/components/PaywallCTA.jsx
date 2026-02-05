@@ -67,9 +67,12 @@ const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
             )}
 
             {/* Button: Inter (Sans) for consistency */}
-            <Button className="rounded-full bg-black hover:bg-gray-800 text-white font-medium text-lg h-12 px-10 min-w-[200px] font-sans">
-                {isRtl ? 'وڌيڪ ڏسو' : 'See More'}
-            </Button>
+            {/* Button: Inter (Sans) for consistency */}
+            <Link to={`/${isRtl ? 'sd' : 'en'}/poets`}>
+                <Button className="rounded-full bg-black hover:bg-gray-800 text-white font-medium text-lg h-12 px-10 min-w-[200px] font-sans">
+                    {isRtl ? 'وڌيڪ ڏسو' : 'See More'}
+                </Button>
+            </Link>
         </div>
     );
 };
