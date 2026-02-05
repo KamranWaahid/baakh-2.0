@@ -19,6 +19,7 @@ const PoemDetail = ({ lang }) => {
 
     const currentUrl = window.location.href;
 
+
     const { data: poem, isLoading, isError, error } = useQuery({
         queryKey: ['poetry', poemSlug, lang],
         queryFn: async () => {
@@ -81,6 +82,11 @@ const PoemDetail = ({ lang }) => {
 
     if (!poem || !poem.id) return null;
 
+    // Justification Logic
+    const isGhazal = poem.category?.name && (poem.category.name.toLowerCase().includes('ghazal') || poem.category.name.includes('غزل'));
+    const alignmentClass = isGhazal ? 'text-justify' : (poem.content_style === 'center' ? 'text-center' : 'text-right');
+
+
     return (
         <div className="w-full flex flex-col items-center py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
             <article className="w-full max-w-[680px] mb-20 animate-fade-in-up">
@@ -127,10 +133,11 @@ const PoemDetail = ({ lang }) => {
 
 
                 {/* Body */}
-                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-relaxed text-[20px] ${isRtl ? 'font-arabic' : ''} ${poem.content_style === 'center' ? 'text-center' : 'text-right'}`}>
+                {/* Body */}
+                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-relaxed text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line`}>
                     {Array.isArray(poem.content) ? (
                         poem.content.map((couplet, index) => (
-                            <p key={index} className="whitespace-pre-wrap mb-6">{couplet}</p>
+                            <p key={index} className="mb-6 w-full">{couplet}</p>
                         ))
                     ) : (
                         <div dangerouslySetInnerHTML={{ __html: poem.content }} />
