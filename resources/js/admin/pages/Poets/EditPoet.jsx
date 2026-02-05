@@ -137,7 +137,7 @@ const EditPoet = () => {
             await api.post(`/api/admin/poets/${id}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            navigate('/poets');
+            navigate('/admin/new/poets');
         } catch (error) {
             console.error(error);
             if (error.response?.data?.errors) {
@@ -447,7 +447,7 @@ const EditPoet = () => {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => navigate('/poets')}>Cancel</Button>
+                        <Button variant="outline" type="button" onClick={() => navigate('/admin/new/poets')}>Cancel</Button>
                         <Button type="submit" disabled={form.formState.isSubmitting}>
                             {form.formState.isSubmitting ? 'Saving...' : 'Update Poet'}
                         </Button>

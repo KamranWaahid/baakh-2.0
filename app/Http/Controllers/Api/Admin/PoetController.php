@@ -30,6 +30,27 @@ class PoetController extends Controller
         $perPage = $request->get('per_page', 10);
         $poets = $query->paginate($perPage);
 
+        $poets->through(function ($poet) {
+            $details = $poet->all_details;
+            $detail = $details->where('lang', 'sd')->first()
+                ?? $details->where('lang', 'en')->first()
+                ?? $details->first()
+                ?? (object) [];
+
+            return [
+                'id' => $poet->id,
+                'poet_slug' => $poet->poet_slug,
+                'poet_pic' => $poet->poet_pic,
+                'poet_name' => $detail->poet_name ?? 'N/A',
+                'poet_laqab' => $detail->poet_laqab ?? 'N/A',
+                'visibility' => $poet->visibility,
+                'is_featured' => $poet->is_featured,
+                'date_of_birth' => $poet->date_of_birth,
+                'date_of_death' => $poet->date_of_death,
+                'deleted_at' => $poet->deleted_at
+            ];
+        });
+
         return response()->json($poets);
     }
 
@@ -201,7 +222,7 @@ class PoetController extends Controller
             }
 
             // Delete details
-            $poet->all_details()->forceDelete();
+            $poet->all_details()->delete(); // Use soft delete
             $poet->delete();
 
             \DB::commit();

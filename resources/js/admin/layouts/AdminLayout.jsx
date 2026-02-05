@@ -122,6 +122,7 @@ const Sidebar = () => {
 };
 
 const AdminLayout = ({ children }) => {
+    const location = useLocation();
     const handleLogout = async () => {
         try {
             await api.post('/api/auth/logout');
@@ -200,8 +201,13 @@ const AdminLayout = ({ children }) => {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </header>
-                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-                    {children}
+                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-hidden">
+                    <div
+                        key={location.key}
+                        className="flex-1 flex flex-col gap-4 lg:gap-6 animate-in fade-in slide-in-from-bottom-1 duration-500 ease-out fill-mode-forward"
+                    >
+                        {children}
+                    </div>
                 </main>
             </div>
         </div>

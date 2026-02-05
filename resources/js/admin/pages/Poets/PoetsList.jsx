@@ -149,7 +149,7 @@ const PoetsList = () => {
                                                 <TableCell>{poet.date_of_death || '-'}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <Button variant="ghost" size="sm" asChild>
-                                                        <Link to={`/poets/${poet.id}/edit`}>Edit</Link>
+                                                        <Link to={`/admin/new/poets/${poet.id}/edit`}>Edit</Link>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
