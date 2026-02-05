@@ -1,3 +1,6 @@
+import React from 'react';
+import { BookmarkPlus, MinusCircle, MoreHorizontal, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
 

@@ -8,42 +8,28 @@ import PostCardSkeleton from './skeletons/PostCardSkeleton';
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
 
-    const posts = [
-        // ... (keep posts array same, assumed to be part of the component logic not shown in replacement chunk if I target the return)
-        {
-            title: isRtl ? 'جنوري ۾ مون پڙهيل 3 شاندار ڪتاب' : '3 Brilliant Books I Read In January',
-            excerpt: isRtl ? 'جنوري ۾ پڙهڻ لاءِ بهترين ڪتابن جي فهرست...' : 'I discovered something so valuable for all of us that it deserved a description longer than an article.',
-            author: 'Tom Addison',
-            date: '5d ago',
-            readTime: '8 min read',
-            category: 'Reading List'
-        },
-        {
-            title: isRtl ? 'هڪ ننڍڙي عادت جيڪي منهنجي دماغ کي نئون ڪيو' : 'The Tiny Habit that Rewired My Brain',
-            excerpt: isRtl ? 'ڪيئن هڪ ننڍي تبديلي وڏي نتيجي جو سبب بڻجي سگهي ٿي...' : 'This is how a small daily ritual can transform your productivity and clarity in ways you never expected.',
-            author: 'Learning Strategist',
-            date: '3d ago',
-            readTime: '12 min read',
-            category: 'Psychology'
-        },
-        {
-            title: isRtl ? 'شاھ لطيف جي شاعري ۾ فطرت جا نظارا' : 'Nature in the Poetry of Shah Latif',
-            excerpt: isRtl ? 'لطيف سائين پنهنجي شاعري ۾ ڪيئن فطرت کي بيان ڪيو آهي...' : 'An exploration of naturalistic elements and symbolism in the immortal verses of Shah Abdul Latif Bhittai.',
-            author: 'Baakh Editorial',
-            date: 'Feb 1',
-            readTime: '15 min read',
-            category: 'Sindhi Literature'
-        }
-    ];
-
+    const [posts, setPosts] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 2000);
-        return () => clearTimeout(timer);
-    }, []);
+        const fetchFeed = async () => {
+            setLoading(true);
+            try {
+                const module = await import('../../admin/api/axios');
+                const api = module.default;
+                const response = await api.get('/api/v1/feed', {
+                    params: { lang }
+                });
+                setPosts(response.data.data);
+            } catch (error) {
+                console.error("Failed to fetch feed", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchFeed();
+    }, [lang]);
 
     const LoadingState = () => (
         <div className="space-y-8 mt-0">
@@ -77,21 +63,29 @@ const Feed = ({ lang }) => {
                 </div>
 
                 <TabsContent value="for-you" className="space-y-8 mt-0">
-                    {loading ? <LoadingState /> : posts.map((post, i) => (
-                        <React.Fragment key={i}>
+                    {loading ? <LoadingState /> : (posts && posts.length > 0) ? posts.map((post, i) => (
+                        <React.Fragment key={post.id || i}>
                             <PostCard lang={lang} {...post} />
                             {i < posts.length - 1 && <Separator className="bg-gray-100" />}
                         </React.Fragment>
-                    ))}
+                    )) : (
+                        <div className="py-20 text-center text-gray-500">
+                            {isRtl ? 'ڪوبه مواد نه مليو.' : 'No content found.'}
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="featured" className="space-y-8 mt-0">
-                    {loading ? <LoadingState /> : posts.slice(0, 2).map((post, i) => (
-                        <React.Fragment key={i}>
+                    {loading ? <LoadingState /> : (posts && posts.length > 0) ? posts.slice(0, 2).map((post, i) => (
+                        <React.Fragment key={post.id || i}>
                             <PostCard lang={lang} {...post} />
-                            {i < 1 && <Separator className="bg-gray-100" />}
+                            {i < Math.min(posts.length, 2) - 1 && <Separator className="bg-gray-100" />}
                         </React.Fragment>
-                    ))}
+                    )) : (
+                        <div className="py-20 text-center text-gray-500">
+                            {isRtl ? 'ڪوبه مواد نه مليو.' : 'No content found.'}
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
         </div>

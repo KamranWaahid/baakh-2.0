@@ -43,6 +43,9 @@ Route::prefix('v1')->group(function () {
     // Sidebar Routes
     Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
+
+    // Feed Routes
+    Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
 });
 
 

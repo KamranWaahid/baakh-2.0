@@ -24,7 +24,7 @@ class HomeController extends UserController
     {
         parent::__construct();
         $this->updateGhazalOfTheDay();
-        
+
     }
 
     /**
@@ -46,7 +46,7 @@ class HomeController extends UserController
         $quiz_couplet = $this->getQuizCouplet($locale);
         $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
         $random_poetry = $this->showRandomPoetry(10, $locale);
-        $poet_tags = Tags::where(['type'=> 'poets', 'lang' => $locale])->get();
+        $poet_tags = Tags::where(['type' => 'poets', 'lang' => $locale])->get();
         $tags = Tags::where('lang', $locale)->limit(18)->get(); // get all tags
 
         // SEO 
@@ -56,64 +56,77 @@ class HomeController extends UserController
         $this->SEO_General($title, $desc);
 
         $ghazal_of_day_poet = $ghazal_of_day?->poet;
-        
+
         $compact = compact(
-            'doodles', 'poet_tags',
-            'ghazal_of_day', 'ghazal_of_day_poet', 'famous_poet', 'random_poetry', 
-            'quiz_couplet', 'quiz_poets', 'tags');
-        
-        return view('web.home.home',  $compact);
+            'doodles',
+            'poet_tags',
+            'ghazal_of_day',
+            'ghazal_of_day_poet',
+            'famous_poet',
+            'random_poetry',
+            'quiz_couplet',
+            'quiz_poets',
+            'tags'
+        );
+
+        return view('web.home.home', $compact);
     }
-     
-    
+
+
     private function getFamousPoets($locale)
     {
-        return Poets::with(['details' => function ($q) use ($locale) {
-            $q->where('lang', $locale);
-        }])
-        ->where('visibility', '1')
-        ->whereHas('details', function ($query) use ($locale) {
-            $query->where('lang', $locale);
-        })
-        ->inRandomOrder()
-        ->limit(5)
-        ->get();
+        return Poets::with([
+            'details' => function ($q) use ($locale) {
+                $q->where('lang', $locale);
+            }
+        ])
+            ->where('visibility', '1')
+            ->whereHas('details', function ($query) use ($locale) {
+                $query->where('lang', $locale);
+            })
+            ->inRandomOrder()
+            ->limit(5)
+            ->get();
     }
-    
+
     private function getGhazalOfDay($locale)
     {
         $todayModule = new TodaysModule();
         return $todayModule->ghazal($locale);
     }
-    
+
     private function getQuizCouplet($locale)
     {
-        return Couplets::with(['poet.details' => function ($query) use ($locale) {
-            $query->where('poets_detail.lang', $locale);
-        }])
-        ->whereRaw('LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, "\n", "")) = 1')
-        ->whereHas('poet', function ($query) {
-            $query->whereNull('deleted_at');
-        })
-        ->where('lang', $locale)
-        ->inRandomOrder()
-        ->limit(1)
-        ->first();
+        return Couplets::with([
+            'poet.details' => function ($query) use ($locale) {
+                $query->where('poets_detail.lang', $locale);
+            }
+        ])
+            ->whereRaw('LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, "\n", "")) = 1')
+            ->whereHas('poet', function ($query) {
+                $query->whereNull('deleted_at');
+            })
+            ->where('lang', $locale)
+            ->inRandomOrder()
+            ->limit(1)
+            ->first();
     }
-    
+
     private function getQuizPoets($quiz_couplet, $locale)
     {
-        $random_poets = Poets::with(['details' => function ($q) use ($locale) {
-            $q->where('lang', $locale);
-        }])
-        ->where('visibility', '1')
-        ->whereHas('details', function ($query) use ($locale) {
-            $query->where('lang', $locale);
-        })
-        ->where('id', '!=', $quiz_couplet->poet_id)
-        ->limit(2)
-        ->inRandomOrder()
-        ->get();
+        $random_poets = Poets::with([
+            'details' => function ($q) use ($locale) {
+                $q->where('lang', $locale);
+            }
+        ])
+            ->where('visibility', '1')
+            ->whereHas('details', function ($query) use ($locale) {
+                $query->where('lang', $locale);
+            })
+            ->where('id', '!=', $quiz_couplet->poet_id)
+            ->limit(2)
+            ->inRandomOrder()
+            ->get();
         $quiz_poets = $random_poets->push($quiz_couplet->poet);
         $quiz_poets = $quiz_poets->shuffle();
         return $quiz_poets;
@@ -147,27 +160,27 @@ class HomeController extends UserController
     {
         // get all peotry couplets
         $random_poetry = Couplets::with('poetry')->where('lang', $locale)->whereNotNull('couplet_slug')
-                        ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
-                        ->whereHas('poet', function ($query) {
-                            $query->whereNull('deleted_at');
-                        })
-                        ->inRandomOrder()
-                        ->limit($limit)
-                        ->get();
-       
+            ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
+            ->whereHas('poet', function ($query) {
+                $query->whereNull('deleted_at');
+            })
+            ->inRandomOrder()
+            ->limit($limit)
+            ->get();
+
         $html = '';
         foreach ($random_poetry as $item) {
             $liked = $this->isLiked('Couplets', $item->id);
-            if($item->couplet_tags != NULL){
+            if ($item->couplet_tags != NULL) {
                 $decodeTags = json_decode($item->couplet_tags);
-                if($decodeTags) {
+                if ($decodeTags) {
                     $usedTags = Tags::whereIn('slug', $decodeTags)->where('lang', $locale)->pluck('tag', 'slug')->toArray();
-                }else{
+                } else {
                     $usedTags = null;
                 }
-                $html .= view('web.home.random-poetry', ['item' => $item, 'liked'=> $liked, 'usedTags' => $usedTags]);
-            }else{
-                $html .= view('web.home.random-poetry', ['item' => $item, 'liked'=> $liked]);
+                $html .= view('web.home.random-poetry', ['item' => $item, 'liked' => $liked, 'usedTags' => $usedTags]);
+            } else {
+                $html .= view('web.home.random-poetry', ['item' => $item, 'liked' => $liked]);
             }
         }
         return $html;
@@ -186,14 +199,14 @@ class HomeController extends UserController
 
         // get poet by main ID
         $correct_poet = Couplets::with('poet')->findOrFail($post_data['couplet']);
-        if($post_data['poet'] == $correct_poet->poet_id){
+        if ($post_data['poet'] == $correct_poet->poet_id) {
             // answer yes
             $message = [
                 'message' => trans('labels.quiz_msg_correct_answer'),
                 'correct_poet' => $correct_poet->poet_id,
                 'type' => 'success'
             ];
-        }else{
+        } else {
             // answer no
             $poet_name = $correct_poet->poet->poet_laqab;
             $message = [
@@ -212,12 +225,12 @@ class HomeController extends UserController
     {
         $thisday = Carbon::now()->format('Y-m-d');
         $result = TodaysModule::where('table_name', 'poetry_main')->first();
- 
+
         if ($result->date_today != $thisday) {
             $poetry = DB::select("SELECT p.* FROM poetry_main p
             WHERE p.category_id = 1 AND p.poet_id != (SELECT b.poet_id FROM poetry_main b WHERE b.poetry_slug = ?)
             AND p.visibility = 1 ORDER BY RAND() LIMIT 1", [$result->table_id]);
- 
+
             $id = $poetry[0]->poetry_slug;
 
             $data = [
@@ -232,17 +245,18 @@ class HomeController extends UserController
     /**
      * Testing Function
      */
- 
-    public function _test_fun(Request $request) {
-        
+
+    public function _test_fun(Request $request)
+    {
+
         $lang = $request->input('lang');
         $poet = $request->input('poet_id');
 
-        
+
         $columns = ['id'];
 
         $query = Poetry::with([
-            'info' => function($query) use ($lang) {
+            'info' => function ($query) use ($lang) {
                 $query->select('poetry_id', 'title')->where('lang', $lang);
             },
             'poet_details' => function ($query) use ($lang) {
@@ -254,14 +268,16 @@ class HomeController extends UserController
             'category.detail' => function ($cat_query) use ($lang) {
                 $cat_query->select('cat_id', 'cat_name')->where('lang', $lang);
             },
-            'translations' => function($query){
-                $query->with(['language' => function ($lang_query) {
-                    $lang_query->select('lang_code', 'lang_title');
-                }])->select('poetry_id', 'lang');
+            'translations' => function ($query) {
+                $query->with([
+                    'language' => function ($lang_query) {
+                        $lang_query->select('lang_code', 'lang_title');
+                    }
+                ])->select('poetry_id', 'lang');
             },
         ])
-        ->limit(20)
-        ->get();
+            ->limit(20)
+            ->get();
 
 
         if ($request->has('search')) {
@@ -269,28 +285,28 @@ class HomeController extends UserController
 
             $query->where(function ($q) use ($searchValue) {
                 $q->orWhere('info.title', 'like', $searchValue)
-                  ->orWhereHas('poet_details', function ($q) use ($searchValue) {
-                      $q->where('poet_laqab', 'like', $searchValue);
-                  });
+                    ->orWhereHas('poet_details', function ($q) use ($searchValue) {
+                        $q->where('poet_laqab', 'like', $searchValue);
+                    });
             });
         }
-        
-        
-        
-         
+
+
+
+
         return response()->Json($query);
         // Implement search
         /* if ($request->has('search') && !empty($request->search['value'])) {
             $searchValue = '%' . $request->search['value'] . '%';
- 
+
             $query->where('info.title', 'like', $searchValue)
             ->orWhere('poet_details.laqab', 'like', $searchValue);
         } */
 
-        
+
         // Implement filtering by language and poet_id
         if ($poet != 0 || $poet != '0') {
-            $query->where('poet_id' , $poet);
+            $query->where('poet_id', $poet);
         }
 
         // Implement ordering based on request
@@ -307,7 +323,7 @@ class HomeController extends UserController
             $duplicateUrl = route('admin.poetry.duplicate', $row->id);
             $toggleVisibilityUrl = route('admin.poetry.toggle-visibility', ['id' => $row->id]);
             $deleteUrl = route('admin.poetry.destroy', ['id' => $row->id]);
-    
+
             return '<a href="' . $mediaCreateUrl . '" class="btn btn-xs btn-success mr-1" data-toggle="tooltip" data-placement="top" title="Poetry Media"><i class="fa fa-video"></i></a>' .
                    '<a href="' . $editUrl . '" class="btn btn-xs btn-warning mr-1" data-toggle="tooltip" data-placement="top" title="Update Poetry"><i class="fa fa-edit"></i></a>' .
                    '<a href="' . $duplicateUrl . '" class="btn btn-xs btn-default mr-1" data-toggle="tooltip" data-placement="top" title="Duplicate Poetry"><i class="fa fa-copy"></i></a>' .
@@ -316,6 +332,48 @@ class HomeController extends UserController
         })
         ->rawColumns(['actions', 'information'])
         ->toJson(); */
-         
+
+    }
+
+    public function feed(Request $request)
+    {
+        $lang = $request->get('lang', app()->getLocale());
+        $page = $request->get('page', 1);
+        $perPage = 10;
+
+        $poetry = Poetry::with([
+            'info' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            },
+            'poet_details' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            },
+            'category_detail' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            },
+            'all_couplets' => function ($query) use ($lang) {
+                $query->where('lang', $lang)->limit(1);
+            }
+        ])
+            ->where('visibility', 1)
+            ->latest()
+            ->paginate($perPage);
+
+        $transformed = $poetry->through(function ($p) use ($lang) {
+            return [
+                'id' => $p->id,
+                'title' => $p->info?->title ?? $p->poetry_title,
+                'slug' => $p->poetry_slug,
+                'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
+                'excerpt' => $p->all_couplets->first()?->couplet_text ?? '',
+                'date' => $p->created_at->diffForHumans(),
+                'readTime' => '5 min read', // Mock for now
+                'category' => $p->category_detail?->cat_name ?? $p->category?->slug ?? 'General',
+                'cat_slug' => $p->category?->slug,
+                'poet_slug' => $p->poet?->poet_slug
+            ];
+        });
+
+        return response()->json($transformed);
     }
 }
