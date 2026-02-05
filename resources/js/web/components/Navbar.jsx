@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool } from 'lucide-react';
+import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool, Home, Library, BarChart2, FileText, Plus } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import api from '../../admin/api/axios';

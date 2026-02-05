@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Library, User, BarChart2, FileText, Plus } from 'lucide-react';
 import { NavLink, useParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const SidebarLeft = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -23,17 +24,23 @@ const SidebarLeft = ({ lang }) => {
         <aside className={`w-[240px] border-e border-gray-100 h-[calc(100vh-57px)] sticky top-[57px] hidden lg:flex flex-col p-6 bg-white shrink-0`}>
             <nav className="space-y-1 mb-8">
                 {navItems.map((item) => (
-                    <NavLink
+                    <Button
                         key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            `flex items-center gap-4 px-3 py-3 rounded-lg transition-colors ${isActive ? 'text-black font-semibold' : 'text-gray-500 hover:text-black hover:bg-gray-50'
-                            }`
-                        }
+                        variant="ghost"
+                        className="w-full justify-start gap-4 px-3 py-6 relative"
+                        asChild
                     >
-                        <item.icon className="h-6 w-6" />
-                        <span className="text-[15px]">{item.label}</span>
-                    </NavLink>
+                        <NavLink
+                            to={item.path}
+                            className={({ isActive }) =>
+                                `flex items-center gap-4 transition-colors ${isActive ? 'bg-gray-100 text-black font-semibold' : 'text-gray-500 hover:text-black hover:bg-gray-50'
+                                }`
+                            }
+                        >
+                            <item.icon className="h-6 w-6" />
+                            <span className="text-[15px]">{item.label}</span>
+                        </NavLink>
+                    </Button>
                 ))}
             </nav>
 
@@ -54,10 +61,10 @@ const SidebarLeft = ({ lang }) => {
                         </div>
                     ))}
 
-                    <button className="flex items-center gap-3 px-3 w-full text-gray-400 hover:text-black transition-colors text-sm mt-4">
+                    <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-gray-400 hover:text-black">
                         <Plus className="h-5 w-5" />
                         <span>{isRtl ? 'وڌيڪ ڳوليو' : 'See suggestions'}</span>
-                    </button>
+                    </Button>
                 </div>
             </div>
         </aside>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookmarkPlus, MinusCircle, MoreHorizontal, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) => {
     const isRtl = lang === 'sd';
@@ -37,15 +38,21 @@ const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) =>
                             <span>{readTime}</span>
                         </div>
 
-                        <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className="hover:text-black"><BookmarkPlus className="h-5 w-5" /></button>
-                            <button className="hover:text-black"><MinusCircle className="h-5 w-5" /></button>
-                            <button className="hover:text-black"><MoreHorizontal className="h-5 w-5" /></button>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
+                                <BookmarkPlus className="h-5 w-5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
+                                <MinusCircle className="h-5 w-5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
+                                <MoreHorizontal className="h-5 w-5" />
+                            </Button>
                         </div>
                     </div>
                 </div>
 
-                <div className="hidden sm:block w-28 h-28 md:w-36 md:h-24 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                <div className="w-20 h-20 md:w-36 md:h-24 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                     <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-200" />
                 </div>
             </div>

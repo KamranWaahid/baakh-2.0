@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const SidebarRight = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -28,23 +30,23 @@ const SidebarRight = ({ lang }) => {
                         </div>
                     ))}
                 </div>
-                <button className="text-sm text-green-700 hover:text-black mt-6 transition-colors font-medium">
+                <Button variant="link" className="text-green-700 hover:text-black p-0 h-auto mt-6 font-medium">
                     {isRtl ? 'مڪمل لسٽ ڏسو' : 'See the full list'}
-                </button>
+                </Button>
             </section>
 
             <section className="mb-10">
                 <h3 className="font-bold text-black mb-4">{isRtl ? 'تجويز ڪيل موضوع' : 'Recommended topics'}</h3>
                 <div className="flex flex-wrap gap-2">
                     {topics.map(topic => (
-                        <button key={topic} className="px-4 py-2 bg-gray-100 rounded-full text-sm text-gray-700 hover:bg-gray-200 transition-colors">
+                        <Badge key={topic} variant="secondary" className="rounded-full px-4 py-2 text-sm font-normal hover:bg-gray-200 cursor-pointer">
                             {topic}
-                        </button>
+                        </Badge>
                     ))}
                 </div>
-                <button className="text-sm text-green-700 hover:text-black mt-6 transition-colors font-medium">
+                <Button variant="link" className="text-green-700 hover:text-black p-0 h-auto mt-6 font-medium">
                     {isRtl ? 'وڌيڪ موضوع ڏسو' : 'See more topics'}
-                </button>
+                </Button>
             </section>
 
             <section className="sticky bottom-0 bg-white pt-4">

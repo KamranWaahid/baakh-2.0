@@ -2,11 +2,13 @@ import React from 'react';
 import PostCard from './PostCard';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
 
     const posts = [
+        // ... (keep posts array same, assumed to be part of the component logic not shown in replacement chunk if I target the return)
         {
             title: isRtl ? 'جنوري ۾ مون پڙهيل 3 شاندار ڪتاب' : '3 Brilliant Books I Read In January',
             excerpt: isRtl ? 'جنوري ۾ پڙهڻ لاءِ بهترين ڪتابن جي فهرست...' : 'I discovered something so valuable for all of us that it deserved a description longer than an article.',
@@ -35,29 +37,43 @@ const Feed = ({ lang }) => {
 
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 py-6">
-            <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 flex items-center gap-6 border-b border-gray-100 mb-8">
-                <Button
-                    variant="link"
-                    className="p-0 h-auto pb-3 rounded-none border-b-2 border-black text-black font-semibold text-sm hover:no-underline"
-                >
-                    {isRtl ? 'توهان لاءِ' : 'For you'}
-                </Button>
-                <Button
-                    variant="link"
-                    className="p-0 h-auto pb-3 rounded-none border-b-2 border-transparent text-gray-500 hover:text-black font-medium text-sm hover:no-underline transition-colors"
-                >
-                    {isRtl ? 'چونڊيل' : 'Featured'}
-                </Button>
-            </div>
+            <Tabs defaultValue="for-you" className="w-full">
+                <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
+                    <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
+                        <TabsTrigger
+                            value="for-you"
+                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3"
+                        >
+                            {isRtl ? 'توهان لاءِ' : 'For you'}
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="featured"
+                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3"
+                        >
+                            {isRtl ? 'چونڊيل' : 'Featured'}
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
-            <div className="space-y-8">
-                {posts.map((post, i) => (
-                    <React.Fragment key={i}>
-                        <PostCard lang={lang} {...post} />
-                        {i < posts.length - 1 && <Separator className="bg-gray-100" />}
-                    </React.Fragment>
-                ))}
-            </div>
+                <TabsContent value="for-you" className="space-y-8 mt-0">
+                    {posts.map((post, i) => (
+                        <React.Fragment key={i}>
+                            <PostCard lang={lang} {...post} />
+                            {i < posts.length - 1 && <Separator className="bg-gray-100" />}
+                        </React.Fragment>
+                    ))}
+                </TabsContent>
+
+                <TabsContent value="featured" className="space-y-8 mt-0">
+                    {/* Just showing same posts for demo purposes */}
+                    {posts.slice(0, 2).map((post, i) => (
+                        <React.Fragment key={i}>
+                            <PostCard lang={lang} {...post} />
+                            {i < 1 && <Separator className="bg-gray-100" />}
+                        </React.Fragment>
+                    ))}
+                </TabsContent>
+            </Tabs>
         </div>
     );
 };
