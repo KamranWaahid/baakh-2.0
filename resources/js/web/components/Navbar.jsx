@@ -29,10 +29,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import SearchDialog from './SearchDialog';
+
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [searchOpen, setSearchOpen] = useState(false);
 
     const navItems = [
         { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
@@ -57,6 +60,18 @@ const Navbar = ({ lang }) => {
             }
         };
         checkAuth();
+
+        // Keyboard Shortcut for Search (Cmd+K / Ctrl+K)
+        const handleKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setSearchOpen((prev) => !prev);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+
     }, []);
 
     const location = useLocation();
@@ -179,73 +194,75 @@ const Navbar = ({ lang }) => {
     };
 
     return (
-        <nav className="h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50]">
-            <div className="flex items-center gap-4 flex-1">
-                <Sheet>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="lg:hidden text-gray-500">
-                            <Menu className="h-6 w-6" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side={isRtl ? "right" : "left"} className="w-[300px] sm:w-[400px]">
-                        <SheetHeader>
-                            <SheetTitle className="flex items-center gap-2">
-                                <Logo className="h-8 w-8 text-black" />
-                                <span className="font-medium text-xl">Baakh</span>
-                            </SheetTitle>
-                        </SheetHeader>
-                        <div className="mt-8 flex flex-col gap-4">
-                            <div className="relative w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <Input
-                                    type="text"
-                                    placeholder={isRtl ? 'ڳوليو...' : 'Search'}
-                                    className={`pl-9 rounded-full bg-gray-50 border-transparent focus:bg-white transition-all`}
-                                    dir={isRtl ? 'rtl' : 'ltr'}
-                                />
+        <>
+            <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
+            <nav className="h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50]">
+                <div className="flex items-center gap-4 flex-1">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="lg:hidden text-gray-500">
+                                <Menu className="h-6 w-6" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side={isRtl ? "right" : "left"} className="w-[300px] sm:w-[400px]">
+                            <SheetHeader>
+                                <SheetTitle className="flex items-center gap-2">
+                                    <Logo className="h-8 w-8 text-black" />
+                                    <span className="font-medium text-xl">Baakh</span>
+                                </SheetTitle>
+                            </SheetHeader>
+                            <div className="mt-8 flex flex-col gap-4">
+                                <div className="relative w-full" onClick={() => setSearchOpen(true)}>
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <div className={`flex items-center h-10 w-full rounded-full border border-transparent bg-gray-50 px-3 pl-9 text-sm text-gray-500 hover:bg-gray-100 cursor-pointer transition-colors`}>
+                                        {isRtl ? 'ڳوليو...' : 'Search...'}
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div className="flex flex-col gap-1">
+                                    {navItems.map(item => (
+                                        <Button key={item.path} variant="ghost" asChild className="justify-start gap-3 px-3 font-normal">
+                                            <Link to={item.path}>
+                                                <item.icon className="h-5 w-5 text-gray-500" />
+                                                <span className="text-base">{item.label}</span>
+                                            </Link>
+                                        </Button>
+                                    ))}
+                                </div>
+                                <Separator />
+                                <NavItems mobile />
                             </div>
-                            <Separator />
-                            <div className="flex flex-col gap-1">
-                                {navItems.map(item => (
-                                    <Button key={item.path} variant="ghost" asChild className="justify-start gap-3 px-3 font-normal">
-                                        <Link to={item.path}>
-                                            <item.icon className="h-5 w-5 text-gray-500" />
-                                            <span className="text-base">{item.label}</span>
-                                        </Link>
-                                    </Button>
-                                ))}
+                        </SheetContent>
+                    </Sheet>
+
+                    <Link to={`/${lang}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                        <Logo className="h-8 w-8 text-black" />
+                    </Link>
+
+                    <div className="relative w-64 hidden md:block ml-4" onClick={() => setSearchOpen(true)}>
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                        <div
+                            className={`flex h-10 w-full items-center rounded-full border border-gray-100 bg-gray-50/50 pl-9 pr-4 text-sm text-muted-foreground hover:bg-gray-100 hover:border-gray-200 cursor-pointer transition-all ${isRtl ? 'text-right pr-9 pl-4' : ''}`}
+                            dir={isRtl ? 'rtl' : 'ltr'}
+                        >
+                            <span>{isRtl ? 'ڳوليو...' : 'Search'}</span>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 text-[10px] uppercase font-medium text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">
+                                <span className="text-xs">⌘</span> K
                             </div>
-                            <Separator />
-                            <NavItems mobile />
                         </div>
-                    </SheetContent>
-                </Sheet>
-
-                <Link to={`/${lang}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <Logo className="h-8 w-8 text-black" />
-                </Link>
-
-                <div className="relative max-w-md w-full hidden md:block ml-4">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder={isRtl ? 'ڳوليو...' : 'Search'}
-                        className={`pl-9 rounded-full bg-gray-50/50 border-gray-100 focus:bg-white focus:border-gray-200 transition-all w-full`} // Increased width handled by container max-w-md
-                        dir={isRtl ? 'rtl' : 'ltr'}
-                    />
+                    </div>
                 </div>
-            </div>
 
-            <div className="flex items-center gap-2 md:gap-4 hidden lg:flex">
-                <NavItems />
-            </div>
-            <div className="flex items-center lg:hidden">
-                <Button variant="ghost" size="icon" className="text-gray-500">
-                    <Search className="h-5 w-5" />
-                </Button>
-                {/* Mobile User Avatar or Auth button if needed outside menu, but keeping it inside menu for cleaner look */}
-            </div>
-        </nav>
+                <div className="flex items-center gap-2 md:gap-4 hidden lg:flex">
+                    <NavItems />
+                </div>
+                <div className="flex items-center lg:hidden">
+                    <Button variant="ghost" size="icon" className="text-gray-500" onClick={() => setSearchOpen(true)}>
+                        <Search className="h-5 w-5" />
+                    </Button>
+                </div>
+            </nav>
+        </>
     );
 };
 

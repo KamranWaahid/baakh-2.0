@@ -4,42 +4,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Info, Volume2, BookmarkPlus, AlertCircle, CheckCircle, ChevronDown, RotateCcw } from 'lucide-react';
+import { scanPoetry } from '../utils/TaqtiScanner';
 import { Separator } from '@/components/ui/separator';
 
 
 const TaqtiTool = ({ lang = 'sd' }) => {
     const isRtl = lang === 'sd';
-    const [script, setScript] = useState('perso'); // 'perso' | 'roman'
+    const [script, setScript] = useState(lang === 'en' ? 'roman' : 'perso'); // 'perso' | 'roman'
     const [method, setMethod] = useState('arooz'); // 'arooz' (Arkan) | 'chhand' (Matra)
     const [inputText, setInputText] = useState('');
     const [result, setResult] = useState(null);
 
-    // Mock Scansion Logic
     const handleScan = () => {
-        // Simulating delay
-        setTimeout(() => {
-            setResult({
-                status: 'success', // 'success' | 'warning' | 'error'
-                meter: {
-                    name_arooz: 'بحر هزج مثمن سالم',
-                    name_chhand: 'Ghazal Meter (24 Matras)',
-                    pattern_arooz: 'مفاعيلن مفاعيلن مفاعيلن مفاعيلن',
-                    pattern_chhand: '1222 1222 1222 1222'
-                },
-                lines: [
-                    {
-                        original: "پنهنجي شاعري هتي لکو",
-                        scanned: [
-                            { word: "پنهنجي", syllables: [{ text: "پن", weight: 2, type: 'long' }, { text: "هن", weight: 2, type: 'long' }, { text: "جي", weight: 2, type: 'long' }] },
-                            { word: "شاعري", syllables: [{ text: "شا", weight: 2, type: 'long' }, { text: "ع", weight: 1, type: 'short' }, { text: "ري", weight: 2, type: 'long' }] },
-                            { word: "هتي", syllables: [{ text: "ه", weight: 1, type: 'short' }, { text: "تي", weight: 2, type: 'long' }] },
-                            { word: "لکو", syllables: [{ text: "ل", weight: 1, type: 'short' }, { text: "کو", weight: 2, type: 'long' }] },
-                        ],
-                        issues: []
-                    }
-                ]
-            });
-        }, 800);
+        // Use the Taqti Engine
+        const analysis = scanPoetry(inputText, method, lang);
+        setResult(analysis);
     };
 
     return (
@@ -146,8 +125,8 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                         <div className="space-y-4">
                             {result.lines.map((line, lIdx) => (
                                 <Card key={lIdx} className="border border-gray-100 shadow-sm rounded-xl overflow-hidden group/card hover:border-black/50 transition-colors">
-                                    <CardContent className="p-6 md:p-10 bg-white">
-                                        <div className="flex flex-wrap gap-x-12 gap-y-8 items-start justify-end flex-row-reverse">
+                                    <CardContent className="p-6 md:p-10 bg-white" dir={script === 'perso' ? 'rtl' : 'ltr'}>
+                                        <div className="flex flex-wrap gap-x-12 gap-y-8 items-start justify-start">
                                             {line.scanned.map((wordObj, wIdx) => (
                                                 <div key={wIdx} className="flex flex-col items-center group relative min-w-[60px]">
 
@@ -173,7 +152,7 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                                                     </div>
 
                                                     {/* Full Word */}
-                                                    <div className={`text-2xl font-bold text-gray-900 border-t-2 border-gray-100 w-full text-center pt-2 group-hover:border-black transition-colors ${isRtl ? 'font-arabic' : ''}`}>
+                                                    <div className={`text-2xl font-bold text-gray-900 border-t-2 border-gray-100 w-full text-center pt-2 group-hover:border-black transition-colors ${script === 'perso' ? 'font-arabic' : 'font-sans'}`}>
                                                         {wordObj.word}
                                                     </div>
 
