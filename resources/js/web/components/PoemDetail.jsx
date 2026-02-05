@@ -84,7 +84,7 @@ const PoemDetail = ({ lang }) => {
 
     // Justification Logic
     const isGhazal = poem.category?.name && (poem.category.name.toLowerCase().includes('ghazal') || poem.category.name.includes('غزل'));
-    const alignmentClass = isGhazal ? 'text-justify' : (poem.content_style === 'center' ? 'text-center' : 'text-right');
+    const alignmentClass = isGhazal ? 'text-justify [text-align-last:justify] w-fit mx-auto' : (poem.content_style === 'center' ? 'text-center' : 'text-right');
 
 
     return (
