@@ -59,116 +59,124 @@ const Navbar = ({ lang }) => {
         checkAuth();
     }, []);
 
-    const NavItems = ({ mobile = false }) => (
-        <>
-            <Link
-                to={`/${lang === 'en' ? 'sd' : 'en'}`}
-                className={`text-sm font-normal hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
-            >
-                {lang === 'en' ? <span className="font-arabic text-base pb-1">سنڌي</span> : 'English'}
-            </Link>
-            {!mobile && (
-                <div className="h-6 w-px bg-gray-200 mx-2"></div>
-            )}
-            {loading ? (
-                <Skeleton className="h-8 w-8 rounded-full" />
-            ) : user ? (
-                <div className={`flex items-center gap-2 ${mobile ? 'flex-col items-start w-full' : ''}`}>
-                    {!mobile && (
-                        <>
-                            <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-gray-600">
-                                <PenTool className="h-4 w-4" />
-                                <span>{isRtl ? 'لکيو' : 'Write'}</span>
-                            </Button>
-                            <Button variant="ghost" size="icon" className="text-gray-500 relative">
-                                <Bell className="h-5 w-5" />
-                                <span className="absolute top-2 right-2 h-2 w-2 bg-black rounded-full border-2 border-white"></span>
-                            </Button>
-                        </>
-                    )}
+    const location = useLocation();
 
-                    {mobile ? (
-                        <>
-                            <Link to="/write" className="flex items-center gap-2 px-3 py-2 w-full hover:bg-gray-100 rounded-md">
-                                <PenTool className="h-4 w-4" />
-                                <span>{isRtl ? 'لکيو' : 'Write'}</span>
-                            </Link>
-                            <Separator className="my-2" />
-                            <div className="flex items-center gap-3 px-3 py-2">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user.avatar} alt={user.name} />
-                                    <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium">{user.name}</span>
-                                    <span className="text-xs text-muted-foreground">{user.email}</span>
-                                </div>
-                            </div>
-                            <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100">
-                                <LogOut className="mr-2 h-4 w-4" />
-                                {isRtl ? 'لاگ آئوٽ' : 'Logout'}
-                            </Button>
-                        </>
-                    ) : (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                                    <Avatar className="h-8 w-8 border border-gray-200">
+    const NavItems = ({ mobile = false }) => {
+        const targetLang = lang === 'en' ? 'sd' : 'en';
+        // Ensure we only replace the first occurrence (the prefix)
+        const newPath = location.pathname.replace(`/${lang}`, `/${targetLang}`);
+
+        return (
+            <>
+                <Link
+                    to={newPath}
+                    className={`text-sm font-normal hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
+                >
+                    {lang === 'en' ? <span className="font-arabic text-base pb-1">سنڌي</span> : 'English'}
+                </Link>
+                {!mobile && (
+                    <div className="h-6 w-px bg-gray-200 mx-2"></div>
+                )}
+                {loading ? (
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                ) : user ? (
+                    <div className={`flex items-center gap-2 ${mobile ? 'flex-col items-start w-full' : ''}`}>
+                        {!mobile && (
+                            <>
+                                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-gray-600">
+                                    <PenTool className="h-4 w-4" />
+                                    <span>{isRtl ? 'لکيو' : 'Write'}</span>
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-gray-500 relative">
+                                    <Bell className="h-5 w-5" />
+                                    <span className="absolute top-2 right-2 h-2 w-2 bg-black rounded-full border-2 border-white"></span>
+                                </Button>
+                            </>
+                        )}
+
+                        {mobile ? (
+                            <>
+                                <Link to="/write" className="flex items-center gap-2 px-3 py-2 w-full hover:bg-gray-100 rounded-md">
+                                    <PenTool className="h-4 w-4" />
+                                    <span>{isRtl ? 'لکيو' : 'Write'}</span>
+                                </Link>
+                                <Separator className="my-2" />
+                                <div className="flex items-center gap-3 px-3 py-2">
+                                    <Avatar className="h-8 w-8">
                                         <AvatarImage src={user.avatar} alt={user.name} />
                                         <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end" forceMount>
-                                <DropdownMenuLabel className="font-normal">
-                                    <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">{user.name}</p>
-                                        <p className="text-xs leading-none text-muted-foreground">
-                                            {user.email}
-                                        </p>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium">{user.name}</span>
+                                        <span className="text-xs text-muted-foreground">{user.email}</span>
                                     </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                    <UserIcon className="mr-2 h-4 w-4" />
-                                    <span>{isRtl ? 'پروفائل' : 'Profile'}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="focus:bg-gray-100">
+                                </div>
+                                <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100">
                                     <LogOut className="mr-2 h-4 w-4" />
-                                    <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </div>
-            ) : (
-                <div className={`flex items-center gap-2 ${mobile ? 'flex-col w-full' : ''}`}>
-                    <LoginModal
-                        trigger={
-                            <Button variant="ghost" className={mobile ? 'w-full justify-start' : 'hover:bg-transparent hover:text-black/70'}>
-                                {isRtl ? 'لاگ ان' : 'Sign in'}
-                            </Button>
-                        }
-                        isRtl={isRtl}
-                    />
+                                    {isRtl ? 'لاگ آئوٽ' : 'Logout'}
+                                </Button>
+                            </>
+                        ) : (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                        <Avatar className="h-8 w-8 border border-gray-200">
+                                            <AvatarImage src={user.avatar} alt={user.name} />
+                                            <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56" align="end" forceMount>
+                                    <DropdownMenuLabel className="font-normal">
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                                            <p className="text-xs leading-none text-muted-foreground">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>
+                                        <UserIcon className="mr-2 h-4 w-4" />
+                                        <span>{isRtl ? 'پروفائل' : 'Profile'}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="focus:bg-gray-100">
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
+                ) : (
+                    <div className={`flex items-center gap-2 ${mobile ? 'flex-col w-full' : ''}`}>
+                        <LoginModal
+                            trigger={
+                                <Button variant="ghost" className={mobile ? 'w-full justify-start' : 'hover:bg-transparent hover:text-black/70'}>
+                                    {isRtl ? 'لاگ ان' : 'Sign in'}
+                                </Button>
+                            }
+                            isRtl={isRtl}
+                        />
 
-                    <LoginModal
-                        trigger={
-                            <Button className={`bg-black text-white hover:bg-gray-800 rounded-full ${mobile ? 'w-full' : ''}`}>
-                                {isRtl ? 'شروعات ڪريو' : 'Get started'}
-                            </Button>
-                        }
-                        isRtl={isRtl}
-                    />
-                </div>
-            )}
-        </>
-    );
+                        <LoginModal
+                            trigger={
+                                <Button className={`bg-black text-white hover:bg-gray-800 rounded-full ${mobile ? 'w-full' : ''}`}>
+                                    {isRtl ? 'شروعات ڪريو' : 'Get started'}
+                                </Button>
+                            }
+                            isRtl={isRtl}
+                        />
+                    </div>
+                )}
+            </>
+        );
+    };
 
     return (
         <nav className="h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50]">

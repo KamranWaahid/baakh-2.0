@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Star, MessageCircle, Share2, MoreHorizontal, BookmarkPlus, PlayCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import PaywallCTA from './PaywallCTA';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -95,14 +96,32 @@ const PoemDetail = ({ lang }) => {
                     </p>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="mt-12 pt-8 border-t border-gray-100 bg-gray-50 -mx-4 px-4 py-8 sm:mx-0 sm:px-0 sm:bg-white sm:py-0">
-                    <p className="font-bold text-lg mb-4">Written by {poem.author}</p>
-                    <p className="text-gray-500 mb-6">Revolutionary poet of Sindh.</p>
-                    <Button className="rounded-full bg-black text-white hover:bg-gray-800">
-                        More from {poem.author}
+                <Separator className="my-12 opacity-50" />
+
+                {/* Author Footer */}
+                <div className="flex items-start justify-between mb-12 font-sans">
+                    <div className="flex gap-4">
+                        <div className="h-[64px] w-[64px] rounded-full bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-500 shrink-0 overflow-hidden">
+                            SA
+                        </div>
+                        <div className="flex flex-col pt-1">
+                            <h3 className="text-[20px] font-bold text-gray-900 mb-1 leading-tight">Written by {poem.author}</h3>
+                            <div className="flex items-center gap-1 text-[14px] text-gray-500 mb-2">
+                                <span>2.3K followers</span>
+                                <span>·</span>
+                                <span>9 following</span>
+                            </div>
+                            <p className="text-[15px] text-gray-600 leading-snug">Revolutionary poet of Sindh.</p>
+                        </div>
+                    </div>
+                    <Button variant="outline" className="rounded-full border-gray-300 text-black hover:border-black hover:bg-transparent px-5 h-[38px] text-[14px]">
+                        Follow
                     </Button>
                 </div>
+
+                <Separator className="my-12 opacity-50" />
+
+                <PaywallCTA authorName={poem.author} isRtl={isRtl} />
             </article>
         </div>
     );
