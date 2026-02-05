@@ -78,8 +78,8 @@ const PoetProfile = ({ lang }) => {
                         {/* Mobile Profile Header */}
                         <div className="lg:hidden mb-8">
                             <div className="flex items-center gap-4 mb-4">
-                                <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-400 shrink-0 border border-gray-100">
-                                    {poet.avatar}
+                                <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-400 shrink-0 border border-gray-100 overflow-hidden">
+                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poet.name)}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover" alt="" />
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 capitalize leading-none mb-1">{poet.name}</h1>
@@ -130,9 +130,8 @@ const PoetProfile = ({ lang }) => {
                 {/* Profile Sidebar (Right) - Medium Style */}
                 <aside className="hidden lg:block w-[320px] shrink-0 sticky top-24 h-fit border-l border-gray-100 pl-12 -ml-6">
                     <div className="flex flex-col items-start">
-                        <div className="h-32 w-32 rounded-full bg-gray-200 mb-6 flex items-center justify-center text-3xl font-bold text-gray-400 overflow-hidden">
-                            {/* Placeholder for Image */}
-                            {poet.avatar}
+                        <div className="h-32 w-32 rounded-full bg-gray-100 mb-6 flex items-center justify-center text-3xl font-bold text-gray-400 overflow-hidden border border-gray-100">
+                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poet.name)}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover" alt="" />
                         </div>
 
                         <h3 className="font-bold tracking-tight text-lg mb-1 capitalize text-gray-900">{poet.name}</h3>
@@ -166,8 +165,8 @@ const PoetProfile = ({ lang }) => {
                                 ].map((p, i) => (
                                     <div key={i} className="flex items-center justify-between group cursor-pointer">
                                         <div className="flex items-center gap-3">
-                                            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200">
-                                                {p.avatar}
+                                            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200 overflow-hidden">
+                                                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover" alt="" />
                                             </div>
                                             <span className="text-sm font-medium text-gray-700 group-hover:text-black transition-colors">{p.name}</span>
                                         </div>

@@ -99,7 +99,7 @@ const SidebarRight = ({ lang }) => {
                                         <img
                                             src={pick.author_avatar
                                                 ? (pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`)
-                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(pick.author)}&background=random&size=128`}
+                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(pick.author)}&background=f3f4f6&color=6b7280&size=128`}
                                             alt={pick.author}
                                             className="w-full h-full object-cover"
                                         />

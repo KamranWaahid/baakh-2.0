@@ -24,11 +24,11 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
                     <Link to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'} className="flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity w-fit">
-                        <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] shrink-0 overflow-hidden border border-gray-100">
+                        <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] shrink-0 overflow-hidden border border-gray-100">
                             <img
                                 src={author_avatar
                                     ? (author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`)
-                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor)}&background=random&size=128`}
+                                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(safeAuthor)}&background=f3f4f6&color=6b7280&size=128`}
                                 alt={safeAuthor}
                                 className="w-full h-full object-cover"
                             />

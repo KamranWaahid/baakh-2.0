@@ -52,7 +52,7 @@ const PoemDetail = ({ lang }) => {
     if (isError) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center" dir={isRtl ? 'rtl' : 'ltr'}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{isRtl ? 'شاعري نه ملي' : 'Poem Not Found'}</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{isRtl ? 'شاعري نہ ملي' : 'Poem Not Found'}</h2>
                 <p className="text-gray-600 mb-6">{isRtl ? 'جيڪا شاعري توهان ڳولي رهيا آهيو اها موجود ناهي.' : 'The poetry you are looking for does not exist or has been removed.'}</p>
                 <Button onClick={() => navigate(`/${lang}`)}>{isRtl ? 'واپس وڃو' : 'Go Home'}</Button>
             </div>
@@ -81,8 +81,8 @@ const PoemDetail = ({ lang }) => {
                             {poem.poet?.avatar ? (
                                 <img src={poem.poet.avatar.startsWith('http') ? poem.poet.avatar : `/${poem.poet.avatar}`} alt={poem.poet.name} className="h-11 w-11 rounded-full object-cover bg-gray-200" />
                             ) : (
-                                <div className="h-11 w-11 rounded-full bg-gray-200 flex items-center justify-center text-sm font-bold shrink-0 text-gray-500 overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poem.poet?.name || 'A')}&background=random&size=128`} className="w-full h-full object-cover rounded-full" alt="" />
+                                <div className="h-11 w-11 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold shrink-0 text-gray-500 overflow-hidden">
+                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poem.poet?.name || 'A')}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover rounded-full" alt="" />
                                 </div>
                             )}
                         </Link>
@@ -160,8 +160,8 @@ const PoemDetail = ({ lang }) => {
                             {poem.poet.avatar ? (
                                 <img src={poem.poet.avatar} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
                             ) : (
-                                <div className="h-[64px] w-[64px] rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-500 shrink-0 overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poem.poet.name)}&background=random&size=128`} className="w-full h-full object-cover" alt="" />
+                                <div className="h-[64px] w-[64px] rounded-full bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-500 shrink-0 overflow-hidden border border-gray-100">
+                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poem.poet?.name || 'A')}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover" alt="" />
                                 </div>
                             )}
                         </Link>
@@ -230,8 +230,8 @@ const PoemDetail = ({ lang }) => {
                             {poem.recommended.map((p, i) => (
                                 <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className={`flex flex-col gap-2 group ${isRtl ? 'text-right' : ''}`}>
                                     <div className={`flex items-center gap-2 mb-1 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                                        <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-bold text-gray-600">
-                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.author)}&background=random&size=128`} className="w-full h-full object-cover rounded-full" alt="" />
+                                        <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600 border border-gray-50">
+                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.author)}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover rounded-full" alt="" />
                                         </div>
                                         <span className="text-xs font-bold text-gray-900">{p.author}</span>
                                     </div>

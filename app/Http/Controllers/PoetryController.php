@@ -133,18 +133,37 @@ class PoetryController extends UserController
     {
         $locale = $request->get('lang', 'sd'); // Default to Sindhi if not specified
 
-        // Get poetry by URL
+        // Get poetry by URL with language constraint
         $poetry = Poetry::with([
             'info' => function ($query) use ($locale) {
-                $query->where('lang', $locale)->take(1);
+                $query->where('lang', $locale);
             },
             'all_couplets' => function ($query) use ($locale) {
                 $query->where('lang', $locale);
             },
             'category'
         ])
-            ->where(['poetry_slug' => $slug, 'visibility' => 1])
+            ->where('poetry_slug', $slug)
+            ->where('visibility', 1)
+            ->whereHas('info', function ($q) use ($locale) {
+                $q->where('lang', $locale);
+            })
             ->first();
+
+        // Fallback: If not found in preferred language, try any language but prioritize preferred metadata
+        if (!$poetry) {
+            $poetry = Poetry::with([
+                'info' => function ($query) use ($locale) {
+                    $query->orderByRaw("CASE WHEN lang = ? THEN 0 ELSE 1 END", [$locale]);
+                },
+                'all_couplets' => function ($query) use ($locale) {
+                    $query->orderByRaw("CASE WHEN lang = ? THEN 0 ELSE 1 END", [$locale]);
+                },
+                'category'
+            ])
+                ->where(['poetry_slug' => $slug, 'visibility' => 1])
+                ->first();
+        }
 
         if (!$poetry) {
             return response()->json(['message' => 'Poem not found'], 404);
@@ -192,14 +211,14 @@ class PoetryController extends UserController
         // Format Response
         $data = [
             'id' => $poetry->id,
-            'title' => $poetry->info->first()?->title ?? $poetry->poetry_title, // Fallback
+            'title' => $poetry->info?->title ?? $poetry->poetry_title, // Fallback
             'slug' => $poetry->poetry_slug,
             'content' => $poetry->all_couplets->map(function ($c) {
                 return $c->couplet_text;
             }), // Array of couplets
             'content_style' => $poetry->content_style ?? 'center',
-            'info' => $poetry->info->first()?->info,
-            'source' => $poetry->info->first()?->source,
+            'info' => $poetry->info?->info,
+            'source' => $poetry->info?->source,
             'views' => $poetry->views,
             'likes' => $poetry->likes_count ?? 0,
             'date' => $poetry->created_at->format('M d, Y'),
@@ -223,11 +242,11 @@ class PoetryController extends UserController
 
             'navigation' => [
                 'next' => $next_poetry ? [
-                    'title' => $next_poetry->info->first()?->title,
+                    'title' => $next_poetry->info?->title,
                     'slug' => $next_poetry->poetry_slug
                 ] : null,
                 'prev' => $previous_poetry ? [
-                    'title' => $previous_poetry->info->first()?->title,
+                    'title' => $previous_poetry->info?->title,
                     'slug' => $previous_poetry->poetry_slug
                 ] : null,
             ],
@@ -248,7 +267,7 @@ class PoetryController extends UserController
                 ->get()
                 ->map(function ($p) {
                     return [
-                        'title' => $p->info->first()?->title ?? $p->poetry_title,
+                        'title' => $p->info?->title ?? $p->poetry_title,
                         'slug' => $p->poetry_slug,
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
@@ -275,7 +294,7 @@ class PoetryController extends UserController
                 ->get()
                 ->map(function ($p) use ($locale) {
                     return [
-                        'title' => $p->info->first()?->title ?? $p->poetry_title,
+                        'title' => $p->info?->title ?? $p->poetry_title,
                         'slug' => $p->poetry_slug,
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
