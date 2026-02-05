@@ -301,8 +301,8 @@ class PoetryController extends UserController
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
                         'author' => $p->poet?->details->where('lang', $locale)->first()?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
-                        'date' => $p->created_at->format('M d'),
-                        'excerpt' => Str::limit($p->couplets->couplet_text ?? '', 80),
+                        'date' => optional($p->created_at)->format('M d') ?? '',
+                        'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
                         'claps' => '200',
                         'comments' => 10
                     ];
