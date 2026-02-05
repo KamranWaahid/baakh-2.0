@@ -316,7 +316,7 @@ class PoetryController extends UserController
                 ->take(60) // Fetch more to ensure we have enough after unique check
                 ->get()
                 ->unique(function ($item) use ($locale) {
-                    return $item->details->where('lang', $locale)->first()?->poet_laqab ?? $item->id;
+                    return $item->details->poet_laqab ?? $item->id;
                 })
                 ->take(8)
                 ->map(function ($poet) use ($locale) {
