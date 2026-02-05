@@ -11,13 +11,13 @@ import Feed from './components/Feed';
 import BottomNav from './components/BottomNav';
 import PoetsFeed from './components/PoetsFeed';
 import PoetProfile from './components/PoetProfile';
-import PoemDetail from './components/PoemDetail';
+import PoetryFeed from './components/PoetryFeed';
 import FeedbackBanner from './components/FeedbackBanner';
 
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
     const location = useLocation();
-    const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/');
+    const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/') || location.pathname.includes('/poetry');
 
     useEffect(() => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
@@ -59,6 +59,11 @@ const Poets = () => {
     return <PoetsFeed lang={lang} />;
 };
 
+const Poetry = () => {
+    const { lang } = useParams();
+    return <PoetryFeed lang={lang} />;
+};
+
 const Poet = () => {
     const { lang } = useParams();
     return <PoetProfile lang={lang} />;
@@ -81,6 +86,11 @@ const App = () => {
                 <Route path="/:lang/poets" element={
                     <LanguageWrapper>
                         <Poets />
+                    </LanguageWrapper>
+                } />
+                <Route path="/:lang/poetry" element={
+                    <LanguageWrapper>
+                        <Poetry />
                     </LanguageWrapper>
                 } />
                 <Route path="/:lang/poet/:slug" element={

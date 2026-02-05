@@ -33,9 +33,79 @@ const PoemDetail = ({ lang }) => {
         comments: 47
     };
 
+    const footerPoems = [
+        {
+            title: "The Silent Echo",
+            excerpt: "In the depth of the night, when stars align, a whisper traverses the dunes of time...",
+            author: "Sheikh Ayaz",
+            date: "Nov 12",
+            claps: "840",
+            comments: 12
+        },
+        {
+            title: "Crimson Horizon",
+            excerpt: "Red is not just a color, it is the blood of the weary sun setting upon the Indus...",
+            author: "Sheikh Ayaz",
+            date: "Nov 10",
+            claps: "1.2K",
+            comments: 45
+        },
+        {
+            title: "Whispers of the Wind",
+            excerpt: "Listen closely, for the breeze tells stories of old, of lovers lost and battles won...",
+            author: "Sheikh Ayaz",
+            date: "Oct 28",
+            claps: "2.5K",
+            comments: 89
+        },
+        {
+            title: "The Poet's Lament",
+            excerpt: "Why do words failing me now? When the world needs a song, my throat is dry...",
+            author: "Sheikh Ayaz",
+            date: "Oct 15",
+            claps: "900",
+            comments: 30
+        }
+    ];
+
+    const recommendedPoems = [
+        {
+            title: "Shah Jo Risalo: Sur Kalyan",
+            excerpt: "A deep dive into the melody of peace and the yearning of the soul...",
+            author: "Shah Latif",
+            date: "Dec 01",
+            claps: "3.4K",
+            comments: 120
+        },
+        {
+            title: "Modern Sindhi Resistance",
+            excerpt: "How poetry shaped the political landscape of the 20th century...",
+            author: "Ustad Bukhari",
+            date: "Nov 20",
+            claps: "1.1K",
+            comments: 56
+        },
+        {
+            title: "The Sufi's Dance",
+            excerpt: "Whirling in the trance of divine love, losing self to find the Truth...",
+            author: "Sachal Sarmast",
+            date: "Nov 18",
+            claps: "2K",
+            comments: 67
+        },
+        {
+            title: "Echoes of Mohenjo-daro",
+            excerpt: "The bricks speak of a civilization that knew peace before war was invented...",
+            author: "Shaikh Ayaz",
+            date: "Nov 05",
+            claps: "1.5K",
+            comments: 40
+        }
+    ];
+
     return (
-        <div className="w-full flex justify-center py-12 px-4 md:px-8 bg-white">
-            <article className="w-full max-w-[680px]">
+        <div className="w-full flex flex-col items-center py-12 px-4 md:px-8 bg-white">
+            <article className="w-full max-w-[680px] mb-20">
                 {/* Header */}
                 <header className="mb-8">
                     {/* Badge */}
@@ -122,7 +192,70 @@ const PoemDetail = ({ lang }) => {
                 <Separator className="my-12 opacity-50" />
 
                 <PaywallCTA authorName={poem.author} isRtl={isRtl} />
+
             </article>
+
+            {/* Footer Recommendations - More Background/Full Width feel but centered */}
+            <div className="w-full max-w-[680px] bg-gray-50/50 p-8 rounded-xl border border-gray-100">
+
+                {/* Section 1: More from Author */}
+                <div className="mb-12">
+                    <h3 className="font-bold text-base text-gray-900 mb-6">More from {poem.author}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                        {footerPoems.map((p, i) => (
+                            <div key={i} className="flex flex-col gap-2">
+                                <div className="text-xs text-gray-500 mb-1">{p.date}</div>
+                                <h4 className="font-bold text-lg text-gray-900 leading-tight">{p.title}</h4>
+                                <p className="text-gray-600 text-[14px] leading-snug line-clamp-3 font-serif">{p.excerpt}</p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                    <div className="flex items-center gap-1">
+                                        <span role="img" aria-label="claps">👏</span>
+                                        <span>{p.claps}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <MessageCircle className="h-3 w-3" />
+                                        <span>{p.comments}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Section 2: Recommended */}
+                <div className="mb-12">
+                    <h3 className="font-bold text-base text-gray-900 mb-6">Recommended from Baakh</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                        {recommendedPoems.map((p, i) => (
+                            <div key={i} className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-bold">
+                                        {p.author.split(' ').map(n => n[0]).join('')}
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-900">{p.author}</span>
+                                </div>
+                                <h4 className="font-bold text-lg text-gray-900 leading-tight">{p.title}</h4>
+                                <p className="text-gray-600 text-[14px] leading-snug line-clamp-3 font-serif">{p.excerpt}</p>
+                                <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                    <span>{p.date}</span>
+                                    <div className="flex items-center gap-1">
+                                        <span role="img" aria-label="claps">👏</span>
+                                        <span>{p.claps}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* See All Button */}
+                <div className="flex justify-center mt-8">
+                    <Button variant="outline" className="rounded-full border-gray-300 text-gray-900 hover:border-black px-8 py-6 h-auto text-[15px]">
+                        See all from {poem.author}
+                    </Button>
+                </div>
+
+            </div>
         </div>
     );
 };

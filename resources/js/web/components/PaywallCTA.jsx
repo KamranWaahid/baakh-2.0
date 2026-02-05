@@ -52,7 +52,7 @@ const PaywallCTA = ({ authorName, isRtl }) => {
                         <Avatar className="h-[74px] w-[74px] mb-4 border-2 border-white shadow-sm ring-1 ring-gray-100">
                             <AvatarFallback className="bg-gray-100 text-gray-500 font-bold text-lg font-sans">{member.img}</AvatarFallback>
                         </Avatar>
-                        <span className="font-bold text-gray-900 text-[15px] leading-tight mb-1">{member.name}</span>
+                        <span className="text-gray-900 text-[15px] leading-tight mb-1">{member.name}</span>
                         <span className="text-[11px] text-gray-500 leading-tight max-w-[140px]">{member.title}</span>
                     </div>
                 ))}
