@@ -149,11 +149,7 @@ const PoemDetail = ({ lang }) => {
                         </div>
                     )}
 
-                    {poem.category && (
-                        <p className="mt-8 text-sm text-gray-500">
-                            {isRtl ? 'مجموعو: ' : 'Collection: '} <span className="font-medium text-gray-900">{poem.category.name}</span>
-                        </p>
-                    )}
+
                 </div>
 
                 <div className={`flex flex-wrap gap-2 mt-8 ${isRtl ? 'flex-row-reverse' : ''}`}>
