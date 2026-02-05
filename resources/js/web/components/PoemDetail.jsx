@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import api from '@/admin/api/axios';
 import { useAuth } from '../contexts/AuthContext';
 import PoemActionBar from './PoemActionBar';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import PaywallCTA from './PaywallCTA';
 import { formatSindhiDate } from '../utils/dateUtils';
 
 const PoemDetail = ({ lang }) => {
-    const { isRtl } = lang === 'sd';
+    const isRtl = lang === 'sd';
     const { poemSlug } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
