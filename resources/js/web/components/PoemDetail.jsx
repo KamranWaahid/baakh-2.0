@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import api from '@/admin/api/axios';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
 import { Button } from '@/components/ui/button';
