@@ -101,7 +101,7 @@ const Feed = ({ lang }) => {
     const FeedContent = ({ feedType }) => {
         const feed = feeds[feedType];
         return (
-            <div className="space-y-8 mt-0">
+            <div className="space-y-8 mt-0 animate-fade-in-up">
                 {feed.loading ? <LoadingState /> : (feed.posts && feed.posts.length > 0) ? (
                     <>
                         {feed.posts.map((post, i) => {
