@@ -116,7 +116,7 @@ const CategoriesList = () => {
                                     data?.data?.map((category) => (
                                         <TableRow key={category.id}>
                                             <TableCell className="font-medium">
-                                                {category.short_detail?.cat_name || 'N/A'}
+                                                <span lang="sd">{category.short_detail?.cat_name || 'N/A'}</span>
                                             </TableCell>
                                             <TableCell>{category.slug}</TableCell>
                                             <TableCell>
@@ -134,7 +134,7 @@ const CategoriesList = () => {
                                                         size="sm"
                                                         asChild
                                                     >
-                                                        <Link to={`/categories/${category.id}/edit`}>Edit</Link>
+                                                        <Link to={`/admin/new/categories/${category.id}/edit`}>Edit</Link>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"

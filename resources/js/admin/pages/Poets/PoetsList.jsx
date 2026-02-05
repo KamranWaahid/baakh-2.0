@@ -127,24 +127,22 @@ const PoetsList = () => {
                                     </TableRow>
                                 ) : (
                                     data?.data?.map((poet) => {
-                                        // Find preferred detail (sd > en > first)
-                                        const details = Array.isArray(poet.all_details) ? poet.all_details : [];
-                                        const detail = details.find(d => d.lang === 'sd')
-                                            || details.find(d => d.lang === 'en')
-                                            || details[0]
-                                            || {};
                                         return (
                                             <TableRow key={poet.id}>
                                                 <TableCell>
                                                     <img
                                                         src={'/' + poet.poet_pic}
-                                                        alt={detail.poet_name}
+                                                        alt={poet.poet_name}
                                                         className="h-10 w-10 rounded-full object-cover"
                                                         onError={(e) => e.target.src = 'https://placehold.co/40'}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="font-medium">{detail.poet_name || 'N/A'}</TableCell>
-                                                <TableCell>{detail.poet_laqab || 'N/A'}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    <span lang="sd">{poet.poet_name}</span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span lang="sd">{poet.poet_laqab}</span>
+                                                </TableCell>
                                                 <TableCell>{poet.date_of_birth || '-'}</TableCell>
                                                 <TableCell>{poet.date_of_death || '-'}</TableCell>
                                                 <TableCell className="text-right space-x-2">

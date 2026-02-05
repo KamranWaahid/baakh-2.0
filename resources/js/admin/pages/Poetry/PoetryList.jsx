@@ -142,10 +142,14 @@ const PoetryList = () => {
                                     data?.data?.map((p) => (
                                         <TableRow key={p.id}>
                                             <TableCell className="font-medium">
-                                                {p.info?.title || 'Untitled'}
+                                                <span lang="sd">{p.info?.title || 'Untitled'}</span>
                                             </TableCell>
-                                            <TableCell>{p.poet_details?.poet_laqab || 'N/A'}</TableCell>
-                                            <TableCell>{p.category?.detail?.cat_name || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <span lang="sd">{p.poet_details?.poet_laqab || 'N/A'}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                {p.category?.detail?.cat_name || 'N/A'}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     {p.visibility === 1 ? (
@@ -184,7 +188,7 @@ const PoetryList = () => {
                                                     <Star className={`h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" asChild>
-                                                    <Link to={`/poetry/${p.id}/edit`}>
+                                                    <Link to={`/admin/new/poetry/${p.id}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>

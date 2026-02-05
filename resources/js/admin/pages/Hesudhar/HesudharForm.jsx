@@ -77,7 +77,7 @@ const HesudharForm = ({ entry, onSuccess }) => {
                         <FormItem>
                             <FormLabel>Incorrect Word</FormLabel>
                             <FormControl>
-                                <Input dir="rtl" placeholder="Incorrect spelling" {...field} />
+                                <Input dir="rtl" lang="sd" placeholder="Incorrect spelling" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -91,7 +91,7 @@ const HesudharForm = ({ entry, onSuccess }) => {
                         <FormItem>
                             <FormLabel>Correct Word</FormLabel>
                             <FormControl>
-                                <Input dir="rtl" placeholder="Correct spelling" {...field} />
+                                <Input dir="rtl" lang="sd" placeholder="Correct spelling" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

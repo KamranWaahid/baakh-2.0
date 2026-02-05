@@ -100,7 +100,7 @@ const CategoryForm = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['categories']);
-            navigate('/categories');
+            navigate('/admin/new/categories');
         },
     });
 
@@ -116,7 +116,7 @@ const CategoryForm = () => {
         <div className="max-w-4xl mx-auto pb-10">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" onClick={() => navigate('/categories')}>
+                    <Button variant="outline" size="icon" onClick={() => navigate('/admin/new/categories')}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <h2 className="text-3xl font-bold tracking-tight">
@@ -206,7 +206,7 @@ const CategoryForm = () => {
                                         <FormItem>
                                             <FormLabel>Name (Sindhi)</FormLabel>
                                             <FormControl>
-                                                <Input dir="rtl" placeholder="غزل" {...field} />
+                                                <Input dir="rtl" lang="sd" placeholder="غزل" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -231,7 +231,7 @@ const CategoryForm = () => {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => navigate('/categories')}>Cancel</Button>
+                        <Button variant="outline" type="button" onClick={() => navigate('/admin/new/categories')}>Cancel</Button>
                         <Button type="submit" disabled={mutation.isPending}>
                             {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             {isEditing ? 'Update Category' : 'Create Category'}

@@ -146,13 +146,15 @@ const CoupletsList = () => {
                                             <TableCell className="font-medium">
                                                 <div className="space-y-1">
                                                     {c.couplet_text?.split('\n').slice(0, 2).map((line, i) => (
-                                                        <div key={i} className="text-base font-arabic leading-relaxed text-right" dir="rtl">
+                                                        <div key={i} className="text-base leading-relaxed text-right" dir="rtl" lang="sd">
                                                             {line}
                                                         </div>
                                                     ))}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{c.poet_details?.poet_laqab || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <span lang="sd">{c.poet_details?.poet_laqab || 'N/A'}</span>
+                                            </TableCell>
                                             <TableCell>
                                                 {c.poetry?.category?.detail?.cat_name ? (
                                                     <Badge variant="secondary" className="flex items-center gap-1 w-fit">
@@ -222,7 +224,7 @@ const CoupletsList = () => {
                                                     <Star className={`h-4 w-4 ${c.poetry?.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" asChild>
-                                                    <Link to={c.poetry?.category_id ? `/poetry/${c.poetry?.id}/edit` : `/couplet/${c.poetry?.id}/edit`}>
+                                                    <Link to={c.poetry?.category_id ? `/admin/new/poetry/${c.poetry?.id}/edit` : `/admin/new/couplet/${c.poetry?.id}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>

@@ -77,7 +77,7 @@ const RomanizerForm = ({ entry, onSuccess }) => {
                         <FormItem>
                             <FormLabel>Sindhi Word</FormLabel>
                             <FormControl>
-                                <Input dir="rtl" placeholder="سنڌي لفظ" {...field} />
+                                <Input dir="rtl" lang="sd" placeholder="سنڌي لفظ" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

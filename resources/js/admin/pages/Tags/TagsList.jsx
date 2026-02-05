@@ -220,7 +220,7 @@ const TagsList = () => {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Tag className="h-3 w-3 text-muted-foreground" />
-                                                    {tag.tag}
+                                                    <span lang={tag.lang === 'sd' ? 'sd' : undefined}>{tag.tag}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>{tag.slug || '-'}</TableCell>

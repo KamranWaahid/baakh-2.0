@@ -153,8 +153,12 @@ const HesudharList = () => {
                                 ) : (
                                     data?.data?.map((entry) => (
                                         <TableRow key={entry.id}>
-                                            <TableCell className="font-medium">{entry.word}</TableCell>
-                                            <TableCell>{entry.correct}</TableCell>
+                                            <TableCell className="font-medium">
+                                                <span lang="sd">{entry.word}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span lang="sd">{entry.correct}</span>
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Button

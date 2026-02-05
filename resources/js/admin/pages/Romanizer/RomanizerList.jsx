@@ -161,7 +161,7 @@ const RomanizerList = () => {
                                 ) : (
                                     data?.data?.map((entry) => (
                                         <TableRow key={entry.id}>
-                                            <TableCell className="font-medium" dir="rtl">{entry.word_sd}</TableCell>
+                                            <TableCell className="font-medium" dir="rtl" lang="sd">{entry.word_sd}</TableCell>
                                             <TableCell>{entry.word_roman}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
