@@ -1,1 +1,0 @@
-<a href="{{ $link }}"><div class="hero-suggestion-item"><i class="bi bi-search me-2"></i>{{ $text }}</div></a>
