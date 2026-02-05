@@ -27,6 +27,7 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -59,7 +60,7 @@ const Navbar = ({ lang }) => {
                 <div className="h-6 w-px bg-gray-200 mx-2"></div>
             )}
             {loading ? (
-                <div className="h-8 w-8 animate-pulse bg-gray-100 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
             ) : user ? (
                 <div className={`flex items-center gap-2 ${mobile ? 'flex-col items-start w-full' : ''}`}>
                     {!mobile && (

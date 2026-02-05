@@ -3,6 +3,7 @@ import PostCard from './PostCard';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PostCardSkeleton from './skeletons/PostCardSkeleton';
 
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -35,6 +36,26 @@ const Feed = ({ lang }) => {
         }
     ];
 
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const LoadingState = () => (
+        <div className="space-y-8 mt-0">
+            {[1, 2, 3].map((i) => (
+                <div key={i}>
+                    <PostCardSkeleton />
+                    {i < 3 && <Separator className="bg-gray-100" />}
+                </div>
+            ))}
+        </div>
+    );
+
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 py-6">
             <Tabs defaultValue="for-you" className="w-full">
@@ -56,7 +77,7 @@ const Feed = ({ lang }) => {
                 </div>
 
                 <TabsContent value="for-you" className="space-y-8 mt-0">
-                    {posts.map((post, i) => (
+                    {loading ? <LoadingState /> : posts.map((post, i) => (
                         <React.Fragment key={i}>
                             <PostCard lang={lang} {...post} />
                             {i < posts.length - 1 && <Separator className="bg-gray-100" />}
@@ -65,8 +86,7 @@ const Feed = ({ lang }) => {
                 </TabsContent>
 
                 <TabsContent value="featured" className="space-y-8 mt-0">
-                    {/* Just showing same posts for demo purposes */}
-                    {posts.slice(0, 2).map((post, i) => (
+                    {loading ? <LoadingState /> : posts.slice(0, 2).map((post, i) => (
                         <React.Fragment key={i}>
                             <PostCard lang={lang} {...post} />
                             {i < 1 && <Separator className="bg-gray-100" />}
