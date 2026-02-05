@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -25,11 +26,15 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'username',
+        'phone',
         'role',
         'password',
         'whatsapp',
         'avatar',
-        'name_sd'
+        'name_sd',
+        'status',
+        'last_login_at',
     ];
 
     /**
@@ -49,6 +54,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
         'password' => 'hashed',
     ];
 
@@ -66,16 +72,16 @@ class User extends Authenticatable
     public static function getPermissionGroups()
     {
         $permission_groups = DB::table('permissions')->select('group_name')
-        ->groupBy('group_name')->get();
+            ->groupBy('group_name')->get();
         return $permission_groups;
     }
 
     public static function getPermissionsByGroupName($group)
     {
         $permission_groups = DB::table('permissions')
-        ->where('group_name', $group)
-        ->select('id','name')
-        ->get();
+            ->where('group_name', $group)
+            ->select('id', 'name')
+            ->get();
         return $permission_groups;
     }
 
@@ -112,4 +118,53 @@ class User extends Authenticatable
             ->exists();
     }
 
+    /**
+     * Get teams where user is owner.
+     */
+    public function ownedTeams()
+    {
+        return $this->hasMany(Team::class, 'owner_id');
+    }
+
+    /**
+     * Get all teams the user belongs to.
+     */
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_members')
+            ->withPivot('role', 'joined_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get team memberships.
+     */
+    public function teamMemberships()
+    {
+        return $this->hasMany(TeamMember::class);
+    }
+
+    /**
+     * Get activity logs for this user.
+     */
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Check if user is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Update last login timestamp.
+     */
+    public function updateLastLogin(): void
+    {
+        $this->update(['last_login_at' => now()]);
+    }
 }

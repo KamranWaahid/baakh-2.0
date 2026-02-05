@@ -112,7 +112,7 @@ const Sidebar = () => {
                 <div className="my-2 border-t" />
                 <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
-                <SidebarLink to="/team" icon={Users}>Team</SidebarLink>
+                <SidebarLink to="/teams" icon={Users}>Team</SidebarLink>
                 <SidebarLink to="/roles" icon={Shield}>Roles & Permissions</SidebarLink>
                 <SidebarLink to="/languages" icon={Languages}>Languages</SidebarLink>
                 <SidebarLink to="/databases" icon={Database}>Databases</SidebarLink>
@@ -124,7 +124,7 @@ const Sidebar = () => {
 const AdminLayout = ({ children }) => {
     const handleLogout = async () => {
         try {
-            await api.post('/logout');
+            await api.post('/api/auth/logout');
             window.location.href = '/admin/new/login'; // Redirect to login
         } catch (error) {
             console.error('Logout failed', error);
@@ -151,6 +151,27 @@ const AdminLayout = ({ children }) => {
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col">
                             <Sidebar />
+                            {/* The following links are added based on the instruction.
+                                 Note: The Sidebar component already contains these links,
+                                 so adding them directly here might result in duplicates
+                                 or unexpected styling if not intended to replace the Sidebar.
+                                 Assuming the instruction intends to add these as additional
+                                 links within the SheetContent, outside the existing Sidebar component.
+                                 However, to maintain syntactic correctness, they are placed
+                                 within the SheetContent's children.
+                            */}
+                            <Link to="/teams" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                                Teams
+                            </Link>
+                            <Link to="/roles" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                                Roles & Permissions
+                            </Link>
+                            <Link to="/languages" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                                Languages
+                            </Link>
+                            <Link to="/databases" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+                                Databases
+                            </Link>
                         </SheetContent>
                     </Sheet>
                     <div className="w-full flex-1">

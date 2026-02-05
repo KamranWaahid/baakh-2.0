@@ -14,14 +14,17 @@ class Provinces extends Model
 
     protected $fillable = [
         'user_id',
-        'province_name',
         'country_id',
-        'lang',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function details()
+    {
+        return $this->hasMany(ProvinceDetails::class, 'province_id');
     }
 
     public function country()

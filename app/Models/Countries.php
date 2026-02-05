@@ -9,21 +9,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Countries extends Model
 {
     use SoftDeletes;
-    
+
     protected $table = "location_countries";
 
     protected $fillable = [
         'user_id',
-        'countryName',
         'Abbreviation',
-        'countryDesc',
         'Continent',
         'capital_city',
-        'lang',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function details()
+    {
+        return $this->hasMany(CountryDetails::class, 'country_id');
     }
 }

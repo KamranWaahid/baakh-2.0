@@ -13,16 +13,19 @@ class Cities extends Model
     protected $table = "location_cities";
     protected $fillable = [
         'user_id',
-        'city_name',
         'geo_lat',
         'geo_long',
         'province_id',
-        'lang',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function details()
+    {
+        return $this->hasMany(CityDetails::class, 'city_id');
     }
 
     public function province()

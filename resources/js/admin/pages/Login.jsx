@@ -14,7 +14,7 @@ const Login = () => {
 
         try {
             await api.get('/sanctum/csrf-cookie');
-            await api.post('/login', { email, password }); // This assumes standard Laravel login route or we create one
+            await api.post('/api/auth/login', { email, password });
             navigate('/');
         } catch (err) {
             const message = err.response?.data?.message || err.message || 'Login failed';

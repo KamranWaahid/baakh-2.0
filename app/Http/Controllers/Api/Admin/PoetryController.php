@@ -170,4 +170,63 @@ class PoetryController extends Controller
             return response()->json(['message' => 'Failed to create poetry: ' . $e->getMessage()], 500);
         }
     }
+
+    public function update(Request $request, $id)
+    {
+        $poetry = Poetry::findOrFail($id);
+
+        $validated = $request->validate([
+            'poet_id' => 'required|exists:poets,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'poetry_slug' => 'required|unique:poetry_main,poetry_slug,' . $id,
+            'poetry_title' => 'required|string|max:255',
+            'content_style' => 'required|string',
+            'visibility' => 'required|boolean',
+            'is_featured' => 'required|boolean',
+            'couplets' => 'required|array|min:1',
+            'couplets.*.couplet_text' => 'required|string',
+            'poetry_tags' => 'nullable|array',
+            'poetry_info' => 'nullable|string',
+            'source' => 'nullable|string'
+        ]);
+
+        \DB::beginTransaction();
+        try {
+            $poetry->update([
+                'poet_id' => $validated['poet_id'],
+                'category_id' => $validated['category_id'],
+                'poetry_slug' => $validated['poetry_slug'],
+                'poetry_tags' => json_encode($validated['poetry_tags'] ?? []),
+                'visibility' => $validated['visibility'],
+                'is_featured' => $validated['is_featured'],
+                'content_style' => $validated['content_style'],
+            ]);
+
+            // Update or create translation for 'sd'
+            $poetry->translations()->updateOrCreate(
+                ['lang' => 'sd'],
+                [
+                    'title' => $validated['poetry_title'],
+                    'info' => $validated['poetry_info'] ?? null,
+                    'source' => $validated['source'] ?? null,
+                ]
+            );
+
+            // Recreate couplets
+            $poetry->couplets()->delete();
+            foreach ($validated['couplets'] as $index => $couplet) {
+                $poetry->couplets()->create([
+                    'couplet_text' => $couplet['couplet_text'],
+                    'poet_id' => $validated['poet_id'],
+                    'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1)
+                ]);
+            }
+
+            \DB::commit();
+            return response()->json(['message' => 'Poetry updated successfully']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to update poetry: ' . $e->getMessage()], 500);
+        }
+    }
 }

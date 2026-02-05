@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     Users,
     BookOpen,
@@ -20,6 +27,8 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
+    const [openDialog, setOpenDialog] = useState(null);
+
     const { data, isLoading, isError } = useQuery({
         queryKey: ['dashboard-stats'],
         queryFn: async () => {
@@ -221,88 +230,49 @@ const Dashboard = () => {
                     );
                 })}
             </div>
-
-            {/* Content Tasks Section */}
-            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-                {/* 1. Missing EN Poetry */}
-                <Card className="col-span-1 shadow-sm border-orange-100 bg-orange-50/30">
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Languages className="h-5 w-5 text-orange-500" />
-                            <CardTitle className="text-lg">Poetry Missing Translation</CardTitle>
-                        </div>
-                        <CardDescription>Poems (Linked) that need English content.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="space-y-2">
-                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+            {/* Dialogs for each action card */}
+            {actionCards.map((card) => {
+                const items = data?.[card.dataKey] || [];
+                return (
+                    <Dialog
+                        key={card.id}
+                        open={openDialog === card.id}
+                        onOpenChange={(open) => !open && setOpenDialog(null)}
+                    >
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                                <DialogTitle>{card.dialogTitle}</DialogTitle>
+                                <DialogDescription>{card.dialogDescription}</DialogDescription>
+                            </DialogHeader>
+                            <div className="mt-4">
+                                {isLoading ? (
+                                    <div className="space-y-2">
+                                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                                    </div>
+                                ) : items.length > 0 ? (
+                                    <div className="space-y-1">
+                                        {items.map(item => (
+                                            <ListItem
+                                                key={item.id}
+                                                item={item}
+                                                link={
+                                                    card.id === 'missing_tags_couplets'
+                                                        ? (item.poetry_id ? `/poetry/${item.poetry_id}/edit` : '#')
+                                                        : `/poetry/${item.id}/edit`
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground py-8 text-center">
+                                        No pending items.
+                                    </p>
+                                )}
                             </div>
-                        ) : data?.missing_en_poetry?.length > 0 ? (
-                            <div className="space-y-1">
-                                {data.missing_en_poetry.map(item => (
-                                    <ListItem key={item.id} item={item} link={`/poetry/${item.id}/edit`} />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground py-4">No pending items.</p>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* 2. Missing EN Couplets */}
-                <Card className="col-span-1 shadow-sm border-blue-100 bg-blue-50/30">
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Languages className="h-5 w-5 text-blue-500" />
-                            <CardTitle className="text-lg">Couplets Missing Translation</CardTitle>
-                        </div>
-                        <CardDescription>Independent couplets needing English content.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="space-y-2">
-                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
-                            </div>
-                        ) : data?.missing_en_couplets?.length > 0 ? (
-                            <div className="space-y-1">
-                                {data.missing_en_couplets.map(item => (
-                                    <ListItem key={item.id} item={item} link={`/poetry/${item.id}/edit`} />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground py-4">No pending items.</p>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* 3. Missing Tags */}
-                <Card className="col-span-1 shadow-sm border-green-100 bg-green-50/30">
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <Tag className="h-5 w-5 text-green-500" />
-                            <CardTitle className="text-lg">Couplets Missing Tags</CardTitle>
-                        </div>
-                        <CardDescription>All couplets that haven't been tagged yet.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="space-y-2">
-                                {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
-                            </div>
-                        ) : data?.missing_tags_couplets?.length > 0 ? (
-                            <div className="space-y-1">
-                                {data.missing_tags_couplets.map(item => (
-                                    // Note: poetry_id is used for editing usually, check if null
-                                    <ListItem key={item.id} item={item} link={item.poetry_id ? `/poetry/${item.poetry_id}/edit` : '#'} />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground py-4">No pending items.</p>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+                        </DialogContent>
+                    </Dialog>
+                );
+            })}
         </div>
     );
 };

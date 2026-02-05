@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +56,10 @@ const poetrySchema = z.object({
 });
 
 const CreatePoetry = () => {
+    const { id } = useParams();
+    const isEdit = !!id;
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [poetryContent, setPoetryContent] = useState('');
     const [showTransliteration, setShowTransliteration] = useState(false);
     const [transliteratedText, setTransliteratedText] = useState('');
@@ -98,6 +101,15 @@ const CreatePoetry = () => {
         }
     });
 
+    const { data: poetry, isLoading: isPoetryLoading } = useQuery({
+        queryKey: ['poetry', id],
+        queryFn: async () => {
+            const response = await api.get(`/api/admin/poetry/${id}`);
+            return response.data;
+        },
+        enabled: isEdit,
+    });
+
     const form = useForm({
         resolver: zodResolver(poetrySchema),
         defaultValues: {
@@ -114,10 +126,10 @@ const CreatePoetry = () => {
         },
     });
 
-    // Auto-generate slug from title
+    // Auto-generate slug from title (only for new poetry)
     const title = form.watch('poetry_title');
     useEffect(() => {
-        if (title) {
+        if (!isEdit && title) {
             const slug = title
                 .toLowerCase()
                 .replace(/[^\w\s-]/g, '')
@@ -125,20 +137,41 @@ const CreatePoetry = () => {
                 .replace(/^-+|-+$/g, '');
             form.setValue('poetry_slug', slug);
         }
-    }, [title, form]);
+    }, [title, isEdit, form]);
+
+    useEffect(() => {
+        if (isEdit && poetry) {
+            const translation = poetry.translations?.find(t => t.lang === 'sd') || poetry.translations?.[0];
+            form.reset({
+                poetry_title: translation?.title || '',
+                poetry_slug: poetry.poetry_slug || '',
+                poet_id: poetry.poet_id?.toString() || '',
+                category_id: poetry.category_id?.toString() || '',
+                content_style: poetry.content_style || 'center',
+                visibility: poetry.visibility === 1,
+                is_featured: poetry.is_featured === 1,
+                poetry_info: translation?.info || '',
+                source: translation?.source || '',
+                poetry_tags: JSON.parse(poetry.poetry_tags || '[]'),
+            });
+            setPoetryContent(poetry.couplets?.map(c => c.couplet_text).join('\n\n') || '');
+        }
+    }, [isEdit, poetry, form]);
 
     const mutation = useMutation({
         mutationFn: async (data) => {
+            if (isEdit) {
+                return await api.put(`/api/admin/poetry/${id}`, data);
+            }
             return await api.post('/api/admin/poetry', data);
         },
         onSuccess: () => {
+            queryClient.invalidateQueries(['poetry']);
             navigate('/poetry');
         },
     });
 
     const onSubmit = (data) => {
-        // Transform the single text block into couplets array
-        // Splits by one or more empty lines
         const coupletTexts = poetryContent
             .split(/\n\s*\n/)
             .map(text => text.trim())
@@ -183,7 +216,7 @@ const CreatePoetry = () => {
         form.setValue('content_style', next);
     };
 
-    if (isMetaLoading) {
+    if (isMetaLoading || (isEdit && isPoetryLoading)) {
         return <div className="p-8 space-y-4">
             <Skeleton className="h-10 w-1/3" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -205,27 +238,25 @@ const CreatePoetry = () => {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="flex items-center justify-between mb-8 border-b pb-4">
                         <div className="flex items-center gap-4">
-                            <h2 className="text-xl font-semibold tracking-tight">Create New Poetry</h2>
+                            <h2 className="text-xl font-semibold tracking-tight">
+                                {isEdit ? 'Edit Poetry' : 'Create New Poetry'}
+                            </h2>
                         </div>
                         <div className="flex items-center gap-4">
                             <Button variant="ghost" type="button" onClick={() => navigate('/poetry')}>Cancel</Button>
                             <Button type="submit" disabled={mutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
-                                {mutation.isPending ? 'Publishing...' : 'Publish'}
+                                {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Main Content Area - Editor Canvas */}
                         <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
-                            {/* Editor Toolbar */}
                             <div className="flex items-center gap-1 p-2 border-b bg-muted/5 sticky top-0 z-10 overflow-x-auto no-scrollbar">
                                 <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => setPoetryContent(prev => prev + '\n\n')} title="Add Couplet Space">
                                     <Plus className="h-4 w-4" />
                                 </Button>
-
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
@@ -240,9 +271,7 @@ const CreatePoetry = () => {
                                         <DropdownMenuItem onClick={() => applyFormat('- ', '')}>Bullet List</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-
                                 <div className="flex items-center">
                                     <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('**')} title="Bold">
                                         <Bold className="h-4 w-4" />
@@ -257,43 +286,22 @@ const CreatePoetry = () => {
                                         <Code className="h-4 w-4" />
                                     </Button>
                                 </div>
-
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-
                                 <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('[', '](url)')} title="Link">
                                     <Link2 className="h-4 w-4" />
                                 </Button>
-
                                 <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => {
                                     document.querySelector('[name="poetry_tags"]')?.scrollIntoView({ behavior: 'smooth' });
                                 }} title="Tags">
                                     <TagIcon className="h-4 w-4" />
                                 </Button>
-
                                 <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={cycleAlignment} title="Change Alignment">
                                     {form.watch('content_style') === 'center' && <AlignCenter className="h-4 w-4" />}
                                     {form.watch('content_style') === 'start' && <AlignLeft className="h-4 w-4" />}
                                     {form.watch('content_style') === 'end' && <AlignRight className="h-4 w-4" />}
                                     {form.watch('content_style') === 'justified' && <AlignJustify className="h-4 w-4" />}
                                 </Button>
-
                                 <div className="h-4 w-[1px] bg-border mx-1" />
-
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
-                                            Button <ChevronDown className="h-3 w-3" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start">
-                                        <DropdownMenuItem>Primary Button</DropdownMenuItem>
-                                        <DropdownMenuItem>Outline Button</DropdownMenuItem>
-                                        <DropdownMenuItem>Link Button</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                <div className="h-4 w-[1px] bg-border mx-1" />
-
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
@@ -302,7 +310,6 @@ const CreatePoetry = () => {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-48">
                                         <DropdownMenuItem onClick={() => { setPoetryContent(''); form.reset(); }}>Clear All</DropdownMenuItem>
-                                        <DropdownMenuItem>Import from File</DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem onClick={() => navigate('/poetry')}>View All Poetry</DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -310,7 +317,6 @@ const CreatePoetry = () => {
                             </div>
 
                             <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
-                                {/* Top Label Placeholder */}
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
                                         <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
@@ -328,7 +334,6 @@ const CreatePoetry = () => {
                                     </div>
                                 </div>
 
-                                {/* Title Section */}
                                 <div className="space-y-3">
                                     <FormField
                                         control={form.control}
@@ -355,7 +360,6 @@ const CreatePoetry = () => {
                                     />
                                 </div>
 
-                                {/* Single Poetry Canvas */}
                                 <div className="pt-6">
                                     <textarea
                                         id="poetry-editor"
@@ -377,9 +381,7 @@ const CreatePoetry = () => {
                             </div>
                         </div>
 
-                        {/* Sidebar */}
                         <div className="space-y-6">
-                            {/* Publish Status Card */}
                             <Card className="shadow-sm">
                                 <CardHeader className="py-3">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -400,7 +402,6 @@ const CreatePoetry = () => {
                                                     <Checkbox
                                                         checked={field.value}
                                                         onCheckedChange={field.onChange}
-                                                        className="transition-all duration-200 data-[state=checked]:animate-in data-[state=checked]:zoom-in-50"
                                                     />
                                                 </div>
                                             )}
@@ -417,7 +418,6 @@ const CreatePoetry = () => {
                                                 <Checkbox
                                                     checked={field.value}
                                                     onCheckedChange={field.onChange}
-                                                    className="transition-all duration-200 data-[state=checked]:animate-in data-[state=checked]:zoom-in-50"
                                                 />
                                             )}
                                         />
@@ -429,7 +429,7 @@ const CreatePoetry = () => {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Content Alignment</FormLabel>
-                                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger>
                                                                 <SelectValue placeholder="Alignment" />
@@ -451,15 +451,14 @@ const CreatePoetry = () => {
                                 </CardContent>
                                 <CardFooter className="bg-muted/10 flex justify-between py-3">
                                     <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/poetry')}>
-                                        Move to Trash
+                                        Cancel
                                     </Button>
                                     <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending}>
-                                        {mutation.isPending ? 'Publishing...' : 'Publish'}
+                                        {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                                     </Button>
                                 </CardFooter>
                             </Card>
 
-                            {/* Meta Info Card */}
                             <Card className="shadow-sm">
                                 <CardHeader className="py-3">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -475,7 +474,7 @@ const CreatePoetry = () => {
                                                 <FormLabel className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-1">
                                                     <User className="h-3 w-3" /> Poet
                                                 </FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select Poet" />
@@ -500,7 +499,7 @@ const CreatePoetry = () => {
                                                 <FormLabel className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-1">
                                                     <Folder className="h-3 w-3" /> Category
                                                 </FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Select Category" />
@@ -535,7 +534,6 @@ const CreatePoetry = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Tags Card */}
                             <Card className="shadow-sm">
                                 <CardHeader className="py-3">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -587,7 +585,6 @@ const CreatePoetry = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Additional Information Card */}
                             <Card className="shadow-sm">
                                 <CardHeader className="py-3">
                                     <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -630,7 +627,6 @@ const CreatePoetry = () => {
                         </div>
                     </div>
 
-                    {/* Transliteration Dialog */}
                     <Dialog open={showTransliteration} onOpenChange={setShowTransliteration}>
                         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>

@@ -222,7 +222,7 @@ const CoupletsList = () => {
                                                     <Star className={`h-4 w-4 ${c.poetry?.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" asChild>
-                                                    <Link to={`/poetry/${c.poetry?.id}/edit`}>
+                                                    <Link to={c.poetry?.category_id ? `/poetry/${c.poetry?.id}/edit` : `/couplet/${c.poetry?.id}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
