@@ -226,9 +226,9 @@ class PoetryController extends UserController
 
             'poet' => [
                 'id' => $poet_info->id ?? 0,
-                'name' => $poet_info->details->poet_laqab ?? 'Unknown',
-                'tagline' => $poet_info->details->tagline ?? '',
-                'bio' => strip_tags($poet_info->details->poet_bio ?? ''),
+                'name' => optional($poet_info->details)->poet_laqab ?? 'Unknown',
+                'tagline' => optional($poet_info->details)->tagline ?? '',
+                'bio' => strip_tags(optional($poet_info->details)->poet_bio ?? ''),
                 'slug' => $poet_info->poet_slug ?? '',
                 'avatar' => $poet_info->photo ? (str_starts_with($poet_info->photo, 'http') ? $poet_info->photo : '/' . $poet_info->photo) : null,
                 'followers' => '2.3K',
@@ -236,7 +236,7 @@ class PoetryController extends UserController
 
             'category' => [
                 'id' => $poetry->category_id,
-                'name' => $poetry->category?->detail?->cat_name ?? $poetry->category?->slug ?? 'General',
+                'name' => optional($poetry->category?->detail)->cat_name ?? $poetry->category?->slug ?? 'General',
                 'slug' => $poetry->category?->slug
             ],
 

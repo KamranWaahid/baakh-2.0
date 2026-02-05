@@ -20,7 +20,8 @@ const PoemDetail = ({ lang }) => {
             const response = await api.get(`/api/v1/poetry/${poemSlug}?lang=${lang}`);
             return response.data;
         },
-        retry: false
+        retry: 1,
+        staleTime: 5 * 60 * 1000
     });
 
     if (isLoading) {
@@ -51,11 +52,24 @@ const PoemDetail = ({ lang }) => {
     }
 
     if (isError) {
+        console.error("PoemDetail Fetch Error:", error);
+        const isNotFound = error?.response?.status === 404;
+
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center" dir={isRtl ? 'rtl' : 'ltr'}>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{isRtl ? 'شاعري نہ ملي' : 'Poem Not Found'}</h2>
-                <p className="text-gray-600 mb-6">{isRtl ? 'جيڪا شاعري توهان ڳولي رهيا آهيو اها موجود ناهي.' : 'The poetry you are looking for does not exist or has been removed.'}</p>
-                <Button onClick={() => navigate(`/${lang}`)}>{isRtl ? 'واپس وڃو' : 'Go Home'}</Button>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                    {isNotFound
+                        ? (isRtl ? 'شاعري نہ ملي' : 'Poem Not Found')
+                        : (isRtl ? 'ڪجهه غلط ٿي ويو' : 'Something went wrong')}
+                </h2>
+                <p className="text-gray-600 mb-6">
+                    {isNotFound
+                        ? (isRtl ? 'جيڪا شاعري توهان ڳولي رهيا آهيو اها موجود ناهي.' : 'The poetry you are looking for does not exist or has been removed.')
+                        : (isRtl ? 'مهرباني ڪري ٿوري دير کان پوءِ ٻيهر ڪوشش ڪريو.' : 'Please try again later or refresh the page.')}
+                </p>
+                <Button onClick={() => isNotFound ? navigate(`/${lang}`) : window.location.reload()}>
+                    {isNotFound ? (isRtl ? 'واپس وڃو' : 'Go Home') : (isRtl ? 'ٻيهر ڪوشش ڪريو' : 'Try Again')}
+                </Button>
             </div>
         );
     }
