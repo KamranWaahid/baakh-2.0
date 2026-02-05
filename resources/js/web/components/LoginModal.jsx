@@ -10,12 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Mail } from 'lucide-react';
 
-const LoginModal = ({ trigger, isRtl = false }) => {
+const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                {trigger}
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            {trigger && (
+                <DialogTrigger asChild>
+                    {trigger}
+                </DialogTrigger>
+            )}
             <DialogContent className="sm:max-w-md bg-white p-12 shadow-xl border-0">
                 <DialogHeader className="mb-8">
                     <DialogTitle className="text-center font-serif text-3xl font-medium tracking-tight">
