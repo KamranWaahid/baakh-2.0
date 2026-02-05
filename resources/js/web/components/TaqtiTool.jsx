@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 
 const TaqtiTool = ({ lang = 'sd' }) => {
     const isRtl = lang === 'sd';
-    const [script, setScript] = useState('perso'); // 'perso' | 'dev'
+    const [script, setScript] = useState('perso'); // 'perso' | 'roman'
     const [method, setMethod] = useState('arooz'); // 'arooz' (Arkan) | 'chhand' (Matra)
     const [inputText, setInputText] = useState('');
     const [result, setResult] = useState(null);
@@ -84,7 +84,7 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                                 <Tabs value={script} onValueChange={setScript} className="h-8">
                                     <TabsList className="h-8 bg-gray-100/80">
                                         <TabsTrigger value="perso" className="text-xs h-6 px-3">سنڌي (Perso)</TabsTrigger>
-                                        <TabsTrigger value="dev" className="text-xs h-6 px-3">सिंधी (Dev)</TabsTrigger>
+                                        <TabsTrigger value="roman" className="text-xs h-6 px-3">Sindhi (roman)</TabsTrigger>
                                     </TabsList>
                                 </Tabs>
                                 <div className="text-xs text-gray-400 flex items-center gap-1 cursor-help" title="Long vowels: aa, ii, uu">
@@ -102,7 +102,7 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                                 onChange={(e) => setInputText(e.target.value)}
                                 dir={script === 'perso' ? 'rtl' : 'ltr'}
                                 className={`w-full min-h-[160px] p-6 text-2xl border-none focus:ring-0 resize-none leading-loose ${script === 'perso' ? 'font-arabic' : 'font-sans'}`}
-                                placeholder={script === 'perso' ? 'پنهنجي شاعري هتي لکو...' : 'Apni shayari hity likho...'}
+                                placeholder={script === 'perso' ? 'پنهنجي شاعري هتي لکو...' : 'pahnji shayari hity likho...'}
                             />
                         </div>
 
