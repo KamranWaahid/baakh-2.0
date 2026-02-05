@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { User } from 'lucide-react';
+import { formatSindhiDate } from '../utils/dateUtils';
 
 const SidebarRight = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -95,20 +97,22 @@ const SidebarRight = ({ lang }) => {
                         staffPicks.map((pick, i) => (
                             <div key={i} className="mb-6 last:mb-0">
                                 <Link to={`/${lang}/poet/${pick.poet_slug}`} className="flex items-center gap-2 mb-1 hover:opacity-80 transition-opacity w-fit">
-                                    <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 overflow-hidden font-bold border border-gray-100">
-                                        <img
-                                            src={pick.author_avatar
-                                                ? (pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`)
-                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(pick.author)}&background=f3f4f6&color=6b7280&size=128`}
-                                            alt={pick.author}
-                                            className="w-full h-full object-cover"
-                                        />
+                                    <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+                                        {pick.author_avatar ? (
+                                            <img
+                                                src={pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`}
+                                                alt={pick.author}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <User className="h-3 w-3" />
+                                        )}
                                     </div>
                                     <span className={`text-xs font-medium hover:underline ${isRtl ? 'font-arabic' : ''}`}>{pick.author}</span>
                                 </Link>
                                 <Link to={`/${lang}/poet/${pick.poet_slug}/${pick.cat_slug}/${pick.slug}`} className="group block">
                                     <h4 className={`text-[14px] font-bold leading-snug group-hover:underline ${isRtl ? 'font-arabic' : ''}`}>{pick.title}</h4>
-                                    <span className="text-xs text-gray-500 mt-1 block">{pick.date}</span>
+                                    <span className="text-xs text-gray-500 mt-1 block">{isRtl ? formatSindhiDate(pick.date) : pick.date}</span>
                                 </Link>
                             </div>
                         ))

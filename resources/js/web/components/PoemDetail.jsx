@@ -3,10 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Share2, BookmarkPlus, MoreHorizontal, Sparkles } from 'lucide-react';
+import { MessageCircle, Share2, BookmarkPlus, MoreHorizontal, Sparkles, User } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import PaywallCTA from './PaywallCTA';
+import { formatSindhiDate } from '../utils/dateUtils';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -81,8 +82,8 @@ const PoemDetail = ({ lang }) => {
                             {poem.poet?.avatar ? (
                                 <img src={poem.poet.avatar.startsWith('http') ? poem.poet.avatar : `/${poem.poet.avatar}`} alt={poem.poet.name} className="h-11 w-11 rounded-full object-cover bg-gray-200" />
                             ) : (
-                                <div className="h-11 w-11 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold shrink-0 text-gray-500 overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poem.poet?.name || 'A')}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover rounded-full" alt="" />
+                                <div className="h-11 w-11 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+                                    <User className="h-6 w-6" />
                                 </div>
                             )}
                         </Link>
@@ -91,10 +92,9 @@ const PoemDetail = ({ lang }) => {
                                 <Link to={`/${lang}/poet/${poem.poet?.slug}`} className="font-medium text-gray-900 hover:underline">
                                     {poem.poet?.name || 'Unknown'}
                                 </Link>
-                                <button className="text-gray-500 hover:text-black hover:underline text-sm">{isRtl ? 'فالو ڪريو' : 'Follow'}</button>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <span>{poem.date}</span>
+                                <span>{isRtl ? formatSindhiDate(poem.date) : poem.date}</span>
                             </div>
                         </div>
                     </div>
@@ -160,8 +160,8 @@ const PoemDetail = ({ lang }) => {
                             {poem.poet.avatar ? (
                                 <img src={poem.poet.avatar} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
                             ) : (
-                                <div className="h-[64px] w-[64px] rounded-full bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-500 shrink-0 overflow-hidden border border-gray-100">
-                                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(poem.poet?.name || 'A')}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover" alt="" />
+                                <div className="h-[64px] w-[64px] rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+                                    <User className="h-8 w-8" />
                                 </div>
                             )}
                         </Link>
@@ -232,8 +232,8 @@ const PoemDetail = ({ lang }) => {
                             {poem.recommended.map((p, i) => (
                                 <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className={`flex flex-col gap-2 group ${isRtl ? 'text-right' : ''}`}>
                                     <div className={`flex items-center gap-2 mb-1 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                                        <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600 border border-gray-50">
-                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(p.author)}&background=f3f4f6&color=6b7280&size=128`} className="w-full h-full object-cover rounded-full" alt="" />
+                                        <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                                            <User className="h-3 w-3" />
                                         </div>
                                         <span className="text-xs font-bold text-gray-900">{p.author}</span>
                                     </div>
