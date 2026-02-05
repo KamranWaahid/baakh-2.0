@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Button } from '@/components/ui/button';
-import { Star, MessageCircle, Share2, MoreHorizontal, BookmarkPlus } from 'lucide-react';
+import { MessageCircle, Share2, BookmarkPlus, MoreHorizontal, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import PaywallCTA from './PaywallCTA';
@@ -68,8 +68,8 @@ const PoemDetail = ({ lang }) => {
                 <header className="mb-8">
                     {/* Badge */}
                     <div className="flex items-center gap-2 mb-6 text-yellow-500">
-                        <Star className="h-4 w-4 fill-yellow-500" />
-                        <span className="text-sm font-medium text-gray-700">{isRtl ? 'رڪني ڪهاڻي' : 'Member-only story'}</span>
+                        <Sparkles className="h-4 w-4 fill-yellow-500" />
+                        <span className="text-sm font-medium text-gray-700">{poem.category?.name || (isRtl ? 'رڪني ڪهاڻي' : 'Member-only story')}</span>
                     </div>
 
                     <h1 className={`text-3xl md:text-[40px] font-bold tracking-tight text-gray-900 leading-tight mb-6 ${isRtl ? 'font-arabic' : ''}`}>
@@ -172,7 +172,9 @@ const PoemDetail = ({ lang }) => {
                             <div className="flex items-center gap-1 text-[14px] text-gray-500 mb-2">
                                 <span>{poem.poet.followers} {isRtl ? 'فالوئرز' : 'followers'}</span>
                             </div>
-                            <p className="text-[15px] text-gray-600 leading-snug">Revolutionary poet of Sindh.</p>
+                            <p className="text-[15px] text-gray-600 leading-snug">
+                                {poem.poet.tagline || (poem.poet.bio ? poem.poet.bio.substring(0, 100) + '...' : (isRtl ? 'سنڌ جو انقلابي شاعر.' : 'Author at Baakh'))}
+                            </p>
                         </div>
                     </div>
                     <Button variant="outline" className="rounded-full border-gray-300 text-black hover:border-black hover:bg-transparent px-5 h-[38px] text-[14px]">

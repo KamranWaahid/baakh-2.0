@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookmarkPlus, MinusCircle, MoreHorizontal, Star } from 'lucide-react';
+import { BookmarkPlus, MinusCircle, MoreHorizontal, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import LoginModal from './LoginModal';
@@ -62,7 +62,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
 
                     <div className="flex items-center justify-between text-gray-500 text-sm">
                         <div className="flex items-center gap-3">
-                            {showStar && <Star className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
+                            {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
                             <span>{isRtl ? safeDate.replace(/(\d+)d ago/, '$1 ڏينھن اڳ ۾') : safeDate}</span>
                             <span>·</span>
                             <span>{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
