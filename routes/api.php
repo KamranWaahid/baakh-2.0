@@ -88,6 +88,7 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
 Route::middleware('auth:sanctum')
     ->prefix('admin')
     ->group(function () {
+        Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);

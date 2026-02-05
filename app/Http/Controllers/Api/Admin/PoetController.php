@@ -16,7 +16,7 @@ class PoetController extends Controller
             $search = $request->search;
             $query->whereHas('all_details', function ($q) use ($search) {
                 $q->where('poet_name', 'like', "%{$search}%")
-                  ->orWhere('poet_laqab', 'like', "%{$search}%");
+                    ->orWhere('poet_laqab', 'like', "%{$search}%");
             });
         }
 
@@ -41,55 +41,85 @@ class PoetController extends Controller
         return response()->json($poet);
     }
 
+    public function create()
+    {
+        $cities = \App\Models\Cities::with([
+            'details' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->get()->map(function ($city) {
+            return [
+                'id' => $city->id,
+                'name' => $city->details->first()?->city_name ?? "City #{$city->id}"
+            ];
+        });
+
+        return response()->json([
+            'cities' => $cities,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
             'poet_slug' => ['required', new \App\Rules\SlugRulePoet()],
             'date_of_birth' => 'nullable|date',
             'date_of_death' => 'nullable|date',
+            'visibility' => 'required|boolean',
+            'is_featured' => 'required|boolean',
             'image' => 'required|image|mimes:jpeg,webp,jpg,png|max:10240',
             'details' => 'required|array',
             'details.*.poet_name' => 'required|string|min:3',
             'details.*.poet_laqab' => 'required|string|min:3',
             'details.*.lang' => 'required|string',
+            'details.*.birth_place' => 'nullable|exists:location_cities,id',
+            'details.*.death_place' => 'nullable|exists:location_cities,id',
         ]);
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $uploadImage = $this->uploadImage($request->image, 'poets', $request->poet_slug, true);
-            if(isset($uploadImage['error']) && $uploadImage['error'] === true) {
-                return response()->json(['message' => $uploadImage['message']], 422);
+        \DB::beginTransaction();
+        try {
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $uploadImage = $this->uploadImage($request->image, 'poets', $request->poet_slug, true);
+                if (isset($uploadImage['error']) && $uploadImage['error'] === true) {
+                    return response()->json(['message' => $uploadImage['message']], 422);
+                }
+                $imagePath = $uploadImage['full_path'];
             }
-            $imagePath = $uploadImage['full_path'];
-        }
 
-        $poet = Poets::create([
-            'poet_slug' => $request->poet_slug,
-            'poet_pic' => $imagePath,
-            'date_of_birth' => $request->date_of_birth,
-            'date_of_death' => $request->date_of_death,
-            'poet_tags' => null, 
-        ]);
-
-        foreach ($request->details as $detail) {
-            // Decoding Json object if it came from FormData as string
-             if (is_string($detail)) {
-                $detail = json_decode($detail, true);
-            }
-            
-            $poet->details()->create([
-                'poet_name' => $detail['poet_name'] ?? null,
-                'poet_laqab' => $detail['poet_laqab'] ?? null,
-                'pen_name' => $detail['pen_name'] ?? null,
-                'tagline' => $detail['tagline'] ?? null,
-                'poet_bio' => $detail['poet_bio'] ?? null,
-                'birth_place' => $detail['birth_place'] ?? null,
-                'death_place' => $detail['death_place'] ?? null,
-                'lang' => $detail['lang'],
+            $poet = Poets::create([
+                'poet_slug' => $request->poet_slug,
+                'poet_pic' => $imagePath,
+                'date_of_birth' => $request->date_of_birth,
+                'date_of_death' => $request->date_of_death,
+                'visibility' => $request->visibility,
+                'is_featured' => $request->is_featured,
+                'poet_tags' => null,
             ]);
-        }
 
-        return response()->json(['message' => 'Poet created successfully', 'data' => $poet], 201);
+            foreach ($request->details as $detail) {
+                if (is_string($detail)) {
+                    $detail = json_decode($detail, true);
+                }
+
+                $poet->all_details()->create([
+                    'poet_name' => $detail['poet_name'] ?? null,
+                    'poet_laqab' => $detail['poet_laqab'] ?? null,
+                    'pen_name' => $detail['pen_name'] ?? null,
+                    'tagline' => $detail['tagline'] ?? null,
+                    'poet_bio' => $detail['poet_bio'] ?? null,
+                    'birth_place' => $detail['birth_place'] ?? null,
+                    'death_place' => $detail['death_place'] ?? null,
+                    'lang' => $detail['lang'],
+                ]);
+            }
+
+            \DB::commit();
+            return response()->json(['message' => 'Poet created successfully', 'data' => $poet], 201);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to create poet: ' . $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, $id)
@@ -100,65 +130,86 @@ class PoetController extends Controller
             'poet_slug' => ['required', new \App\Rules\SlugRulePoet($id)],
             'date_of_birth' => 'nullable|date',
             'date_of_death' => 'nullable|date',
+            'visibility' => 'required|boolean',
+            'is_featured' => 'required|boolean',
             'image' => 'nullable|image|mimes:jpeg,webp,jpg,png|max:10240',
             'details' => 'required|array',
             'details.*.poet_name' => 'required|string|min:3',
             'details.*.poet_laqab' => 'required|string|min:3',
             'details.*.lang' => 'required|string',
+            'details.*.birth_place' => 'nullable|exists:location_cities,id',
+            'details.*.death_place' => 'nullable|exists:location_cities,id',
         ]);
 
-        $imagePath = $poet->poet_pic;
-        if ($request->hasFile('image')) {
-            $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $request->poet_slug, true);
-            if(isset($uploadImage['error']) && $uploadImage['error'] === true) {
-                return response()->json(['message' => $uploadImage['message']], 422);
+        \DB::beginTransaction();
+        try {
+            $imagePath = $poet->poet_pic;
+            if ($request->hasFile('image')) {
+                $uploadImage = $this->updateImage($request->image, 'poets', public_path($poet->poet_pic), $request->poet_slug, true);
+                if (isset($uploadImage['error']) && $uploadImage['error'] === true) {
+                    return response()->json(['message' => $uploadImage['message']], 422);
+                }
+                $imagePath = $uploadImage['full_path'];
             }
-            $imagePath = $uploadImage['full_path'];
-        }
 
-        $poet->update([
-            'poet_slug' => $request->poet_slug,
-            'poet_pic' => $imagePath,
-            'date_of_birth' => $request->date_of_birth,
-            'date_of_death' => $request->date_of_death,
-        ]);
-
-        // Remove old details and re-create
-        $poet->details()->forceDelete();
-
-        foreach ($request->details as $detail) {
-             if (is_string($detail)) {
-                $detail = json_decode($detail, true);
-            }
-            
-            $poet->details()->create([
-                'poet_name' => $detail['poet_name'] ?? null,
-                'poet_laqab' => $detail['poet_laqab'] ?? null,
-                'pen_name' => $detail['pen_name'] ?? null,
-                'tagline' => $detail['tagline'] ?? null,
-                'poet_bio' => $detail['poet_bio'] ?? null,
-                'birth_place' => $detail['birth_place'] ?? null,
-                'death_place' => $detail['death_place'] ?? null,
-                'lang' => $detail['lang'],
+            $poet->update([
+                'poet_slug' => $request->poet_slug,
+                'poet_pic' => $imagePath,
+                'date_of_birth' => $request->date_of_birth,
+                'date_of_death' => $request->date_of_death,
+                'visibility' => $request->visibility,
+                'is_featured' => $request->is_featured,
             ]);
-        }
 
-        return response()->json(['message' => 'Poet updated successfully']);
+            // Remove old details and re-create
+            $poet->all_details()->forceDelete();
+
+            foreach ($request->details as $detail) {
+                if (is_string($detail)) {
+                    $detail = json_decode($detail, true);
+                }
+
+                $poet->all_details()->create([
+                    'poet_name' => $detail['poet_name'] ?? null,
+                    'poet_laqab' => $detail['poet_laqab'] ?? null,
+                    'pen_name' => $detail['pen_name'] ?? null,
+                    'tagline' => $detail['tagline'] ?? null,
+                    'poet_bio' => $detail['poet_bio'] ?? null,
+                    'birth_place' => $detail['birth_place'] ?? null,
+                    'death_place' => $detail['death_place'] ?? null,
+                    'lang' => $detail['lang'],
+                ]);
+            }
+
+            \DB::commit();
+            return response()->json(['message' => 'Poet updated successfully']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to update poet: ' . $e->getMessage()], 500);
+        }
     }
 
     public function destroy($id)
     {
         $poet = Poets::findOrFail($id);
 
-        // Delete image if exists
-        if ($poet->poet_pic) {
-            $this->deleteImageFiles(public_path($poet->poet_pic), true);
+        \DB::beginTransaction();
+        try {
+            // Delete image if exists
+            if ($poet->poet_pic) {
+                $this->deleteImageFiles(public_path($poet->poet_pic), true);
+            }
+
+            // Delete details
+            $poet->all_details()->forceDelete();
+            $poet->delete();
+
+            \DB::commit();
+            return response()->json(['message' => 'Poet deleted successfully']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to delete poet: ' . $e->getMessage()], 500);
         }
-
-        // Delete details (handled by cascade or manually)
-        $poet->details()->forceDelete();
-        $poet->delete();
-
-        return response()->json(['message' => 'Poet deleted successfully']);
     }
+
 }

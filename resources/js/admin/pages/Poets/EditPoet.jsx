@@ -23,12 +23,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus } from 'lucide-react';
 
 const poetSchema = z.object({
     poet_slug: z.string().min(3, 'Slug must be at least 3 characters'),
     date_of_birth: z.string().optional().nullable(),
     date_of_death: z.string().optional().nullable(),
+    visibility: z.boolean().default(true),
+    is_featured: z.boolean().default(false),
     image: z.any().optional(), // Image is optional in edit
     details: z.array(z.object({
         poet_name: z.string().min(3, "Name must be at least 3 characters"),
@@ -36,7 +39,7 @@ const poetSchema = z.object({
         pen_name: z.string().optional().nullable(),
         tagline: z.string().optional().nullable(),
         poet_bio: z.string().optional().nullable(),
-        birth_place: z.string().min(2, "Birth Place is required"),
+        birth_place: z.string().optional().nullable(),
         death_place: z.string().optional().nullable(),
         lang: z.string().min(1, "Language is required"),
     })).min(1, "At least one language detail is required"),
@@ -46,6 +49,14 @@ const EditPoet = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [preview, setPreview] = useState(null);
+
+    const { data: createData } = useQuery({
+        queryKey: ['poets-create-data'],
+        queryFn: async () => {
+            const res = await api.get('/api/admin/poets/create');
+            return res.data;
+        }
+    });
 
     const { data: poet, isLoading } = useQuery({
         queryKey: ['poet', id],
@@ -61,6 +72,8 @@ const EditPoet = () => {
             poet_slug: '',
             date_of_birth: '',
             date_of_death: '',
+            visibility: true,
+            is_featured: false,
             image: null,
             details: [],
         },
@@ -77,6 +90,8 @@ const EditPoet = () => {
                 poet_slug: poet.poet_slug,
                 date_of_birth: poet.date_of_birth || '',
                 date_of_death: poet.date_of_death || '',
+                visibility: poet.visibility === 1,
+                is_featured: poet.is_featured === 1,
                 details: poet.all_details.map(d => ({
                     lang: d.lang,
                     poet_name: d.poet_name,
@@ -84,8 +99,8 @@ const EditPoet = () => {
                     pen_name: d.pen_name || '',
                     tagline: d.tagline || '',
                     poet_bio: d.poet_bio || '',
-                    birth_place: d.birth_place || '',
-                    death_place: d.death_place || '',
+                    birth_place: d.birth_place?.toString() || null,
+                    death_place: d.death_place?.toString() || null,
                 })),
             });
             if (poet.poet_pic) {
@@ -94,13 +109,14 @@ const EditPoet = () => {
         }
     }, [poet, form]);
 
-
     const onSubmit = async (data) => {
         const formData = new FormData();
-        formData.append('_method', 'PUT'); // Trick for Laravel PUT requests with files
+        formData.append('_method', 'PUT');
         formData.append('poet_slug', data.poet_slug);
         if (data.date_of_birth) formData.append('date_of_birth', data.date_of_birth);
         if (data.date_of_death) formData.append('date_of_death', data.date_of_death);
+        formData.append('visibility', data.visibility ? '1' : '0');
+        formData.append('is_featured', data.is_featured ? '1' : '0');
 
         if (data.image && data.image.length > 0) {
             formData.append('image', data.image[0]);
@@ -196,6 +212,43 @@ const EditPoet = () => {
                                 />
                             </div>
 
+                            <div className="flex gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="visibility"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Visible</FormLabel>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="is_featured"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Featured</FormLabel>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
                             <FormField
                                 control={form.control}
                                 name="image"
@@ -226,7 +279,7 @@ const EditPoet = () => {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-semibold">Language Details</h3>
-                            <Button type="button" variant="outline" size="sm" onClick={() => append({ lang: 'sd', poet_name: '', poet_laqab: '', birth_place: '' })}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => append({ lang: 'sd', poet_name: '', poet_laqab: '', birth_place: null })}>
                                 <Plus className="mr-2 h-4 w-4" /> Add Language
                             </Button>
                         </div>
@@ -318,9 +371,20 @@ const EditPoet = () => {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Birth Place</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="City, Country" {...field} />
-                                                    </FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Birth City" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {createData?.cities?.map(city => (
+                                                                <SelectItem key={city.id} value={city.id.toString()}>
+                                                                    {city.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -332,9 +396,20 @@ const EditPoet = () => {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Death Place</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="City, Country" {...field} />
-                                                    </FormControl>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select Death City" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {createData?.cities?.map(city => (
+                                                                <SelectItem key={city.id} value={city.id.toString()}>
+                                                                    {city.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

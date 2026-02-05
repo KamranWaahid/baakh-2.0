@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace App\Traits;
 
 use Illuminate\Support\Facades\DB;
@@ -18,30 +18,30 @@ trait SQLiteTrait
             'SELECT pm.id as poetry_id, pm.category_id, pm.poet_id, pm.poetry_slug,  pt.title,  pt.lang  
              FROM  poetry_main pm 
              INNER JOIN  poetry_translations pt  ON pt.poetry_id = pm.id
-             WHERE pm.id = :main_id', 
-             ['main_id' => $model]
+             WHERE pm.id = :main_id',
+            ['main_id' => $model]
         );
-        DB::connection('sqlite')->enableQueryLog();
 
-        if(empty($poetry_data)) {
-            Log::warning('No poetry data found for model ID '. $model);
+        if (empty($poetry_data)) {
+            Log::warning('No poetry data found for model ID ' . $model);
             return;
         }
 
-        foreach ($poetry_data as $data) {
-            DB::connection('sqlite')->table('unified_poetry')->updateOrInsert
-            (
-                ['poetry_id' => $data->poetry_id, 'lang' => $data->lang],
-                [
-                    'category_id' => $data->category_id,
-                    'poet_id' => $data->poet_id,
-                    'poetry_slug' => $data->poetry_slug,
-                    'title' => $this->cleanText($data->title),
-                    'title_original' => $data->title,
-                ]
-            );
-    
-        }
+        $this->runSQLiteSilently(function ($sqlite) use ($poetry_data) {
+            foreach ($poetry_data as $data) {
+                $sqlite->table('unified_poetry')->updateOrInsert
+                (
+                    ['poetry_id' => $data->poetry_id, 'lang' => $data->lang],
+                    [
+                        'category_id' => $data->category_id,
+                        'poet_id' => $data->poet_id,
+                        'poetry_slug' => $data->poetry_slug,
+                        'title' => $this->cleanText($data->title),
+                        'title_original' => $data->title,
+                    ]
+                );
+            }
+        });
     }
 
     /**
@@ -54,26 +54,28 @@ trait SQLiteTrait
         $poet_data = DB::select(
             'SELECT p.id as poet_id, p.poet_slug , pd.poet_name, pd.poet_laqab, pd.lang 
              FROM poets p 
-             INNER JOIN poets_detail pd ON pd.poet_id=p.id WHERE p.id = :min_id', 
-             ['min_id' => $poetId]
+             INNER JOIN poets_detail pd ON pd.poet_id=p.id WHERE p.id = :min_id',
+            ['min_id' => $poetId]
         );
-        
-        if(empty($poet_data)) {
-            Log::warning('No poet data found for model ID '. $poetId);
+
+        if (empty($poet_data)) {
+            Log::warning('No poet data found for model ID ' . $poetId);
             return;
         }
- 
-        foreach ($poet_data as $data) {
-            DB::connection('sqlite')->table('unified_poets')->updateOrInsert
-            (
-                ['poet_id' => $data->poet_id, 'lang' => $data->lang],
-                [
-                    'poet_slug' => $data->poet_slug,
-                    'poet_name' => $this->cleanText($data->poet_name),
-                    'poet_laqab' => $this->cleanText($data->poet_laqab)
-                ]
-            );
-        }
+
+        $this->runSQLiteSilently(function ($sqlite) use ($poet_data) {
+            foreach ($poet_data as $data) {
+                $sqlite->table('unified_poets')->updateOrInsert
+                (
+                    ['poet_id' => $data->poet_id, 'lang' => $data->lang],
+                    [
+                        'poet_slug' => $data->poet_slug,
+                        'poet_name' => $this->cleanText($data->poet_name),
+                        'poet_laqab' => $this->cleanText($data->poet_laqab)
+                    ]
+                );
+            }
+        });
     }
 
     /**
@@ -84,23 +86,25 @@ trait SQLiteTrait
     protected function updateTag($tagId)
     {
         $tag_data = DB::select('SELECT `id`, `tag`, `slug`, `type`, `lang` FROM baakh_tags WHERE id = :main_id', ['main_id' => $tagId]);
-       
-        if(empty($tag_data)) {
-            Log::warning('No Tag data found for model ID '. $tagId);
+
+        if (empty($tag_data)) {
+            Log::warning('No Tag data found for model ID ' . $tagId);
             return;
         }
 
-        foreach ($tag_data as $data) {
-            DB::connection('sqlite')->table('unified_tags')->updateOrInsert
-            (
-                ['id' => $data->id, 'lang' => $data->lang],
-                [
-                    'tag' => $data->tag,
-                    'slug' => $data->slug,
-                    'type' => $data->type,
-                ]
-            );
-        }
+        $this->runSQLiteSilently(function ($sqlite) use ($tag_data) {
+            foreach ($tag_data as $data) {
+                $sqlite->table('unified_tags')->updateOrInsert
+                (
+                    ['id' => $data->id, 'lang' => $data->lang],
+                    [
+                        'tag' => $data->tag,
+                        'slug' => $data->slug,
+                        'type' => $data->type,
+                    ]
+                );
+            }
+        });
     }
 
     /**
@@ -112,26 +116,30 @@ trait SQLiteTrait
     {
         $couplets_data = DB::select(
             'SELECT id as couplet_id, poet_id, poetry_id, couplet_slug, couplet_text, lang  
-            FROM poetry_couplets WHERE id = :main_id', ['main_id' => $coupletId]);
+            FROM poetry_couplets WHERE id = :main_id',
+            ['main_id' => $coupletId]
+        );
 
-        if(empty($couplets_data)) {
-            Log::warning('No couplet data found for model ID '. $coupletId);
+        if (empty($couplets_data)) {
+            Log::warning('No couplet data found for model ID ' . $coupletId);
             return;
         }
- 
-        foreach ($couplets_data as $data) {
-            DB::connection('sqlite')->table('unified_couplets')->updateOrInsert
-            (
-                ['couplet_id' => $data->couplet_id, 'lang' => $data->lang],
-                [
-                    'poet_id' => $data->poet_id,
-                    'poetry_id' => $data->poetry_id,
-                    'couplet_slug' => $data->couplet_slug,
-                    'couplet_text' => $this->cleanText($data->couplet_text),
-                    'couplet_text_original' => $data->couplet_text
-                ]
-            );
-        }
+
+        $this->runSQLiteSilently(function ($sqlite) use ($couplets_data) {
+            foreach ($couplets_data as $data) {
+                $sqlite->table('unified_couplets')->updateOrInsert
+                (
+                    ['couplet_id' => $data->couplet_id, 'lang' => $data->lang],
+                    [
+                        'poet_id' => $data->poet_id,
+                        'poetry_id' => $data->poetry_id,
+                        'couplet_slug' => $data->couplet_slug,
+                        'couplet_text' => $this->cleanText($data->couplet_text),
+                        'couplet_text_original' => $data->couplet_text
+                    ]
+                );
+            }
+        });
     }
 
     /**
@@ -144,34 +152,59 @@ trait SQLiteTrait
         $categories = DB::select(
             'SELECT c.id as category_id, c.slug, c.gender, cd.cat_name, cd.cat_name_plural, cd.lang 
              FROM categories c 
-             INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id = :main_id', ['main_id' => $categoryId]);
-        
-        if(empty($categories)) {
-            Log::warning('No Category data found for model ID '. $categoryId);
+             INNER JOIN category_details cd ON cd.cat_id=c.id WHERE c.id = :main_id',
+            ['main_id' => $categoryId]
+        );
+
+        if (empty($categories)) {
+            Log::warning('No Category data found for model ID ' . $categoryId);
         }
 
-        foreach ($categories as $data) {
-            DB::connection('sqlite')->table('unified_categories')->updateOrInsert
-            (
-                ['category_id' => $data->category_id, 'lang' => $data->lang],
-                [
-                    'slug' => $data->slug,
-                    'gender' => $data->gender,
-                    'cat_name' => $data->cat_name,
-                    'cat_name_plural' => $data->cat_name_plural,
-                ]
-            );
-        }
+        $this->runSQLiteSilently(function ($sqlite) use ($categories) {
+            foreach ($categories as $data) {
+                $sqlite->table('unified_categories')->updateOrInsert
+                (
+                    ['category_id' => $data->category_id, 'lang' => $data->lang],
+                    [
+                        'slug' => $data->slug,
+                        'gender' => $data->gender,
+                        'cat_name' => $data->cat_name,
+                        'cat_name_plural' => $data->cat_name_plural,
+                    ]
+                );
+            }
+        });
     }
 
 
     /**
      * Clear content
      */
-    protected function cleanText($text){
+    protected function cleanText($text)
+    {
+        if (is_null($text))
+            return '';
         $garbadge = ['َ', 'ِ', 'ُ', 'ّ', '،', '.'];
         $cleanGarbage = str_replace($garbadge, '', $text);
         $cleanText = preg_replace('/[^a-zA-Z0-9\s\p{Arabic}]/u', '', $cleanGarbage);
         return $cleanText;
+    }
+
+    /**
+     * Run SQLite operations without firing events to avoid Debugbar issues
+     */
+    protected function runSQLiteSilently($callback)
+    {
+        $connection = DB::connection('sqlite');
+        $dispatcher = $connection->getEventDispatcher();
+        $connection->unsetEventDispatcher();
+
+        try {
+            return $callback($connection);
+        } finally {
+            if ($dispatcher) {
+                $connection->setEventDispatcher($dispatcher);
+            }
+        }
     }
 }

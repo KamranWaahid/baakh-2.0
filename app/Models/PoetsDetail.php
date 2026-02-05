@@ -43,13 +43,13 @@ class PoetsDetail extends Model
     public function birthCityCurrentLang()
     {
         return $this->belongsTo(Cities::class, 'birth_place')
-                    ->where('lang', app()->getLocale());
+            ->where('lang', app()->getLocale());
     }
 
     public function deathCityCurrentLang()
     {
         return $this->belongsTo(Cities::class, 'death_place')
-                    ->where('lang', app()->getLocale());
+            ->where('lang', app()->getLocale());
     }
 
     /**
@@ -60,12 +60,16 @@ class PoetsDetail extends Model
     public function birthPlaceComplete()
     {
         // Load birth city with related province and country, applying language filter
-        $city = $this->birthCityCurrentLang()->with(['province' => function($query) {
-            $query->where('lang', app()->getLocale())
-                  ->with(['country' => function($query) {
-                      $query->where('lang', app()->getLocale());
-                  }]);
-        }])->first();
+        $city = $this->birthCityCurrentLang()->with([
+            'province' => function ($query) {
+                $query->where('lang', app()->getLocale())
+                    ->with([
+                        'country' => function ($query) {
+                            $query->where('lang', app()->getLocale());
+                        }
+                    ]);
+            }
+        ])->first();
 
         return [
             'cityName' => $city->city_name ?? null,
@@ -76,12 +80,16 @@ class PoetsDetail extends Model
 
     public function deathPlaceComplete()
     {
-        $city = $this->deathCityCurrentLang()->with(['province' => function($query) {
-            $query->where('lang', app()->getLocale())
-                  ->with(['country' => function($query) {
-                      $query->where('lang', app()->getLocale());
-                  }]);
-        }])->first();
+        $city = $this->deathCityCurrentLang()->with([
+            'province' => function ($query) {
+                $query->where('lang', app()->getLocale())
+                    ->with([
+                        'country' => function ($query) {
+                            $query->where('lang', app()->getLocale());
+                        }
+                    ]);
+            }
+        ])->first();
 
         return [
             'cityName' => $city->city_name ?? null,
@@ -93,7 +101,13 @@ class PoetsDetail extends Model
 
     protected static function booted()
     {
+        static::created(function ($model) {
+            $model->updatePoet($model->poet_id); // coming from SQLiteTrait
+        });
         static::updated(function ($model) {
+            $model->updatePoet($model->poet_id); // coming from SQLiteTrait
+        });
+        static::deleted(function ($model) {
             $model->updatePoet($model->poet_id); // coming from SQLiteTrait
         });
     }
