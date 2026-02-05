@@ -189,7 +189,7 @@ const PoemDetail = ({ lang }) => {
 
                 <Separator className="my-12 opacity-50" />
 
-                <PaywallCTA authorName={poem.poet.name} categoryName={poem.category?.name} isRtl={isRtl} />
+                <PaywallCTA authorName={poem.poet.name} categoryName={poem.category?.name} poets={poem.suggested_poets} isRtl={isRtl} />
 
             </article>
 

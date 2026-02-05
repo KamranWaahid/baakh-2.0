@@ -303,10 +303,51 @@ class PoetryController extends UserController
                         'author' => $p->poet?->details->where('lang', $locale)->first()?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
                         'date' => $p->created_at ? $p->created_at->format('M d') : '',
                         'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
-                        'claps' => '200',
                         'comments' => 10
                     ];
+                }),
+            'suggested_poets' => Poets::with([
+                'details' => function ($q) use ($locale) {
+                    $q->where('lang', $locale);
+                }
+            ])
+                ->where('id', '!=', $poet_id)
+                ->inRandomOrder()
+                ->take(60) // Fetch more to ensure we have enough after unique check
+                ->get()
+                ->unique(function ($item) use ($locale) {
+                    return $item->details->where('lang', $locale)->first()?->poet_laqab ?? $item->id;
                 })
+                ->take(8)
+                ->map(function ($poet) use ($locale) {
+                    $detail = $poet->details; // details is HasOne, so it returns the object directly
+        
+                    // Fallback to any detail if specific lang is missing
+                    if (!$detail) {
+                        // Accessing via dynamic property might not work if not loaded. 
+                        // But we filtered by lang in 'with'. 
+                        // If we want fallback, we need to load differently or query differently. 
+                        // For now, let's stick to the loaded one.
+                        // Ideally we should use $poet->shortDetail or similar if structured.
+                        // Or lazy load:
+                        $detail = $poet->details()->first(); // Query specifically for this poet
+                    }
+
+                    $name = $detail->poet_laqab ?? 'Unknown';
+                    $tagline = $detail->tagline ?? 'Poet';
+                    $initials = collect(explode(' ', $name))->map(fn($s) => Str::substr($s, 0, 1))->take(2)->join('');
+
+                    $pic = $poet->photo ?? $poet->poet_pic;
+                    $img = $pic ? (str_starts_with($pic, 'http') ? $pic : '/' . $pic) : null;
+
+                    return [
+                        'name' => $name,
+                        'title' => Str::limit($tagline, 20),
+                        'slug' => $poet->poet_slug,
+                        'img' => $img,
+                        'fallback' => $initials
+                    ];
+                })->values(), // Reset keys after unique
         ];
 
         return response()->json($data);

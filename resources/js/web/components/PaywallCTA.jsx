@@ -1,9 +1,9 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const PaywallCTA = ({ authorName, categoryName, isRtl }) => {
+const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
     const benefits = isRtl ? [
         "نون شاعرن جا بيت، غزل ۽ نظم بہ ساڳي ئي پيج تان رسائي حاصل ڪري سگھو ٿا.",
         "پنهنجي دلچسپيءَ وارن موضوعن مطابق شاعر چونڊيو ۽ سندن مڪمل شاعري ڏسو.",
@@ -14,23 +14,16 @@ const PaywallCTA = ({ authorName, categoryName, isRtl }) => {
         "Read poetry from the classical poets of Sindh."
     ];
 
-    const members = [
-        { name: "Steve Yegge", title: "ex-Geoworks, ex-Amazon", img: "SY" },
-        { name: "Carlos Arguelles", title: "Sr. Staff Engineer", img: "CA" },
-        { name: "Tony Yiu", title: "Director, Nasdaq", img: "TY" },
-        { name: "Brandeis Marshall", title: "CEO, DataedX", img: "BM" },
-        { name: "Cassie Kozyrkov", title: "Chief Decision Scientist", img: "CK" },
-        { name: "The Secret Developer", title: "Software Developer", img: "SD" },
-        { name: "Austin Starks", title: "Software Engineer", img: "AS" },
-        { name: "Camille Fournier", title: "Head of Engineering", img: "CF" },
-    ];
+    // Use dynamic poets if available, otherwise fallback (or show empty)
+    // For now we assume dynamic data is passed.
+    const displayPoets = poets && poets.length > 0 ? poets : [];
 
     return (
         <div className="w-full max-w-4xl mx-auto py-20 px-4 text-center">
             {/* Headline: Serif, Not Bold, Smaller */}
             <h3 className={`text-3xl md:text-5xl font-normal mb-8 text-gray-900 leading-tight font-serif ${isRtl ? 'font-arabic' : ''}`}>
                 {isRtl
-                    ? <>{authorName} جي هن {categoryName} کان پوءِ، هي ٻيا شاعر به پڙهڻ جھڙا آهن:</>
+                    ? <>{authorName} جي هن {categoryName} کان پوءِ، هي ٻيا شاعر بہ پڙهڻ جھڙا آهن:</>
                     : <>After reading this {categoryName || 'poem'} by {authorName}, here are other poets worth reading:</>
                 }
             </h3>
@@ -51,17 +44,27 @@ const PaywallCTA = ({ authorName, categoryName, isRtl }) => {
             </ul>
 
             {/* Avatars: Names in Inter (Sans) */}
-            <div className={`grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-8 mb-20 justify-items-center ${isRtl ? 'font-sans' : 'font-sans'}`}>
-                {members.map((member, i) => (
-                    <div key={i} className="flex flex-col items-center text-center">
-                        <Avatar className="h-[74px] w-[74px] mb-4 border-2 border-white shadow-sm ring-1 ring-gray-100">
-                            <AvatarFallback className="bg-gray-100 text-gray-500 font-bold text-lg font-sans">{member.img}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-gray-900 text-[15px] leading-tight mb-1">{member.name}</span>
-                        <span className="text-[11px] text-gray-500 leading-tight max-w-[140px]">{member.title}</span>
-                    </div>
-                ))}
-            </div>
+            {displayPoets.length > 0 && (
+                <div className={`grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-8 mb-20 justify-items-center ${isRtl ? 'font-arabic' : 'font-sans'}`}>
+                    {displayPoets.map((poet, i) => (
+                        <div key={i} className="flex flex-col items-center text-center">
+                            <Link to={`/${isRtl ? 'sd' : 'en'}/poet/${poet.slug}`} className="group">
+                                <Avatar className="h-[74px] w-[74px] mb-4 border-2 border-white shadow-sm ring-1 ring-gray-100 transition-all">
+                                    {poet.img ? (
+                                        <AvatarImage src={poet.img} className="object-cover" />
+                                    ) : (
+                                        <div className="h-full w-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                            <User className="h-8 w-8" />
+                                        </div>
+                                    )}
+                                </Avatar>
+                            </Link>
+                            <span className="text-gray-900 text-[15px] leading-tight mb-1 font-bold">{poet.name}</span>
+                            <span className="text-[11px] text-gray-500 leading-tight max-w-[140px]">{poet.title}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Button: Inter (Sans) for consistency */}
             <Button className="rounded-full bg-black hover:bg-gray-800 text-white font-medium text-lg h-12 px-10 min-w-[200px] font-sans">
