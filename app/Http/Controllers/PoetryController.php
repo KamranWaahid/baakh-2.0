@@ -201,16 +201,16 @@ class PoetryController extends UserController
             'info' => $poetry->info->first()?->info,
             'source' => $poetry->info->first()?->source,
             'views' => $poetry->views,
-            'likes' => $poetry->likes_count ?? 0, // Assuming likes_count is available or need to count
+            'likes' => $poetry->likes_count ?? 0,
             'date' => $poetry->created_at->format('M d, Y'),
             'date_diff' => $poetry->created_at->diffForHumans(),
 
             'poet' => [
                 'id' => $poet_info->id ?? 0,
-                'name' => $poet_info->details->first()?->poet_laqab ?? 'Unknown',
+                'name' => optional($poet_info->details)->first()?->poet_laqab ?? 'Unknown',
                 'slug' => $poet_info->poet_slug ?? '',
-                'avatar' => $poet_info->photo ?? null, // Check 'photo' field in Poets model separately if needed
-                'followers' => '2.3K', // Mock for now or implement follower count
+                'avatar' => $poet_info->photo ? (str_starts_with($poet_info->photo, 'http') ? $poet_info->photo : '/' . $poet_info->photo) : null,
+                'followers' => '2.3K',
             ],
 
             'category' => [
@@ -232,8 +232,14 @@ class PoetryController extends UserController
                 ] : null,
             ],
 
-            'more_from_author' => Poetry::with(['info' => function ($q) use ($locale) {
-                $q->where('lang', $locale); }])
+            'more_from_author' => Poetry::with([
+                'info' => function ($q) use ($locale) {
+                    $q->where('lang', $locale);
+                },
+                'category',
+                'poet',
+                'couplets'
+            ])
                 ->where('poet_id', $poet_id)
                 ->where('id', '!=', $poetry->id)
                 ->where('visibility', 1)
@@ -244,15 +250,23 @@ class PoetryController extends UserController
                     return [
                         'title' => $p->info->first()?->title ?? $p->poetry_title,
                         'slug' => $p->poetry_slug,
+                        'poet_slug' => $p->poet->poet_slug ?? '',
+                        'cat_slug' => $p->category->slug ?? 'ghazal',
                         'date' => $p->created_at->format('M d'),
-                        'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
+                        'excerpt' => Str::limit($p->couplets->couplet_text ?? '', 80),
                         'claps' => '100', // Mock
                         'comments' => 5 // Mock
                     ];
                 }),
 
-            'recommended' => Poetry::with(['info' => function ($q) use ($locale) {
-                $q->where('lang', $locale); }, 'poet.details'])
+            'recommended' => Poetry::with([
+                'info' => function ($q) use ($locale) {
+                    $q->where('lang', $locale);
+                },
+                'poet.details',
+                'category',
+                'couplets'
+            ])
                 ->where('id', '!=', $poetry->id)
                 // simple random recommendation for now
                 ->where('visibility', 1)
@@ -263,9 +277,11 @@ class PoetryController extends UserController
                     return [
                         'title' => $p->info->first()?->title ?? $p->poetry_title,
                         'slug' => $p->poetry_slug,
-                        'author' => $p->poet->details->where('lang', $locale)->first()?->poet_laqab ?? $p->poet->poet_slug,
+                        'poet_slug' => $p->poet->poet_slug ?? '',
+                        'cat_slug' => $p->category->slug ?? 'ghazal',
+                        'author' => $p->poet?->details->where('lang', $locale)->first()?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
                         'date' => $p->created_at->format('M d'),
-                        'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
+                        'excerpt' => Str::limit($p->couplets->couplet_text ?? '', 80),
                         'claps' => '200',
                         'comments' => 10
                     ];
