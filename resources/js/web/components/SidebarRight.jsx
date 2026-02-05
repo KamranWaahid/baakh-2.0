@@ -74,7 +74,7 @@ const SidebarRight = ({ lang }) => {
     return (
         <aside
             ref={sidebarRef}
-            className="w-[368px] hidden xl:block shrink-0 border-s border-gray-100 p-8 sticky transition-[top] duration-200"
+            className="w-[368px] hidden xl:block shrink-0 border-s border-gray-100 p-8 sticky flex flex-col"
             style={{ top: stickyTop }}
         >
             <section className="mb-10">
@@ -133,7 +133,7 @@ const SidebarRight = ({ lang }) => {
                 </Button>
             </section>
 
-            <section className="sticky bottom-0 bg-white pt-4">
+            <section className="pt-4 mt-auto">
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500">
                     <a href="#" className="hover:text-black transition-colors">Help</a>
                     <a href="#" className="hover:text-black transition-colors">Status</a>

@@ -348,11 +348,15 @@ class HomeController extends UserController
             'poet_details' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
             },
+            'poet',
             'category_detail' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
             },
             'all_couplets' => function ($query) use ($lang) {
                 $query->where('lang', $lang)->limit(1);
+            },
+            'media' => function ($query) use ($lang) {
+                $query->where('media_type', 'image')->where('lang', $lang)->limit(1);
             }
         ])
             ->where('visibility', 1)
@@ -365,6 +369,8 @@ class HomeController extends UserController
                 'title' => $p->info?->title ?? $p->poetry_title,
                 'slug' => $p->poetry_slug,
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
+                'author_avatar' => $p->poet?->poet_pic,
+                'cover' => $p->media->first()?->media_url,
                 'excerpt' => $p->all_couplets->first()?->couplet_text ?? '',
                 'date' => $p->created_at->diffForHumans(),
                 'readTime' => '5 min read', // Mock for now
