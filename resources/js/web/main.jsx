@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import '../../css/app.css';
 
 // Components
@@ -9,9 +9,13 @@ import SidebarLeft from './components/SidebarLeft';
 import SidebarRight from './components/SidebarRight';
 import Feed from './components/Feed';
 import BottomNav from './components/BottomNav';
+import PoetsFeed from './components/PoetsFeed';
+import PoetProfile from './components/PoetProfile';
 
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
+    const location = useLocation();
+    const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/');
 
     useEffect(() => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
@@ -31,7 +35,7 @@ const MainLayout = ({ children, lang }) => {
                 <main className="flex-1 flex flex-col min-w-0">
                     {children}
                 </main>
-                <SidebarRight lang={lang} />
+                {!hideRightSidebar && <SidebarRight lang={lang} />}
             </div>
             <BottomNav lang={lang} />
         </div>
@@ -43,6 +47,16 @@ const Home = () => {
     return <Feed lang={lang} />;
 };
 
+const Poets = () => {
+    const { lang } = useParams();
+    return <PoetsFeed lang={lang} />;
+};
+
+const Poet = () => {
+    const { lang } = useParams();
+    return <PoetProfile lang={lang} />;
+};
+
 const App = () => {
     return (
         <BrowserRouter>
@@ -50,6 +64,16 @@ const App = () => {
                 <Route path="/:lang" element={
                     <LanguageWrapper>
                         <Home />
+                    </LanguageWrapper>
+                } />
+                <Route path="/:lang/poets" element={
+                    <LanguageWrapper>
+                        <Poets />
+                    </LanguageWrapper>
+                } />
+                <Route path="/:lang/poet/:slug" element={
+                    <LanguageWrapper>
+                        <Poet />
                     </LanguageWrapper>
                 } />
                 <Route path="/:lang/:category" element={
