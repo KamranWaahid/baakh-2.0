@@ -163,9 +163,9 @@ const PoemDetail = ({ lang }) => {
                 <Separator className="my-12 opacity-50" />
 
                 {/* Author Footer */}
-                <div className={`flex items-start justify-between mb-12 font-sans ${isRtl ? 'flex-row-reverse text-right' : ''}`}>
-                    <div className={`flex gap-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                        <Link to={`/${lang}/poet/${poem.poet.slug}`}>
+                <div className={`flex items-center mb-12 ${isRtl ? 'font-arabic' : 'font-sans'}`}>
+                    <div className={`flex items-center gap-4 ${isRtl ? 'text-right' : 'text-left'}`}>
+                        <Link to={`/${lang}/poet/${poem.poet.slug}`} className="shrink-0">
                             {poem.poet.avatar ? (
                                 <img src={poem.poet.avatar} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
                             ) : (
@@ -174,26 +174,22 @@ const PoemDetail = ({ lang }) => {
                                 </div>
                             )}
                         </Link>
-                        <div className="flex flex-col pt-1">
+                        <div className="flex flex-col">
                             <Link to={`/${lang}/poet/${poem.poet.slug}`}>
-                                <h3 className="text-[20px] font-bold text-gray-900 mb-1 leading-tight">{isRtl ? 'ليکڪ: ' : 'Written by '} {poem.poet.name}</h3>
+                                <h3 className="text-[20px] font-bold text-gray-900 mb-1 leading-tight">
+                                    {isRtl ? `${poem.poet.name} جي شاعري` : `Poetry of ${poem.poet.name}`}
+                                </h3>
                             </Link>
-                            <div className="flex items-center gap-1 text-[14px] text-gray-500 mb-2">
-                                <span>{poem.poet.followers} {isRtl ? 'فالوئرز' : 'followers'}</span>
-                            </div>
                             <p className="text-[15px] text-gray-600 leading-snug">
-                                {poem.poet.tagline || (poem.poet.bio ? poem.poet.bio.substring(0, 100) + '...' : (isRtl ? 'سنڌ جو انقلابي شاعر.' : 'Author at Baakh'))}
+                                {poem.poet.title || poem.poet.tagline || (poem.poet.bio ? poem.poet.bio.substring(0, 100) + '...' : (isRtl ? 'سنڌ جو انقلابي شاعر.' : 'Author at Baakh'))}
                             </p>
                         </div>
                     </div>
-                    <Button variant="outline" className="rounded-full border-gray-300 text-black hover:border-black hover:bg-transparent px-5 h-[38px] text-[14px]">
-                        {isRtl ? 'فالو ڪريو' : 'Follow'}
-                    </Button>
                 </div>
 
                 <Separator className="my-12 opacity-50" />
 
-                <PaywallCTA authorName={poem.poet.name} isRtl={isRtl} />
+                <PaywallCTA authorName={poem.poet.name} categoryName={poem.category?.name} isRtl={isRtl} />
 
             </article>
 
