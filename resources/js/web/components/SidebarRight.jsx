@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,13 +6,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const SidebarRight = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const [staffPicks, setStaffPicks] = React.useState([]);
-    const [topics, setTopics] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
-    const [stickyTop, setStickyTop] = React.useState(85);
-    const sidebarRef = React.useRef(null);
+    const [staffPicks, setStaffPicks] = useState([]);
+    const [topics, setTopics] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [stickyTop, setStickyTop] = useState(85);
+    const sidebarRef = useRef(null);
 
-    const updateSticky = React.useCallback(() => {
+    const updateSticky = useCallback(() => {
         if (!sidebarRef.current) return;
         const sidebarHeight = sidebarRef.current.offsetHeight;
         const windowHeight = window.innerHeight;
@@ -24,9 +24,9 @@ const SidebarRight = ({ lang }) => {
         } else {
             setStickyTop(windowHeight - sidebarHeight - padding);
         }
-    }, [sidebarRef]);
+    }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
         updateSticky();
 
         const observer = new ResizeObserver(() => updateSticky());
@@ -39,7 +39,7 @@ const SidebarRight = ({ lang }) => {
         };
     }, [updateSticky, staffPicks, topics, loading]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
