@@ -12,6 +12,11 @@ export const AuthProvider = ({ children }) => {
             const response = await api.get('/api/auth/me');
             setUser(response.data);
         } catch (error) {
+            // Silently handle 401 (Unauthorized) as it simply means the user is a guest
+            if (error.response?.status !== 401) {
+                // Optional: log other unexpected auth errors
+                // console.error('Auth check failed:', error);
+            }
             setUser(null);
         } finally {
             setLoading(false);

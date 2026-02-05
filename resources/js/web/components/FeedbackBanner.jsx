@@ -14,7 +14,7 @@ const FeedbackBanner = ({ lang }) => {
             <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
                 <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500 shrink-0" />
                 <p className={`text-sm text-gray-900 leading-none ${isRtl ? 'font-arabic' : ''} text-center`}>
-                    {isRtl ? 'باک جي خاڪو استعمال ڪندي توهان جو تجربو ڪهڙو رهيو؟ ' : 'How was your experience using Baakh’s UI? '}
+                    {isRtl ? 'باک جو ويبسائيٽ استعمال ڪندي توهان جو تجربو ڪهڙو رهيو؟ ' : 'How was your experience using Baakh’s UI? '}
 
                     <FeedbackModal
                         isRtl={isRtl}
