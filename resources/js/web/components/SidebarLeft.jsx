@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Library, User, BarChart2, FileText, Plus } from 'lucide-react';
+import { Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Plus } from 'lucide-react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,11 +17,14 @@ const SidebarLeft = ({ lang }) => {
     }, []);
 
     const navItems = [
-        { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
-        { label: isRtl ? 'لائبريري' : 'Library', icon: Library, path: `/${lang}/library` },
-        { label: isRtl ? 'پروفائل' : 'Profile', icon: User, path: `/${lang}/profile` },
-        { label: isRtl ? 'ڪهاڻيون' : 'Stories', icon: FileText, path: `/${lang}/stories` },
-        { label: isRtl ? 'انگ اکر' : 'Stats', icon: BarChart2, path: `/${lang}/stats` },
+        { label: isRtl ? 'گهر' : 'Home', icon: Home, path: `/${lang}` },
+        { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
+        { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
+        { label: isRtl ? 'بيت' : 'Couplets', icon: Scroll, path: `/${lang}/couplets` },
+        { label: isRtl ? 'ڪلام' : 'Lyrics', icon: Music, path: `/${lang}/lyrics` },
+        { label: isRtl ? 'صنف' : 'Genre', icon: Tags, path: `/${lang}/genre` },
+        { label: isRtl ? 'دور' : 'Period', icon: History, path: `/${lang}/period` },
+        { label: isRtl ? 'علم عروض' : 'Prosody', icon: Scale, path: `/${lang}/prosody` },
     ];
 
     const following = [

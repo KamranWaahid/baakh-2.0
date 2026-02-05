@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool, Home, Library, BarChart2, FileText, Plus } from 'lucide-react';
+import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Plus } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import api from '../../admin/api/axios';
@@ -34,6 +34,17 @@ const Navbar = ({ lang }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const navItems = [
+        { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
+        { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
+        { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
+        { label: isRtl ? 'بيت' : 'Couplets', icon: Scroll, path: `/${lang}/couplets` },
+        { label: isRtl ? 'ڪلام' : 'Lyrics', icon: Music, path: `/${lang}/lyrics` },
+        { label: isRtl ? 'صنف' : 'Genre', icon: Tags, path: `/${lang}/genre` },
+        { label: isRtl ? 'دور' : 'Period', icon: History, path: `/${lang}/period` },
+        { label: isRtl ? 'علم عروض' : 'Prosody', icon: Scale, path: `/${lang}/prosody` },
+    ];
+
     useEffect(() => {
         const checkAuth = async () => {
             try {
@@ -54,7 +65,7 @@ const Navbar = ({ lang }) => {
                 to={`/${lang === 'en' ? 'sd' : 'en'}`}
                 className={`text-sm font-medium hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
             >
-                {lang === 'en' ? 'سنڌي' : 'English'}
+                {lang === 'en' ? <span className="font-arabic text-base pb-1">سنڌي</span> : 'English'}
             </Link>
             {!mobile && (
                 <div className="h-6 w-px bg-gray-200 mx-2"></div>
@@ -184,6 +195,17 @@ const Navbar = ({ lang }) => {
                                     className={`pl-9 rounded-full bg-gray-50 border-transparent focus:bg-white transition-all`}
                                     dir={isRtl ? 'rtl' : 'ltr'}
                                 />
+                            </div>
+                            <Separator />
+                            <div className="flex flex-col gap-1">
+                                {navItems.map(item => (
+                                    <Button key={item.path} variant="ghost" asChild className="justify-start gap-3 px-3 font-normal">
+                                        <Link to={item.path}>
+                                            <item.icon className="h-5 w-5 text-gray-500" />
+                                            <span className="text-base">{item.label}</span>
+                                        </Link>
+                                    </Button>
+                                ))}
                             </div>
                             <Separator />
                             <NavItems mobile />

@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 import SidebarLeft from './components/SidebarLeft';
 import SidebarRight from './components/SidebarRight';
 import Feed from './components/Feed';
+import BottomNav from './components/BottomNav';
 
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
@@ -15,7 +16,6 @@ const MainLayout = ({ children, lang }) => {
     useEffect(() => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
         document.documentElement.lang = lang;
-        // Apply SF Arabic font to body if Sindhi
         if (isRtl) {
             document.body.classList.add('font-arabic');
         } else {
@@ -26,13 +26,14 @@ const MainLayout = ({ children, lang }) => {
     return (
         <div className={`min-h-screen bg-white transition-opacity duration-500`}>
             <Navbar lang={lang} />
-            <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100vh-57px)]`}>
+            <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100vh-57px)] pb-[60px] lg:pb-0`}>
                 <SidebarLeft lang={lang} />
                 <main className="flex-1 flex flex-col min-w-0">
                     {children}
                 </main>
                 <SidebarRight lang={lang} />
             </div>
+            <BottomNav lang={lang} />
         </div>
     );
 };
@@ -47,6 +48,11 @@ const App = () => {
         <BrowserRouter>
             <Routes>
                 <Route path="/:lang" element={
+                    <LanguageWrapper>
+                        <Home />
+                    </LanguageWrapper>
+                } />
+                <Route path="/:lang/:category" element={
                     <LanguageWrapper>
                         <Home />
                     </LanguageWrapper>
