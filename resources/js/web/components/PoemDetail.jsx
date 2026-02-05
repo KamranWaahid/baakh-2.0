@@ -1,19 +1,10 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from '@/admin/api/axios';
 import { useAuth } from '../contexts/AuthContext';
-import LoginModal from './LoginModal';
-import ReportModal from './ReportModal';
+import PoemActionBar from './PoemActionBar';
 import { Button } from '@/components/ui/button';
-import { Share2, MoreHorizontal, Sparkles, User, Link2, Facebook, Twitter, Linkedin, MessageCircle, Flag } from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
+import { Sparkles, User, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import PaywallCTA from './PaywallCTA';
@@ -357,8 +348,6 @@ const PoemDetail = ({ lang }) => {
                 )}
 
             </div>
-            <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} isRtl={isRtl} />
-            <ReportModal open={reportModalOpen} onOpenChange={setReportModalOpen} isRtl={isRtl} poemId={poem?.id} />
         </div>
     );
 };

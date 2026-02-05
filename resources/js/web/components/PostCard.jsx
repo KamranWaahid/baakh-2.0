@@ -1,24 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookmarkPlus, MinusCircle, MoreHorizontal, Sparkles, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '../contexts/AuthContext';
-import LoginModal from './LoginModal';
+import { Sparkles, User } from 'lucide-react';
+import PoemActionBar from './PoemActionBar';
 import { formatSindhiDate } from '../utils/dateUtils';
 
-const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true }) => {
+const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, id }) => {
     const isRtl = lang === 'sd';
-    const { user } = useAuth();
-
-    const BookmarkButton = (
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
-            <BookmarkPlus className="h-5 w-5" />
-        </Button>
-    );
 
     const safeDate = date || '';
     const safeReadTime = readTime || '';
     const safeAuthor = author || 'Anonymous';
+
+    // Construct a pseudo-poem object for PoemActionBar
+    const postPoem = {
+        id,
+        likes,
+        slug,
+        poet_slug,
+        cat_slug
+    };
 
     return (
         <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'}`}>
@@ -63,27 +63,17 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                         </div>
                     </Link>
 
-                    <div className="flex items-center justify-between text-gray-500 text-sm">
-                        <div className="flex items-center gap-3">
-                            {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
-                            <span>{isRtl ? formatSindhiDate(safeDate.replace(/(\d+)d ago/, '$1 ڏينھن اڳ ۾')) : safeDate}</span>
-                            <span>·</span>
-                            <span>{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between text-gray-500 text-sm">
+                            <div className="flex items-center gap-3">
+                                {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
+                                <span>{isRtl ? formatSindhiDate(safeDate.replace(/(\d+)d ago/, '$1 ڏينھن اڳ ۾')) : safeDate}</span>
+                                <span>·</span>
+                                <span>{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {user ? (
-                                BookmarkButton
-                            ) : (
-                                <LoginModal trigger={BookmarkButton} isRtl={isRtl} />
-                            )}
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
-                                <MinusCircle className="h-5 w-5" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
-                                <MoreHorizontal className="h-5 w-5" />
-                            </Button>
-                        </div>
+                        <PoemActionBar poem={postPoem} lang={lang} />
                     </div>
                 </div>
             </div>
