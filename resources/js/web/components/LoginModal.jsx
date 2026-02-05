@@ -44,7 +44,7 @@ const LoginModal = ({ trigger, isRtl = false }) => {
                     <span className="text-black font-medium">
                         {isRtl ? 'اڪائونٽ ناهي؟ ' : 'No account? '}
                     </span>
-                    <a href="/register" className="text-green-700 font-bold hover:text-green-800">
+                    <a href="/register" className="text-black font-bold hover:underline">
                         {isRtl ? 'نئون ٺاهيو' : 'Create one'}
                     </a>
                 </div>

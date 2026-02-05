@@ -74,7 +74,7 @@ const SidebarRight = ({ lang }) => {
                         staffPicks.map((pick, i) => (
                             <div key={i} className="group cursor-pointer">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <div className="h-5 w-5 rounded-full bg-blue-100" />
+                                    <div className="h-5 w-5 rounded-full bg-gray-100" />
                                     <span className="text-xs font-medium">{pick.author}</span>
                                 </div>
                                 <h4 className="text-[14px] font-bold leading-snug group-hover:underline">{pick.title}</h4>
@@ -83,7 +83,7 @@ const SidebarRight = ({ lang }) => {
                         ))
                     )}
                 </div>
-                <Button variant="link" className="text-green-700 hover:text-black p-0 h-auto mt-6 font-medium">
+                <Button variant="link" className="text-black hover:text-gray-600 p-0 h-auto mt-6 font-medium">
                     {isRtl ? 'مڪمل لسٽ ڏسو' : 'See the full list'}
                 </Button>
             </section>
@@ -103,7 +103,7 @@ const SidebarRight = ({ lang }) => {
                         ))
                     )}
                 </div>
-                <Button variant="link" className="text-green-700 hover:text-black p-0 h-auto mt-6 font-medium">
+                <Button variant="link" className="text-black hover:text-gray-600 p-0 h-auto mt-6 font-medium">
                     {isRtl ? 'وڌيڪ موضوع ڏسو' : 'See more topics'}
                 </Button>
             </section>

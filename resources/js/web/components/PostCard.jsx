@@ -32,7 +32,7 @@ const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) =>
 
                     <div className="flex items-center justify-between text-gray-500 text-sm">
                         <div className="flex items-center gap-3">
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                            <Star className="h-4 w-4 text-black fill-black" />
                             <span>{date}</span>
                             <span>·</span>
                             <span>{readTime}</span>

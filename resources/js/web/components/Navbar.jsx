@@ -82,7 +82,7 @@ const Navbar = ({ lang }) => {
                             </Button>
                             <Button variant="ghost" size="icon" className="text-gray-500 relative">
                                 <Bell className="h-5 w-5" />
-                                <span className="absolute top-2 right-2 h-2 w-2 bg-green-500 rounded-full border-2 border-white"></span>
+                                <span className="absolute top-2 right-2 h-2 w-2 bg-black rounded-full border-2 border-white"></span>
                             </Button>
                         </>
                     )}
@@ -104,7 +104,7 @@ const Navbar = ({ lang }) => {
                                     <span className="text-xs text-muted-foreground">{user.email}</span>
                                 </div>
                             </div>
-                            <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100">
                                 <LogOut className="mr-2 h-4 w-4" />
                                 {isRtl ? 'لاگ آئوٽ' : 'Logout'}
                             </Button>
@@ -138,7 +138,7 @@ const Navbar = ({ lang }) => {
                                     <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                <DropdownMenuItem className="focus:bg-gray-100">
                                     <LogOut className="mr-2 h-4 w-4" />
                                     <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
                                 </DropdownMenuItem>

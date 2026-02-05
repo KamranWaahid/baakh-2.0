@@ -75,7 +75,35 @@ const PoetProfile = ({ lang }) => {
                 {/* Main Content (Left) */}
                 <div className="flex-1 min-w-0">
                     <header className="mb-8">
-                        <h1 className="text-4xl md:text-5xl font-black mb-6 text-gray-900 capitalize tracking-tight">
+                        {/* Mobile Profile Header */}
+                        <div className="lg:hidden mb-8">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-400 shrink-0 border border-gray-100">
+                                    {poet.avatar}
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl font-black text-gray-900 capitalize leading-none mb-1">{poet.name}</h1>
+                                    <p className="text-gray-500 text-sm font-medium">{poet.followers} {isRtl ? 'پيروي ڪندڙ' : 'Followers'}</p>
+                                </div>
+                            </div>
+                            <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+                                {poet.bio}
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium h-10">
+                                    {isRtl ? 'فالو ڪريو' : 'Follow'}
+                                </Button>
+                                <Button variant="outline" size="icon" className="rounded-full bg-black border-black text-white hover:bg-gray-800 hover:text-white h-10 w-10">
+                                    <Mail className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Desktop Title */}
+                        <h1 className="hidden lg:block text-4xl md:text-5xl font-black mb-6 text-gray-900 capitalize tracking-tight">
                             {poet.name}
                         </h1>
 
@@ -115,10 +143,10 @@ const PoetProfile = ({ lang }) => {
                         </p>
 
                         <div className="flex gap-2 w-full mb-6">
-                            <Button className="flex-1 rounded-full bg-green-600 hover:bg-green-700 text-white font-medium">
+                            <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium">
                                 {isRtl ? 'فالو ڪريو' : 'Follow'}
                             </Button>
-                            <Button variant="outline" size="icon" className="rounded-full bg-green-600 border-green-600 text-white hover:bg-green-700 hover:text-white">
+                            <Button variant="outline" size="icon" className="rounded-full bg-black border-black text-white hover:bg-gray-800 hover:text-white">
                                 <Mail className="h-4 w-4" />
                             </Button>
                             <Button variant="outline" size="icon" className="rounded-full border-gray-300">
@@ -126,12 +154,28 @@ const PoetProfile = ({ lang }) => {
                             </Button>
                         </div>
 
-                        <div className="text-xs text-gray-400">
-                            <h4 className="font-bold text-gray-900 mb-2 uppercase tracking-wide">Following</h4>
-                            {/* Small list if needed */}
-                            <div className="flex gap-2">
-                                <div className="h-6 w-6 rounded-full bg-gray-100"></div>
-                                <div className="h-6 w-6 rounded-full bg-gray-100"></div>
+                        <div className="w-full pt-6 border-t border-gray-100">
+                            <h4 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">
+                                {isRtl ? 'تجويز ڪيل شاعر' : 'Recommended Poets'}
+                            </h4>
+                            <div className="space-y-4">
+                                {[
+                                    { name: 'Shah Latif', avatar: 'SL' },
+                                    { name: 'Ustad Bukhari', avatar: 'UB' },
+                                    { name: 'Sachal Sarmast', avatar: 'SS' }
+                                ].map((p, i) => (
+                                    <div key={i} className="flex items-center justify-between group cursor-pointer">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200">
+                                                {p.avatar}
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-700 group-hover:text-black transition-colors">{p.name}</span>
+                                        </div>
+                                        <Button variant="outline" size="sm" className="h-7 w-auto px-3 text-xs rounded-full border-gray-300 hover:border-black hover:bg-black hover:text-white transition-all">
+                                            Follow
+                                        </Button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
