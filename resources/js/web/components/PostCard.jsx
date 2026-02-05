@@ -39,7 +39,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                     <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}>
                         <div className="flex justify-between items-start gap-4">
                             <div className="flex-1">
-                                <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:opacity-80 transition-opacity ${isRtl ? 'font-arabic' : ''}`}>
+                                <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
                                     {title || 'Untitled'}
                                 </h2>
                                 {excerpt && (
