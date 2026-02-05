@@ -68,7 +68,7 @@ const PoetsFeed = ({ lang }) => {
     );
 
     return (
-        <div className="w-full max-w-[1080px] mx-auto py-8 px-4">
+        <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
             <Tabs defaultValue="all" className="w-full">
                 <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none overflow-x-auto flex-nowrap scrollbar-hide">

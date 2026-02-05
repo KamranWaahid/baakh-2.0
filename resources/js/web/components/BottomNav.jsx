@@ -10,7 +10,6 @@ const BottomNav = ({ lang }) => {
         { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
         { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
         { label: isRtl ? 'بيت' : 'Couplets', icon: Scroll, path: `/${lang}/couplets` },
-        { label: isRtl ? 'ڪلام' : 'Lyrics', icon: Music, path: `/${lang}/lyrics` },
     ];
 
     return (
