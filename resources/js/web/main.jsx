@@ -99,64 +99,68 @@ const Prosody = () => {
     return <ProsodyFeed lang={lang} />;
 };
 
+import { AuthProvider } from './contexts/AuthContext';
+
 const App = () => {
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/:lang" element={
-                    <LanguageWrapper>
-                        <Home />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/poets" element={
-                    <LanguageWrapper>
-                        <Poets />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/poetry" element={
-                    <LanguageWrapper>
-                        <Poetry />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/couplets" element={
-                    <LanguageWrapper>
-                        <Couplets />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/genre" element={
-                    <LanguageWrapper>
-                        <Genre />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/period" element={
-                    <LanguageWrapper>
-                        <Period />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/poet/:slug" element={
-                    <LanguageWrapper>
-                        <Poet />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/poet/:slug/:category/:poemSlug" element={
-                    <LanguageWrapper>
-                        <SinglePoem />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/:category" element={
-                    <LanguageWrapper>
-                        <Home />
-                    </LanguageWrapper>
-                } />
-                <Route path="/:lang/prosody" element={
-                    <LanguageWrapper>
-                        <Prosody />
-                    </LanguageWrapper>
-                } />
-                <Route path="/" element={<Navigate to="/sd" replace />} />
-                <Route path="*" element={<Navigate to="/sd" replace />} />
-            </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/:lang" element={
+                        <LanguageWrapper>
+                            <Home />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/poets" element={
+                        <LanguageWrapper>
+                            <Poets />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/poetry" element={
+                        <LanguageWrapper>
+                            <Poetry />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/couplets" element={
+                        <LanguageWrapper>
+                            <Couplets />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/genre" element={
+                        <LanguageWrapper>
+                            <Genre />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/period" element={
+                        <LanguageWrapper>
+                            <Period />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/poet/:slug" element={
+                        <LanguageWrapper>
+                            <Poet />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/poet/:slug/:category/:poemSlug" element={
+                        <LanguageWrapper>
+                            <SinglePoem />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/:category" element={
+                        <LanguageWrapper>
+                            <Home />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/:lang/prosody" element={
+                        <LanguageWrapper>
+                            <Prosody />
+                        </LanguageWrapper>
+                    } />
+                    <Route path="/" element={<Navigate to="/sd" replace />} />
+                    <Route path="*" element={<Navigate to="/sd" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
     );
 };
 

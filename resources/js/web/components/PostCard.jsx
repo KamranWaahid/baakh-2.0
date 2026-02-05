@@ -1,9 +1,15 @@
-import React from 'react';
-import { BookmarkPlus, MinusCircle, MoreHorizontal, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '../contexts/AuthContext';
+import LoginModal from './LoginModal';
 
 const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) => {
     const isRtl = lang === 'sd';
+    const { user } = useAuth();
+
+    const BookmarkButton = (
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
+            <BookmarkPlus className="h-5 w-5" />
+        </Button>
+    );
 
     return (
         <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'}`}>
@@ -29,9 +35,11 @@ const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) =>
                         </div>
 
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
-                                <BookmarkPlus className="h-5 w-5" />
-                            </Button>
+                            {user ? (
+                                BookmarkButton
+                            ) : (
+                                <LoginModal trigger={BookmarkButton} isRtl={isRtl} />
+                            )}
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-black">
                                 <MinusCircle className="h-5 w-5" />
                             </Button>

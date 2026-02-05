@@ -12,32 +12,32 @@ const SidebarRight = ({ lang }) => {
     const [stickyTop, setStickyTop] = React.useState(85);
     const sidebarRef = React.useRef(null);
 
+    const updateSticky = React.useCallback(() => {
+        if (!sidebarRef.current) return;
+        const sidebarHeight = sidebarRef.current.offsetHeight;
+        const windowHeight = window.innerHeight;
+        const headerHeight = 65;
+        const padding = 20;
+
+        if (sidebarHeight + headerHeight + padding < windowHeight) {
+            setStickyTop(headerHeight + padding);
+        } else {
+            setStickyTop(windowHeight - sidebarHeight - padding);
+        }
+    }, [sidebarRef]);
+
     React.useEffect(() => {
-        const updateSticky = () => {
-            // ... existing sticky logic ...
-            if (!sidebarRef.current) return;
-            const sidebarHeight = sidebarRef.current.offsetHeight;
-            const windowHeight = window.innerHeight;
-            const headerHeight = 65;
-            const padding = 20;
-
-            if (sidebarHeight + headerHeight + padding < windowHeight) {
-                setStickyTop(headerHeight + padding);
-            } else {
-                setStickyTop(windowHeight - sidebarHeight - padding);
-            }
-        };
-
         updateSticky();
-        // ... existing observers ...
-        const observer = new ResizeObserver(updateSticky);
+
+        const observer = new ResizeObserver(() => updateSticky());
         if (sidebarRef.current) observer.observe(sidebarRef.current);
+
         window.addEventListener('resize', updateSticky);
         return () => {
             observer.disconnect();
             window.removeEventListener('resize', updateSticky);
         };
-    }, [staffPicks, topics, loading]);
+    }, [updateSticky, staffPicks, topics, loading]);
 
     React.useEffect(() => {
         const fetchData = async () => {

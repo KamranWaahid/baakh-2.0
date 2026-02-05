@@ -31,13 +31,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import SearchDialog from './SearchDialog';
 
+import { useAuth } from '../contexts/AuthContext';
+
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, loading, logout } = useAuth();
     const [searchOpen, setSearchOpen] = useState(false);
 
     const navItems = [
+        // ... items ...
         { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
         { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
         { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
@@ -49,18 +51,6 @@ const Navbar = ({ lang }) => {
     ];
 
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const response = await api.get('/api/auth/me');
-                setUser(response.data);
-            } catch (error) {
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-        checkAuth();
-
         // Keyboard Shortcut for Search (Cmd+K / Ctrl+K)
         const handleKeyDown = (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -71,7 +61,6 @@ const Navbar = ({ lang }) => {
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-
     }, []);
 
     const location = useLocation();
@@ -126,7 +115,7 @@ const Navbar = ({ lang }) => {
                                         <span className="text-xs text-muted-foreground">{user.email}</span>
                                     </div>
                                 </div>
-                                <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100">
+                                <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100" onClick={logout}>
                                     <LogOut className="mr-2 h-4 w-4" />
                                     {isRtl ? 'لاگ آئوٽ' : 'Logout'}
                                 </Button>
@@ -160,7 +149,7 @@ const Navbar = ({ lang }) => {
                                         <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="focus:bg-gray-100">
+                                    <DropdownMenuItem className="focus:bg-gray-100" onClick={logout}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
                                     </DropdownMenuItem>
