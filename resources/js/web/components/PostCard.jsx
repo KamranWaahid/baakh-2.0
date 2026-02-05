@@ -10,29 +10,29 @@ const PostCard = ({ lang, title, excerpt, author, date, readTime, category }) =>
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">
+                        <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px]">
                             {author[0]}
                         </div>
-                        <span className="text-sm font-medium">{author}</span>
+                        <span className="text-sm">{author}</span>
                         {category && (
                             <>
                                 <span className="text-gray-400">in</span>
-                                <span className="text-sm font-medium">{category}</span>
+                                <span className="text-sm">{category}</span>
                             </>
                         )}
                     </div>
 
-                    <h2 className={`text-xl md:text-2xl font-black mb-1 leading-tight group-hover:opacity-80 transition-opacity ${isRtl ? 'font-arabic' : ''}`}>
+                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:opacity-80 transition-opacity ${isRtl ? 'font-arabic' : ''}`}>
                         {title}
                     </h2>
 
-                    <p className="text-gray-500 text-[15px] line-clamp-2 md:line-clamp-3 mb-4 leading-relaxed lg:max-w-[500px]">
+                    <p className="text-gray-600 font-serif text-[16px] line-clamp-2 md:line-clamp-3 mb-4 leading-relaxed lg:max-w-[500px]">
                         {excerpt}
                     </p>
 
                     <div className="flex items-center justify-between text-gray-500 text-sm">
                         <div className="flex items-center gap-3">
-                            <Star className="h-4 w-4 text-black fill-black" />
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                             <span>{date}</span>
                             <span>·</span>
                             <span>{readTime}</span>

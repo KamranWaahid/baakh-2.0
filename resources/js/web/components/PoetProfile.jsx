@@ -82,11 +82,11 @@ const PoetProfile = ({ lang }) => {
                                     {poet.avatar}
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-black text-gray-900 capitalize leading-none mb-1">{poet.name}</h1>
-                                    <p className="text-gray-500 text-sm font-medium">{poet.followers} {isRtl ? 'پيروي ڪندڙ' : 'Followers'}</p>
+                                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 capitalize leading-none mb-1">{poet.name}</h1>
+                                    <p className="text-gray-500 text-sm">{poet.followers} {isRtl ? 'پيروي ڪندڙ' : 'Followers'}</p>
                                 </div>
                             </div>
-                            <p className="text-gray-600 text-[15px] leading-relaxed mb-6">
+                            <p className="text-gray-600 font-serif text-[16px] leading-relaxed mb-6">
                                 {poet.bio}
                             </p>
                             <div className="flex gap-3 w-full">
@@ -103,7 +103,7 @@ const PoetProfile = ({ lang }) => {
                         </div>
 
                         {/* Desktop Title */}
-                        <h1 className="hidden lg:block text-4xl md:text-5xl font-black mb-6 text-gray-900 capitalize tracking-tight">
+                        <h1 className="hidden lg:block text-4xl md:text-5xl font-bold tracking-tight mb-6 text-gray-900 capitalize">
                             {poet.name}
                         </h1>
 
@@ -135,10 +135,10 @@ const PoetProfile = ({ lang }) => {
                             {poet.avatar}
                         </div>
 
-                        <h3 className="font-bold text-lg mb-1 capitalize text-gray-900">{poet.name}</h3>
+                        <h3 className="font-bold tracking-tight text-lg mb-1 capitalize text-gray-900">{poet.name}</h3>
                         <p className="text-gray-500 text-sm mb-4">{poet.followers} {isRtl ? 'پيروي ڪندڙ' : 'Followers'}</p>
 
-                        <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                        <p className="font-serif text-sm text-gray-600 leading-relaxed mb-6">
                             {poet.bio}
                         </p>
 
@@ -155,7 +155,7 @@ const PoetProfile = ({ lang }) => {
                         </div>
 
                         <div className="w-full pt-6 border-t border-gray-100">
-                            <h4 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wide">
+                            <h4 className="font-medium text-gray-900 mb-4 text-sm uppercase tracking-wide">
                                 {isRtl ? 'تجويز ڪيل شاعر' : 'Recommended Poets'}
                             </h4>
                             <div className="space-y-4">

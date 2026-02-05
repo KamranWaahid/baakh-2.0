@@ -63,7 +63,7 @@ const Navbar = ({ lang }) => {
         <>
             <Link
                 to={`/${lang === 'en' ? 'sd' : 'en'}`}
-                className={`text-sm font-medium hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
+                className={`text-sm font-normal hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
             >
                 {lang === 'en' ? <span className="font-arabic text-base pb-1">سنڌي</span> : 'English'}
             </Link>
@@ -183,7 +183,7 @@ const Navbar = ({ lang }) => {
                         <SheetHeader>
                             <SheetTitle className="flex items-center gap-2">
                                 <Logo className="h-8 w-8 text-black" />
-                                <span className="font-bold text-xl">Baakh</span>
+                                <span className="font-medium text-xl">Baakh</span>
                             </SheetTitle>
                         </SheetHeader>
                         <div className="mt-8 flex flex-col gap-4">

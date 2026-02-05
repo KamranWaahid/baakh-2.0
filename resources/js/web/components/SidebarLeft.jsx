@@ -38,7 +38,7 @@ const SidebarLeft = ({ lang }) => {
                                         strokeWidth={isActive ? 0 : 2}
                                         fill={isActive ? "currentColor" : "none"}
                                     />
-                                    <span className={`text-[15px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                                    <span className={`text-[15px] ${isActive ? 'font-bold' : 'font-normal'}`}>{item.label}</span>
                                 </div>
                             </Link>
                         </Button>
