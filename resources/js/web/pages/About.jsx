@@ -281,14 +281,14 @@ const About = () => {
                     title: 'تعارف',
                     content: [
                         'باک هڪ جامع غير منافع بخش ۽ ترقي پسند، سياسي ۽ سماجي شعور رکندڙ ڊجيٽل آرڪائيو ۽ پليٽفارم آهي جيڪو سنڌي شاعري جي ورثي کي محفوظ ۽ دستاويز ڪرڻ لاءِ وقف آهي. اسان جو مقصد صديون پراڻي شاعري جي روايت کي جديد ٽيڪنالاجي سان ڳنڍڻ آهي، سنڌي شاعري کي دنيا جي عالمن، شاگردن، شاعرن ۽ شوقينن لاءِ رسائي لائق بڻائڻ.',
-                        'شاعري هڪ لطيف فن آهي جيڪو انساني تهذيب سان گڏ ان جي شروعاتي جمالياتي اظهار کان وٺي گڏ رهيو آهي. سنڌي ڪلچر ۾، شاعري رڳو ادبي ڪاميابي نه آهي پر اسان جي مزاحمتي تحريڪن جو روح آهي، هڪ برتن جيڪو تاريخ، روحانيت، سياست، فلسفو ۽ جذبن کي نسلن تائين پهچائي ٿو.',
-                        'سنڌي شاعري جي تاريخ گهڻي قديم آهي، جيڪا عرب دور کان به اڳ جي آهي. قديم صنفون جهڙوڪ دوها، بيت، وائي، ڪافي، دوهيرو، مرثيو ۽ اشلوڪ صدين کان اسان جي ادبي ۽ سياسي منظرنامي کي شڪل ڏني آهي.'
+                        'شاعري هڪ لطيف فن آهي جيڪو انساني تهذيب سان گڏ ان جي شروعاتي جمالياتي اظهار کان وٺي گڏ رهيو آهي. سنڌي ڪلچر ۾، شاعري رڳو ادبي ڪاميابي نه آهي پر اسان جي مزاحمتي تحريڪن جو روح رھيو آهي، هڪ ڀنڊار جيڪو تاريخ، روحانيت، سياست، فلسفو ۽ جذبن کي نسلن تائين پهچائي ٿو.',
+                        'سنڌي شاعري جي تاريخ گهڻي قديم آهي، جيڪا عرب دور کان به اڳ جي آهي. قديم صنفون جهڙوڪ دوها، بيت، وائي، ڪافي، دوھيڙو، مرثيو ۽ اشلوڪ صدين کان اسان جي ادبي ۽ سياسي منظرنامي کي شڪل ڏني آهي.'
                     ]
                 },
                 {
                     title: 'ڊجيٽل تحفظ جو چئلينج',
                     content: [
-                        'روايتي طور تي، سنڌي شاعري انفرادي ڪتابن، ادبي رسالن ۽ ادارن جي لائبريرين ۾ محفوظ رهي آهي. شاهه عبداللطيف ڀٽائيءَ جي لافاني شعرن کان وٺي سچل سرمست جي صوفياتي ڪم تائين، استاد بخاري جي مهارت کان وٺي شيخ اياز ۽ جانڻ چن جي جديد روشنيءَ تائين، اسان جا ادبي خزانا بنيادي طور تي ڇپيل شڪل ۾ موجود آهن، نجي مجموعن ۽ محدود لائبريرين ۾ پکڙيل.',
+                        'روايتي طور تي، سنڌي شاعري انفرادي ڪتابن، ادبي رسالن ۽ ادارن جي لائبريرين ۾ محفوظ رهي آهي. شاهه عبداللطيف ڀٽائيءَ جي لافاني شعرن کان وٺي سچل سرمست جي صوفياڻي ڪم تائين، استاد بخاري جي مهارت کان وٺي شيخ اياز ۽ جانڻ چن جي جديد مزاحمتي ۽ روشن خيالي تائين، اسان جا ادبي خزانا بنيادي طور تي ڇپيل شڪل ۾ موجود آهن، نجي مجموعن ۽ محدود لائبريرين ۾ پکڙيل.',
                         'ڊجيٽل دور ۾، هي ٽڪراءُ هڪ اهم چئلينج آهي. سنڌي شاعري جي دولت جي باوجود، ڪو به مرڪزي، ڳولا لائق، ٽيڪنالاجي طور رسائي لائق ذخيرو موجود نه هو جيڪو تحقيق، تعليم ۽ ثقافتي مشغوليت جي معاصر ضرورتن کي پورو ڪري.',
                         'باک انهيءَ مسئلي کي حل ڪرڻ لاءِ ٺاهيو ويو.'
                     ]
@@ -548,18 +548,18 @@ const About = () => {
     return (
         <div className={`min-h-screen bg-white text-black ${isRtl ? 'text-right font-arabic' : 'text-left font-sans'}`}>
             {/* Minimal Header */}
-            <header className="px-6 md:px-12 lg:px-24 py-8 flex items-center border-b border-gray-100">
+            <header className="px-5 md:px-12 lg:px-24 py-6 md:py-8 flex items-center border-b border-gray-100">
                 <Link to={`/${lang}`} className="hover:opacity-80 transition-opacity">
-                    <Logo className="h-10 w-10 text-black" />
+                    <Logo className="h-8 w-8 md:h-10 md:w-10 text-black" />
                 </Link>
             </header>
 
-            <div className="py-20 px-6 md:px-12 lg:px-24">
-                <div className="max-w-4xl mx-auto space-y-24">
+            <div className="py-12 md:py-20 px-5 md:px-12 lg:px-24">
+                <div className="max-w-4xl mx-auto space-y-16 md:space-y-24">
 
                     {/* Hero */}
                     <div className="space-y-6">
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 leading-tight">
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-gray-900 leading-tight">
                             {currentContent.title}
                         </h1>
                     </div>
@@ -568,11 +568,11 @@ const About = () => {
                     <div className="space-y-20">
                         {currentContent.sections.map((section, index) => (
                             <section key={index} className="space-y-8">
-                                <h2 className="text-3xl font-bold text-gray-900 border-b border-gray-200 pb-4 inline-block">
+                                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 border-b border-gray-200 pb-4 inline-block">
                                     {section.title}
                                 </h2>
 
-                                <div className="space-y-6 text-xl text-gray-700 leading-relaxed">
+                                <div className="space-y-6 text-lg md:text-xl text-gray-700 leading-relaxed">
                                     {section.content?.map((text, i) => (
                                         <p key={i}>{text}</p>
                                     ))}
@@ -580,7 +580,7 @@ const About = () => {
                                     {section.list && (
                                         <ul className="space-y-4 list-disc list-inside mt-6">
                                             {section.list.map((item, i) => (
-                                                <li key={i} className="pl-2">{item}</li>
+                                                <li key={i} className={`${isRtl ? 'pr-2' : 'pl-2'}`}>{item}</li>
                                             ))}
                                         </ul>
                                     )}
@@ -592,7 +592,7 @@ const About = () => {
                                             {sub.list && (
                                                 <ul className="space-y-3 list-disc list-inside">
                                                     {sub.list.map((item, j) => (
-                                                        <li key={j} className="pl-2">{item}</li>
+                                                        <li key={j} className={`${isRtl ? 'pr-2' : 'pl-2'}`}>{item}</li>
                                                     ))}
                                                 </ul>
                                             )}
@@ -635,7 +635,7 @@ const About = () => {
                                     )}
 
                                     {section.team && (
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mt-8">
                                             {section.team.map((member, i) => (
                                                 <div key={i} className="bg-gray-50 p-8 rounded-3xl">
                                                     <h3 className="text-xl font-bold text-gray-900 text-center mb-2">{member.name}</h3>
@@ -647,7 +647,7 @@ const About = () => {
                                     )}
 
                                     {section.footer && (
-                                        <p className="font-medium text-gray-900 mt-6 border-l-4 border-black pl-4">
+                                        <p className={`font-medium text-gray-900 mt-6 ${isRtl ? 'border-r-4 pr-4' : 'border-l-4 pl-4'} border-black`}>
                                             {section.footer}
                                         </p>
                                     )}
@@ -658,7 +658,7 @@ const About = () => {
 
                     {/* Footer Quote */}
                     <div className="border-t border-gray-100 pt-16 text-center space-y-4 pb-20">
-                        <p className="text-2xl md:text-4xl font-serif font-medium text-gray-900">
+                        <p className={`text-2xl md:text-4xl font-medium text-gray-900 ${isRtl ? 'font-arabic leading-relaxed' : 'font-serif'}`}>
                             {currentContent.quote.original}
                         </p>
                         <p className="text-lg text-gray-500 italic">

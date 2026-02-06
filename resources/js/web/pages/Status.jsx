@@ -10,15 +10,15 @@ const Status = () => {
     return (
         <div className={`min-h-screen bg-white text-black ${isRtl ? 'text-right font-arabic' : 'text-left font-sans'}`}>
             {/* Minimal Header */}
-            <header className="px-6 md:px-12 lg:px-24 py-8 flex items-center border-b border-gray-100">
+            <header className="px-5 md:px-12 lg:px-24 py-6 md:py-8 flex items-center border-b border-gray-100">
                 <Link to={`/${lang}`} className="hover:opacity-80 transition-opacity">
-                    <Logo className="h-10 w-10 text-black" />
+                    <Logo className="h-8 w-8 md:h-10 md:w-10 text-black" />
                 </Link>
             </header>
 
-            <div className="py-20 px-6 md:px-12 lg:px-24">
-                <div className="max-w-3xl mx-auto space-y-12">
-                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-8">
+            <div className="py-12 md:py-20 px-5 md:px-12 lg:px-24">
+                <div className="max-w-3xl mx-auto space-y-8 md:space-y-12">
+                    <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-8">
                         {isRtl ? 'سسٽم جي حالت' : 'System Status'}
                     </h1>
 

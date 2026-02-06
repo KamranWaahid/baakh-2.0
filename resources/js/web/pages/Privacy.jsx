@@ -128,19 +128,19 @@ const Privacy = () => {
     return (
         <div className={`min-h-screen bg-white text-black ${isRtl ? 'text-right font-arabic' : 'text-left font-sans'}`}>
             {/* Minimal Header */}
-            <header className="px-6 md:px-12 lg:px-24 py-8 flex items-center border-b border-gray-100">
+            <header className="px-5 md:px-12 lg:px-24 py-6 md:py-8 flex items-center border-b border-gray-100">
                 <Link to={`/${lang}`} className="hover:opacity-80 transition-opacity">
-                    <Logo className="h-10 w-10 text-black" />
+                    <Logo className="h-8 w-8 md:h-10 md:w-10 text-black" />
                 </Link>
             </header>
 
-            <div className="py-20 px-6 md:px-12 lg:px-24">
-                <div className="max-w-3xl mx-auto space-y-12">
+            <div className="py-12 md:py-20 px-5 md:px-12 lg:px-24">
+                <div className="max-w-3xl mx-auto space-y-12 md:space-y-16">
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+                        <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">
                             {currentContent.title}
                         </h1>
-                        <p className="text-xl text-gray-600 leading-relaxed font-medium">
+                        <p className="text-lg md:text-xl text-gray-600 leading-relaxed font-medium">
                             {currentContent.intro}
                         </p>
                     </div>
