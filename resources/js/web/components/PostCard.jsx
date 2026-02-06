@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, User } from 'lucide-react';
 import PoemActionBar from './PoemActionBar';
-import { formatSindhiDate } from '../utils/dateUtils';
+import { formatDate } from '@/lib/date-utils';
 
 const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, id }) => {
     const isRtl = lang === 'sd';
@@ -67,7 +67,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                         <div className="flex items-center justify-between text-gray-500 text-sm">
                             <div className="flex items-center gap-3">
                                 {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
-                                <span>{isRtl ? formatSindhiDate(safeDate.replace(/(\d+)d ago/, '$1 ڏينھن اڳ ۾')) : safeDate}</span>
+                                <span>{formatDate(safeDate, lang)}</span>
                                 <span>·</span>
                                 <span>{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
                             </div>
