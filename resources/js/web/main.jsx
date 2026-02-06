@@ -18,6 +18,7 @@ import PeriodFeed from './components/PeriodFeed';
 import FeedbackBanner from './components/FeedbackBanner';
 import ProsodyFeed from './components/ProsodyFeed';
 import PoemDetail from './components/PoemDetail';
+import ScrollToTop from './components/ScrollToTop';
 
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
@@ -50,6 +51,7 @@ const MainLayout = ({ children, lang }) => {
                 </div>
             </div>
             <BottomNav lang={lang} />
+            <ScrollToTop />
         </div>
     );
 };
