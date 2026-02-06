@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Poets;
 use App\Models\Tags;
+use App\Models\Categories;
 use Illuminate\Http\Request;
 
 class PoetController extends Controller
@@ -185,22 +186,30 @@ class PoetController extends Controller
     public function getPoetry(Request $request, $slug)
     {
         $lang = $request->get('lang', 'sd');
+        $catSlug = $request->get('category');
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
-        $poetry = \App\Models\Poetry::where('poet_id', $poet->id)
-            ->where('visibility', 1)
-            ->with([
-                'translations' => function ($q) use ($lang) {
-                    $q->where('lang', $lang);
-                },
-                'category',
-                'category.details' => function ($q) use ($lang) {
-                    $q->where('lang', $lang);
-                },
-                'poet_details' => function ($q) use ($lang) {
-                    $q->where('lang', $lang);
-                }
-            ])
+        $query = \App\Models\Poetry::where('poet_id', $poet->id)
+            ->where('visibility', 1);
+
+        if ($catSlug) {
+            $query->whereHas('category', function ($q) use ($catSlug) {
+                $q->where('slug', $catSlug);
+            });
+        }
+
+        $poetry = $query->with([
+            'translations' => function ($q) use ($lang) {
+                $q->where('lang', $lang);
+            },
+            'category',
+            'category.details' => function ($q) use ($lang) {
+                $q->where('lang', $lang);
+            },
+            'poet_details' => function ($q) use ($lang) {
+                $q->where('lang', $lang);
+            }
+        ])
             ->latest()
             ->paginate(10);
 
@@ -225,7 +234,7 @@ class PoetController extends Controller
                 'slug' => $p->poetry_slug,
                 'poet_slug' => $poet->poet_slug,
                 'cat_slug' => $p->category->slug ?? '',
-                'category' => $catDetail->name ?? 'Uncategorized',
+                'category' => $catDetail->cat_name ?? 'Uncategorized',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
                 'author_avatar' => $poet->poet_pic,
                 'date' => $p->created_at->format('d M Y'),
@@ -281,5 +290,31 @@ class PoetController extends Controller
         });
 
         return response()->json($couplets);
+    }
+
+    public function getCategories(Request $request, $slug)
+    {
+        $lang = $request->get('lang', 'sd');
+        $poet = Poets::where('poet_slug', $slug)->firstOrFail();
+
+        $categories = \App\Models\Categories::whereHas('poetry', function ($q) use ($poet) {
+            $q->where('poet_id', $poet->id)->where('visibility', 1);
+        })
+            ->with([
+                'details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])
+            ->get()
+            ->map(function ($cat) use ($lang) {
+                $detail = $cat->details->where('lang', $lang)->first() ?? $cat->details->first();
+                return [
+                    'id' => $cat->id,
+                    'slug' => $cat->slug,
+                    'name' => $detail->cat_name ?? $cat->slug,
+                ];
+            });
+
+        return response()->json($categories);
     }
 }

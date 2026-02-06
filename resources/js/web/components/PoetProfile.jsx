@@ -34,15 +34,26 @@ const PoetProfile = ({ lang }) => {
         isFetchingNextPage: isPoetryFetching,
         isLoading: isPoetryLoading
     } = useInfiniteQuery({
-        queryKey: ['poet-poetry', slug],
+        queryKey: ['poet-poetry', slug, activeTab],
+        enabled: !!slug && (activeTab === 'poetry' || !['poetry', 'couplets'].includes(activeTab)),
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await axios.get(`/api/v1/poets/${slug}/poetry?page=${pageParam}`);
+            const catParam = activeTab === 'poetry' ? '' : `&category=${activeTab}`;
+            const response = await axios.get(`/api/v1/poets/${slug}/poetry?page=${pageParam}${catParam}`);
             return response.data;
         },
         getNextPageParam: (lastPage) => {
             return lastPage.next_page_url ? lastPage.current_page + 1 : undefined;
+        }
+    });
+
+    // Categories Query
+    const { data: categories } = useQuery({
+        queryKey: ['poet-categories', slug],
+        queryFn: async () => {
+            const response = await axios.get(`/api/v1/poets/${slug}/categories`);
+            return response.data;
         },
-        enabled: !!slug && activeTab === 'poetry'
+        enabled: !!slug
     });
 
     // Couplets Query
@@ -66,10 +77,10 @@ const PoetProfile = ({ lang }) => {
 
     React.useEffect(() => {
         if (inView) {
-            if (activeTab === 'poetry' && hasPoetryNext) {
-                fetchPoetryNext();
-            } else if (activeTab === 'couplets' && hasCoupletsNext) {
+            if (activeTab === 'couplets' && hasCoupletsNext) {
                 fetchCoupletsNext();
+            } else if (hasPoetryNext) {
+                fetchPoetryNext();
             }
         }
     }, [inView, activeTab, hasPoetryNext, fetchPoetryNext, hasCoupletsNext, fetchCoupletsNext]);
@@ -148,7 +159,7 @@ const PoetProfile = ({ lang }) => {
                                 onClick={() => setActiveTab('poetry')}
                                 className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === 'poetry' ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
                             >
-                                {isRtl ? 'شاعري' : 'Poetry'}
+                                {isRtl ? 'اصل' : 'Home'}
                             </button>
                             <button
                                 onClick={() => setActiveTab('couplets')}
@@ -156,15 +167,21 @@ const PoetProfile = ({ lang }) => {
                             >
                                 {isRtl ? 'بيت' : 'Couplets'}
                             </button>
-                            {/* Categories Placeholder */}
-                            <button className="pb-4 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">
-                                {isRtl ? 'سڀ زمرا' : 'All Categories'}
-                            </button>
+
+                            {categories?.filter(cat => cat.slug !== 'bait' && cat.slug !== 'couplets').map((cat) => (
+                                <button
+                                    key={cat.slug}
+                                    onClick={() => setActiveTab(cat.slug)}
+                                    className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === cat.slug ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                                >
+                                    {cat.name}
+                                </button>
+                            ))}
                         </div>
                     </header>
 
                     <div className="space-y-0">
-                        {activeTab === 'poetry' ? (
+                        {activeTab !== 'couplets' ? (
                             isPoetryLoading ? (
                                 <div className="space-y-8 py-8">
                                     {[1, 2, 3].map((i) => (

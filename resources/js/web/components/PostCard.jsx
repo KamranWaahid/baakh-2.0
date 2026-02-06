@@ -26,7 +26,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                 <div className="flex-1">
                     <Link
                         to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'}
-                        className={`flex gap-2 mb-2 hover:opacity-80 transition-opacity w-fit ${is_couplet ? 'flex-col items-center mx-auto' : 'items-center'}`}
+                        className={`flex gap-2 mb-2 transition-opacity w-fit ${is_couplet ? 'flex-col items-center mx-auto' : 'items-center hover:opacity-80'}`}
                     >
                         <div className={`${is_couplet ? 'h-12 w-12' : 'h-5 w-5'} rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
                             {author_avatar ? (
