@@ -58,7 +58,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                 <div className="flex items-center gap-3 px-5 py-4" dir={isRtl ? 'rtl' : 'ltr'}>
                     <Search className="h-5 w-5 text-gray-400 shrink-0" />
                     <input
-                        className="flex-1 bg-transparent text-lg outline-none placeholder:text-gray-400 font-normal"
+                        className="flex-1 bg-transparent text-lg outline-none border-none focus:border-none focus:ring-0 focus:outline-none placeholder:text-gray-400 font-normal"
                         placeholder={isRtl ? "ڳوليو..." : "Search..."}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
