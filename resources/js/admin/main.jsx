@@ -65,7 +65,7 @@ import CitiesList from './pages/Locations/CitiesList';
 const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter basename="/admin/new">
+            <BrowserRouter basename="/admin">
                 <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/" element={

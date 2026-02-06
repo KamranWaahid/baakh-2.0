@@ -19,7 +19,7 @@ Route::get('admin/new/{any?}', function () {
 */
 Route::get('{any?}', function () {
     return view('app');
-})->where('any', '^(?!admin/new|api|login|register|password|logout).*$')->name('web.spa');
+})->where('any', '^(?!admin|api|login|register|password|logout).*$')->name('web.spa');
 
 /*
 |--------------------------------------------------------------------------
