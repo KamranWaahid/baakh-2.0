@@ -30,7 +30,7 @@ const ProsodyFeed = ({ lang }) => {
     const { data: items, isLoading } = useQuery({
         queryKey: ['prosody', lang],
         queryFn: async () => {
-            const response = await axios.get(`/v1/prosody?lang=${lang}`);
+            const response = await axios.get(`/api/v1/prosody?lang=${lang}`);
             return response.data;
         }
     });
