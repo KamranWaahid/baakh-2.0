@@ -134,15 +134,15 @@ const CitiesList = () => {
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Cities</h1>
-                    <p className="text-gray-500 mt-2">Manage cities within provinces</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Cities</h1>
+                    <p className="text-gray-500 mt-1 md:mt-2 text-sm md:text-base">Manage cities within provinces</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <Select value={filterProvince} onValueChange={setFilterProvince}>
-                        <SelectTrigger className="w-[200px]">
+                        <SelectTrigger className="w-full sm:w-[200px]">
                             <SelectValue placeholder="Filter by Province" />
                         </SelectTrigger>
                         <SelectContent>
@@ -153,20 +153,20 @@ const CitiesList = () => {
                         </SelectContent>
                     </Select>
 
-                    <Button onClick={handleCreate} className="flex items-center gap-2">
+                    <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
                         <Plus className="h-4 w-4" /> Add City
                     </Button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>City Name</TableHead>
+                            <TableHead className="min-w-[150px]">City Name</TableHead>
                             <TableHead>Province</TableHead>
-                            <TableHead>Coordinates</TableHead>
-                            <TableHead>Languages</TableHead>
+                            <TableHead className="hidden md:table-cell">Coordinates</TableHead>
+                            <TableHead className="hidden sm:table-cell">Languages</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -177,31 +177,33 @@ const CitiesList = () => {
                             </TableRow>
                         ) : cities?.map((city) => (
                             <TableRow key={city.id}>
-                                <TableCell className="font-medium flex items-center gap-2">
-                                    <MapPin className="h-4 w-4 text-gray-400" />
-                                    {getDisplayName(city)}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="secondary">{getProvinceName(city.province)}</Badge>
-                                </TableCell>
-                                <TableCell className="text-xs text-gray-400">
-                                    {city.geo_lat && city.geo_long ? `${city.geo_lat}, ${city.geo_long}` : '-'}
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex gap-1">
-                                        {city.details.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-xs">EN</Badge>}
-                                        {city.details.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-xs">SD</Badge>}
+                                <TableCell className="font-medium whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-400" />
+                                        {getDisplayName(city)}
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="whitespace-nowrap">
+                                    <Badge variant="secondary">{getProvinceName(city.province)}</Badge>
+                                </TableCell>
+                                <TableCell className="text-[10px] text-gray-400 hidden md:table-cell whitespace-nowrap">
+                                    {city.geo_lat && city.geo_long ? `${city.geo_lat}, ${city.geo_long}` : '-'}
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell">
+                                    <div className="flex gap-1">
+                                        {city.details.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
+                                        {city.details.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right whitespace-nowrap">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(city)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(city)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                             onClick={() => {
                                                 if (confirm('Delete this city?')) deleteMutation.mutate(city.id);
                                             }}

@@ -76,10 +76,10 @@ const PoetryList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Poetry</h2>
-                <Button asChild>
+        <div className="space-y-4 p-4 md:p-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poetry</h2>
+                <Button asChild className="w-full sm:w-auto">
                     <Link to="/poetry/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Poetry
                     </Link>
@@ -87,9 +87,9 @@ const PoetryList = () => {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Poetry</CardTitle>
-                    <div className="flex items-center py-4">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl">Manage Poetry</CardTitle>
+                    <div className="flex items-center py-2">
                         <Input
                             placeholder="Search titles or poets..."
                             value={search}
@@ -97,20 +97,20 @@ const PoetryList = () => {
                                 setSearch(e.target.value);
                                 setPage(1);
                             }}
-                            className="max-w-sm"
+                            className="max-w-full sm:max-w-sm"
                         />
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Title</TableHead>
+                                    <TableHead className="min-w-[200px]">Title</TableHead>
                                     <TableHead>Poet</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Added By</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Category</TableHead>
+                                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                                    <TableHead className="hidden xl:table-cell">Added By</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -120,9 +120,9 @@ const PoetryList = () => {
                                         <TableRow key={index}>
                                             <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                            <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
@@ -141,16 +141,16 @@ const PoetryList = () => {
                                 ) : (
                                     data?.data?.map((p) => (
                                         <TableRow key={p.id}>
-                                            <TableCell className="font-medium">
+                                            <TableCell className="font-medium whitespace-nowrap">
                                                 <span lang="sd">{p.info?.title || 'Untitled'}</span>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="whitespace-nowrap">
                                                 <span lang="sd">{p.poet_details?.poet_laqab || 'N/A'}</span>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden lg:table-cell whitespace-nowrap">
                                                 {p.category?.detail?.cat_name || 'N/A'}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden md:table-cell">
                                                 <div className="flex items-center gap-2">
                                                     {p.visibility === 1 ? (
                                                         <span className="text-green-600 text-xs font-semibold">Visible</span>
@@ -162,7 +162,7 @@ const PoetryList = () => {
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden xl:table-cell">
                                                 <div className="text-sm">
                                                     <div>{p.user?.name || 'System'}</div>
                                                     <div className="text-xs text-muted-foreground">
@@ -170,10 +170,11 @@ const PoetryList = () => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right space-x-1">
+                                            <TableCell className="text-right whitespace-nowrap space-x-1">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    className="h-8 w-8"
                                                     onClick={() => toggleVisibilityMutation.mutate(p.id)}
                                                     title={p.visibility === 1 ? "Hide" : "Show"}
                                                 >
@@ -182,20 +183,21 @@ const PoetryList = () => {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    className="h-8 w-8"
                                                     onClick={() => toggleFeaturedMutation.mutate(p.id)}
                                                     title={p.is_featured === 1 ? "Unfeature" : "Feature"}
                                                 >
                                                     <Star className={`h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" asChild>
-                                                    <Link to={`/admin/new/poetry/${p.id}/edit`}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                                    <Link to={`/poetry/${p.id}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                     onClick={() => handleDelete(p.id)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -209,11 +211,11 @@ const PoetryList = () => {
                     </div>
 
                     {data && (
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <div className="flex-1 text-sm text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                            <div className="text-sm text-muted-foreground text-center sm:text-left">
                                 Showing {data.from || 0} to {data.to || 0} of {data.total || 0} results
                             </div>
-                            <div className="space-x-2">
+                            <div className="flex items-center space-x-2">
                                 <Button
                                     variant="outline"
                                     size="sm"

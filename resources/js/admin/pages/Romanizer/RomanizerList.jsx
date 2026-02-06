@@ -73,29 +73,29 @@ const RomanizerList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                    <Languages className="h-8 w-8 text-primary" />
-                    <h2 className="text-3xl font-bold tracking-tight">Romanizer</h2>
+                    <Languages className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Romanizer</h2>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" asChild>
+                <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                    <Button variant="outline" asChild className="w-full sm:w-auto">
                         <Link to="/romanizer/check">
                             <FileSearch className="mr-2 h-4 w-4" /> Bulk Check
                         </Link>
                     </Button>
-                    <Button variant="outline" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
                         {refreshMutation.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                         Refresh Dictionary
                     </Button>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button onClick={handleAdd}>
+                            <Button onClick={handleAdd} className="w-full sm:w-auto">
                                 <Plus className="mr-2 h-4 w-4" /> Add Word
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
                                 <DialogTitle>{editingEntry ? 'Edit Romanized Word' : 'Add New Romanized Word'}</DialogTitle>
                             </DialogHeader>
@@ -128,7 +128,7 @@ const RomanizerList = () => {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

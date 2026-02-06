@@ -73,10 +73,10 @@ const CoupletsList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Couplets</h2>
-                <Button asChild>
+        <div className="space-y-4 p-4 md:p-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Couplets</h2>
+                <Button asChild className="w-full sm:w-auto">
                     <Link to="/couplet/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Couplet
                     </Link>
@@ -84,9 +84,9 @@ const CoupletsList = () => {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Couplets</CardTitle>
-                    <div className="flex items-center py-4">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl">Manage Couplets</CardTitle>
+                    <div className="flex items-center py-2">
                         <Input
                             placeholder="Search couplet text or poets..."
                             value={search}
@@ -94,22 +94,22 @@ const CoupletsList = () => {
                                 setSearch(e.target.value);
                                 setPage(1);
                             }}
-                            className="max-w-sm"
+                            className="max-w-full sm:max-w-sm"
                         />
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[80px]">ID</TableHead>
-                                    <TableHead>Couplet</TableHead>
+                                    <TableHead className="w-[80px] hidden sm:table-cell">ID</TableHead>
+                                    <TableHead className="min-w-[300px]">Couplet</TableHead>
                                     <TableHead>Poet</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Languages</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Added By</TableHead>
+                                    <TableHead className="hidden md:table-cell">Type</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Languages</TableHead>
+                                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                                    <TableHead className="hidden xl:table-cell">Added By</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -117,13 +117,13 @@ const CoupletsList = () => {
                                 {isLoading ? (
                                     Array(5).fill(0).map((_, index) => (
                                         <TableRow key={index}>
-                                            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                                            <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-12" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                                            <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
@@ -142,8 +142,8 @@ const CoupletsList = () => {
                                 ) : (
                                     data?.data?.map((c) => (
                                         <TableRow key={c.id}>
-                                            <TableCell className="font-mono text-xs">{c.id}</TableCell>
-                                            <TableCell className="font-medium">
+                                            <TableCell className="font-mono text-xs hidden sm:table-cell">{c.id}</TableCell>
+                                            <TableCell className="font-medium whitespace-nowrap">
                                                 <div className="space-y-1">
                                                     {c.couplet_text?.split('\n').slice(0, 2).map((line, i) => (
                                                         <div key={i} className="text-base leading-relaxed text-right" dir="rtl" lang="sd">
@@ -152,10 +152,10 @@ const CoupletsList = () => {
                                                     ))}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="whitespace-nowrap">
                                                 <span lang="sd">{c.poet_details?.poet_laqab || 'N/A'}</span>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden md:table-cell">
                                                 {c.poetry?.category?.detail?.cat_name ? (
                                                     <Badge variant="secondary" className="flex items-center gap-1 w-fit">
                                                         <LinkIcon className="h-3 w-3" />
@@ -168,7 +168,7 @@ const CoupletsList = () => {
                                                     </Badge>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden lg:table-cell">
                                                 <div className="flex flex-wrap gap-1">
                                                     {['sd', ...new Set(c.poetry?.translations?.map(t => t.lang) || [])].filter(l => l && l !== 'sd').length > 0 ? (
                                                         <>
@@ -184,7 +184,7 @@ const CoupletsList = () => {
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden md:table-cell">
                                                 <div className="flex items-center gap-2">
                                                     {c.poetry?.visibility === 1 ? (
                                                         <span className="text-green-600 text-xs font-semibold">Visible</span>
@@ -196,7 +196,7 @@ const CoupletsList = () => {
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell className="hidden xl:table-cell">
                                                 <div className="text-sm">
                                                     <div>{c.poetry?.user?.name || 'System'}</div>
                                                     <div className="text-xs text-muted-foreground">
@@ -204,10 +204,11 @@ const CoupletsList = () => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right space-x-1">
+                                            <TableCell className="text-right whitespace-nowrap space-x-1">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    className="h-8 w-8"
                                                     onClick={() => c.poetry && toggleVisibilityMutation.mutate(c.poetry.id)}
                                                     title={c.poetry?.visibility === 1 ? "Hide" : "Show"}
                                                     disabled={!c.poetry}
@@ -217,21 +218,22 @@ const CoupletsList = () => {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
+                                                    className="h-8 w-8"
                                                     onClick={() => c.poetry && toggleFeaturedMutation.mutate(c.poetry.id)}
                                                     title={c.poetry?.is_featured === 1 ? "Unfeature" : "Feature"}
                                                     disabled={!c.poetry}
                                                 >
                                                     <Star className={`h-4 w-4 ${c.poetry?.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" asChild>
-                                                    <Link to={c.poetry?.category_id ? `/admin/new/poetry/${c.poetry?.id}/edit` : `/admin/new/couplet/${c.poetry?.id}/edit`}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                                    <Link to={c.poetry?.category_id ? `/poetry/${c.poetry?.id}/edit` : `/couplet/${c.poetry?.id}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                     onClick={() => c.poetry && handleDelete(c.poetry.id)}
                                                     disabled={!c.poetry}
                                                 >
@@ -246,11 +248,11 @@ const CoupletsList = () => {
                     </div>
 
                     {data && (
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <div className="flex-1 text-sm text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                            <div className="text-sm text-muted-foreground text-center sm:text-left">
                                 Showing {data.from || 0} to {data.to || 0} of {data.total || 0} results
                             </div>
-                            <div className="space-x-2">
+                            <div className="flex items-center space-x-2">
                                 <Button
                                     variant="outline"
                                     size="sm"

@@ -62,10 +62,10 @@ const PoetsList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Poets</h2>
-                <Button asChild>
+        <div className="space-y-4 p-4 md:p-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poets</h2>
+                <Button asChild className="w-full sm:w-auto">
                     <Link to="/poets/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Poet
                     </Link>
@@ -73,9 +73,9 @@ const PoetsList = () => {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Poets</CardTitle>
-                    <div className="flex items-center py-4">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl">Manage Poets</CardTitle>
+                    <div className="flex items-center py-2">
                         <Input
                             placeholder="Search names or laqab..."
                             value={search}
@@ -83,20 +83,20 @@ const PoetsList = () => {
                                 setSearch(e.target.value);
                                 setPage(1); // Reset to first page on search
                             }}
-                            className="max-w-sm"
+                            className="max-w-full sm:max-w-sm"
                         />
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Image</TableHead>
+                                    <TableHead className="w-[80px]">Image</TableHead>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Laqab</TableHead>
-                                    <TableHead>Born</TableHead>
-                                    <TableHead>Died</TableHead>
+                                    <TableHead className="hidden md:table-cell">Born</TableHead>
+                                    <TableHead className="hidden md:table-cell">Died</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -108,8 +108,8 @@ const PoetsList = () => {
                                             <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
@@ -137,17 +137,17 @@ const PoetsList = () => {
                                                         onError={(e) => e.target.src = 'https://placehold.co/40'}
                                                     />
                                                 </TableCell>
-                                                <TableCell className="font-medium">
+                                                <TableCell className="font-medium whitespace-nowrap">
                                                     <span lang="sd">{poet.poet_name}</span>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="whitespace-nowrap">
                                                     <span lang="sd">{poet.poet_laqab}</span>
                                                 </TableCell>
-                                                <TableCell>{poet.date_of_birth || '-'}</TableCell>
-                                                <TableCell>{poet.date_of_death || '-'}</TableCell>
+                                                <TableCell className="hidden md:table-cell">{poet.date_of_birth || '-'}</TableCell>
+                                                <TableCell className="hidden md:table-cell">{poet.date_of_death || '-'}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <Button variant="ghost" size="sm" asChild>
-                                                        <Link to={`/admin/new/poets/${poet.id}/edit`}>Edit</Link>
+                                                        <Link to={`/poets/${poet.id}/edit`}>Edit</Link>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"

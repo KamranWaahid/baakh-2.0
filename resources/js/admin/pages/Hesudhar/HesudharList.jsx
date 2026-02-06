@@ -73,23 +73,26 @@ const HesudharList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Hesudhar</h2>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Hesudhar</h2>
+                    <p className="text-gray-500 text-sm md:text-base">Manage spell correction dictionary</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
                         {refreshMutation.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                         Refresh Dictionary
                     </Button>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button onClick={handleAdd}>
+                            <Button onClick={handleAdd} className="w-full sm:w-auto">
                                 <Plus className="mr-2 h-4 w-4" /> Add Word
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                                <DialogTitle>{editingEntry ? 'Edit Word pair' : 'Add New Word Pair'}</DialogTitle>
+                                <DialogTitle>{editingEntry ? 'Edit Word Pair' : 'Add New Word Pair'}</DialogTitle>
                             </DialogHeader>
                             <HesudharForm
                                 entry={editingEntry}
@@ -113,7 +116,7 @@ const HesudharList = () => {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>

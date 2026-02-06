@@ -44,14 +44,14 @@ const RomanizerBulkCheck = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" asChild>
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex items-center gap-3 md:gap-4">
+                <Button variant="ghost" size="icon" asChild className="h-8 w-8 md:h-10 md:w-10">
                     <Link to="/romanizer">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight">Bulk Check</h2>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Bulk Check</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

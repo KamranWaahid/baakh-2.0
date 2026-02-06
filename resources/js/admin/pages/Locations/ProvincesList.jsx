@@ -132,15 +132,15 @@ const ProvincesList = () => {
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Provinces / States</h1>
-                    <p className="text-gray-500 mt-2">Manage provinces for each country</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Provinces / States</h1>
+                    <p className="text-gray-500 mt-1 md:mt-2 text-sm md:text-base">Manage provinces for each country</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <Select value={filterCountry} onValueChange={setFilterCountry}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Filter by Country" />
                         </SelectTrigger>
                         <SelectContent>
@@ -151,19 +151,19 @@ const ProvincesList = () => {
                         </SelectContent>
                     </Select>
 
-                    <Button onClick={handleCreate} className="flex items-center gap-2">
+                    <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
                         <Plus className="h-4 w-4" /> Add Province
                     </Button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Province Name</TableHead>
+                            <TableHead className="min-w-[150px]">Province Name</TableHead>
                             <TableHead>Country</TableHead>
-                            <TableHead>Languages</TableHead>
+                            <TableHead className="hidden sm:table-cell">Languages</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -174,28 +174,30 @@ const ProvincesList = () => {
                             </TableRow>
                         ) : provinces?.map((province) => (
                             <TableRow key={province.id}>
-                                <TableCell className="font-medium flex items-center gap-2">
-                                    <Map className="h-4 w-4 text-gray-400" />
-                                    {getDisplayName(province)}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="secondary">{getCountryName(province.country)}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex gap-1">
-                                        {province.details.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-xs">EN</Badge>}
-                                        {province.details.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-xs">SD</Badge>}
+                                <TableCell className="font-medium whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <Map className="h-4 w-4 text-gray-400" />
+                                        {getDisplayName(province)}
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="whitespace-nowrap">
+                                    <Badge variant="secondary">{getCountryName(province.country)}</Badge>
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell">
+                                    <div className="flex gap-1">
+                                        {province.details.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
+                                        {province.details.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right whitespace-nowrap">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(province)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(province)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                             onClick={() => {
                                                 if (confirm('Delete this province?')) deleteMutation.mutate(province.id);
                                             }}

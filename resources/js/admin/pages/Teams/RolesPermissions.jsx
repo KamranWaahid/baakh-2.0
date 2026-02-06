@@ -91,45 +91,45 @@ const RolesPermissions = () => {
     const groupedPermissions = permissionsObj?.grouped || {};
 
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Roles & Permissions</h1>
-                    <p className="text-gray-500 mt-2">Manage system roles and access control</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Roles & Permissions</h1>
+                    <p className="text-gray-500 mt-1 md:mt-2 text-sm md:text-base">Manage system roles and access control</p>
                 </div>
-                <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
                     <Plus className="h-4 w-4" /> Create Role
                 </Button>
             </div>
 
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Role Name</TableHead>
-                            <TableHead>Permissions Count</TableHead>
-                            <TableHead>Guard</TableHead>
+                            <TableHead className="min-w-[150px]">Role Name</TableHead>
+                            <TableHead>Permissions</TableHead>
+                            <TableHead className="hidden md:table-cell">Guard</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {roles?.map((role) => (
                             <TableRow key={role.id}>
-                                <TableCell className="font-medium capitalize">{role.name.replace('_', ' ')}</TableCell>
-                                <TableCell>
-                                    <Badge variant="secondary">{role.permissions.length} permissions</Badge>
+                                <TableCell className="font-medium capitalize whitespace-nowrap">{role.name.replace('_', ' ')}</TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                    <Badge variant="secondary" className="text-[10px]">{role.permissions.length} perms</Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{role.guard_name}</TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-muted-foreground hidden md:table-cell whitespace-nowrap">{role.guard_name}</TableCell>
+                                <TableCell className="text-right whitespace-nowrap">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(role)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(role)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         {!['super_admin', 'admin', 'editor', 'contributor', 'viewer'].includes(role.name) && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                 onClick={() => {
                                                     if (confirm('Delete this role?')) deleteMutation.mutate(role.id);
                                                 }}

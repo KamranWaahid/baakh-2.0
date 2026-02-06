@@ -113,13 +113,13 @@ const CategoryForm = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto pb-10">
+        <div className="max-w-4xl mx-auto pb-10 px-4 md:px-0">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" onClick={() => navigate('/admin/new/categories')}>
+                    <Button variant="outline" size="icon" onClick={() => navigate('/categories')}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <h2 className="text-3xl font-bold tracking-tight">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
                         {isEditing ? 'Edit Category' : 'Add New Category'}
                     </h2>
                 </div>
@@ -127,10 +127,10 @@ const CategoryForm = () => {
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Basic Information</CardTitle>
+                                <CardTitle className="text-xl">Basic Information</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -154,7 +154,7 @@ const CategoryForm = () => {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Gender</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value || 'none'}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select gender" />
@@ -196,7 +196,7 @@ const CategoryForm = () => {
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Translations</CardTitle>
+                                <CardTitle className="text-xl">Translations</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <FormField
@@ -230,9 +230,9 @@ const CategoryForm = () => {
                         </Card>
                     </div>
 
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => navigate('/admin/new/categories')}>Cancel</Button>
-                        <Button type="submit" disabled={mutation.isPending}>
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+                        <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => navigate('/categories')}>Cancel</Button>
+                        <Button type="submit" className="w-full sm:w-auto" disabled={mutation.isPending}>
                             {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             {isEditing ? 'Update Category' : 'Create Category'}
                         </Button>

@@ -97,25 +97,25 @@ const LanguagesList = () => {
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Languages</h1>
-                    <p className="text-gray-500 mt-2">Manage system languages and localization settings</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Languages</h1>
+                    <p className="text-gray-500 mt-1 md:mt-2 text-sm md:text-base">Manage system languages and localization settings</p>
                 </div>
-                <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
                     <Plus className="h-4 w-4" /> Add Language
                 </Button>
             </div>
 
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Title</TableHead>
+                            <TableHead className="min-w-[150px]">Title</TableHead>
                             <TableHead>Code</TableHead>
-                            <TableHead>Direction</TableHead>
-                            <TableHead>Folder</TableHead>
+                            <TableHead className="hidden md:table-cell">Direction</TableHead>
+                            <TableHead className="hidden lg:table-cell">Folder</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -123,29 +123,31 @@ const LanguagesList = () => {
                     <TableBody>
                         {languages?.map((lang) => (
                             <TableRow key={lang.id}>
-                                <TableCell className="font-medium flex items-center gap-2">
-                                    <Globe className="h-4 w-4 text-gray-400" />
-                                    {lang.lang_title}
+                                <TableCell className="font-medium whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <Globe className="h-4 w-4 text-gray-400" />
+                                        {lang.lang_title}
+                                    </div>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline" className="uppercase">{lang.lang_code}</Badge>
                                 </TableCell>
-                                <TableCell className="uppercase">{lang.lang_dir}</TableCell>
-                                <TableCell>{lang.lang_folder || '-'}</TableCell>
+                                <TableCell className="uppercase hidden md:table-cell">{lang.lang_dir}</TableCell>
+                                <TableCell className="hidden lg:table-cell">{lang.lang_folder || '-'}</TableCell>
                                 <TableCell>
                                     {lang.is_default ? (
-                                        <Badge variant="default">Default</Badge>
+                                        <Badge variant="default" className="text-[10px]">Default</Badge>
                                     ) : null}
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right whitespace-nowrap">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(lang)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(lang)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                             onClick={() => {
                                                 if (confirm('Delete this language?')) deleteMutation.mutate(lang.id);
                                             }}

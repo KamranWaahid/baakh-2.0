@@ -107,54 +107,56 @@ const CountriesList = () => {
     };
 
     return (
-        <div className="p-8 space-y-6">
-            <div className="flex justify-between items-center">
+        <div className="p-4 md:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Countries</h1>
-                    <p className="text-gray-500 mt-2">Manage supported countries</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Countries</h1>
+                    <p className="text-gray-500 mt-1 md:mt-2 text-sm md:text-base">Manage supported countries</p>
                 </div>
-                <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
                     <Plus className="h-4 w-4" /> Add Country
                 </Button>
             </div>
 
-            <div className="bg-white rounded-lg border">
+            <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Name</TableHead>
+                            <TableHead className="min-w-[150px]">Name</TableHead>
                             <TableHead>Abbreviation</TableHead>
-                            <TableHead>Continent</TableHead>
-                            <TableHead>Languages</TableHead>
+                            <TableHead className="hidden md:table-cell">Continent</TableHead>
+                            <TableHead className="hidden sm:table-cell">Languages</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {countries?.map((country) => (
                             <TableRow key={country.id}>
-                                <TableCell className="font-medium flex items-center gap-2">
-                                    <MapPin className="h-4 w-4 text-gray-400" />
-                                    {getDisplayName(country)}
+                                <TableCell className="font-medium whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-400" />
+                                        {getDisplayName(country)}
+                                    </div>
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline">{country.Abbreviation}</Badge>
                                 </TableCell>
-                                <TableCell>{country.Continent}</TableCell>
-                                <TableCell>
+                                <TableCell className="hidden md:table-cell whitespace-nowrap">{country.Continent}</TableCell>
+                                <TableCell className="hidden sm:table-cell">
                                     <div className="flex gap-1">
-                                        {country.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-xs">EN</Badge>}
-                                        {country.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-xs">SD</Badge>}
+                                        {country.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
+                                        {country.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right whitespace-nowrap">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(country)}>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(country)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                             onClick={() => {
                                                 if (confirm('Delete this country?')) deleteMutation.mutate(country.id);
                                             }}

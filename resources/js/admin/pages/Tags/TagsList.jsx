@@ -103,19 +103,19 @@ const TagsList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Tags</h2>
+        <div className="space-y-4 p-4 md:p-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Tags</h2>
                 <Dialog open={isDialogOpen} onOpenChange={(open) => {
                     setIsDialogOpen(open);
                     if (!open) resetForm();
                 }}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button className="w-full sm:w-auto">
                             <Plus className="mr-2 h-4 w-4" /> Add Tag
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle>{editingTag ? 'Edit Tag' : 'Create New Tag'}</DialogTitle>
                         </DialogHeader>
@@ -128,9 +128,10 @@ const TagsList = () => {
                                     onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                                     placeholder="Enter tag name"
                                     required
+                                    className="w-full"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="tag-lang">Language</Label>
                                     <Input
@@ -150,9 +151,9 @@ const TagsList = () => {
                                     />
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                            <DialogFooter className="gap-2 sm:gap-0">
+                                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+                                <Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending || updateMutation.isPending}>
                                     {createMutation.isPending || updateMutation.isPending ? 'Saving...' : 'Save'}
                                 </Button>
                             </DialogFooter>
@@ -162,9 +163,9 @@ const TagsList = () => {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Tags</CardTitle>
-                    <div className="flex items-center py-4">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl">Manage Tags</CardTitle>
+                    <div className="flex items-center py-2">
                         <Input
                             placeholder="Search tags..."
                             value={search}
@@ -172,20 +173,20 @@ const TagsList = () => {
                                 setSearch(e.target.value);
                                 setPage(1);
                             }}
-                            className="max-w-sm"
+                            className="max-w-full sm:max-w-sm"
                         />
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[80px]">ID</TableHead>
-                                    <TableHead>Tag Name</TableHead>
-                                    <TableHead>Slug</TableHead>
+                                    <TableHead className="w-[80px] hidden sm:table-cell">ID</TableHead>
+                                    <TableHead className="min-w-[150px]">Tag Name</TableHead>
+                                    <TableHead className="hidden md:table-cell">Slug</TableHead>
                                     <TableHead>Language</TableHead>
-                                    <TableHead>Type</TableHead>
+                                    <TableHead className="hidden lg:table-cell">Type</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -193,12 +194,12 @@ const TagsList = () => {
                                 {isLoading ? (
                                     Array(5).fill(0).map((_, index) => (
                                         <TableRow key={index}>
-                                            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                                            <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-12" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                                            <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : isError ? (
@@ -216,24 +217,24 @@ const TagsList = () => {
                                 ) : (
                                     data?.data?.map((tag) => (
                                         <TableRow key={tag.id}>
-                                            <TableCell className="font-medium">{tag.id}</TableCell>
-                                            <TableCell>
+                                            <TableCell className="font-medium hidden sm:table-cell">{tag.id}</TableCell>
+                                            <TableCell className="whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <Tag className="h-3 w-3 text-muted-foreground" />
                                                     <span lang={tag.lang === 'sd' ? 'sd' : undefined}>{tag.tag}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{tag.slug || '-'}</TableCell>
-                                            <TableCell><span className="uppercase text-xs font-semibold bg-gray-100 px-2 py-1 rounded">{tag.lang || 'SD'}</span></TableCell>
-                                            <TableCell>{tag.type || '-'}</TableCell>
-                                            <TableCell className="text-right space-x-1">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEdit(tag)}>
+                                            <TableCell className="hidden md:table-cell whitespace-nowrap">{tag.slug || '-'}</TableCell>
+                                            <TableCell><span className="uppercase text-[10px] font-semibold bg-gray-100 px-2 py-1 rounded">{tag.lang || 'SD'}</span></TableCell>
+                                            <TableCell className="hidden lg:table-cell whitespace-nowrap">{tag.type || '-'}</TableCell>
+                                            <TableCell className="text-right whitespace-nowrap space-x-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tag)}>
                                                     <Edit className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                     onClick={() => handleDelete(tag.id)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
@@ -247,11 +248,11 @@ const TagsList = () => {
                     </div>
 
                     {data && (
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <div className="flex-1 text-sm text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                            <div className="text-sm text-muted-foreground text-center sm:text-left">
                                 Showing {data.from || 0} to {data.to || 0} of {data.total || 0} results
                             </div>
-                            <div className="space-x-2">
+                            <div className="flex items-center space-x-2">
                                 <Button
                                     variant="outline"
                                     size="sm"

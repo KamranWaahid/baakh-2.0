@@ -176,21 +176,21 @@ const Dashboard = () => {
     );
 
     return (
-        <div className="flex flex-col gap-8 p-8 fade-in-bottom">
+        <div className="flex flex-col gap-6 p-4 md:p-8 fade-in-bottom">
             {/* Header Section */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-                    <p className="mt-2 text-lg text-gray-500">Overview of your platform's performance and activity.</p>
+                    <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+                    <p className="mt-1 md:mt-2 text-sm md:text-lg text-gray-500">Overview of your platform's performance and activity.</p>
                 </div>
-                <div className="flex gap-4">
-                    <Button variant="outline" className="gap-2">
-                        <Search className="h-4 w-4" />
+                <div className="flex flex-wrap gap-2 md:gap-4">
+                    <Button variant="outline" className="gap-2 text-xs md:text-sm">
+                        <Search className="h-3 w-3 md:h-4 md:w-4" />
                         Search
                     </Button>
-                    <Button className="gap-2 bg-black hover:bg-gray-800 text-white" asChild>
+                    <Button className="gap-2 bg-black hover:bg-gray-800 text-white text-xs md:text-sm" asChild>
                         <Link to="/poetry/create">
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3 w-3 md:h-4 md:w-4" />
                             New Entry
                         </Link>
                     </Button>

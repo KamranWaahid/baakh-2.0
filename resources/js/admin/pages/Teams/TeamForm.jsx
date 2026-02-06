@@ -55,8 +55,8 @@ const TeamForm = () => {
     if (isEditMode && isLoading) return <div>Loading...</div>;
 
     return (
-        <div className="max-w-2xl mx-auto p-8">
-            <Button variant="ghost" onClick={() => navigate('/teams')} className="mb-6 pl-0 hover:pl-2 transition-all">
+        <div className="max-w-2xl mx-auto p-4 md:p-8">
+            <Button variant="ghost" onClick={() => navigate('/teams')} className="mb-4 md:mb-6 pl-0 hover:pl-2 transition-all flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back to Teams
             </Button>
 

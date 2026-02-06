@@ -48,10 +48,10 @@ const CategoriesList = () => {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Categories</h2>
-                <Button asChild>
+        <div className="space-y-4 p-4 md:p-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Categories</h2>
+                <Button asChild className="w-full sm:w-auto">
                     <Link to="/categories/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Category
                     </Link>
@@ -59,33 +59,33 @@ const CategoriesList = () => {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Manage Categories</CardTitle>
-                    <div className="flex items-center py-4">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-xl">Manage Categories</CardTitle>
+                    <div className="flex items-center py-2">
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 type="search"
                                 placeholder="Search categories..."
-                                className="pl-8 w-full max-w-sm"
+                                className="pl-8 w-full max-w-full sm:max-w-sm"
                                 value={search}
                                 onChange={(e) => {
                                     setSearch(e.target.value);
-                                    setPage(1);
+                                    setPage(Page => 1);
                                 }}
                             />
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name (Sindhi)</TableHead>
-                                    <TableHead>Slug</TableHead>
+                                    <TableHead className="min-w-[150px]">Name (Sindhi)</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Slug</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Gender</TableHead>
+                                    <TableHead className="hidden md:table-cell">Gender</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -94,9 +94,9 @@ const CategoriesList = () => {
                                     Array(5).fill(0).map((_, index) => (
                                         <TableRow key={index}>
                                             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                            <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
@@ -115,10 +115,10 @@ const CategoriesList = () => {
                                 ) : (
                                     data?.data?.map((category) => (
                                         <TableRow key={category.id}>
-                                            <TableCell className="font-medium">
+                                            <TableCell className="font-medium whitespace-nowrap">
                                                 <span lang="sd">{category.short_detail?.cat_name || 'N/A'}</span>
                                             </TableCell>
-                                            <TableCell>{category.slug}</TableCell>
+                                            <TableCell className="hidden sm:table-cell whitespace-nowrap">{category.slug}</TableCell>
                                             <TableCell>
                                                 {category.is_featured ? (
                                                     <Badge variant="secondary">Featured</Badge>
@@ -126,15 +126,15 @@ const CategoriesList = () => {
                                                     <Badge variant="outline">Regular</Badge>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="capitalize">{category.gender || 'Any'}</TableCell>
-                                            <TableCell className="text-right">
+                                            <TableCell className="capitalize hidden md:table-cell">{category.gender || 'Any'}</TableCell>
+                                            <TableCell className="text-right whitespace-nowrap">
                                                 <div className="flex justify-end gap-2">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         asChild
                                                     >
-                                                        <Link to={`/admin/new/categories/${category.id}/edit`}>Edit</Link>
+                                                        <Link to={`/categories/${category.id}/edit`}>Edit</Link>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
@@ -155,11 +155,11 @@ const CategoriesList = () => {
                     </div>
 
                     {data && (
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <div className="flex-1 text-sm text-muted-foreground">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                            <div className="text-sm text-muted-foreground text-center sm:text-left">
                                 Showing {data.from} to {data.to} of {data.total} results
                             </div>
-                            <div className="space-x-2">
+                            <div className="flex items-center space-x-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
