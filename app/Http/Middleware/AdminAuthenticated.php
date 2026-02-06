@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminAuthenticated
 {
-   
+
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
@@ -19,11 +19,11 @@ class AdminAuthenticated
         // User is not authenticated, check the current route
         if ($request->is('admin*')) {
             // If the route is in the 'admin' namespace, redirect to the login page
-            return redirect('admin/login');
+            return redirect('/');
         }
 
         // For non-admin routes, continue to the route
         return $next($request);
-        
+
     }
 }

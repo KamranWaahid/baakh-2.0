@@ -15,6 +15,7 @@ class LoginController extends Controller
      */
     public function __invoke(Request $request)
     {
+
         $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -27,6 +28,7 @@ class LoginController extends Controller
         }
 
         $user = Auth::user();
+
 
         if (!$user->isActive()) {
             Auth::logout();

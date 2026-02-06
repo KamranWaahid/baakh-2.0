@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children }) => {
             } catch (error) {
                 setIsAuthenticated(false);
                 if (location.pathname !== '/login') {
-                    navigate('/login');
+                    window.location.href = '/';
                 }
             }
         };

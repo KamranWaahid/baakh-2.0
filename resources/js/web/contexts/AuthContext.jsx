@@ -10,7 +10,9 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
         try {
             const response = await api.get('/api/auth/me');
-            setUser(response.data);
+            const userData = response.data.user;
+            setUser(userData);
+            return userData;
         } catch (error) {
             // Silently handle 401 (Unauthorized) as it simply means the user is a guest
             if (error.response?.status !== 401) {
@@ -18,6 +20,7 @@ export const AuthProvider = ({ children }) => {
                 // console.error('Auth check failed:', error);
             }
             setUser(null);
+            return null;
         } finally {
             setLoading(false);
         }
@@ -30,6 +33,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await api.post('/api/auth/logout');
+            localStorage.removeItem('auth_token');
             setUser(null);
         } catch (error) {
             console.error('Logout failed', error);

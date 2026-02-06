@@ -22,8 +22,8 @@ Route::middleware('guest')->group(function () {
 
     /* Route::post('register', [RegisteredUserController::class, 'store']); */
 
-    Route::get('admin/login', [AuthenticatedSessionController::class, 'create'])
-                ->name('admin.login');
+    /* Route::get('admin/login', [AuthenticatedSessionController::class, 'create'])
+                ->name('admin.login'); */
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
@@ -38,15 +38,15 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('admin/verify-email', EmailVerificationPromptController::class)
-                ->name('verification.notice');
+        ->name('verification.notice');
 
     Route::get('admin/verify-email/{id}/{hash}', VerifyEmailController::class)
-                ->middleware(['signed', 'throttle:6,1'])
-                ->name('verification.verify');
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-                ->middleware('throttle:6,1')
-                ->name('verification.send');
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
 
     //Route::get('admin/confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
 
@@ -55,7 +55,7 @@ Route::middleware('auth')->group(function () {
     //Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-                ->name('logout');
+        ->name('logout');
 });
 
 

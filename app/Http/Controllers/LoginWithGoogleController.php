@@ -40,8 +40,8 @@ class LoginWithGoogleController extends Controller
 
         // Log in the user
         auth()->login($user);
-        return redirect(route('user.profile'));
-        
+        return redirect(url('/'));
+
     }
 
 
