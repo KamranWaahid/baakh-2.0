@@ -155,37 +155,64 @@ const PoetProfile = ({ lang }) => {
 
                                     <div className="flex-1 overflow-y-auto p-6 pt-0">
                                         <div className="space-y-5 text-sm">
+                                            {(isRtl ? poet.pen_name_sd : poet.pen_name_en) && (
+                                                <div className="bg-gray-50 p-4 rounded-lg">
+                                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                        {isRtl ? 'تخلص' : 'Pen Name'}
+                                                    </span>
+                                                    <span className="font-medium text-gray-900">
+                                                        {isRtl ? poet.pen_name_sd : poet.pen_name_en}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                                {/* Birth Info */}
                                                 <div>
                                                     <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
                                                         {isRtl ? 'جنم' : 'Born'}
                                                     </span>
-                                                    <span className="font-medium text-gray-900">
+                                                    <span className="font-medium text-gray-900 block mb-3">
                                                         {poet.dob ? new Date(poet.dob).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
                                                     </span>
-                                                </div>
-                                                {poet.dod && (
-                                                    <div>
-                                                        <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                            {isRtl ? 'وفات' : 'Died'}
-                                                        </span>
-                                                        <span className="font-medium text-gray-900">
-                                                            {new Date(poet.dod).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
 
-                                            {(isRtl ? poet.location_sd : poet.location_en) && (
-                                                <div className="bg-gray-50 p-4 rounded-lg -mt-3">
-                                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                        {isRtl ? 'هنڌ' : 'Location'}
-                                                    </span>
-                                                    <span className="font-medium text-gray-900">
-                                                        {isRtl ? poet.location_sd : poet.location_en}
-                                                    </span>
+                                                    {(isRtl ? poet.birth_location_sd : poet.birth_location_en) && (
+                                                        <>
+                                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                                {isRtl ? 'جنم جو هنڌ' : 'Birth Place'}
+                                                            </span>
+                                                            <span className="font-medium text-gray-900 block">
+                                                                {isRtl ? poet.birth_location_sd : poet.birth_location_en}
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </div>
-                                            )}
+
+                                                {/* Death Info */}
+                                                <div>
+                                                    {poet.dod && (
+                                                        <>
+                                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                                {isRtl ? 'وفات' : 'Died'}
+                                                            </span>
+                                                            <span className="font-medium text-gray-900 block mb-3">
+                                                                {new Date(poet.dod).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                                            </span>
+                                                        </>
+                                                    )}
+
+                                                    {(isRtl ? poet.death_location_sd : poet.death_location_en) && (
+                                                        <>
+                                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                                {isRtl ? 'وفات جو هنڌ' : 'Death Place'}
+                                                            </span>
+                                                            <span className="font-medium text-gray-900 block">
+                                                                {isRtl ? poet.death_location_sd : poet.death_location_en}
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
 
                                             <Separator />
 

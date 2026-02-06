@@ -160,14 +160,18 @@ class PoetController extends Controller
             // English Data
             'name_en' => $detailEn->poet_name ?? $detailSd->poet_name ?? 'N/A',
             'laqab_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
+            'pen_name_en' => $detailEn->pen_name ?? null,
             'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
-            'location_en' => $getLocation($detailEn->birth_place ?? $detailSd->birth_place ?? null, 'en'),
+            'birth_location_en' => $getLocation($detailEn->birth_place ?? $detailSd->birth_place ?? null, 'en'),
+            'death_location_en' => $getLocation($detailEn->death_place ?? $detailSd->death_place ?? null, 'en'),
 
             // Sindhi Data
             'name_sd' => $detailSd->poet_name ?? $detailEn->poet_name ?? 'N/A',
             'laqab_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
+            'pen_name_sd' => $detailSd->pen_name ?? null,
             'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
-            'location_sd' => $getLocation($detailSd->birth_place ?? $detailEn->birth_place ?? null, 'sd'),
+            'birth_location_sd' => $getLocation($detailSd->birth_place ?? $detailEn->birth_place ?? null, 'sd'),
+            'death_location_sd' => $getLocation($detailSd->death_place ?? $detailEn->death_place ?? null, 'sd'),
 
             'entries_count' => $poet->poetry_count ?? 0,
             'suggested' => $suggested,
