@@ -24,8 +24,11 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
         <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
-                    <Link to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'} className={`flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity w-fit ${is_couplet ? 'mx-auto justify-center' : ''}`}>
-                        <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+                    <Link
+                        to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'}
+                        className={`flex gap-2 mb-2 hover:opacity-80 transition-opacity w-fit ${is_couplet ? 'flex-col items-center mx-auto' : 'items-center'}`}
+                    >
+                        <div className={`${is_couplet ? 'h-12 w-12' : 'h-5 w-5'} rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
                             {author_avatar ? (
                                 <img
                                     src={author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`}
@@ -33,37 +36,47 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     className="w-full h-full object-cover"
                                 />
                             ) : (
-                                <User className="h-3 w-3" />
+                                <User className={is_couplet ? 'h-6 w-6' : 'h-3 w-3'} />
                             )}
                         </div>
                         <span className="text-sm hover:underline">{safeAuthor}</span>
                     </Link>
 
-                    <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}>
-                        <div className="flex justify-between items-start gap-4">
+                    {is_couplet ? (
+                        <div className="flex justify-center items-start gap-4">
                             <div className="flex-1">
-                                {!is_couplet && (
-                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
-                                        {title || 'Untitled'}
-                                    </h2>
-                                )}
                                 {excerpt && (
-                                    <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} ${is_couplet ? 'whitespace-pre-wrap text-center text-xl md:text-2xl font-medium py-6' : 'text-sm md:text-base line-clamp-2'}`}>
+                                    <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} whitespace-pre-wrap text-center text-xl md:text-2xl font-medium py-6`}>
                                         {excerpt}
                                     </p>
                                 )}
                             </div>
-                            {cover && !is_couplet && (
-                                <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-sm bg-gray-50 border border-gray-100">
-                                    <img
-                                        src={cover.startsWith('http') ? cover : `/${cover}`}
-                                        alt={title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
-                                </div>
-                            )}
                         </div>
-                    </Link>
+                    ) : (
+                        <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}>
+                            <div className="flex justify-between items-start gap-4">
+                                <div className="flex-1">
+                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
+                                        {title || 'Untitled'}
+                                    </h2>
+                                    {excerpt && (
+                                        <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} text-sm md:text-base line-clamp-2`}>
+                                            {excerpt}
+                                        </p>
+                                    )}
+                                </div>
+                                {cover && (
+                                    <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-sm bg-gray-50 border border-gray-100">
+                                        <img
+                                            src={cover.startsWith('http') ? cover : `/${cover}`}
+                                            alt={title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    )}
 
                     <div className="flex flex-col gap-4">
                         {!is_couplet && (
