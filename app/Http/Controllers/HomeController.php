@@ -385,7 +385,8 @@ class HomeController extends UserController
                 'author_avatar' => $p->poet?->poet_pic,
                 'cover' => $p->media->first()?->media_url,
                 'excerpt' => $p->all_couplets->first()?->couplet_text ?? '',
-                'date' => $p->created_at->diffForHumans(),
+                'date' => $p->created_at->toIso8601String(),
+                'date_human' => $p->created_at->diffForHumans(),
                 'readTime' => '5 min read', // Mock for now
                 'category' => $p->category_detail?->cat_name ?? $p->category?->slug ?? 'General',
                 'cat_slug' => $p->category?->slug,

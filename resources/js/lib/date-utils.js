@@ -6,6 +6,7 @@ const SINDHI_MONTHS = [
 export const formatDate = (dateString, lang = 'en') => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return original if parse failed
 
     if (lang === 'sd') {
         const day = date.getDate();
