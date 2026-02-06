@@ -24,23 +24,35 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
         <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
-                    <Link
-                        to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'}
-                        className={`flex gap-2 mb-2 transition-opacity w-fit ${is_couplet ? 'flex-col items-center mx-auto' : 'items-center hover:opacity-80'}`}
-                    >
-                        <div className={`${is_couplet ? 'h-12 w-12' : 'h-5 w-5'} rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
-                            {author_avatar ? (
-                                <img
-                                    src={author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`}
-                                    alt={safeAuthor}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <User className={is_couplet ? 'h-6 w-6' : 'h-3 w-3'} />
-                            )}
-                        </div>
-                        <span className="text-sm hover:underline">{safeAuthor}</span>
-                    </Link>
+                    <div className={`flex flex-wrap items-center gap-2 mb-2 text-sm ${is_couplet ? 'justify-center' : ''}`}>
+                        <Link
+                            to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'}
+                            className={`flex items-center gap-2 transition-opacity w-fit hover:opacity-80`}
+                        >
+                            <div className={`h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
+                                {author_avatar ? (
+                                    <img
+                                        src={author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`}
+                                        alt={safeAuthor}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <User className="h-3 w-3" />
+                                )}
+                            </div>
+                            <span className="font-medium text-gray-900 hover:underline">{safeAuthor}</span>
+                        </Link>
+
+                        {!is_couplet && (
+                            <>
+                                <span className="text-gray-300">·</span>
+                                <span className="text-gray-500">{formatDate(safeDate, lang)}</span>
+                                <span className="text-gray-300">·</span>
+                                <span className="text-gray-500">{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
+                                {showStar && <Sparkles className={`h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ${isRtl ? 'mr-1' : 'ml-1'}`} />}
+                            </>
+                        )}
+                    </div>
 
                     {is_couplet ? (
                         <div className="flex justify-center items-start gap-4">
@@ -73,31 +85,18 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                         </Link>
                     )}
 
-                    <div className="flex flex-col gap-4">
-                        {!is_couplet && (
-                            <div className="flex items-center justify-between text-gray-500 text-sm">
-                                <div className="flex items-center gap-3">
-                                    {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ${isRtl ? 'ml-0' : ''}`} />}
-                                    <span>{formatDate(safeDate, lang)}</span>
-                                    <span>·</span>
-                                    <span>{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
-                                </div>
+                    <PoemActionBar
+                        poem={postPoem}
+                        lang={lang}
+                        className={is_couplet ? 'justify-center gap-10' : ''}
+                        leftContent={is_couplet ? (
+                            <div className="flex items-center gap-3 text-sm">
+                                {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ml-1`} />}
+                                <span>{formatDate(safeDate, lang)}</span>
+                                <span className="text-gray-300">·</span>
                             </div>
-                        )}
-
-                        <PoemActionBar
-                            poem={postPoem}
-                            lang={lang}
-                            className={is_couplet ? 'justify-center gap-10' : ''}
-                            leftContent={is_couplet ? (
-                                <div className="flex items-center gap-3 text-sm">
-                                    {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ml-1`} />}
-                                    <span>{formatDate(safeDate, lang)}</span>
-                                    <span className="text-gray-300">·</span>
-                                </div>
-                            ) : null}
-                        />
-                    </div>
+                        ) : null}
+                    />
                 </div>
             </div>
         </article>
