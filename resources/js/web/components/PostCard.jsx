@@ -4,7 +4,7 @@ import { Sparkles, User } from 'lucide-react';
 import PoemActionBar from './PoemActionBar';
 import { formatDate } from '@/lib/date-utils';
 
-const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, id }) => {
+const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, id, is_couplet = false }) => {
     const isRtl = lang === 'sd';
 
     const safeDate = date || '';
@@ -21,7 +21,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
     };
 
     return (
-        <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'}`}>
+        <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
                     <Link to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'} className="flex items-center gap-2 mb-2 hover:opacity-80 transition-opacity w-fit">
@@ -46,12 +46,12 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     {title || 'Untitled'}
                                 </h2>
                                 {excerpt && (
-                                    <p className={`text-gray-600 line-clamp-2 mb-4 text-sm md:text-base leading-relaxed ${isRtl ? 'font-arabic' : ''}`}>
+                                    <p className={`text-gray-600 mb-4 text-sm md:text-base leading-relaxed ${isRtl ? 'font-arabic' : ''} ${is_couplet ? 'whitespace-pre-wrap text-center text-lg font-medium py-4' : 'line-clamp-2'}`}>
                                         {excerpt}
                                     </p>
                                 )}
                             </div>
-                            {cover && (
+                            {cover && !is_couplet && (
                                 <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-sm bg-gray-50 border border-gray-100">
                                     <img
                                         src={cover.startsWith('http') ? cover : `/${cover}`}

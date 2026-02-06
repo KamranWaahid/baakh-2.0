@@ -14,6 +14,7 @@ import { formatDate } from '@/lib/date-utils';
 const PoetProfile = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { slug } = useParams();
+    const [activeTab, setActiveTab] = React.useState('poetry');
 
     const { ref, inView } = useInView();
 
@@ -25,11 +26,12 @@ const PoetProfile = ({ lang }) => {
         }
     });
 
+    // Poetry Query
     const {
         data: poetryData,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
+        fetchNextPage: fetchPoetryNext,
+        hasNextPage: hasPoetryNext,
+        isFetchingNextPage: isPoetryFetching,
         isLoading: isPoetryLoading
     } = useInfiniteQuery({
         queryKey: ['poet-poetry', slug],
@@ -40,14 +42,37 @@ const PoetProfile = ({ lang }) => {
         getNextPageParam: (lastPage) => {
             return lastPage.next_page_url ? lastPage.current_page + 1 : undefined;
         },
-        enabled: !!slug
+        enabled: !!slug && activeTab === 'poetry'
+    });
+
+    // Couplets Query
+    const {
+        data: coupletsData,
+        fetchNextPage: fetchCoupletsNext,
+        hasNextPage: hasCoupletsNext,
+        isFetchingNextPage: isCoupletsFetching,
+        isLoading: isCoupletsLoading
+    } = useInfiniteQuery({
+        queryKey: ['poet-couplets', slug],
+        queryFn: async ({ pageParam = 1 }) => {
+            const response = await axios.get(`/api/v1/poets/${slug}/couplets?page=${pageParam}`);
+            return response.data;
+        },
+        getNextPageParam: (lastPage) => {
+            return lastPage.next_page_url ? lastPage.current_page + 1 : undefined;
+        },
+        enabled: !!slug && activeTab === 'couplets'
     });
 
     React.useEffect(() => {
-        if (inView && hasNextPage) {
-            fetchNextPage();
+        if (inView) {
+            if (activeTab === 'poetry' && hasPoetryNext) {
+                fetchPoetryNext();
+            } else if (activeTab === 'couplets' && hasCoupletsNext) {
+                fetchCoupletsNext();
+            }
         }
-    }, [inView, hasNextPage, fetchNextPage]);
+    }, [inView, activeTab, hasPoetryNext, fetchPoetryNext, hasCoupletsNext, fetchCoupletsNext]);
 
     // Mock posts for now, or correct if API provided posts
     // For now we will keep the static posts structure but ideally this should also come from API
@@ -119,10 +144,16 @@ const PoetProfile = ({ lang }) => {
                         </p>
 
                         <div className="flex items-center gap-8 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
-                            <button className="pb-4 text-sm font-medium border-b-2 border-black text-black whitespace-nowrap">
-                                {isRtl ? 'گھر' : 'Home'}
+                            <button
+                                onClick={() => setActiveTab('poetry')}
+                                className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === 'poetry' ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                            >
+                                {isRtl ? 'شاعري' : 'Poetry'}
                             </button>
-                            <button className="pb-4 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors whitespace-nowrap">
+                            <button
+                                onClick={() => setActiveTab('couplets')}
+                                className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === 'couplets' ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                            >
                                 {isRtl ? 'بيت' : 'Couplets'}
                             </button>
                             {/* Categories Placeholder */}
@@ -133,38 +164,73 @@ const PoetProfile = ({ lang }) => {
                     </header>
 
                     <div className="space-y-0">
-                        {isPoetryLoading ? (
-                            <div className="space-y-8 py-8">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="space-y-4">
-                                        <Skeleton className="h-8 w-3/4" />
-                                        <Skeleton className="h-20 w-full" />
-                                    </div>
-                                ))}
-                            </div>
-                        ) : poetryData?.pages[0]?.data.length > 0 ? (
-                            <>
-                                {poetryData.pages.map((page, i) => (
-                                    <React.Fragment key={i}>
-                                        {page.data.map((post) => (
-                                            <PostCard key={post.id} {...post} lang={lang} />
-                                        ))}
-                                    </React.Fragment>
-                                ))}
-
-                                <div ref={ref} className="py-8 flex justify-center">
-                                    {isFetchingNextPage && (
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                                    )}
+                        {activeTab === 'poetry' ? (
+                            isPoetryLoading ? (
+                                <div className="space-y-8 py-8">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="space-y-4">
+                                            <Skeleton className="h-8 w-3/4" />
+                                            <Skeleton className="h-20 w-full" />
+                                        </div>
+                                    ))}
                                 </div>
-                            </>
+                            ) : poetryData?.pages[0]?.data.length > 0 ? (
+                                <>
+                                    {poetryData.pages.map((page, i) => (
+                                        <React.Fragment key={i}>
+                                            {page.data.map((post) => (
+                                                <PostCard key={post.id} {...post} lang={lang} />
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+
+                                    <div ref={ref} className="py-8 flex justify-center">
+                                        {isPoetryFetching && (
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="py-20 text-center">
+                                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                    <p className="text-gray-500 font-medium">
+                                        {isRtl ? 'هن وقت ڪا به شاعري موجود ناهي.' : 'No poetry available at the moment.'}
+                                    </p>
+                                </div>
+                            )
                         ) : (
-                            <div className="py-20 text-center">
-                                <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-500 font-medium">
-                                    {isRtl ? 'هن وقت ڪا به شاعري موجود ناهي.' : 'No poetry available at the moment.'}
-                                </p>
-                            </div>
+                            isCoupletsLoading ? (
+                                <div className="space-y-8 py-8">
+                                    {[1, 2, 3].map((i) => (
+                                        <div key={i} className="space-y-4">
+                                            <Skeleton className="h-20 w-full" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : coupletsData?.pages[0]?.data.length > 0 ? (
+                                <>
+                                    {coupletsData.pages.map((page, i) => (
+                                        <React.Fragment key={i}>
+                                            {page.data.map((post) => (
+                                                <PostCard key={post.id} {...post} lang={lang} />
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+
+                                    <div ref={ref} className="py-8 flex justify-center">
+                                        {isCoupletsFetching && (
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="py-20 text-center">
+                                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                    <p className="text-gray-500 font-medium">
+                                        {['sd', 'ur'].includes(lang) ? 'هن وقت ڪو به بيت موجود ناهي.' : 'No couplets available at the moment.'}
+                                    </p>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>

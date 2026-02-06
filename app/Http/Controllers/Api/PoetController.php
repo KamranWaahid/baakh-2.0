@@ -238,4 +238,48 @@ class PoetController extends Controller
 
         return response()->json($poetry);
     }
+
+    public function getCouplets(Request $request, $slug)
+    {
+        $lang = $request->get('lang', 'sd');
+        $poet = Poets::where('poet_slug', $slug)->firstOrFail();
+
+        // Couplets are where poetry_id is null? Or a specific category?
+        // Wait, looking at Couplets model, it has 'couplet_text'.
+        // Is it related to Poetry? 'poetry_id'.
+        // If 'couplets' are stand-alone, maybe poetry_id is null?
+        // Or maybe Couplets are just rows in 'poetry_couplets' table.
+
+        // Let's assume we fetch from 'Couplets' model directly where 'poet_id' matches.
+
+        $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
+            ->where('lang', $lang) // Filter by lang? Couplets model has 'lang'
+            ->latest()
+            ->paginate(20);
+
+        $couplets->through(function ($c) use ($poet, $lang) {
+            $poetDetail = $poet->all_details->where('lang', $lang)->first();
+            if (!$poetDetail)
+                $poetDetail = $poet->all_details->first();
+
+            return [
+                'id' => $c->id,
+                'title' => 'Couplet', // Or use first few words
+                'excerpt' => $c->couplet_text, // Full text for "excerpt" to show in card
+                'slug' => $c->couplet_slug, // If it has a slug
+                'poet_slug' => $poet->poet_slug,
+                'cat_slug' => 'couplets', // Dummy
+                'category' => 'Couplet',
+                'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
+                'author_avatar' => $poet->poet_pic,
+                'date' => $c->created_at->format('d M Y'),
+                'readTime' => '',
+                'likes' => 0,
+                'cover' => null,
+                'is_couplet' => true, // Flag for frontend styling
+            ];
+        });
+
+        return response()->json($couplets);
+    }
 }
