@@ -63,10 +63,10 @@ const PoetProfile = ({ lang }) => {
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 capitalize leading-none mb-1">
-                                        {isRtl ? poet.name_sd : poet.name_en}
+                                        {isRtl ? poet.laqab_sd : poet.laqab_en}
                                     </h1>
                                     <p className="text-gray-500 text-sm font-bold">
-                                        {isRtl ? poet.laqab_sd : poet.laqab_en}
+                                        {isRtl ? poet.name_sd : poet.name_en}
                                     </p>
                                 </div>
                             </div>
@@ -85,10 +85,10 @@ const PoetProfile = ({ lang }) => {
 
                         {/* Desktop Title */}
                         <h1 className="hidden lg:block text-4xl md:text-5xl font-bold tracking-tight mb-2 text-gray-900 capitalize">
-                            {isRtl ? poet.name_sd : poet.name_en}
+                            {isRtl ? poet.laqab_sd : poet.laqab_en}
                         </h1>
                         <p className="hidden lg:block text-gray-500 text-xl mb-6 font-medium">
-                            {isRtl ? poet.laqab_sd : poet.laqab_en}
+                            {isRtl ? poet.name_sd : poet.name_en}
                         </p>
 
                         <div className="flex items-center gap-8 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
@@ -120,10 +120,10 @@ const PoetProfile = ({ lang }) => {
                         </div>
 
                         <h3 className="font-bold tracking-tight text-lg mb-1 capitalize text-gray-900">
-                            {isRtl ? poet.name_sd : poet.name_en}
+                            {isRtl ? poet.laqab_sd : poet.laqab_en}
                         </h3>
                         <p className="text-gray-500 text-sm mb-4 font-bold">
-                            {isRtl ? poet.laqab_sd : poet.laqab_en}
+                            {isRtl ? poet.name_sd : poet.name_en}
                         </p>
 
                         <p className="font-serif text-sm text-gray-600 leading-relaxed mb-6 font-arabic line-clamp-3">
