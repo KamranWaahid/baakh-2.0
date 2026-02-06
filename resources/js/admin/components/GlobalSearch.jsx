@@ -10,7 +10,7 @@ import {
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import api from '../../api/axios';
+import api from '../api/axios';
 import { useQuery } from '@tanstack/react-query';
 
 // Simple debounce hook implementation since I don't want to assume external lib

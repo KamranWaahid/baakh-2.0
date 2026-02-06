@@ -19,21 +19,17 @@ import FeedbackBanner from './components/FeedbackBanner';
 import ProsodyFeed from './components/ProsodyFeed';
 import PoemDetail from './components/PoemDetail';
 import ScrollToTop from './components/ScrollToTop';
+import About from './pages/About';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import Help from './pages/Help';
+import Status from './pages/Status';
 
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
     const location = useLocation();
     const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/') || location.pathname.includes('/poetry') || location.pathname.includes('/couplets') || location.pathname.includes('/genre') || location.pathname.includes('/period') || location.pathname.includes('/prosody');
 
-    useEffect(() => {
-        document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
-        document.documentElement.lang = lang;
-        if (isRtl) {
-            document.body.classList.add('font-arabic');
-        } else {
-            document.body.classList.remove('font-arabic');
-        }
-    }, [isRtl, lang]);
 
     return (
         <div className={`min-h-screen bg-white transition-opacity duration-500`}>
@@ -152,14 +148,39 @@ const App = () => {
                                 <SinglePoem />
                             </LanguageWrapper>
                         } />
-                        <Route path="/:lang/:category" element={
-                            <LanguageWrapper>
-                                <Home />
-                            </LanguageWrapper>
-                        } />
                         <Route path="/:lang/prosody" element={
                             <LanguageWrapper>
                                 <Prosody />
+                            </LanguageWrapper>
+                        } />
+                        <Route path="/:lang/about" element={
+                            <LanguageWrapper withLayout={false}>
+                                <About />
+                            </LanguageWrapper>
+                        } />
+                        <Route path="/:lang/privacy" element={
+                            <LanguageWrapper withLayout={false}>
+                                <Privacy />
+                            </LanguageWrapper>
+                        } />
+                        <Route path="/:lang/terms" element={
+                            <LanguageWrapper withLayout={false}>
+                                <Terms />
+                            </LanguageWrapper>
+                        } />
+                        <Route path="/:lang/help" element={
+                            <LanguageWrapper withLayout={false}>
+                                <Help />
+                            </LanguageWrapper>
+                        } />
+                        <Route path="/:lang/status" element={
+                            <LanguageWrapper withLayout={false}>
+                                <Status />
+                            </LanguageWrapper>
+                        } />
+                        <Route path="/:lang/:category" element={
+                            <LanguageWrapper>
+                                <Home />
                             </LanguageWrapper>
                         } />
                         <Route path="/" element={<Navigate to="/sd" replace />} />
@@ -171,15 +192,30 @@ const App = () => {
     );
 };
 
-const LanguageWrapper = ({ children }) => {
+const LanguageWrapper = ({ children, withLayout = true }) => {
     const { lang } = useParams();
     const validLangs = ['en', 'sd'];
+    const isRtl = lang === 'sd';
+
+    useEffect(() => {
+        document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+        document.documentElement.lang = lang;
+        if (isRtl) {
+            document.body.classList.add('font-arabic');
+        } else {
+            document.body.classList.remove('font-arabic');
+        }
+    }, [isRtl, lang]);
 
     if (!validLangs.includes(lang)) {
         return <Navigate to="/sd" replace />;
     }
 
-    return <MainLayout lang={lang}>{children}</MainLayout>;
+    if (withLayout) {
+        return <MainLayout lang={lang}>{children}</MainLayout>;
+    }
+
+    return children;
 };
 
 const root = createRoot(document.getElementById('root'));
