@@ -8,6 +8,7 @@ import { useParams, Link } from 'react-router-dom';
 import PostCard from './PostCard';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { formatDate } from '@/lib/date-utils';
 
 const PoetProfile = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -173,7 +174,7 @@ const PoetProfile = ({ lang }) => {
                                                         {isRtl ? 'جنم' : 'Born'}
                                                     </span>
                                                     <span className="font-medium text-gray-900 block mb-3">
-                                                        {poet.dob ? new Date(poet.dob).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+                                                        {formatDate(poet.dob, lang)}
                                                     </span>
 
                                                     {(isRtl ? poet.birth_location_sd : poet.birth_location_en) && (
@@ -196,7 +197,7 @@ const PoetProfile = ({ lang }) => {
                                                                 {isRtl ? 'وفات' : 'Died'}
                                                             </span>
                                                             <span className="font-medium text-gray-900 block mb-3">
-                                                                {new Date(poet.dod).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                                                {formatDate(poet.dod, lang)}
                                                             </span>
                                                         </>
                                                     )}
