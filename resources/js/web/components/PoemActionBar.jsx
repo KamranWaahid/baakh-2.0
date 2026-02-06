@@ -20,7 +20,7 @@ import {
     DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 
-const PoemActionBar = ({ poem, lang }) => {
+const PoemActionBar = ({ poem, lang, className, leftContent }) => {
     const isRtl = lang === 'sd';
     const { user } = useAuth();
     const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -103,8 +103,13 @@ const PoemActionBar = ({ poem, lang }) => {
     };
 
     return (
-        <div className="flex items-center justify-between text-gray-500 w-full" onClick={(e) => e.preventDefault()}>
+        <div className={`flex items-center justify-between text-gray-500 w-full ${className || ''}`} onClick={(e) => e.preventDefault()}>
             <div className="flex items-center gap-6">
+                {leftContent && (
+                    <div className="flex items-center gap-3">
+                        {leftContent}
+                    </div>
+                )}
                 <button
                     onClick={handleClap}
                     className="flex items-center gap-2 hover:text-black transition-colors z-10 relative"
