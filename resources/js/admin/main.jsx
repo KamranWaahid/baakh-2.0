@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import AdminLayout from './layouts/AdminLayout';
 import api from './api/axios';
+import { Button } from '@/components/ui/button';
 import '../../css/admin.css';
 
 const ProtectedRoute = ({ children }) => {
@@ -60,120 +61,121 @@ import DatabaseList from './pages/Databases/DatabaseList';
 import CountriesList from './pages/Locations/CountriesList';
 import ProvincesList from './pages/Locations/ProvincesList';
 import CitiesList from './pages/Locations/CitiesList';
+import UserForm from './pages/Users/UserForm';
 
 
 const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter basename="/admin">
+            <BrowserRouter>
                 <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/" element={
+                    <Route path="/admin/login" element={<Login />} />
+                    <Route path="/admin" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <Dashboard />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/poets" element={
+                    <Route path="/admin/poets" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <PoetsList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/poets/create" element={
+                    <Route path="/admin/poets/create" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreatePoet />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/poets/:id/edit" element={
+                    <Route path="/admin/poets/:id/edit" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <EditPoet />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/poetry" element={
+                    <Route path="/admin/poetry" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <PoetryList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/poetry/create" element={
+                    <Route path="/admin/poetry/create" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreatePoetry />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/poetry/:id/edit" element={
+                    <Route path="/admin/poetry/:id/edit" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreatePoetry />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/couplet/create" element={
+                    <Route path="/admin/couplet/create" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreateCouplet />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/couplet/:id/edit" element={
+                    <Route path="/admin/couplet/:id/edit" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreateCouplet />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/couplets" element={
+                    <Route path="/admin/couplets" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CoupletsList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/tags" element={
+                    <Route path="/admin/tags" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TagsList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/categories" element={
+                    <Route path="/admin/categories" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CategoriesList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/categories/create" element={
+                    <Route path="/admin/categories/create" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CategoryForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/categories/:id/edit" element={
+                    <Route path="/admin/categories/:id/edit" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CategoryForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/hesudhar" element={
+                    <Route path="/admin/hesudhar" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <HesudharList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/romanizer" element={
+                    <Route path="/admin/romanizer" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <RomanizerList />
@@ -181,7 +183,7 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/romanizer/check" element={
+                    <Route path="/admin/romanizer/check" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <RomanizerBulkCheck />
@@ -190,21 +192,21 @@ const App = () => {
                     } />
 
                     {/* Team Management Routes */}
-                    <Route path="/teams" element={
+                    <Route path="/admin/teams" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TeamList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/teams/create" element={
+                    <Route path="/admin/teams/create" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TeamForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
-                    <Route path="/teams/:id/edit" element={
+                    <Route path="/admin/teams/:id/edit" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TeamForm />
@@ -212,7 +214,7 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/teams/:id/members" element={
+                    <Route path="/admin/teams/:id/members" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TeamMembers />
@@ -221,7 +223,7 @@ const App = () => {
                     } />
 
 
-                    <Route path="/roles" element={
+                    <Route path="/admin/roles" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <RolesPermissions />
@@ -229,7 +231,15 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/languages" element={
+                    <Route path="/admin/users/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <UserForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/languages" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <LanguagesList />
@@ -237,7 +247,7 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/databases" element={
+                    <Route path="/admin/databases" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <DatabaseList />
@@ -245,7 +255,7 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/locations/countries" element={
+                    <Route path="/admin/locations/countries" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CountriesList />
@@ -253,7 +263,7 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/locations/provinces" element={
+                    <Route path="/admin/locations/provinces" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <ProvincesList />
@@ -261,12 +271,21 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/locations/cities" element={
+                    <Route path="/admin/locations/cities" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CitiesList />
                             </AdminLayout>
                         </ProtectedRoute>
+                    } />
+
+                    {/* Catch-all 404 Route */}
+                    <Route path="/admin/*" element={
+                        <div className="p-8 text-center space-y-4">
+                            <h1 className="text-2xl font-bold text-red-600">404 - Admin Page Not Found</h1>
+                            <p className="text-gray-500">The page you are looking for does not exist in the admin panel.</p>
+                            <Button onClick={() => window.location.href = '/admin'}>Back to Dashboard</Button>
+                        </div>
                     } />
 
                 </Routes>

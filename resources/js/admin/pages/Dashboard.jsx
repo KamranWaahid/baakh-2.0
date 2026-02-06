@@ -189,7 +189,7 @@ const Dashboard = () => {
                         Search
                     </Button>
                     <Button className="gap-2 bg-black hover:bg-gray-800 text-white text-xs md:text-sm" asChild>
-                        <Link to="/poetry/create">
+                        <Link to="/admin/poetry/create">
                             <Plus className="h-3 w-3 md:h-4 md:w-4" />
                             New Entry
                         </Link>
@@ -257,8 +257,8 @@ const Dashboard = () => {
                                                 item={item}
                                                 link={
                                                     card.id === 'missing_tags_couplets'
-                                                        ? (item.poetry_id ? `/poetry/${item.poetry_id}/edit` : '#')
-                                                        : `/poetry/${item.id}/edit`
+                                                        ? (item.poetry_id ? `/admin/poetry/${item.poetry_id}/edit` : '#')
+                                                        : `/admin/poetry/${item.id}/edit`
                                                 }
                                             />
                                         ))}

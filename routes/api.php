@@ -62,6 +62,7 @@ Route::prefix('v1')->group(function () {
 });
 
 
+use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Admin\TeamController;
 use App\Http\Controllers\Api\Admin\TeamMemberController;
 use App\Http\Controllers\Api\Admin\RoleController;
@@ -77,6 +78,9 @@ use App\Http\Controllers\Api\Admin\CityController;
 
 // Admin / Team Management Routes
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+
+    // Users
+    Route::apiResource('users', UserController::class);
 
     // Teams
     Route::apiResource('teams', TeamController::class);

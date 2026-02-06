@@ -85,37 +85,37 @@ const Sidebar = () => {
                 <span className="font-bold text-xl">Baakh Admin</span>
             </div>
             <nav className="flex-1 px-4 flex flex-col gap-1">
-                <SidebarLink to="/" icon={LayoutDashboard}>Dashboard</SidebarLink>
+                <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>
 
                 <div className="my-2 border-t" />
                 <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Content</div>
 
-                <SidebarLink to="/poets" icon={Feather}>Poets</SidebarLink>
+                <SidebarLink to="/admin/poets" icon={Feather}>Poets</SidebarLink>
 
                 <SidebarGroup icon={BookOpen} label="Poetry">
-                    <SidebarLink to="/poetry" icon={Book}>Main Poetry</SidebarLink>
-                    <SidebarLink to="/poetry/create" icon={Plus}>Add Poetry</SidebarLink>
-                    <SidebarLink to="/couplet/create" icon={Plus}>Add Couplet</SidebarLink>
-                    <SidebarLink to="/couplets" icon={AlignCenter}>Couplets</SidebarLink>
+                    <SidebarLink to="/admin/poetry" icon={Book}>Main Poetry</SidebarLink>
+                    <SidebarLink to="/admin/poetry/create" icon={Plus}>Add Poetry</SidebarLink>
+                    <SidebarLink to="/admin/couplet/create" icon={Plus}>Add Couplet</SidebarLink>
+                    <SidebarLink to="/admin/couplets" icon={AlignCenter}>Couplets</SidebarLink>
                 </SidebarGroup>
 
-                <SidebarLink to="/tags" icon={Tags}>Tags</SidebarLink>
-                <SidebarLink to="/categories" icon={Layers}>Categories</SidebarLink>
-                <SidebarLink to="/hesudhar" icon={Type}>Hesudhar</SidebarLink>
-                <SidebarLink to="/romanizer" icon={Languages}>Romanizer</SidebarLink>
+                <SidebarLink to="/admin/tags" icon={Tags}>Tags</SidebarLink>
+                <SidebarLink to="/admin/categories" icon={Layers}>Categories</SidebarLink>
+                <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
+                <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 
                 <SidebarGroup icon={MapPin} label="Locations">
-                    <SidebarLink to="/locations/countries" icon={Flag}>Countries</SidebarLink>
-                    <SidebarLink to="/locations/cities" icon={Map}>Provinces/Cities</SidebarLink>
+                    <SidebarLink to="/admin/locations/countries" icon={Flag}>Countries</SidebarLink>
+                    <SidebarLink to="/admin/locations/cities" icon={Map}>Provinces/Cities</SidebarLink>
                 </SidebarGroup>
 
                 <div className="my-2 border-t" />
                 <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
-                <SidebarLink to="/teams" icon={Users}>Admins & Teams</SidebarLink>
-                <SidebarLink to="/roles" icon={Shield}>Roles & Permissions</SidebarLink>
-                <SidebarLink to="/languages" icon={Languages}>Languages</SidebarLink>
-                <SidebarLink to="/databases" icon={Database}>Databases</SidebarLink>
+                <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
+                <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
+                <SidebarLink to="/admin/languages" icon={Languages}>Languages</SidebarLink>
+                <SidebarLink to="/admin/databases" icon={Database}>Databases</SidebarLink>
             </nav>
         </div>
     );

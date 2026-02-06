@@ -200,6 +200,21 @@ const TeamForm = () => {
                     </Card>
                 )}
 
+                {mutation.isError && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                        <p className="font-bold">Error saving team:</p>
+                        {mutation.error.response?.data?.errors ? (
+                            <ul className="list-disc list-inside mt-1">
+                                {Object.values(mutation.error.response.data.errors).flat().map((err, i) => (
+                                    <li key={i}>{err}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>{mutation.error.response?.data?.message || mutation.error.message}</p>
+                        )}
+                    </div>
+                )}
+
                 <Button type="submit" form="team-form" disabled={mutation.isPending} className="w-full">
                     {mutation.isPending ? 'Saving...' : (isEditMode ? 'Update Team' : 'Create Team & Admin')}
                 </Button>
