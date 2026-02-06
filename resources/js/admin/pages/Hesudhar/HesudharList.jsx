@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Plus, Trash2, Search, RefreshCw, Loader2 } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,19 +23,19 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { GlobalSearch } from '../../components/GlobalSearch';
 
 const HesudharList = () => {
-    const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState(null);
     const queryClient = useQueryClient();
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['hesudhar', page, search],
+        queryKey: ['hesudhar', page],
         queryFn: async () => {
             const response = await api.get('/api/admin/hesudhar', {
-                params: { page, search, per_page: 20 }
+                params: { page, per_page: 20 }
             });
             return response.data;
         },
@@ -105,16 +105,9 @@ const HesudharList = () => {
                     <CardTitle>Manage Spell Correction Dictionary</CardTitle>
                     <div className="flex items-center py-4">
                         <div className="relative flex-1">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="search"
-                                placeholder="Search words..."
-                                className="pl-8 w-full max-w-sm"
-                                value={search}
-                                onChange={(e) => {
-                                    setSearch(e.target.value);
-                                    setPage(1);
-                                }}
+                            <GlobalSearch
+                                className="w-full max-w-sm ml-auto"
+                                onSelect={handleEdit}
                             />
                         </div>
                     </div>
