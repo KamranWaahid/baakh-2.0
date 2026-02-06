@@ -76,7 +76,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                 </div>
 
                 {/* Results Area */}
-                <div className="max-h-[400px] overflow-y-auto" dir={isRtl ? 'rtl' : 'ltr'}>
+                <div className="h-[350px] overflow-y-auto scroll-smooth" dir={isRtl ? 'rtl' : 'ltr'}>
                     {!query && (
                         <div className="py-16 text-center text-sm text-gray-400">
                             {isRtl ? 'شاعر، شاعري، يا دور ڳوليو...' : 'Search for poets, poetry, or periods...'}
