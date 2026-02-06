@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
     Route::get('couplet-tags', [App\Http\Controllers\Api\CoupletController::class, 'tags']);
     Route::get('periods', [App\Http\Controllers\Api\PeriodController::class, 'index']);
     Route::get('periods/{id}/poets', [App\Http\Controllers\Api\PeriodController::class, 'poets']);
+    Route::get('prosody', [App\Http\Controllers\Api\ProsodyController::class, 'index']);
 });
 
 
