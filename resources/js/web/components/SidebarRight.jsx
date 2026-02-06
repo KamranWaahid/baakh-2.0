@@ -145,11 +145,11 @@ const SidebarRight = ({ lang }) => {
 
             <section className="pt-4 mt-auto">
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500">
-                    <Link to={`/${lang}/help`} className="hover:text-black transition-colors">Help</Link>
-                    <Link to={`/${lang}/status`} className="hover:text-black transition-colors">Status</Link>
-                    <Link to={`/${lang}/about`} className="hover:text-black transition-colors">About</Link>
-                    <Link to={`/${lang}/privacy`} className="hover:text-black transition-colors">Privacy</Link>
-                    <Link to={`/${lang}/terms`} className="hover:text-black transition-colors">Terms</Link>
+                    <Link to={`/${lang}/help`} className="hover:text-black transition-colors">{isRtl ? 'مدد' : 'Help'}</Link>
+                    <Link to={`/${lang}/status`} className="hover:text-black transition-colors">{isRtl ? 'حالت' : 'Status'}</Link>
+                    <Link to={`/${lang}/about`} className="hover:text-black transition-colors">{isRtl ? 'بابت' : 'About'}</Link>
+                    <Link to={`/${lang}/privacy`} className="hover:text-black transition-colors">{isRtl ? 'رازداري' : 'Privacy'}</Link>
+                    <Link to={`/${lang}/terms`} className="hover:text-black transition-colors">{isRtl ? 'شرطون' : 'Terms'}</Link>
                 </div>
             </section>
         </aside>
