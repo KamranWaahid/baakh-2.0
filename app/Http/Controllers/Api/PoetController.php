@@ -182,4 +182,60 @@ class PoetController extends Controller
 
         return response()->json($data);
     }
+    public function getPoetry(Request $request, $slug)
+    {
+        $lang = $request->get('lang', 'sd');
+        $poet = Poets::where('poet_slug', $slug)->firstOrFail();
+
+        $poetry = \App\Models\Poetry::where('poet_id', $poet->id)
+            ->where('visibility', 1)
+            ->with([
+                'translations' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                },
+                'category',
+                'category.details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                },
+                'poet_details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])
+            ->latest()
+            ->paginate(10);
+
+        $poetry->through(function ($p) use ($lang, $poet) {
+            $trans = $p->translations->first();
+            // Fallback to any translation if specific lang missing (optional, but good for UX)
+            if (!$trans)
+                $trans = $p->translations()->first();
+
+            $catDetail = $p->category ? $p->category->details->where('lang', $lang)->first() : null;
+            if (!$catDetail && $p->category)
+                $catDetail = $p->category->details->first();
+
+            $poetDetail = $poet->all_details->where('lang', $lang)->first();
+            if (!$poetDetail)
+                $poetDetail = $poet->all_details->first();
+
+            return [
+                'id' => $p->id,
+                'title' => $trans->title ?? 'Untitled',
+                'excerpt' => \Illuminate\Support\Str::limit(strip_tags($trans->info ?? ''), 150),
+                'slug' => $p->poetry_slug,
+                'poet_slug' => $poet->poet_slug,
+                'cat_slug' => $p->category->slug ?? '',
+                'category' => $catDetail->name ?? 'Uncategorized',
+                'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
+                'author_avatar' => $poet->poet_pic,
+                'date' => $p->created_at->format('d M Y'),
+                'readTime' => '2 min read', // Placeholder logic
+                'likes' => 0, // Placeholder
+                'cover' => $p->cover_image ?? null, // If exists
+                'content_style' => $p->content_style,
+            ];
+        });
+
+        return response()->json($poetry);
+    }
 }

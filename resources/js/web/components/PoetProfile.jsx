@@ -6,7 +6,8 @@ import { Separator } from '@/components/ui/separator';
 import { MoreHorizontal, User, BookOpen } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import PostCard from './PostCard';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
 import axios from 'axios';
 import { formatDate } from '@/lib/date-utils';
 
@@ -14,13 +15,39 @@ const PoetProfile = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { slug } = useParams();
 
-    const { data: poet, isLoading } = useQuery({
+    const { ref, inView } = useInView();
+
+    const { data: poet, isLoading: isPoetLoading } = useQuery({
         queryKey: ['poet', slug],
         queryFn: async () => {
             const response = await axios.get(`/api/v1/poets/${slug}`);
             return response.data;
         }
     });
+
+    const {
+        data: poetryData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading: isPoetryLoading
+    } = useInfiniteQuery({
+        queryKey: ['poet-poetry', slug],
+        queryFn: async ({ pageParam = 1 }) => {
+            const response = await axios.get(`/api/v1/poets/${slug}/poetry?page=${pageParam}`);
+            return response.data;
+        },
+        getNextPageParam: (lastPage) => {
+            return lastPage.next_page_url ? lastPage.current_page + 1 : undefined;
+        },
+        enabled: !!slug
+    });
+
+    React.useEffect(() => {
+        if (inView && hasNextPage) {
+            fetchNextPage();
+        }
+    }, [inView, hasNextPage, fetchNextPage]);
 
     // Mock posts for now, or correct if API provided posts
     // For now we will keep the static posts structure but ideally this should also come from API
@@ -32,7 +59,7 @@ const PoetProfile = ({ lang }) => {
     // We didn't implement 'couplets' fetching in show method yet specifically as a separate list, 
     // but we can just show the menu items as requested.
 
-    if (isLoading) {
+    if (isPoetLoading) {
         return (
             <div className="w-full flex justify-center py-10 px-4 md:px-8">
                 <div className="w-full max-w-[1000px] flex gap-12">
@@ -106,9 +133,39 @@ const PoetProfile = ({ lang }) => {
                     </header>
 
                     <div className="space-y-0">
-                        <div className="py-10 text-center text-gray-500">
-                            {isRtl ? 'هن وقت ڪا به شاعري موجود ناهي.' : 'No poetry available at the moment.'}
-                        </div>
+                        {isPoetryLoading ? (
+                            <div className="space-y-8 py-8">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="space-y-4">
+                                        <Skeleton className="h-8 w-3/4" />
+                                        <Skeleton className="h-20 w-full" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : poetryData?.pages[0]?.data.length > 0 ? (
+                            <>
+                                {poetryData.pages.map((page, i) => (
+                                    <React.Fragment key={i}>
+                                        {page.data.map((post) => (
+                                            <PostCard key={post.id} {...post} lang={lang} />
+                                        ))}
+                                    </React.Fragment>
+                                ))}
+
+                                <div ref={ref} className="py-8 flex justify-center">
+                                    {isFetchingNextPage && (
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="py-20 text-center">
+                                <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                <p className="text-gray-500 font-medium">
+                                    {isRtl ? 'هن وقت ڪا به شاعري موجود ناهي.' : 'No poetry available at the moment.'}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
