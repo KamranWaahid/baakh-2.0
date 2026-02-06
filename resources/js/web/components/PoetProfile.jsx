@@ -56,11 +56,7 @@ const PoetProfile = ({ lang }) => {
                         <div className="lg:hidden mb-8">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden">
-                                    {poet.avatar ? (
-                                        <img src={poet.avatar} alt={poet.name_en} className="h-full w-full object-cover" />
-                                    ) : (
-                                        <User className="h-10 w-10" />
-                                    )}
+                                    <User className="h-10 w-10" />
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 capitalize leading-none mb-1">
@@ -117,11 +113,7 @@ const PoetProfile = ({ lang }) => {
                 <aside className="hidden lg:block w-[320px] shrink-0 sticky top-24 h-fit border-l border-gray-100 pl-12 -ml-6">
                     <div className="flex flex-col items-start">
                         <div className="h-32 w-32 rounded-full bg-gray-50 mb-6 flex items-center justify-center text-gray-400 overflow-hidden border border-gray-100">
-                            {poet.avatar ? (
-                                <img src={poet.avatar} alt={poet.name_en} className="h-full w-full object-cover" />
-                            ) : (
-                                <User className="h-16 w-16" />
-                            )}
+                            <User className="h-16 w-16" />
                         </div>
 
                         <h3 className="font-bold tracking-tight text-lg mb-1 capitalize text-gray-900">
@@ -153,11 +145,7 @@ const PoetProfile = ({ lang }) => {
                                     <div key={i} className="flex items-center justify-between group cursor-pointer">
                                         <Link to={`/${lang}/poet/${p.slug}`} className="flex items-center gap-3 flex-1">
                                             <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-200 overflow-hidden">
-                                                {p.avatar ? (
-                                                    <img src={p.avatar} alt={p.name_en} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <User className="h-4 w-4" />
-                                                )}
+                                                <User className="h-4 w-4" />
                                             </div>
                                             <span className="text-sm font-medium text-gray-700 group-hover:text-black transition-colors">
                                                 {isRtl ? p.name_sd : p.name_en}
