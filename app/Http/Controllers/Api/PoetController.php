@@ -263,7 +263,7 @@ class PoetController extends Controller
 
         $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
             ->where('lang', $lang)
-            ->whereRaw("(LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, '\n', ''))) <= 1")
+            ->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1")
             ->latest()
             ->paginate(20);
 

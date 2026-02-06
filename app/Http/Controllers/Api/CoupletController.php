@@ -20,7 +20,7 @@ class CoupletController extends Controller
             $q->where('visibility', 1);
         })
             ->with([
-                'poet.details' => function ($q) use ($lang) {
+                'poet.all_details' => function ($q) use ($lang) {
                     $q->where('lang', $lang);
                 }
             ])
@@ -31,13 +31,13 @@ class CoupletController extends Controller
         }
 
         // Filter only those with at most 2 lines (1 newline)
-        // Note: Using raw DB count for efficiency
-        $query->whereRaw("(LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, '\n', ''))) <= 1");
+        // Using raw DB count for efficiency, handling \r\n and trailing newlines
+        $query->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1");
 
         $couplets = $query->latest()->paginate($perPage);
 
         $transformed = $couplets->through(function ($c) use ($lang) {
-            $poetDetail = $c->poet->details->where('lang', $lang)->first() ?? $c->poet->details->first();
+            $poetDetail = $c->poet->all_details->where('lang', $lang)->first() ?? $c->poet->all_details->first();
 
             return [
                 'id' => $c->id,
