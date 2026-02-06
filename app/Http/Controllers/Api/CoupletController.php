@@ -16,16 +16,23 @@ class CoupletController extends Controller
         $tag = $request->get('tag');
         $perPage = 10;
 
-        $query = Couplets::with([
-            'poet.details' => function ($q) use ($lang) {
-                $q->where('lang', $lang);
-            }
-        ])
+        $query = Couplets::whereHas('poet', function ($q) {
+            $q->where('visibility', 1);
+        })
+            ->with([
+                'poet.details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])
             ->where('lang', $lang);
 
         if ($tag && $tag !== 'all') {
             $query->where('couplet_tags', 'like', '%"' . $tag . '"%');
         }
+
+        // Filter only those with at most 2 lines (1 newline)
+        // Note: Using raw DB count for efficiency
+        $query->whereRaw("(LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, '\n', ''))) <= 1");
 
         $couplets = $query->latest()->paginate($perPage);
 

@@ -262,7 +262,8 @@ class PoetController extends Controller
         // Let's assume we fetch from 'Couplets' model directly where 'poet_id' matches.
 
         $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
-            ->where('lang', $lang) // Filter by lang? Couplets model has 'lang'
+            ->where('lang', $lang)
+            ->whereRaw("(LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, '\n', ''))) <= 1")
             ->latest()
             ->paginate(20);
 
