@@ -59,11 +59,6 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
                                         {title || 'Untitled'}
                                     </h2>
-                                    {excerpt && (
-                                        <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} text-sm md:text-base line-clamp-2`}>
-                                            {excerpt}
-                                        </p>
-                                    )}
                                 </div>
                                 {cover && (
                                     <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-sm bg-gray-50 border border-gray-100">

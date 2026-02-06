@@ -360,7 +360,10 @@ class HomeController extends UserController
                 $query->where('media_type', 'image')->where('lang', $lang)->limit(1);
             }
         ])
-            ->where('visibility', 1);
+            ->where('visibility', 1)
+            ->whereHas('poet', function ($q) {
+                $q->where('visibility', 1);
+            });
 
         if ($filter === 'featured') {
             $query->where('is_featured', 1);
@@ -371,6 +374,24 @@ class HomeController extends UserController
             $query->whereHas('category', function ($q) use ($categorySlug) {
                 $q->where('slug', $categorySlug);
             });
+        }
+
+        if ($request->has('period_id')) {
+            $period = \App\Models\Period::find($request->period_id);
+            if ($period) {
+                $range = explode('-', $period->date_range);
+                $startYear = trim($range[0]);
+                $endYearRaw = trim($range[1]);
+                $endYear = ($endYearRaw === 'Present') ? date('Y') : $endYearRaw;
+
+                $query->whereHas('poet', function ($q) use ($startYear, $endYear) {
+                    $q->whereYear('date_of_birth', '<=', $endYear)
+                        ->where(function ($sq) use ($startYear) {
+                            $sq->whereYear('date_of_death', '>=', $startYear)
+                                ->orWhereNull('date_of_death');
+                        });
+                });
+            }
         }
 
         $poetry = $query->latest()
@@ -384,7 +405,6 @@ class HomeController extends UserController
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
                 'author_avatar' => $p->poet?->poet_pic,
                 'cover' => $p->media->first()?->media_url,
-                'excerpt' => $p->all_couplets->first()?->couplet_text ?? '',
                 'date' => $p->created_at->toIso8601String(),
                 'date_human' => $p->created_at->diffForHumans(),
                 'readTime' => '5 min read', // Mock for now

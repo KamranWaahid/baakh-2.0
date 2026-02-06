@@ -1,52 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { History, Calendar, ScrollText } from 'lucide-react';
+import { History, Calendar, ScrollText, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import PeriodDetailsModal from './PeriodDetailsModal';
 
 const PeriodFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const [loading, setLoading] = useState(true);
+    const [selectedPeriod, setSelectedPeriod] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Mock Data: Sindhi Literary Periods
-    const periods = [
-        { id: 'soomra', label: 'سومرن جو دور', enLabel: 'Soomra Period', desc: 'The early era of Sindhi romantic tales and folklore.', year: '1024 - 1351' },
-        { id: 'samma', label: 'سمن جو دور', enLabel: 'Samma Period', desc: 'The golden age of Sindhi culture and early classical poetry.', year: '1351 - 1524' },
-        { id: 'arghun', label: 'ارغون ۽ ترخان', enLabel: 'Arghun & Tarkhan', desc: 'A transitional phase influencing Persian-Sindhi blend.', year: '1524 - 1591' },
-        { id: 'kalhora', label: 'ڪلهوڙا دور', enLabel: 'Kalhora Period', desc: 'The era of Shah Latif and the peak of Sufi poetry.', year: '1701 - 1783' },
-        { id: 'talpur', label: 'ٽالپر دور', enLabel: 'Talpur Period', desc: 'Prominence of Sachal Sarmast and Persian influence.', year: '1783 - 1843' },
-        { id: 'british', label: 'برطانوي دور', enLabel: 'British Period', desc: 'Modernization, printing press, and prose development.', year: '1843 - 1947' },
-        { id: 'modern', label: 'جديد دور', enLabel: 'Modern Period', desc: 'Post-partition literature, resistance, and new genres.', year: '1947 - Present' },
-    ];
+    // Fetch Periods
+    const { data: periods, isLoading } = useQuery({
+        queryKey: ['periods', lang],
+        queryFn: async () => {
+            const response = await axios.get(`/api/v1/periods`);
+            return response.data;
+        }
+    });
 
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1500);
-        return () => clearTimeout(timer);
-    }, []);
+    const handlePeriodClick = (period) => {
+        setSelectedPeriod(period);
+        setIsModalOpen(true);
+    };
 
     const PeriodCard = ({ period }) => (
-        <div className="group relative bg-white border border-gray-100 rounded-xl p-8 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col h-full">
+        <div
+            onClick={() => handlePeriodClick(period)}
+            className="group relative bg-white border border-gray-100 rounded-xl p-8 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col h-full"
+        >
             <div className="flex items-start justify-between mb-6">
                 <div className={`h-12 w-12 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors`}>
                     <History className="h-5 w-5 text-gray-400 group-hover:text-black transition-colors" />
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 text-xs font-medium text-gray-500">
                     <Calendar className="h-3 w-3" />
-                    <span>{period.year}</span>
+                    <span>{period.date_range}</span>
                 </div>
             </div>
 
             <h3 className={`text-2xl font-bold text-gray-900 mb-2 ${isRtl ? 'font-arabic' : ''}`}>
-                {isRtl ? period.label : period.enLabel}
+                {isRtl ? period.title_sd : period.title_en}
             </h3>
 
             <span className={`text-xs font-medium text-gray-400 uppercase tracking-wider mb-4 ${isRtl ? 'font-sans' : ''}`}>
-                {isRtl ? period.enLabel : period.label}
+                {isRtl ? period.title_en : period.title_sd}
             </span>
 
             <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
-                {period.desc}
+                {isRtl ? period.description_sd : period.description_en}
             </p>
 
             <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
@@ -73,7 +76,7 @@ const PeriodFeed = ({ lang }) => {
                 </p>
             </div>
 
-            {loading ? (
+            {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {Array(6).fill(0).map((_, i) => (
                         <div key={i} className="border border-gray-100 rounded-xl p-8 flex flex-col">
@@ -87,13 +90,27 @@ const PeriodFeed = ({ lang }) => {
                         </div>
                     ))}
                 </div>
-            ) : (
+            ) : periods?.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {periods.map((period) => (
                         <PeriodCard key={period.id} period={period} />
                     ))}
                 </div>
+            ) : (
+                <div className="text-center py-20">
+                    <Search className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                    <p className="text-gray-500">
+                        {isRtl ? 'ڪو به دور نه مليو.' : 'No periods found.'}
+                    </p>
+                </div>
             )}
+
+            <PeriodDetailsModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                period={selectedPeriod}
+                lang={lang}
+            />
         </div>
     );
 };

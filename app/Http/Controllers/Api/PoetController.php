@@ -230,7 +230,6 @@ class PoetController extends Controller
             return [
                 'id' => $p->id,
                 'title' => $trans->title ?? 'Untitled',
-                'excerpt' => \Illuminate\Support\Str::limit(strip_tags($trans->info ?? ''), 150),
                 'slug' => $p->poetry_slug,
                 'poet_slug' => $poet->poet_slug,
                 'cat_slug' => $p->category->slug ?? '',
