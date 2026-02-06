@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PoetsDetail;
+use App\Models\Poetry;
 use App\Models\PoetryTranslations;
 use App\Models\Period;
 use Illuminate\Support\Facades\DB;
@@ -43,20 +44,24 @@ class GlobalSearchController extends Controller
             });
 
         // 2. Search Poetry
-        // Search mostly by Title for now
-        $poetry = PoetryTranslations::where('title', 'LIKE', "%{$query}%")
-            ->with(['poetry', 'poetry.poet_details']) // Eager load relations
+        // Search by title in translations
+        $poetry = Poetry::whereHas('translations', function ($q) use ($query) {
+            $q->where('title', 'LIKE', "%{$query}%");
+        })
+            ->with(['translations', 'poet_details', 'poet', 'category'])
             ->take(5)
             ->get()
-            ->map(function ($trans) {
-                $poetName = $trans->poetry->poet_details->poet_name ?? 'Unknown';
+            ->map(function ($poem) use ($lang) {
+                $translation = $poem->translations->where('lang', $lang)->first()
+                    ?? $poem->translations->first();
+                $poetName = $poem->poet_details->poet_name ?? 'Unknown';
                 return [
-                    'id' => $trans->poetry_id,
-                    'title' => $trans->title,
-                    'slug' => $trans->poetry->poetry_slug ?? '',
+                    'id' => $poem->id,
+                    'title' => $translation->title ?? 'Untitled',
+                    'slug' => $poem->poetry_slug ?? '',
                     'poet_name' => $poetName,
-                    'cat_slug' => $trans->poetry->category->slug ?? 'ghazal', // default or fetch
-                    'poet_slug' => $trans->poetry->poet->poet_slug ?? '',
+                    'cat_slug' => $poem->category->slug ?? 'ghazal',
+                    'poet_slug' => $poem->poet->poet_slug ?? '',
                     'type' => 'poetry'
                 ];
             });
