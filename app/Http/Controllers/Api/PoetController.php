@@ -82,4 +82,64 @@ class PoetController extends Controller
 
         return response()->json($tags);
     }
+
+    public function show($slug)
+    {
+        $poet = Poets::where('poet_slug', $slug)
+            ->where('visibility', 1)
+            ->with([
+                'all_details',
+                'poetry' => function ($q) {
+                    // Fetch recent poetry, limited
+                    $q->latest()->take(10);
+                }
+            ])
+            ->withCount('poetry')
+            ->firstOrFail();
+
+        // Helper for details
+        $getDetail = function ($lang) use ($poet) {
+            return $poet->all_details->where('lang', $lang)->first();
+        };
+
+        $detailSd = $getDetail('sd');
+        $detailEn = $getDetail('en');
+
+        // Suggested Poets (Random 3, unique)
+        $suggested = Poets::where('id', '!=', $poet->id)
+            ->where('visibility', 1)
+            ->with('all_details')
+            ->inRandomOrder()
+            ->take(3)
+            ->get()
+            ->map(function ($p) {
+                $dSd = $p->all_details->where('lang', 'sd')->first();
+                $dEn = $p->all_details->where('lang', 'en')->first();
+                return [
+                    'name_en' => $dEn->poet_laqab ?? $dEn->poet_name ?? $dSd->poet_laqab ?? $dSd->poet_name ?? 'N/A',
+                    'name_sd' => $dSd->poet_laqab ?? $dSd->poet_name ?? $dEn->poet_laqab ?? $dEn->poet_name ?? 'N/A',
+                    'slug' => $p->poet_slug,
+                    'avatar' => $p->poet_pic,
+                ];
+            });
+
+        $data = [
+            'id' => $poet->id,
+            'slug' => $poet->poet_slug,
+            'avatar' => $poet->poet_pic,
+            'name_en' => $detailEn->poet_name ?? $detailSd->poet_name ?? 'N/A',
+            'name_sd' => $detailSd->poet_name ?? $detailEn->poet_name ?? 'N/A',
+            'laqab_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
+            'laqab_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
+            'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
+            'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
+            'entries_count' => $poet->poetry_count ?? 0,
+            'suggested' => $suggested,
+            // Categories/Menu would usually come from aggregating poetry types, 
+            // but for now we'll return a static list or derived from actual poetry if complex query allowed.
+            // Simplified for this step.
+        ];
+
+        return response()->json($data);
+    }
 }

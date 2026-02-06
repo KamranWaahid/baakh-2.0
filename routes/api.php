@@ -38,6 +38,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     Route::get('poetry/{slug}', [App\Http\Controllers\PoetryController::class, 'apiShow']);
     Route::get('poet-tags', [App\Http\Controllers\Api\PoetController::class, 'tags']);
+    Route::get('poets/{slug}', [App\Http\Controllers\Api\PoetController::class, 'show']);
     Route::get('poets', [App\Http\Controllers\Api\PoetController::class, 'index']);
     Route::get('search', [App\Http\Controllers\Api\GlobalSearchController::class, 'search']);
     Route::post('feedback', [App\Http\Controllers\Api\FeedbackController::class, 'store']);
