@@ -5,9 +5,12 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import GenreDetailsModal from './GenreDetailsModal';
 
 const GenreFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
+    const [selectedGenre, setSelectedGenre] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Fetch Genres
     const { data: genres, isLoading } = useQuery({
@@ -18,9 +21,14 @@ const GenreFeed = ({ lang }) => {
         }
     });
 
+    const handleGenreClick = (genre) => {
+        setSelectedGenre(genre);
+        setIsModalOpen(true);
+    };
+
     const GenreCard = ({ genre }) => (
-        <Link
-            to={`/${lang}/${genre.slug}`}
+        <div
+            onClick={() => handleGenreClick(genre)}
             className="group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full"
         >
             <div className={`h-12 w-12 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center mb-4 transition-colors ${isRtl ? 'ml-0' : 'mr-0'}`}>
@@ -47,7 +55,7 @@ const GenreFeed = ({ lang }) => {
                     {isRtl ? '←' : '→'}
                 </span>
             </div>
-        </Link>
+        </div>
     );
 
     return (
@@ -89,6 +97,13 @@ const GenreFeed = ({ lang }) => {
                     </p>
                 </div>
             )}
+
+            <GenreDetailsModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                genre={selectedGenre}
+                lang={lang}
+            />
         </div>
     );
 };
