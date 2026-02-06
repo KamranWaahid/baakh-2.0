@@ -99,3 +99,14 @@
 .animate-fade-in-up {
     animation: fade-in-up 0.6s ease-out forwards;
 }
+
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}

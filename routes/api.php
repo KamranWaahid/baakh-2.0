@@ -53,6 +53,7 @@ Route::prefix('v1')->group(function () {
 
     // Feed Routes
     Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
+    Route::get('categories', [App\Http\Controllers\Api\CategoryController::class, 'index']);
 });
 
 

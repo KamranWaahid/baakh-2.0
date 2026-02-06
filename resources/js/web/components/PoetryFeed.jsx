@@ -3,54 +3,63 @@ import PostCard from './PostCard';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
+import axios from 'axios';
+import { BookOpen } from 'lucide-react';
 
 const PoetryFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
+    const [activeTab, setActiveTab] = useState('all');
+    const { ref, inView } = useInView();
 
-    const posts = [
-        {
-            title: isRtl ? 'وائي: درد جو داستان' : 'Waai: A Tale of Pain',
-            excerpt: isRtl ? 'وائي سنڌي شاعري جي قديم صنف آهي...' : 'The waai is one of the oldest forms of Sindhi poetry, echoing the cries of the soul.',
-            author: 'Sheikh Ayaz',
-            date: '2d ago',
-            readTime: '3 min read',
-            category: 'Waai'
-        },
-        {
-            title: isRtl ? 'غزل: محبت جو پيغام' : 'Ghazal: The Message of Love',
-            excerpt: isRtl ? 'غزل جي دنيا ۾ هڪ نئون تجربو...' : 'Exploring the nuances of modern Sindhi Ghazal through the lens of romance and revolution.',
-            author: 'Ustad Bukhari',
-            date: '4d ago',
-            readTime: '5 min read',
-            category: 'Ghazal'
-        },
-        {
-            title: isRtl ? 'نظم: آزادي جو سڏ' : 'Nazam: The Call for Freedom',
-            excerpt: isRtl ? 'نظم ذريعي قومي شعور بيدار ڪرڻ...' : 'How Nazam became the voice of resistance during the chaotic times.',
-            author: 'Hari Dilgir',
-            date: '1w ago',
-            readTime: '6 min read',
-            category: 'Nazam'
+    // Fetch Categories
+    const { data: categoriesData } = useQuery({
+        queryKey: ['categories', lang],
+        queryFn: async () => {
+            const response = await axios.get(`/api/v1/categories?lang=${lang}`);
+            return response.data;
         }
-    ];
+    });
 
     const categories = [
-        { id: 'all', label: isRtl ? 'سڀ' : 'All' },
-        { id: 'ghazal', label: isRtl ? 'غزل' : 'Ghazal' },
-        { id: 'waai', label: isRtl ? 'وائي' : 'Waai' },
-        { id: 'nazam', label: isRtl ? 'نظم' : 'Nazam' },
-        { id: 'bait', label: isRtl ? 'بيت' : 'Bait' },
-        { id: 'kafi', label: isRtl ? 'ڪافي' : 'Kafi' },
+        { slug: 'all', name: isRtl ? 'سڀ' : 'All' },
+        ...(categoriesData || [])
     ];
 
-    const [loading, setLoading] = useState(true);
+    // Fetch Poetry Feed
+    const {
+        data: poetryData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading,
+        isError
+    } = useInfiniteQuery({
+        queryKey: ['poetry-feed', activeTab, lang],
+        queryFn: async ({ pageParam = 1 }) => {
+            const response = await axios.get(`/api/v1/feed`, {
+                params: {
+                    lang,
+                    category: activeTab,
+                    page: pageParam
+                }
+            });
+            return response.data;
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.current_page < lastPage.last_page) {
+                return lastPage.current_page + 1;
+            }
+            return undefined;
+        },
+    });
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1500);
-        return () => clearTimeout(timer);
-    }, []);
+        if (inView && hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     const LoadingState = () => (
         <div className="space-y-8 mt-0">
@@ -65,37 +74,56 @@ const PoetryFeed = ({ lang }) => {
 
     return (
         <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
-            <Tabs defaultValue="all" className="w-full">
-                <div className="sticky top-[65px] bg-white/95 backdrop-blur-sm pt-2 pb-0 z-40 border-b border-gray-100 mb-8">
-                    <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none overflow-x-auto flex-nowrap scrollbar-hide">
-                        {categories.map(cat => (
-                            <TabsTrigger
-                                key={cat.id}
-                                value={cat.id}
-                                className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3 px-4 min-w-fit"
-                            >
-                                {cat.label}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
+            <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-8 min-w-max pb-4">
+                    {categories.map((cat) => (
+                        <button
+                            key={cat.slug}
+                            onClick={() => setActiveTab(cat.slug)}
+                            className={`text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === cat.slug ? 'text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                        >
+                            {cat.name}
+                            {activeTab === cat.slug && (
+                                <div className="absolute -bottom-4 left-0 right-0 h-0.5 bg-black" />
+                            )}
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                {categories.map(cat => (
-                    <TabsContent key={cat.id} value={cat.id} className="space-y-8 mt-0">
-                        {loading ? <LoadingState /> : posts.map((post, i) => (
+            <div className="space-y-0">
+                {isLoading ? (
+                    <LoadingState />
+                ) : poetryData?.pages[0]?.data.length > 0 ? (
+                    <>
+                        {poetryData.pages.map((page, i) => (
                             <React.Fragment key={i}>
-                                <PostCard lang={lang} {...post} />
-                                {i < posts.length - 1 && <Separator className="bg-gray-100" />}
+                                {page.data.map((post, idx) => (
+                                    <React.Fragment key={post.id}>
+                                        <PostCard {...post} lang={lang} />
+                                        {(i < poetryData.pages.length - 1 || idx < page.data.length - 1) && (
+                                            <Separator className="bg-gray-50/50" />
+                                        )}
+                                    </React.Fragment>
+                                ))}
                             </React.Fragment>
                         ))}
-                        {!loading && cat.id !== 'all' && posts.filter(p => p.category.toLowerCase() === cat.id).length === 0 && (
-                            <div className="text-center py-20 text-gray-500">
-                                No poetry found in {cat.label}
-                            </div>
-                        )}
-                    </TabsContent>
-                ))}
-            </Tabs>
+
+                        <div ref={ref} className="py-12 flex justify-center">
+                            {isFetchingNextPage && (
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div className="py-20 text-center">
+                        <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 font-medium">
+                            {isRtl ? 'هن وقت ڪا به شاعري موجود ناهي.' : 'No poetry available at the moment.'}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

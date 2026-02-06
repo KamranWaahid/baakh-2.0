@@ -366,6 +366,13 @@ class HomeController extends UserController
             $query->where('is_featured', 1);
         }
 
+        if ($request->has('category') && $request->category !== 'all') {
+            $categorySlug = $request->category;
+            $query->whereHas('category', function ($q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
+
         $poetry = $query->latest()
             ->paginate($perPage);
 
