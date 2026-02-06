@@ -69,7 +69,7 @@ const PoetsFeed = ({ lang }) => {
 
     const PoetCard = ({ poet }) => (
         <div className="flex items-center gap-6 p-6 border-b border-gray-100 bg-white transition-colors group">
-            <Link to={`/poets/${poet.slug}`}>
+            <Link to={`/${lang}/poet/${poet.slug}`}>
                 <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
                     <AvatarImage src={poet.avatar} alt={poet.name_en} className="object-cover" />
                     <AvatarFallback className="text-xl md:text-2xl font-bold text-gray-400 bg-gray-100">
@@ -80,7 +80,7 @@ const PoetsFeed = ({ lang }) => {
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                    <Link to={`/poets/${poet.slug}`} className="hover:underline">
+                    <Link to={`/${lang}/poet/${poet.slug}`} className="hover:underline">
                         <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">
                             {isRtl ? poet.name_sd : poet.name_en}
                         </h3>
@@ -103,10 +103,10 @@ const PoetsFeed = ({ lang }) => {
                 asChild
                 className="rounded-full hidden sm:flex items-center gap-2 hover:bg-gray-50 transition-colors"
             >
-                <a href={`/poets/${poet.slug}`}>
+                <Link to={`/${lang}/poet/${poet.slug}`}>
                     <User className="h-4 w-4" />
                     <span>{isRtl ? 'کاتو' : 'Profile'}</span>
-                </a>
+                </Link>
             </Button>
         </div>
     );
