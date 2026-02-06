@@ -54,13 +54,12 @@ class PoetController extends Controller
                 'slug' => $poet->poet_slug,
                 'avatar' => $poet->poet_pic, // Full URL expected if accessor exists or handled in frontend
                 // English Data
-                'name_en' => $detailEn->poet_name ?? $detailSd->poet_name ?? 'N/A',
-                'bio_en' => $detailEn->poet_bio ?? $detailSd->poet_bio ?? '',
+                'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
+                'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
                 // Sindhi Data
-                'name_sd' => $detailSd->poet_name ?? $detailEn->poet_name ?? 'N/A',
-                'bio_sd' => $detailSd->poet_bio ?? $detailEn->poet_bio ?? '',
+                'name_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
+                'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
 
-                'slug' => $poet->poet_slug, // Ensure slug is available for profile link
                 'entries_count' => $poet->poetry_count ?? 0,
 
                 // Extra metadata

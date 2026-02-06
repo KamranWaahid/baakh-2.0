@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { User, BookOpen } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from 'react-router-dom';
+import { useInView } from 'react-intersection-observer';
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Removing Tabs for now as we are just listing
 
 const PoetsFeed = ({ lang }) => {
@@ -23,12 +25,18 @@ const PoetsFeed = ({ lang }) => {
 
     const tags = tagsData || [];
 
-    // Fetch poets from API
-    const { data, isLoading } = useQuery({
+    // Fetch poets from API with Infinite Scroll
+    const {
+        data,
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
         queryKey: ['poets', search, selectedTag],
-        queryFn: async () => {
+        queryFn: async ({ pageParam = 1 }) => {
             // In real app, might want to debounce search here or in the UI
-            const params = { search };
+            const params = { search, page: pageParam };
             if (selectedTag !== 'all') {
                 params.tag = selectedTag;
             }
@@ -36,28 +44,48 @@ const PoetsFeed = ({ lang }) => {
                 params
             });
             return response.data;
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.current_page < lastPage.last_page) {
+                return lastPage.current_page + 1;
+            }
+            return undefined;
         }
     });
 
-    const poets = data?.data || [];
+    const poets = data?.pages.flatMap(page => page.data) || [];
+
+    // Intersection Observer for infinite scroll
+    const { ref, InView } = useInView({
+        threshold: 0,
+        onChange: (inView) => {
+            if (inView && hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
+            }
+        },
+    });
 
     const PoetCard = ({ poet }) => (
         <div className="flex items-center gap-6 p-6 border-b border-gray-100 bg-white transition-colors group">
-            <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
-                <AvatarImage src={poet.avatar} alt={poet.name_en} className="object-cover" />
-                <AvatarFallback className="text-xl md:text-2xl font-bold text-gray-400 bg-gray-100">
-                    {poet.name_en?.charAt(0) || poet.name_sd?.charAt(0) || 'P'}
-                </AvatarFallback>
-            </Avatar>
+            <Link to={`/poets/${poet.slug}`}>
+                <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
+                    <AvatarImage src={poet.avatar} alt={poet.name_en} className="object-cover" />
+                    <AvatarFallback className="text-xl md:text-2xl font-bold text-gray-400 bg-gray-100">
+                        {poet.name_en?.charAt(0) || poet.name_sd?.charAt(0) || 'P'}
+                    </AvatarFallback>
+                </Avatar>
+            </Link>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">
-                        {isRtl ? poet.name_sd : poet.name_en}
-                    </h3>
+                    <Link to={`/poets/${poet.slug}`} className="hover:underline">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">
+                            {isRtl ? poet.name_sd : poet.name_en}
+                        </h3>
+                    </Link>
                 </div>
 
-                <p className="text-gray-500 text-sm md:text-base line-clamp-2 mb-2 font-serif">
+                <p className="text-gray-500 text-sm md:text-base line-clamp-2 mb-2 font-arabic">
                     {isRtl ? poet.bio_sd : poet.bio_en}
                 </p>
 
@@ -141,7 +169,15 @@ const PoetsFeed = ({ lang }) => {
                     </div>
                 )}
 
-                {/* Pagination could be added here */}
+                {/* Loading indicator for next page */}
+                {isFetchingNextPage && (
+                    <div className="py-4 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                    </div>
+                )}
+
+                {/* Sentinel for infinite scroll */}
+                <div ref={ref} className="h-4 w-full" />
             </div>
         </div>
     );
