@@ -16,9 +16,11 @@ const PoetsFeed = ({ lang }) => {
 
     // Fetch tags
     const { data: tagsData } = useQuery({
-        queryKey: ['poet-tags'],
+        queryKey: ['poet-tags', lang],
         queryFn: async () => {
-            const response = await axios.get('/api/v1/poet-tags');
+            const response = await axios.get('/api/v1/poet-tags', {
+                params: { lang }
+            });
             return response.data;
         }
     });

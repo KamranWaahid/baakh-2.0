@@ -71,10 +71,12 @@ class PoetController extends Controller
         return response()->json($poets);
     }
 
-    public function tags()
+    public function tags(Request $request)
     {
+        $lang = $request->get('lang', 'sd');
+
         $tags = Tags::where('type', 'poets')
-            ->where('lang', 'sd') // Assuming we fetch SD tags primarily for the menu, or based on locale
+            ->where('lang', $lang)
             ->select('tag', 'slug')
             ->get();
 
