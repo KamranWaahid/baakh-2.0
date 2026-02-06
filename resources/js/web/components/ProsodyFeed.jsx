@@ -4,7 +4,8 @@ import { Scale, Ruler, Music, Info, Scissors, Columns2, Wrench, Scroll, Footprin
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import TaqtiTool from './TaqtiTool';
+import PattiTool from './PattiTool';
+import ProsodyTermModal from './ProsodyTermModal';
 
 // Icon Map for dynamic icons from database
 const IconMap = {
@@ -26,6 +27,8 @@ const IconMap = {
 const ProsodyFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [showTool, setShowTool] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const { data: items, isLoading } = useQuery({
         queryKey: ['prosody', lang],
@@ -35,14 +38,24 @@ const ProsodyFeed = ({ lang }) => {
         }
     });
 
+    const handleItemClick = (item) => {
+        const isPatti = item.title?.toLowerCase().includes('patti') || item.title?.includes('پٽي');
+        if (isPatti) {
+            setShowTool(true);
+        } else {
+            setSelectedItem(item);
+            setIsModalOpen(true);
+        }
+    };
+
     const ConceptCard = ({ item }) => {
         const IconComponent = IconMap[item.icon] || Info;
-        const isTaqti = item.title?.toLowerCase().includes('taqti') || item.title?.includes('تقطيع');
+        const isPatti = item.title?.toLowerCase().includes('patti') || item.title?.includes('پٽي');
 
         return (
             <div
-                onClick={() => { if (isTaqti) setShowTool(true); }}
-                className={`group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full ${isTaqti ? 'ring-2 ring-black ring-offset-2' : ''}`}
+                onClick={() => handleItemClick(item)}
+                className={`group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full ${isPatti ? 'ring-2 ring-black ring-offset-2' : ''}`}
             >
                 <div className={`h-12 w-12 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center mb-4 transition-colors`}>
                     <IconComponent className="h-5 w-5 text-gray-400 group-hover:text-black transition-colors" />
@@ -52,23 +65,13 @@ const ProsodyFeed = ({ lang }) => {
                     {item.title || '...'}
                 </h3>
 
-                <span className={`text-xs font-medium text-gray-400 uppercase tracking-wider mb-3 ${isRtl ? 'font-sans' : ''}`}>
+                <span className={`text-xs font-medium text-gray-400 uppercase tracking-wider mb-6 ${isRtl ? 'font-sans' : ''}`}>
                     {item.subtitle || '...'}
                 </span>
 
-                <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-4">
-                    {item.description}
-                </p>
-
-                {item.technical_detail && (
-                    <div className="text-[10px] text-gray-400 mt-1 mb-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {item.technical_detail}
-                    </div>
-                )}
-
                 <div className="mt-auto pt-4 w-full border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
                     <span className="flex items-center gap-1 font-medium text-black group-hover:underline underline-offset-4">
-                        {isTaqti ? (isRtl ? 'ٽول کوليو' : 'Open Tool') : (isRtl ? 'تفصيل' : 'Learn Details')}
+                        {isPatti ? (isRtl ? 'پٽي کوليو' : 'Open Patti Tool') : (isRtl ? 'تفصيل' : 'Learn Details')}
                     </span>
                     <span className="group-hover:translate-x-1 transition-transform duration-300 text-black">
                         {isRtl ? '←' : '→'}
@@ -84,7 +87,7 @@ const ProsodyFeed = ({ lang }) => {
                 <Button variant="ghost" className="mb-4" onClick={() => setShowTool(false)}>
                     {isRtl ? '← واپس' : '← Back to Concepts'}
                 </Button>
-                <TaqtiTool lang={lang} />
+                <PattiTool lang={lang} />
             </div>
         );
     }
@@ -105,10 +108,10 @@ const ProsodyFeed = ({ lang }) => {
                 <div className="mt-8 bg-black text-white p-6 rounded-2xl flex items-center justify-between shadow-lg">
                     <div>
                         <h2 className="text-xl font-bold mb-1">{isRtl ? 'شاعري جي پرک' : "Poet's Workbench Available"}</h2>
-                        <p className="text-gray-300 text-sm">{isRtl ? 'اسان جي تقطيع ٽول ذريعي پنهنجي شاعري جو وزن چيڪ ڪريو.' : 'Check the metrics of your poetry with our new Taqti tool.'}</p>
+                        <p className="text-gray-300 text-sm">{isRtl ? 'اسان جي پٽي ٽول ذريعي پنهنجي شاعري جو وزن چيڪ ڪريو.' : 'Check the metrics of your poetry with our new Patti tool.'}</p>
                     </div>
                     <Button onClick={() => setShowTool(true)} className="bg-white text-black hover:bg-gray-200 font-bold">
-                        {isRtl ? 'تقطيع ڪريو' : 'Try Scansion'}
+                        {isRtl ? 'پٽي ڪريو' : 'Try Scansion'}
                     </Button>
                 </div>
             </div>
@@ -131,6 +134,13 @@ const ProsodyFeed = ({ lang }) => {
                     ))}
                 </div>
             )}
+
+            <ProsodyTermModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                item={selectedItem}
+                lang={lang}
+            />
         </div>
     );
 };

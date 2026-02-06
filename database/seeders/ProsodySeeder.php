@@ -36,8 +36,8 @@ class ProsodySeeder extends Seeder
                 'order' => 2,
             ],
             [
-                'title_sd' => 'تقطيع',
-                'title_en' => 'Taqti (Scansion)',
+                'title_sd' => 'پٽي',
+                'title_en' => 'Patti',
                 'desc_sd' => 'شعر جي وزن کي پرکڻ لاءِ ان کي ان جي تال وارن حصن (ارڪان) ۾ تقسيم ڪرڻ جو عمل.',
                 'desc_en' => 'The process of fragmenting a verse into its rhythmic components to verify its meter.',
                 'tech_detail_sd' => 'هي لکيل اکرن جي بجاءِ اچاريل آوازن (لفظي) تي ٻڌل هوندو آهي. خاموش اکرن کي خارج ڪيو ويندو آهي.',

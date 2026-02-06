@@ -4,19 +4,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Info, Volume2, BookmarkPlus, AlertCircle, CheckCircle, ChevronDown, RotateCcw } from 'lucide-react';
-import { scanPoetry } from '../utils/TaqtiScanner';
+import { scanPoetry } from '../utils/PattiScanner';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '../contexts/AuthContext';
+import LoginModal from './LoginModal';
 
 
-const TaqtiTool = ({ lang = 'sd' }) => {
+const PattiTool = ({ lang = 'sd' }) => {
     const isRtl = lang === 'sd';
+    const { user } = useAuth();
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [script, setScript] = useState(lang === 'en' ? 'roman' : 'perso'); // 'perso' | 'roman'
     const [method, setMethod] = useState('arooz'); // 'arooz' (Arkan) | 'chhand' (Matra)
     const [inputText, setInputText] = useState('');
     const [result, setResult] = useState(null);
 
     const handleScan = () => {
-        // Use the Taqti Engine
+        // Use the Patti Engine
         const analysis = scanPoetry(inputText, method, lang);
         setResult(analysis);
     };
@@ -29,26 +33,44 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                 <div>
                     <h1 className={`text-2xl font-bold text-gray-900 flex items-center gap-2 ${isRtl ? 'font-arabic' : ''}`}>
                         <span className="text-3xl">🪶</span>
-                        {isRtl ? 'شاعر جي ورڪ بينچ' : "Poet's Workbench"}
+                        {isRtl ? 'شاعر جي پٽي (Workbench)' : "Poet's Scansion Patti"}
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">
-                        {isRtl ? 'بحر، وزن ۽ تقطيع جو جديد اوزار' : 'Advanced tool for Meter, Weight, and Scansion'}
+                        {isRtl ? 'بحر، وزن ۽ پٽي جو جديد اوزار' : 'Advanced tool for Meter, Weight, and Patti (Scansion)'}
                     </p>
                 </div>
 
-                <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-lg border border-gray-100" dir={isRtl ? 'rtl' : 'ltr'}>
                     <div className="flex items-center gap-2 px-2">
-                        <span className={`text-sm font-medium ${method === 'chhand' ? 'text-gray-900' : 'text-gray-400'}`}>
-                            {isRtl ? 'ڇند وديا' : 'Chhand Widya'}
-                        </span>
-                        <Switch
-                            checked={method === 'arooz'}
-                            onCheckedChange={(c) => setMethod(c ? 'arooz' : 'chhand')}
-                            className="data-[state=checked]:bg-black"
-                        />
-                        <span className={`text-sm font-medium ${method === 'arooz' ? 'text-gray-900' : 'text-gray-400'}`}>
-                            {isRtl ? 'علم عروض' : 'Ilm Arooz'}
-                        </span>
+                        {isRtl ? (
+                            <>
+                                <span className={`text-sm font-medium ${method === 'arooz' ? 'text-gray-900' : 'text-gray-400'}`}>
+                                    علم عروض
+                                </span>
+                                <Switch
+                                    checked={method === 'arooz'}
+                                    onCheckedChange={(c) => setMethod(c ? 'arooz' : 'chhand')}
+                                    className="data-[state=checked]:bg-black"
+                                />
+                                <span className={`text-sm font-medium ${method === 'chhand' ? 'text-gray-900' : 'text-gray-400'}`}>
+                                    ڇند وديا
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <span className={`text-sm font-medium ${method === 'chhand' ? 'text-gray-900' : 'text-gray-400'}`}>
+                                    Chhand Widya
+                                </span>
+                                <Switch
+                                    checked={method === 'arooz'}
+                                    onCheckedChange={(c) => setMethod(c ? 'arooz' : 'chhand')}
+                                    className="data-[state=checked]:bg-black"
+                                />
+                                <span className={`text-sm font-medium ${method === 'arooz' ? 'text-gray-900' : 'text-gray-400'}`}>
+                                    Ilm Arooz
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -102,21 +124,40 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                                 <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-white backdrop-blur-sm">
                                     <CheckCircle className="h-6 w-6" />
                                 </div>
-                                <div>
+                                <div className={isRtl ? 'text-right' : 'text-left'}>
                                     <h3 className={`text-xl font-bold ${isRtl ? 'font-arabic' : ''}`}>
                                         {method === 'arooz' ? result.meter.name_arooz : result.meter.name_chhand}
                                     </h3>
-                                    <p className={`text-white/70 font-mono mt-1 ${isRtl ? 'font-arabic' : ''}`}>
+                                    <p className={`text-white/70 font-mono mt-1 ${isRtl ? 'font-arabic' : ''}`} dir="ltr">
                                         {method === 'arooz' ? result.meter.pattern_arooz : result.meter.pattern_chhand}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="h-9 bg-transparent border-white/20 text-white hover:bg-white hover:text-black transition-all">
-                                    <Volume2 className="h-4 w-4 mr-2" /> Play Beat
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled
+                                    className="h-9 bg-transparent border-white/20 text-white/50 cursor-not-allowed opacity-50"
+                                >
+                                    <Volume2 className={`h-4 w-4 ${isRtl ? 'ml-2' : 'mr-2'}`} />
+                                    {isRtl ? 'تار وڄايو' : 'Play Beat'}
                                 </Button>
-                                <Button variant="outline" size="sm" className="h-9 bg-white text-black hover:bg-gray-200 border-white transition-all">
-                                    <BookmarkPlus className="h-4 w-4 mr-2" /> Save
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        if (!user) {
+                                            setLoginModalOpen(true);
+                                        } else {
+                                            // Handle save logic
+                                            console.log('Saved');
+                                        }
+                                    }}
+                                    className="h-9 bg-white text-black hover:bg-gray-200 border-white transition-all"
+                                >
+                                    <BookmarkPlus className={`h-4 w-4 ${isRtl ? 'ml-2' : 'mr-2'}`} />
+                                    {isRtl ? 'محفوظ ڪريو' : 'Save'}
                                 </Button>
                             </div>
                         </div>
@@ -174,8 +215,10 @@ const TaqtiTool = ({ lang = 'sd' }) => {
                     </div>
                 )}
             </div>
+
+            <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} isRtl={isRtl} />
         </div>
     );
 };
 
-export default TaqtiTool;
+export default PattiTool;
