@@ -35,26 +35,58 @@ class TeamController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            // Admin account fields (optional if creating team for self)
+            'admin_name' => 'nullable|string|max:255',
+            'admin_name_sd' => 'nullable|string|max:255',
+            'admin_username' => 'nullable|string|max:255|unique:users,username',
+            'admin_email' => 'nullable|email|unique:users,email',
+            'admin_phone' => 'nullable|string|max:20',
+            'admin_whatsapp' => 'nullable|string|max:20',
+            'admin_password' => 'nullable|string|min:8',
+            'admin_role' => 'nullable|string|exists:roles,name',
         ]);
+
+        $ownerId = $request->user()->id;
+
+        // If admin fields are provided, create a new user
+        if ($request->filled('admin_email')) {
+            $newUser = \App\Models\User::create([
+                'name' => $request->admin_name,
+                'name_sd' => $request->admin_name_sd,
+                'username' => $request->admin_username,
+                'email' => $request->admin_email,
+                'phone' => $request->admin_phone,
+                'whatsapp' => $request->admin_whatsapp,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->admin_password),
+                'status' => 'active',
+            ]);
+
+            if ($request->admin_role) {
+                $newUser->assignRole($request->admin_role);
+            }
+
+            $ownerId = $newUser->id;
+            ActivityLog::log('created_user', $request->user(), $newUser, 'Created new admin user: ' . $newUser->email);
+        }
 
         $team = Team::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name) . '-' . Str::random(4),
             'description' => $request->description,
-            'owner_id' => $request->user()->id,
+            'owner_id' => $ownerId,
             'status' => 'active',
         ]);
 
         // Add owner as member
         $team->members()->create([
-            'user_id' => $request->user()->id,
+            'user_id' => $ownerId,
             'role' => 'owner'
         ]);
 
         ActivityLog::log('created_team', $request->user(), $team, 'Created team: ' . $team->name);
 
         return response()->json([
-            'message' => 'Team created successfully',
+            'message' => 'Team and Admin created successfully',
             'team' => $team,
         ], 201);
     }

@@ -112,7 +112,7 @@ const Sidebar = () => {
                 <div className="my-2 border-t" />
                 <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
-                <SidebarLink to="/teams" icon={Users}>Team</SidebarLink>
+                <SidebarLink to="/teams" icon={Users}>Admins & Teams</SidebarLink>
                 <SidebarLink to="/roles" icon={Shield}>Roles & Permissions</SidebarLink>
                 <SidebarLink to="/languages" icon={Languages}>Languages</SidebarLink>
                 <SidebarLink to="/databases" icon={Database}>Databases</SidebarLink>
