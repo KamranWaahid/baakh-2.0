@@ -10,11 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('poetry_main', 'is_featured')) {
-            Schema::table('poetry_main', function (Blueprint $table) {
-                $table->boolean('is_featured')->default(false)->after('visibility');
-            });
-        }
+        Schema::table('reports', function (Blueprint $table) {
+            $table->unsignedBigInteger('poet_id')->nullable()->after('poem_id');
+        });
     }
 
     /**
@@ -22,8 +20,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('poetry_main', function (Blueprint $table) {
-            $table->dropColumn('is_featured');
+        Schema::table('reports', function (Blueprint $table) {
+            $table->dropColumn('poet_id');
         });
     }
 };

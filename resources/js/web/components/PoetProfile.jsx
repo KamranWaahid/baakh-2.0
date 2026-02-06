@@ -10,11 +10,20 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import axios from 'axios';
 import { formatDate } from '@/lib/date-utils';
+import ReportModal from './ReportModal';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Flag } from 'lucide-react';
 
 const PoetProfile = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { slug } = useParams();
     const [activeTab, setActiveTab] = React.useState('poetry');
+    const [reportModalOpen, setReportModalOpen] = React.useState(false);
 
     const { ref, inView } = useInView();
 
@@ -140,9 +149,22 @@ const PoetProfile = ({ lang }) => {
                                 <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium h-10">
                                     {isRtl ? 'شاعر بابت' : 'About Poet'}
                                 </Button>
-                                <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-48 bg-white p-1 z-50">
+                                        <DropdownMenuItem
+                                            className="cursor-pointer py-2 text-red-600 focus:text-red-700 focus:bg-red-50 flex items-center gap-2"
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportModalOpen(true); }}
+                                        >
+                                            <Flag className="h-4 w-4" />
+                                            <span>{isRtl ? 'شاعر رپورٽ ڪريو' : 'Report this poet'}</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
 
@@ -370,9 +392,22 @@ const PoetProfile = ({ lang }) => {
                                 </DialogContent>
                             </Dialog>
 
-                            <Button variant="outline" size="icon" className="rounded-full border-gray-300">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10 shrink-0">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48 bg-white p-1 z-50">
+                                    <DropdownMenuItem
+                                        className="cursor-pointer py-2 text-red-600 focus:text-red-700 focus:bg-red-50 flex items-center gap-2"
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReportModalOpen(true); }}
+                                    >
+                                        <Flag className="h-4 w-4" />
+                                        <span>{isRtl ? 'شاعر رپورٽ ڪريو' : 'Report this poet'}</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
 
                         <div className="w-full pt-6 border-t border-gray-100">
@@ -409,6 +444,13 @@ const PoetProfile = ({ lang }) => {
                 </aside>
 
             </div>
+            {/* Report Poet Modal */}
+            <ReportModal
+                open={reportModalOpen}
+                onOpenChange={setReportModalOpen}
+                isRtl={isRtl}
+                poetId={poet?.id}
+            />
         </div>
     );
 };

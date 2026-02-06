@@ -15,12 +15,14 @@ class ReportController extends Controller
             'reason' => 'required|string|min:3',
             'url' => 'nullable|url',
             'poem_id' => 'nullable|integer',
+            'poet_id' => 'nullable|integer',
         ]);
 
         $report = Report::create([
             'reason' => $validated['reason'],
             'url' => $validated['url'],
             'poem_id' => $validated['poem_id'],
+            'poet_id' => $validated['poet_id'],
             'user_id' => Auth::guard('sanctum')->id(),
         ]);
 

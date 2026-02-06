@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId }) => {
+const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetId }) => {
     const [submitted, setSubmitted] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
 
@@ -26,7 +26,8 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId }) => 
                 return api.post('/api/v1/report', {
                     reason,
                     url,
-                    poem_id: poemId
+                    poem_id: poemId,
+                    poet_id: poetId
                 });
             });
             setSubmitted(true);
