@@ -5,7 +5,7 @@ import api from '@/admin/api/axios';
 import { useAuth } from '../contexts/AuthContext';
 import PoemActionBar from './PoemActionBar';
 import { Button } from '@/components/ui/button';
-import { Sparkles, User, MessageCircle } from 'lucide-react';
+import { Sparkles, User } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import PaywallCTA from './PaywallCTA';
@@ -210,10 +210,6 @@ const PoemDetail = ({ lang }) => {
                                         <div className="flex items-center gap-1">
                                             <span role="img" aria-label="claps">👏</span>
                                             <span>{p.claps}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <MessageCircle className="h-3 w-3" />
-                                            <span>{p.comments}</span>
                                         </div>
                                     </div>
                                 </Link>
