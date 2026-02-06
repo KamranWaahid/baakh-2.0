@@ -103,8 +103,8 @@ const PoemActionBar = ({ poem, lang, className, leftContent }) => {
     };
 
     return (
-        <div className={`flex items-center justify-between text-gray-500 w-full ${className || ''}`} onClick={(e) => e.preventDefault()}>
-            <div className="flex items-center gap-6">
+        <div className={`flex items-center text-gray-500 w-full ${className && className.includes('justify-center') ? 'justify-center' : 'justify-between'} ${className || ''}`} onClick={(e) => e.preventDefault()}>
+            <div className={`flex items-center ${className && className.includes('justify-center') ? 'gap-3' : 'gap-6'}`}>
                 {leftContent && (
                     <div className="flex items-center gap-3">
                         {leftContent}
@@ -118,7 +118,7 @@ const PoemActionBar = ({ poem, lang, className, leftContent }) => {
                     <span className="text-sm">{poem.likes || 0}</span>
                 </button>
             </div>
-            <div className="flex items-center gap-4">
+            <div className={`flex items-center ${className && className.includes('justify-center') ? 'gap-6' : 'gap-4'}`}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button className="hover:text-black outline-none z-10 relative">

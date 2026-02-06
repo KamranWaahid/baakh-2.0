@@ -48,7 +48,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     </h2>
                                 )}
                                 {excerpt && (
-                                    <p className={`text-gray-600 mb-4 text-sm md:text-base leading-relaxed ${isRtl ? 'font-arabic' : ''} ${is_couplet ? 'whitespace-pre-wrap text-center text-lg font-medium py-4' : 'line-clamp-2'}`}>
+                                    <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} ${is_couplet ? 'whitespace-pre-wrap text-center text-xl md:text-2xl font-medium py-6' : 'text-sm md:text-base line-clamp-2'}`}>
                                         {excerpt}
                                     </p>
                                 )}
@@ -58,7 +58,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     <img
                                         src={cover.startsWith('http') ? cover : `/${cover}`}
                                         alt={title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                 </div>
                             )}
@@ -80,12 +80,13 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                         <PoemActionBar
                             poem={postPoem}
                             lang={lang}
-                            className={is_couplet ? 'justify-center gap-8' : ''}
+                            className={is_couplet ? 'justify-center gap-10' : ''}
                             leftContent={is_couplet ? (
-                                <>
+                                <div className="flex items-center gap-3 text-sm">
                                     {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ml-1`} />}
                                     <span>{formatDate(safeDate, lang)}</span>
-                                </>
+                                    <span className="text-gray-300">·</span>
+                                </div>
                             ) : null}
                         />
                     </div>
