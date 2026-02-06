@@ -105,6 +105,33 @@ class PoetController extends Controller
         $detailSd = $getDetail('sd');
         $detailEn = $getDetail('en');
 
+        // Helper to get location string
+        $getLocation = function ($cityId, $lang) {
+            if (!$cityId)
+                return null;
+            $city = \App\Models\Cities::with([
+                'details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                },
+                'province.details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                },
+                'province.country.details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])->find($cityId);
+
+            if (!$city)
+                return null;
+
+            $cName = $city->details->first()->city_name ?? '';
+            $pName = $city->province->details->first()->province_name ?? '';
+            $coName = $city->province->country->details->first()->country_name ?? '';
+
+            $parts = array_filter([$cName, $pName, $coName]);
+            return implode(', ', $parts);
+        };
+
         // Suggested Poets (Random 3, unique)
         $suggested = Poets::where('id', '!=', $poet->id)
             ->where('visibility', 1)
@@ -127,12 +154,21 @@ class PoetController extends Controller
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
             'avatar' => $poet->poet_pic,
+            'dob' => $poet->date_of_birth,
+            'dod' => $poet->date_of_death,
+
+            // English Data
             'name_en' => $detailEn->poet_name ?? $detailSd->poet_name ?? 'N/A',
-            'name_sd' => $detailSd->poet_name ?? $detailEn->poet_name ?? 'N/A',
             'laqab_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
-            'laqab_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
             'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
+            'location_en' => $getLocation($detailEn->birth_place ?? $detailSd->birth_place ?? null, 'en'),
+
+            // Sindhi Data
+            'name_sd' => $detailSd->poet_name ?? $detailEn->poet_name ?? 'N/A',
+            'laqab_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
             'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
+            'location_sd' => $getLocation($detailSd->birth_place ?? $detailEn->birth_place ?? null, 'sd'),
+
             'entries_count' => $poet->poetry_count ?? 0,
             'suggested' => $suggested,
             // Categories/Menu would usually come from aggregating poetry types, 

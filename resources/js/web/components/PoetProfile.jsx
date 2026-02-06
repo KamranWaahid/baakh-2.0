@@ -1,6 +1,8 @@
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { MoreHorizontal, User, BookOpen } from 'lucide-react';
 import { useParams, Link } from 'react-router-dom';
 import PostCard from './PostCard';
@@ -123,14 +125,83 @@ const PoetProfile = ({ lang }) => {
                             {isRtl ? poet.laqab_sd : poet.laqab_en}
                         </p>
 
-                        <p className="font-serif text-sm text-gray-600 leading-relaxed mb-6 font-arabic">
+                        <p className="font-serif text-sm text-gray-600 leading-relaxed mb-6 font-arabic line-clamp-3">
                             {isRtl ? poet.bio_sd : poet.bio_en}
                         </p>
 
                         <div className="flex gap-2 w-full mb-6">
-                            <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium">
-                                {isRtl ? 'شاعر بابت' : 'About Poet'}
-                            </Button>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium">
+                                        {isRtl ? 'شاعر بابت' : 'About Poet'}
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+                                    <DialogHeader className="p-6 pb-2">
+                                        <div className="flex flex-col items-center gap-4 mb-2">
+                                            <div className="h-24 w-24 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 shrink-0">
+                                                <User className="h-12 w-12" />
+                                            </div>
+                                            <div className="text-center w-full">
+                                                <DialogTitle className="text-2xl font-bold mb-1 text-center">
+                                                    {isRtl ? poet.name_sd : poet.name_en}
+                                                </DialogTitle>
+                                                <DialogDescription className="text-base font-medium text-gray-500 text-center">
+                                                    {isRtl ? poet.laqab_sd : poet.laqab_en}
+                                                </DialogDescription>
+                                            </div>
+                                        </div>
+                                    </DialogHeader>
+
+                                    <div className="flex-1 overflow-y-auto p-6 pt-0">
+                                        <div className="space-y-5 text-sm">
+                                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                                <div>
+                                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                        {isRtl ? 'جنم' : 'Born'}
+                                                    </span>
+                                                    <span className="font-medium text-gray-900">
+                                                        {poet.dob ? new Date(poet.dob).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+                                                    </span>
+                                                </div>
+                                                {poet.dod && (
+                                                    <div>
+                                                        <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                            {isRtl ? 'وفات' : 'Died'}
+                                                        </span>
+                                                        <span className="font-medium text-gray-900">
+                                                            {new Date(poet.dod).toLocaleDateString(lang === 'sd' ? 'ur-PK' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {(isRtl ? poet.location_sd : poet.location_en) && (
+                                                <div className="bg-gray-50 p-4 rounded-lg -mt-3">
+                                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                        {isRtl ? 'هنڌ' : 'Location'}
+                                                    </span>
+                                                    <span className="font-medium text-gray-900">
+                                                        {isRtl ? poet.location_sd : poet.location_en}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <Separator />
+
+                                            <div>
+                                                <span className="text-gray-400 block text-xs uppercase tracking-wide mb-2 font-semibold">
+                                                    {isRtl ? 'بايو' : 'Biography'}
+                                                </span>
+                                                <p className="font-serif text-gray-600 leading-relaxed font-arabic whitespace-pre-line text-base">
+                                                    {isRtl ? poet.bio_sd : poet.bio_en}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+
                             <Button variant="outline" size="icon" className="rounded-full border-gray-300">
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
