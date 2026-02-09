@@ -24,7 +24,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const poetSchema = z.object({
     poet_slug: z.string().min(3, 'Slug must be at least 3 characters'),
@@ -48,6 +49,7 @@ const poetSchema = z.object({
 const CreatePoet = () => {
     const navigate = useNavigate();
     const [preview, setPreview] = useState(null);
+    const [submitError, setSubmitError] = useState(null);
 
     const { data: createData } = useQuery({
         queryKey: ['poets-create-data'],
@@ -87,29 +89,30 @@ const CreatePoet = () => {
 
     const onSubmit = async (data) => {
         const formData = new FormData();
-        formData.append('poet_slug', data.poet_slug);
-        if (data.date_of_birth) formData.append('date_of_birth', data.date_of_birth);
-        if (data.date_of_death) formData.append('date_of_death', data.date_of_death);
+        formData.append('poet_slug', data.poet_slug || '');
+        formData.append('date_of_birth', data.date_of_birth || '');
+        formData.append('date_of_death', data.date_of_death || '');
         formData.append('visibility', data.visibility ? '1' : '0');
         formData.append('is_featured', data.is_featured ? '1' : '0');
         formData.append('image', data.image[0]);
 
         data.details.forEach((detail, index) => {
-            formData.append(`details[${index}][lang]`, detail.lang);
-            formData.append(`details[${index}][poet_name]`, detail.poet_name);
-            formData.append(`details[${index}][poet_laqab]`, detail.poet_laqab);
-            if (detail.pen_name) formData.append(`details[${index}][pen_name]`, detail.pen_name);
-            if (detail.tagline) formData.append(`details[${index}][tagline]`, detail.tagline);
-            if (detail.poet_bio) formData.append(`details[${index}][poet_bio]`, detail.poet_bio);
-            if (detail.birth_place) formData.append(`details[${index}][birth_place]`, detail.birth_place);
-            if (detail.death_place) formData.append(`details[${index}][death_place]`, detail.death_place);
+            formData.append(`details[${index}][lang]`, detail.lang || 'sd');
+            formData.append(`details[${index}][poet_name]`, detail.poet_name || '');
+            formData.append(`details[${index}][poet_laqab]`, detail.poet_laqab || '');
+            formData.append(`details[${index}][pen_name]`, detail.pen_name || '');
+            formData.append(`details[${index}][tagline]`, detail.tagline || '');
+            formData.append(`details[${index}][poet_bio]`, detail.poet_bio || '');
+            formData.append(`details[${index}][birth_place]`, detail.birth_place || '');
+            formData.append(`details[${index}][death_place]`, detail.death_place || '');
         });
 
         try {
+            setSubmitError(null);
             await api.post('/api/admin/poets', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            navigate('/admin/new/poets');
+            navigate('/admin/poets');
         } catch (error) {
             console.error(error);
             if (error.response?.data?.errors) {
@@ -117,6 +120,9 @@ const CreatePoet = () => {
                 Object.keys(errors).forEach(key => {
                     form.setError(key, { message: errors[key][0] });
                 });
+                setSubmitError("Validation failed. Please check the form for errors.");
+            } else {
+                setSubmitError(error.response?.data?.message || "An unexpected error occurred. Please try again.");
             }
         }
     };
@@ -132,6 +138,15 @@ const CreatePoet = () => {
     return (
         <div className="max-w-4xl mx-auto pb-10">
             <h2 className="text-2xl font-bold mb-4">Add New Poet</h2>
+
+            {submitError && (
+                <Alert variant="destructive" className="mb-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
+            )}
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <Card>
@@ -417,7 +432,7 @@ const CreatePoet = () => {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => navigate('/poets')}>Cancel</Button>
+                        <Button variant="outline" type="button" onClick={() => navigate('/admin/poets')}>Cancel</Button>
                         <Button type="submit" disabled={form.formState.isSubmitting}>
                             {form.formState.isSubmitting ? 'Saving...' : 'Create Poet'}
                         </Button>

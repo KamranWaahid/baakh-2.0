@@ -24,7 +24,40 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+// Simple Error Boundary to catch render crashes
+class EditPoetErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("EditPoet Error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-8 text-center space-y-4 max-w-2xl mx-auto">
+                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+                    <h2 className="text-xl font-bold text-red-600">Something went wrong</h2>
+                    <p className="text-gray-500 text-sm bg-gray-50 p-4 rounded border font-mono text-left overflow-auto">
+                        {this.state.error?.toString()}
+                    </p>
+                    <Button onClick={() => window.location.reload()}>Reload Page</Button>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 const poetSchema = z.object({
     poet_slug: z.string().min(3, 'Slug must be at least 3 characters'),
@@ -45,7 +78,7 @@ const poetSchema = z.object({
     })).min(1, "At least one language detail is required"),
 });
 
-const EditPoet = () => {
+const EditPoetContent = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [preview, setPreview] = useState(null);
@@ -58,7 +91,7 @@ const EditPoet = () => {
         }
     });
 
-    const { data: poet, isLoading } = useQuery({
+    const { data: poet, isLoading, isError, error } = useQuery({
         queryKey: ['poet', id],
         queryFn: async () => {
             const res = await api.get(`/api/admin/poets/${id}`);
@@ -87,21 +120,21 @@ const EditPoet = () => {
     useEffect(() => {
         if (poet) {
             form.reset({
-                poet_slug: poet.poet_slug,
+                poet_slug: poet.poet_slug || '',
                 date_of_birth: poet.date_of_birth || '',
                 date_of_death: poet.date_of_death || '',
                 visibility: poet.visibility === 1,
                 is_featured: poet.is_featured === 1,
-                details: poet.all_details.map(d => ({
-                    lang: d.lang,
-                    poet_name: d.poet_name,
-                    poet_laqab: d.poet_laqab,
+                details: Array.isArray(poet.all_details) ? poet.all_details.map(d => ({
+                    lang: d.lang || 'sd',
+                    poet_name: d.poet_name || '',
+                    poet_laqab: d.poet_laqab || '',
                     pen_name: d.pen_name || '',
                     tagline: d.tagline || '',
                     poet_bio: d.poet_bio || '',
                     birth_place: d.birth_place?.toString() || null,
                     death_place: d.death_place?.toString() || null,
-                })),
+                })) : [],
             });
             if (poet.poet_pic) {
                 setPreview('/' + poet.poet_pic);
@@ -112,9 +145,9 @@ const EditPoet = () => {
     const onSubmit = async (data) => {
         const formData = new FormData();
         formData.append('_method', 'PUT');
-        formData.append('poet_slug', data.poet_slug);
-        if (data.date_of_birth) formData.append('date_of_birth', data.date_of_birth);
-        if (data.date_of_death) formData.append('date_of_death', data.date_of_death);
+        formData.append('poet_slug', data.poet_slug || '');
+        formData.append('date_of_birth', data.date_of_birth || '');
+        formData.append('date_of_death', data.date_of_death || '');
         formData.append('visibility', data.visibility ? '1' : '0');
         formData.append('is_featured', data.is_featured ? '1' : '0');
 
@@ -123,21 +156,21 @@ const EditPoet = () => {
         }
 
         data.details.forEach((detail, index) => {
-            formData.append(`details[${index}][lang]`, detail.lang);
-            formData.append(`details[${index}][poet_name]`, detail.poet_name);
-            formData.append(`details[${index}][poet_laqab]`, detail.poet_laqab);
-            if (detail.pen_name) formData.append(`details[${index}][pen_name]`, detail.pen_name);
-            if (detail.tagline) formData.append(`details[${index}][tagline]`, detail.tagline);
-            if (detail.poet_bio) formData.append(`details[${index}][poet_bio]`, detail.poet_bio);
-            if (detail.birth_place) formData.append(`details[${index}][birth_place]`, detail.birth_place);
-            if (detail.death_place) formData.append(`details[${index}][death_place]`, detail.death_place);
+            formData.append(`details[${index}][lang]`, detail.lang || 'sd');
+            formData.append(`details[${index}][poet_name]`, detail.poet_name || '');
+            formData.append(`details[${index}][poet_laqab]`, detail.poet_laqab || '');
+            formData.append(`details[${index}][pen_name]`, detail.pen_name || '');
+            formData.append(`details[${index}][tagline]`, detail.tagline || '');
+            formData.append(`details[${index}][poet_bio]`, detail.poet_bio || '');
+            formData.append(`details[${index}][birth_place]`, detail.birth_place || '');
+            formData.append(`details[${index}][death_place]`, detail.death_place || '');
         });
 
         try {
             await api.post(`/api/admin/poets/${id}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            navigate('/admin/new/poets');
+            navigate('/admin/poets');
         } catch (error) {
             console.error(error);
             if (error.response?.data?.errors) {
@@ -157,7 +190,40 @@ const EditPoet = () => {
         }
     };
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading poet data...</p>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="max-w-2xl mx-auto p-4">
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>
+                        {error?.response?.data?.message || error?.message || "Failed to load poet details."}
+                    </AlertDescription>
+                </Alert>
+                <div className="mt-4 flex justify-center">
+                    <Button onClick={() => window.location.reload()}>Retry</Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!poet) {
+        return (
+            <div className="max-w-2xl mx-auto p-4 text-center">
+                <p className="text-muted-foreground">Poet not found.</p>
+                <Button className="mt-4" onClick={() => navigate('/admin/poets')}>Back to List</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto pb-10">
@@ -447,7 +513,7 @@ const EditPoet = () => {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" type="button" onClick={() => navigate('/admin/new/poets')}>Cancel</Button>
+                        <Button variant="outline" type="button" onClick={() => navigate('/admin/poets')}>Cancel</Button>
                         <Button type="submit" disabled={form.formState.isSubmitting}>
                             {form.formState.isSubmitting ? 'Saving...' : 'Update Poet'}
                         </Button>
@@ -457,5 +523,11 @@ const EditPoet = () => {
         </div>
     );
 };
+
+const EditPoet = () => (
+    <EditPoetErrorBoundary>
+        <EditPoetContent />
+    </EditPoetErrorBoundary>
+);
 
 export default EditPoet;

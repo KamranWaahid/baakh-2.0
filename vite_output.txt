@@ -1,0 +1,273 @@
+
+> dev
+> vite
+
+
+  VITE v4.4.9  ready in 776 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h to show help
+
+  LARAVEL v10.50.0  plugin v0.7.8
+
+  ➜  APP_URL: http://127.0.0.1:8001
+1:21:05 AM [vite] hmr update /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/Navbar.jsx, /resources/css/app.css?direct, /resources/css/app.css, /resources/js/web/components/Feed.jsx, /resources/js/web/components/SidebarRight.jsx, /resources/js/web/contexts/AuthContext.jsx, /resources/js/web/components/PoemDetail.jsx, /resources/js/web/components/LoginModal.jsx, /resources/js/web/components/SearchDialog.jsx, /resources/js/web/components/FeedbackModal.jsx, /resources/js/web/components/ReportModal.jsx
+1:21:05 AM [vite] page reload resources/js/admin/components/GlobalSearch.jsx
+1:21:05 AM [vite] page reload resources/js/admin/layouts/AdminLayout.jsx
+1:21:05 AM [vite] page reload resources/js/admin/main.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Categories/CategoriesList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Categories/CategoryForm.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Dashboard.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Databases/DatabaseList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Hesudhar/HesudharForm.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Hesudhar/HesudharList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Languages/LanguagesList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Locations/CitiesList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Locations/CountriesList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Locations/ProvincesList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Login.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poetry/CoupletsList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poetry/CreateCouplet.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poetry/CreatePoetry.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poetry/PoetryList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poets/CreatePoet.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poets/EditPoet.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Poets/PoetsList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Romanizer/RomanizerBulkCheck.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Romanizer/RomanizerForm.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Romanizer/RomanizerList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Tags/TagsList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Teams/RolesPermissions.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Teams/TeamForm.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Teams/TeamList.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Teams/TeamMembers.jsx
+1:21:05 AM [vite] page reload resources/js/admin/pages/Users/UserForm.jsx
+1:21:05 AM [vite] page reload resources/js/components/ui/alert.jsx
+1:21:05 AM [vite] hmr update /resources/js/components/ui/avatar.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/badge.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/button.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/card.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] page reload resources/js/components/ui/checkbox.jsx
+1:21:05 AM [vite] page reload resources/js/components/ui/command.jsx
+1:21:05 AM [vite] hmr update /resources/js/components/ui/dialog.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/dropdown-menu.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] page reload resources/js/components/ui/form.jsx
+1:21:05 AM [vite] hmr update /resources/js/components/ui/input.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/label.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] page reload resources/js/components/ui/pagination.jsx
+1:21:05 AM [vite] page reload resources/js/components/ui/select.jsx
+1:21:05 AM [vite] hmr update /resources/js/components/ui/separator.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/sheet.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/skeleton.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/switch.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] page reload resources/js/components/ui/table.jsx
+1:21:05 AM [vite] hmr update /resources/js/components/ui/tabs.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/components/ui/textarea.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] page reload resources/js/components/ui/tooltip.jsx
+1:21:05 AM [vite] hmr update /resources/js/web/components/PoetProfile.jsx, /resources/css/app.css?direct, /resources/css/app.css, /resources/js/web/components/PostCard.jsx
+1:21:05 AM [vite] hmr update /resources/js/components/ui/button.jsx, /resources/css/app.css?direct, /resources/css/app.css, /resources/js/components/ui/skeleton.jsx, /resources/js/components/ui/dropdown-menu.jsx, /resources/js/components/ui/avatar.jsx, /resources/js/components/ui/input.jsx, /resources/js/components/ui/separator.jsx, /resources/js/components/ui/tabs.jsx, /resources/js/components/ui/sheet.jsx, /resources/js/components/ui/badge.jsx, /resources/js/components/ui/dialog.jsx, /resources/js/components/ui/label.jsx, /resources/js/components/ui/card.jsx, /resources/js/components/ui/textarea.jsx, /resources/js/components/ui/switch.jsx
+1:21:05 AM [vite] hmr update /resources/js/web/components/BottomNav.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/CoupletsFeed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/Feed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/FeedbackBanner.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/FeedbackModal.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/GenreDetailsModal.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/GenreFeed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/LoginModal.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/Logo.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/Navbar.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PattiTool.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PaywallCTA.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PeriodDetailsModal.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PeriodFeed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PoemActionBar.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PoemDetail.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PoetProfile.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PoetryFeed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PoetsFeed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PostCard.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/ProsodyFeed.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/ProsodyTermModal.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/ReportModal.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/ScrollToTop.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/SearchDialog.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/SidebarLeft.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/SidebarRight.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/skeletons/PostCardSkeleton.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/contexts/AuthContext.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/main.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/pages/About.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/pages/Help.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/pages/Privacy.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/pages/Status.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/pages/Terms.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/PattiTool.jsx, /resources/css/app.css?direct, /resources/css/app.css
+1:21:05 AM [vite] hmr update /resources/js/web/components/SidebarRight.jsx, /resources/css/app.css?direct, /resources/css/app.css, /resources/js/web/components/PoemDetail.jsx
+1:21:05 AM [vite] page reload resources/views/admin/app.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/bundles/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/bundles/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/bundles/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/bundles/old-edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/bundles/translation.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/bundles/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/categories/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/categories/dynamic_category_info.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/categories/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/categories/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/categories/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/couplets/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/couplets/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/couplets/foreach-items.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/couplets/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/couplets/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/dashboard.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/doodles/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/doodles/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/doodles/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/doodles/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/hesudhar/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/hesudhar/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/home.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/languages/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/languages/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/locations/cities/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/locations/country/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/locations/province/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/media/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/create_translation.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/duplicate.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/edit_translation.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/partials/info_create_default.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/partials/info_create_for_lang.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/partials/info_edit_default.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/partials/info_edit_for_lang.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poetry/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poets/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poets/dynamic-fields-create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poets/dynamic-fields.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poets/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poets/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/poets/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/profile/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/profile/partials/delete-user-form.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/profile/partials/update-password-form.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/profile/partials/update-profile-information-form.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/romanizer/form-data.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/romanizer/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/romanizer/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/romanizer/words.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/sliders/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/sliders/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/sliders/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/sliders/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/sqlite/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/tags/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/tags/create_form.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/tags/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/tags/index.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/tags/trashed.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/permissions/all.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/permissions/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/permissions/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/profiles/admins.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/profiles/create.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/profiles/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/profiles/users.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/roles/add_role_in_permission.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/roles/all_roles.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/roles/edit.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/roles/edit_role_in_permission.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/roles/permissions-list.blade.php
+1:21:05 AM [vite] page reload resources/views/admin/users/roles/role_in_permission.blade.php
+1:21:05 AM [vite] page reload resources/views/app.blade.php
+1:21:05 AM [vite] page reload resources/views/components/application-logo.blade.php
+1:21:05 AM [vite] page reload resources/views/components/auth-session-status.blade.php
+1:21:05 AM [vite] page reload resources/views/components/baakh_share_buttons.blade.php
+1:21:05 AM [vite] page reload resources/views/components/danger-button.blade.php
+1:21:05 AM [vite] page reload resources/views/components/dropdown-link.blade.php
+1:21:05 AM [vite] page reload resources/views/components/dropdown.blade.php
+1:21:05 AM [vite] page reload resources/views/components/input-error.blade.php
+1:21:05 AM [vite] page reload resources/views/components/input-label.blade.php
+1:21:05 AM [vite] page reload resources/views/components/modal.blade.php
+1:21:05 AM [vite] page reload resources/views/components/nav-link.blade.php
+1:21:05 AM [vite] page reload resources/views/components/primary-button.blade.php
+1:21:05 AM [vite] page reload resources/views/components/responsive-nav-link.blade.php
+1:21:05 AM [vite] page reload resources/views/components/secondary-button.blade.php
+1:21:05 AM [vite] page reload resources/views/components/text-input.blade.php
+1:21:05 AM [vite] page reload resources/views/errors/403.blade.php
+1:21:05 AM [vite] page reload resources/views/errors/404.blade.php
+1:21:05 AM [vite] page reload resources/views/layouts/app.blade.php
+1:21:05 AM [vite] page reload resources/views/layouts/backup-web.blade.php
+1:21:05 AM [vite] page reload resources/views/layouts/breadcrumbs.blade.php
+1:21:05 AM [vite] page reload resources/views/layouts/guest.blade.php
+1:21:05 AM [vite] page reload resources/views/layouts/navigation.blade.php
+1:21:05 AM [vite] page reload resources/views/livewire/like-couplet-button.blade.php
+1:21:05 AM [vite] page reload resources/views/livewire/like-poet-button.blade.php
+1:21:05 AM [vite] page reload resources/views/livewire/like-poetry-button.blade.php
+1:21:05 AM [vite] page reload resources/views/livewire/login-modal.blade.php
+1:21:05 AM [vite] page reload resources/views/livewire/poetry-comments.blade.php
+1:21:05 AM [vite] page reload storage/framework/views/158ec840507c2cd50dd4068d88cd026d.php
+1:21:05 AM [vite] page reload storage/framework/views/634f0aa25a1f1fcef3eb5a9b17b5904e.php
+1:21:05 AM [vite] page reload tailwind.config.js
+1:21:05 AM [vite] changed tsconfig file detected: /Users/kamranwahid/Baakh - GIT/Baakh/vendor/laravel/breeze/stubs/inertia-react-ts/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+1:21:05 AM [vite] changed tsconfig file detected: /Users/kamranwahid/Baakh - GIT/Baakh/vendor/laravel/breeze/stubs/inertia-vue-ts/tsconfig.json - Clearing cache and forcing full-reload to ensure TypeScript is compiled with updated config values.
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/bootstrap-4.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/bootstrap-5.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/default.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/semantic-ui.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-bootstrap-4.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-bootstrap-5.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-default.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/simple-tailwind.blade.php
+1:21:05 AM [vite] page reload vendor/laravel/framework/src/Illuminate/Pagination/resources/views/tailwind.blade.php
+1:21:05 AM [vite] vite.config.js changed, restarting server...
+1:21:05 AM [vite] .env changed, restarting server...
+1:21:05 AM [vite] .env.example changed, restarting server...
+1:21:05 AM [vite] server restarted.
+
+  LARAVEL v10.50.0  plugin v0.7.8
+
+  ➜  APP_URL: http://127.0.0.1:8001
+1:21:06 AM [vite] vite.config.js changed, restarting server...
+1:21:06 AM [vite] .env changed, restarting server...
+1:21:06 AM [vite] .env.example changed, restarting server...
+1:21:06 AM [vite] server restarted.
+
+  LARAVEL v10.50.0  plugin v0.7.8
+
+  ➜  APP_URL: http://127.0.0.1:8001
+1:21:07 AM [vite] vite.config.js changed, restarting server...
+1:21:07 AM [vite] .env changed, restarting server...
+1:21:07 AM [vite] .env.example changed, restarting server...
+1:21:07 AM [vite] server restarted.
+
+  LARAVEL v10.50.0  plugin v0.7.8
+
+  ➜  APP_URL: http://127.0.0.1:8001
+1:21:08 AM [vite] vite.config.js changed, restarting server...
+1:21:08 AM [vite] .env changed, restarting server...
+1:21:08 AM [vite] .env.example changed, restarting server...
+1:21:08 AM [vite] server restarted.
+
+  LARAVEL v10.50.0  plugin v0.7.8
+
+  ➜  APP_URL: http://127.0.0.1:8001
+1:43:48 AM [vite] hmr update /resources/js/admin/pages/Poets/CreatePoet.jsx, /resources/css/app.css?direct, /resources/css/app.css, /resources/css/admin.css
+1:44:03 AM [vite] hmr update /resources/js/admin/pages/Poets/CreatePoet.jsx, /resources/css/app.css?direct, /resources/css/app.css, /resources/css/admin.css
+node:internal/errors:542
+      throw error;
+      ^
+
+TypeError [ERR_INVALID_ARG_TYPE]: The "code" argument must be of type number. Received type string ('SIGHUP')
+    at process.set [as exitCode] (node:internal/bootstrap/node:119:9)
+    at process.exit (node:internal/process/per_thread:231:24)
+    at process.emit (node:events:507:28) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+
+Node.js v24.5.0

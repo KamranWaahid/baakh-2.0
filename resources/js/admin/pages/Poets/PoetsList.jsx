@@ -66,7 +66,7 @@ const PoetsList = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poets</h2>
                 <Button asChild className="w-full sm:w-auto">
-                    <Link to="/poets/create">
+                    <Link to="/admin/poets/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Poet
                     </Link>
                 </Button>
@@ -147,7 +147,7 @@ const PoetsList = () => {
                                                 <TableCell className="hidden md:table-cell">{poet.date_of_death || '-'}</TableCell>
                                                 <TableCell className="text-right space-x-2">
                                                     <Button variant="ghost" size="sm" asChild>
-                                                        <Link to={`/poets/${poet.id}/edit`}>Edit</Link>
+                                                        <Link to={`/admin/poets/${poet.id}/edit`}>Edit</Link>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
