@@ -81,6 +81,7 @@ const CreatePoetry = () => {
 
     const [transliteratedText, setTransliteratedText] = useState('');
     const [isTransliterated, setIsTransliterated] = useState(isEdit); // Default true for edit, false for new
+    const [hasSindhiChars, setHasSindhiChars] = useState(false);
     const [slugError, setSlugError] = useState('');
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [openPoet, setOpenPoet] = useState(false);
@@ -89,37 +90,48 @@ const CreatePoetry = () => {
     const [openTags, setOpenTags] = useState(false);
     const [script, setScript] = useState('perso'); // 'perso' | 'roman'
 
+    // Prevent auto-updates on initial load for Edit mode
+    const allowAutoUpdates = React.useRef(!isEdit);
+
     // Reset transliteration status when content changes
     useEffect(() => {
+        if (!allowAutoUpdates.current) return;
         setIsTransliterated(false);
     }, [poetryContent]);
 
-    const handleTransliterate = async () => {
-        if (!poetryContent.trim()) return;
+    // Live Transliterate Content
+    useEffect(() => {
+        if (!allowAutoUpdates.current) return;
 
-        try {
-            // Transliterate Content
-            const contentResponse = await api.post('/api/admin/romanizer/transliterate', {
-                text: poetryContent
-            });
-            setTransliteratedText(contentResponse.data.transliterated_text);
-
-            // Transliterate Title
-            const currentTitle = form.getValues('poetry_title');
-            if (currentTitle) {
-                const titleResponse = await api.post('/api/admin/romanizer/transliterate', {
-                    text: currentTitle
-                });
-                setRomanTitle(titleResponse.data.transliterated_text);
-            }
-
-            setIsTransliterated(true);
-            setScript('roman'); // Switch to Roman view
-        } catch (error) {
-            console.error("Transliteration failed:", error);
-            alert("Failed to transliterate. Please try again.");
+        if (!poetryContent) {
+            setTransliteratedText('');
+            return;
         }
-    };
+
+        const timer = setTimeout(async () => {
+            try {
+                const response = await api.post('/api/admin/romanizer/transliterate', {
+                    text: poetryContent
+                });
+                setTransliteratedText(response.data.transliterated_text);
+                setIsTransliterated(true);
+            } catch (error) {
+                console.error("Content transliteration failed:", error);
+            }
+        }, 300); // Debounce 300ms for faster feedback
+
+        return () => clearTimeout(timer);
+    }, [poetryContent]);
+
+    // Validate Roman Text for Sindhi Characters
+    useEffect(() => {
+        const sindhiRegex = /[\u0600-\u06FF]/;
+        if (sindhiRegex.test(transliteratedText)) {
+            setHasSindhiChars(true);
+        } else {
+            setHasSindhiChars(false);
+        }
+    }, [transliteratedText]);
 
     const checkSlugUnique = async (slug) => {
         if (!slug) return;
@@ -176,7 +188,12 @@ const CreatePoetry = () => {
     // Auto-generate slug from title (only for new poetry)
     const title = form.watch('poetry_title');
     useEffect(() => {
-        if (!title) return;
+        if (!allowAutoUpdates.current) return;
+
+        if (!title) {
+            setRomanTitle('');
+            return;
+        }
 
         const timer = setTimeout(async () => {
             // Auto-transliterate title
@@ -187,20 +204,18 @@ const CreatePoetry = () => {
                 const roman = response.data.transliterated_text;
                 setRomanTitle(roman);
 
-                // Generate slug from Roman title if creating new
-                if (!isEdit) {
-                    const slug = roman
-                        .toLowerCase()
-                        .replace(/[^\w\s-]/g, '')
-                        .replace(/[\s_-]+/g, '-')
-                        .replace(/^-+|-+$/g, '');
-                    form.setValue('poetry_slug', slug);
-                    checkSlugUnique(slug);
-                }
+                // Generate slug from Roman title
+                const slug = roman
+                    .toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/[\s_-]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                form.setValue('poetry_slug', slug);
+                checkSlugUnique(slug);
             } catch (error) {
                 console.error("Auto-transliteration failed:", error);
             }
-        }, 800); // Debounce 800ms
+        }, 500); // Debounce 500ms
 
         return () => clearTimeout(timer);
     }, [title, isEdit, form]);
@@ -235,6 +250,11 @@ const CreatePoetry = () => {
 
             setPoetryContent(displayPersoCouplets.map(c => c.couplet_text).join('\n\n'));
             setTransliteratedText(romanCouplets.map(c => c.couplet_text).join('\n\n'));
+
+            // Enable auto-updates after initial data load
+            setTimeout(() => {
+                allowAutoUpdates.current = true;
+            }, 1000);
         }
     }, [isEdit, poetry, form]);
 
@@ -334,11 +354,18 @@ const CreatePoetry = () => {
                         </div>
                         <div className="flex items-center gap-4">
                             <Button variant="ghost" type="button" onClick={() => navigate('/admin/poetry')}>Cancel</Button>
-                            <Button type="submit" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
+                            <Button type="submit" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>
                         </div>
                     </div>
+
+                    {hasSindhiChars && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                            <strong className="font-bold">Warning: </strong>
+                            <span className="block sm:inline">The Roman text contains Sindhi characters. Please manually transliterate the remaining words in the Roman tab before publishing.</span>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
@@ -350,15 +377,13 @@ const CreatePoetry = () => {
                                     </TabsList>
 
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
-                                        <button
-                                            type="button"
-                                            className={`flex items-center gap-1 hover:text-foreground transition-colors ${!isTransliterated ? 'text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-200' : ''}`}
-                                            title="Transliterate (Required to Publish)"
-                                            onClick={handleTransliterate}
-                                        >
-                                            <Languages className="h-3.5 w-3.5" />
-                                            <span>Transliterate</span>
-                                        </button>
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground/80 font-medium px-2 py-1 rounded bg-muted/20">
+                                            {isTransliterated ? (
+                                                <span className="flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Auto-Transliterated</span>
+                                            ) : (
+                                                <span className="flex items-center gap-1"><Languages className="h-3 w-3" /> Transliterating...</span>
+                                            )}
+                                        </div>
                                         {/* formatting toolbar - only show in Perso mode */}
                                         {(script === 'perso' || script === 'roman') && (
                                             <>
@@ -548,7 +573,7 @@ const CreatePoetry = () => {
                                     <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/admin/poetry')}>
                                         Cancel
                                     </Button>
-                                    <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug}>
+                                    <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars}>
                                         {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                                     </Button>
                                 </CardFooter>
