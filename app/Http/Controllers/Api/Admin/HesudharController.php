@@ -120,27 +120,27 @@ class HesudharController extends Controller
             $normalizedMatchWord = str_replace(["ه", "ہ"], "ھ", $matchWord);
 
             if (!empty($matchWord)) {
-                // Policy A: Check for non-standard Heh usage in the ORIGINAL word (but clean of punctuation)
-                // Standard Sindhi Heh is ھ (U+06BE). Arabic 'ه' (0647) and Urdu/Arabic 'ہ' (06C1) are incorrect.
-                if (preg_match('/[هہ]/u', $matchWord)) {
-                    $standardized = str_replace(["ه", "ہ"], "ھ", $matchWord);
-                    $mistakes[] = [
-                        'word' => $matchWord,
-                        'correct' => $standardized,
-                        'type' => 'normalization'
-                    ];
-                    continue; // Skip dictionary lookup if we already found a normalization issue
+                // 1. Check dictionary with the word as-is
+                $mistake = BaakhHesudhar::where('word', $matchWord)->first();
+
+                // 2. If not found, try dictionary with normalized Heh
+                if (!$mistake && preg_match('/[هہ]/u', $matchWord)) {
+                    $mistake = BaakhHesudhar::where('word', $normalizedMatchWord)->first();
                 }
 
-                // Policy B: Dictionary Lookup
-                // We check the matchWord (preserving existing Heh if standard) and if not found, 
-                // we check the normalized version against the dictionary.
-                $mistake = BaakhHesudhar::where('word', $matchWord)->first();
                 if ($mistake) {
                     $mistakes[] = [
                         'word' => $matchWord,
                         'correct' => $mistake->correct,
                         'type' => 'dictionary'
+                    ];
+                }
+                // 3. Fallback: Only heuristic normalization if no dictionary hit
+                else if (preg_match('/[هہ]/u', $matchWord)) {
+                    $mistakes[] = [
+                        'word' => $matchWord,
+                        'correct' => $normalizedMatchWord,
+                        'type' => 'normalization'
                     ];
                 }
             }
