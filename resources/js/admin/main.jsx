@@ -49,6 +49,7 @@ import TagsList from './pages/Tags/TagsList';
 import CategoriesList from './pages/Categories/CategoriesList';
 import CategoryForm from './pages/Categories/CategoryForm';
 import HesudharList from './pages/Hesudhar/HesudharList';
+import HesudharBulkCheck from './pages/Hesudhar/HesudharBulkCheck';
 import RomanizerList from './pages/Romanizer/RomanizerList';
 import RomanizerBulkCheck from './pages/Romanizer/RomanizerBulkCheck';
 
@@ -172,6 +173,13 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <HesudharList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/hesudhar/check" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <HesudharBulkCheck />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

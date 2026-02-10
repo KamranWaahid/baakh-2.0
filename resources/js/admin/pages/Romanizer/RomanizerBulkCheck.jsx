@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileSearch, Plus, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 
 const RomanizerBulkCheck = () => {
@@ -27,6 +28,11 @@ const RomanizerBulkCheck = () => {
             setMissingWords(data.data.missing_words);
         }
     });
+
+    const entry = useMemo(() => ({
+        word_sd: selectedWord,
+        word_roman: ''
+    }), [selectedWord]);
 
     const handleCheck = () => {
         if (!text.trim()) return;
@@ -47,7 +53,7 @@ const RomanizerBulkCheck = () => {
         <div className="p-4 md:p-8 space-y-6">
             <div className="flex items-center gap-3 md:gap-4">
                 <Button variant="ghost" size="icon" asChild className="h-8 w-8 md:h-10 md:w-10">
-                    <Link to="/romanizer">
+                    <Link to="/admin/romanizer">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                 </Button>
@@ -81,17 +87,17 @@ const RomanizerBulkCheck = () => {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Missing Words ({missingWords.length})</CardTitle>
+                        <CardTitle>Missing Words ({(missingWords || []).length})</CardTitle>
                         <CardDescription>These words are not in the Romanizer dictionary yet.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {missingWords.length === 0 ? (
+                        {(!missingWords || missingWords.length === 0) ? (
                             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground italic">
                                 {checkMutation.isSuccess ? "All words are already in the dictionary!" : "Perform a check to see missing words."}
                             </div>
                         ) : (
                             <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[500px] p-2 border rounded-md">
-                                {missingWords.map((word, index) => (
+                                {Array.isArray(missingWords) && missingWords.map((word, index) => (
                                     <Badge
                                         key={index}
                                         variant="outline"
@@ -113,9 +119,10 @@ const RomanizerBulkCheck = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Add Romanized Word</DialogTitle>
+                        <DialogDescription>Add a Roman mapping for "{selectedWord}"</DialogDescription>
                     </DialogHeader>
                     <RomanizerForm
-                        entry={{ word_sd: selectedWord, word_roman: '' }}
+                        entry={entry}
                         onSuccess={handleAddSuccess}
                     />
                 </DialogContent>

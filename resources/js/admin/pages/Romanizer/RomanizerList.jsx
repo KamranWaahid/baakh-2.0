@@ -81,7 +81,7 @@ const RomanizerList = () => {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
                     <Button variant="outline" asChild className="w-full sm:w-auto">
-                        <Link to="/romanizer/check">
+                        <Link to="/admin/romanizer/check">
                             <FileSearch className="mr-2 h-4 w-4" /> Bulk Check
                         </Link>
                     </Button>

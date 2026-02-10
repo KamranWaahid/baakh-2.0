@@ -73,6 +73,50 @@ class HesudharController extends Controller
         ]);
     }
 
+    public function checkWords(Request $request)
+    {
+        $request->validate([
+            'text' => 'required|string'
+        ]);
+
+        // Split by whitespace (space, tab, newline, etc.)
+        $get_text = preg_split('/\s+/u', $request->text, -1, PREG_SPLIT_NO_EMPTY);
+        $text = array_unique($get_text);
+
+        $mistakes = array();
+        // Punctuation to strip from beginning and end
+        $punctuation = ['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
+
+        foreach ($text as $word) {
+            $cleanWord = $word;
+
+            // Strip punctuation from start
+            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, 0, 1), $punctuation)) {
+                $cleanWord = mb_substr($cleanWord, 1);
+            }
+
+            // Strip punctuation from end
+            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, -1), $punctuation)) {
+                $cleanWord = mb_substr($cleanWord, 0, -1);
+            }
+
+            if (!empty($cleanWord)) {
+                $mistake = BaakhHesudhar::where('word', $cleanWord)->first();
+                if ($mistake) {
+                    $mistakes[] = [
+                        'word' => $cleanWord,
+                        'correct' => $mistake->correct
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'mistakes' => $mistakes,
+            'total_mistakes' => count($mistakes)
+        ]);
+    }
+
     public function refresh()
     {
         $words = BaakhHesudhar::all();

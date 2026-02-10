@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Plus, Trash2, RefreshCw, Loader2 } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Loader2, FileSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -80,6 +80,11 @@ const HesudharList = () => {
                     <p className="text-gray-500 text-sm md:text-base">Manage spell correction dictionary</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button variant="outline" asChild className="w-full sm:w-auto">
+                        <Link to="/admin/hesudhar/check">
+                            <FileSearch className="mr-2 h-4 w-4" /> Bulk Check
+                        </Link>
+                    </Button>
                     <Button variant="outline" className="w-full sm:w-auto" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
                         {refreshMutation.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                         Refresh Dictionary
