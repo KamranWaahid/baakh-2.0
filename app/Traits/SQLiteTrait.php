@@ -85,7 +85,13 @@ trait SQLiteTrait
      */
     protected function updateTag($tagId)
     {
-        $tag_data = DB::select('SELECT `id`, `tag`, `slug`, `type`, `lang` FROM baakh_tags WHERE id = :main_id', ['main_id' => $tagId]);
+        $tag_data = DB::select(
+            'SELECT t.id, td.name as tag, t.slug, t.type, td.lang 
+             FROM baakh_tags t 
+             INNER JOIN baakh_tag_details td ON td.tag_id = t.id 
+             WHERE t.id = :main_id',
+            ['main_id' => $tagId]
+        );
 
         if (empty($tag_data)) {
             Log::warning('No Tag data found for model ID ' . $tagId);

@@ -20,6 +20,9 @@ class PoetryController extends Controller
             'category.detail' => function ($q) {
                 $q->where('lang', 'sd');
             },
+            'topic_category.details' => function ($q) {
+                $q->where('lang', 'sd');
+            },
             'user' => function ($q) {
                 $q->select('id', 'name');
             }
@@ -55,7 +58,7 @@ class PoetryController extends Controller
 
     public function show($id)
     {
-        $poetry = Poetry::with(['translations', 'couplets', 'category', 'poet'])->findOrFail($id);
+        $poetry = Poetry::with(['translations', 'couplets', 'category', 'poet', 'topic_category.details'])->findOrFail($id);
         return response()->json($poetry);
     }
 
@@ -113,8 +116,28 @@ class PoetryController extends Controller
             ];
         });
 
-        $tags = \App\Models\Tags::where('lang', 'en')->select('id', 'tag', 'slug', 'type')->get()->groupBy('type');
-        $topicCategories = \App\Models\TopicCategory::orderBy('name')->get();
+        $tags = \App\Models\Tags::with([
+            'details' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->get()->map(function ($tag) {
+            return [
+                'id' => $tag->id,
+                'name' => $tag->details->first()?->name ?? $tag->slug,
+                'type' => $tag->type
+            ];
+        })->groupBy('type');
+
+        $topicCategories = \App\Models\TopicCategory::with([
+            'details' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->get()->map(function ($cat) {
+            return [
+                'id' => $cat->id,
+                'name' => $cat->details->first()?->name ?? $cat->slug
+            ];
+        });
 
         return response()->json([
             'poets' => $poets,

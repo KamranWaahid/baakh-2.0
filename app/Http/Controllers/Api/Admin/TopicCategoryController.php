@@ -13,53 +13,83 @@ class TopicCategoryController extends Controller
      */
     public function index()
     {
-        return response()->json(TopicCategory::orderBy('name')->get());
+        return response()->json(
+            TopicCategory::with(['details'])->get()->map(function ($tc) {
+                return [
+                    'id' => $tc->id,
+                    'slug' => $tc->slug,
+                    'details' => $tc->details->mapWithKeys(function ($d) {
+                        return [$d->lang => ['name' => $d->name]];
+                    }),
+                    'name' => $tc->details->where('lang', 'sd')->first()?->name ?? $tc->details->first()?->name
+                ];
+            })
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
+        $request->validate([
+            'slug' => 'required|string|max:255|unique:topic_categories,slug',
+            'details' => 'required|array',
+            'details.sd.name' => 'required|string|max:255',
+            'details.en.name' => 'nullable|string|max:255',
         ]);
 
-        $validated['slug'] = \Str::slug($request->name);
+        $topicCategory = TopicCategory::create([
+            'slug' => $request->slug
+        ]);
 
-        $topicCategory = TopicCategory::create($validated);
+        foreach ($request->details as $lang => $data) {
+            if (!empty($data['name'])) {
+                $topicCategory->details()->create([
+                    'lang' => $lang,
+                    'name' => $data['name']
+                ]);
+            }
+        }
 
-        return response()->json($topicCategory, 201);
+        return response()->json($topicCategory->load('details'), 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(TopicCategory $topicCategory)
+    public function show($id)
     {
-        return response()->json($topicCategory);
+        $tc = TopicCategory::with('details')->findOrFail($id);
+        return response()->json([
+            'id' => $tc->id,
+            'slug' => $tc->slug,
+            'details' => $tc->details->mapWithKeys(function ($d) {
+                return [$d->lang => ['name' => $d->name]];
+            })
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
         $topicCategory = TopicCategory::findOrFail($id);
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
+
+        $request->validate([
+            'slug' => 'required|string|max:255|unique:topic_categories,slug,' . $id,
+            'details' => 'required|array',
+            'details.sd.name' => 'required|string|max:255',
+            'details.en.name' => 'nullable|string|max:255',
         ]);
 
-        $validated['slug'] = \Str::slug($request->name);
+        $topicCategory->update(['slug' => $request->slug]);
 
-        $topicCategory->update($validated);
+        // Sync details
+        foreach ($request->details as $lang => $data) {
+            if (!empty($data['name'])) {
+                $topicCategory->details()->updateOrCreate(
+                    ['lang' => $lang],
+                    ['name' => $data['name']]
+                );
+            }
+        }
 
-        return response()->json($topicCategory);
+        return response()->json($topicCategory->load('details'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         $topicCategory = TopicCategory::findOrFail($id);

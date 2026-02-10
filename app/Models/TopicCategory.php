@@ -9,7 +9,12 @@ class TopicCategory extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['slug'];
+
+    public function details()
+    {
+        return $this->hasMany(TopicCategoryDetail::class);
+    }
 
     public function poetry()
     {

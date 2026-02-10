@@ -1,37 +1,24 @@
-import React, { useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import api from '../../api/axios';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Edit, Tag } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Badge } from '@/components/ui/badge';
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 const TagsList = () => {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingTag, setEditingTag] = useState(null);
-    const [formData, setFormData] = useState({ tag: '', slug: '', type: '', lang: 'sd' });
+    const [formData, setFormData] = useState({
+        slug: '',
+        type: '',
+        details: {
+            sd: { name: '' },
+            en: { name: '' }
+        }
+    });
 
     const debouncedSearch = useDebounce(search, 500);
     const queryClient = useQueryClient();
@@ -45,6 +32,8 @@ const TagsList = () => {
         },
         placeholderData: keepPreviousData,
     });
+
+    const tagsResponse = data?.tags || { data: [] };
 
     const createMutation = useMutation({
         mutationFn: (newTag) => api.post('/api/admin/tags', newTag),
@@ -72,17 +61,26 @@ const TagsList = () => {
     });
 
     const resetForm = () => {
-        setFormData({ tag: '', slug: '', type: '', lang: 'sd' });
+        setFormData({
+            slug: '',
+            type: '',
+            details: {
+                sd: { name: '' },
+                en: { name: '' }
+            }
+        });
         setEditingTag(null);
     };
 
     const handleEdit = (tag) => {
         setEditingTag(tag);
         setFormData({
-            tag: tag.tag,
             slug: tag.slug || '',
             type: tag.type || '',
-            lang: tag.lang || 'sd'
+            details: {
+                sd: { name: tag.details?.sd?.name || '' },
+                en: { name: tag.details?.en?.name || '' }
+            }
         });
         setIsDialogOpen(true);
     };
@@ -121,35 +119,59 @@ const TagsList = () => {
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="tag-name">Tag Name</Label>
+                                <Label htmlFor="tag-slug">Slug (Unique ID)</Label>
                                 <Input
-                                    id="tag-name"
-                                    value={formData.tag}
-                                    onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
-                                    placeholder="Enter tag name"
+                                    id="tag-slug"
+                                    value={formData.slug}
+                                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                                    placeholder="e.g. love-poetry"
                                     required
                                     className="w-full"
                                 />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="tag-lang">Language</Label>
-                                    <Input
-                                        id="tag-lang"
-                                        value={formData.lang}
-                                        onChange={(e) => setFormData({ ...formData, lang: e.target.value })}
-                                        placeholder="sd"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="tag-type">Type</Label>
-                                    <Input
-                                        id="tag-type"
-                                        value={formData.type}
-                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        placeholder="Type (optional)"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tag-type">Type</Label>
+                                <Select
+                                    value={formData.type}
+                                    onValueChange={(value) => setFormData({ ...formData, type: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select tag type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {data?.available_types?.map(type => (
+                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tag-name-sd">Name (Sindhi)</Label>
+                                <Input
+                                    id="tag-name-sd"
+                                    dir="rtl"
+                                    value={formData.details.sd.name}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        details: { ...formData.details, sd: { name: e.target.value } }
+                                    })}
+                                    placeholder="روزمرہ جي زندگي..."
+                                    required
+                                    className="w-full text-right font-arabic"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tag-name-en">Name (English)</Label>
+                                <Input
+                                    id="tag-name-en"
+                                    value={formData.details.en.name}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        details: { ...formData.details, en: { name: e.target.value } }
+                                    })}
+                                    placeholder="Love Poetry"
+                                    className="w-full"
+                                />
                             </div>
                             <DialogFooter className="gap-2 sm:gap-0">
                                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">Cancel</Button>
@@ -183,9 +205,9 @@ const TagsList = () => {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[80px] hidden sm:table-cell">ID</TableHead>
-                                    <TableHead className="min-w-[150px]">Tag Name</TableHead>
+                                    <TableHead className="min-w-[150px]">Tag (SD)</TableHead>
+                                    <TableHead className="min-w-[150px]">Tag (EN)</TableHead>
                                     <TableHead className="hidden md:table-cell">Slug</TableHead>
-                                    <TableHead>Language</TableHead>
                                     <TableHead className="hidden lg:table-cell">Type</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -196,8 +218,8 @@ const TagsList = () => {
                                         <TableRow key={index}>
                                             <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-12" /></TableCell>
                                             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                                             <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                                             <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                                         </TableRow>
@@ -208,25 +230,29 @@ const TagsList = () => {
                                             Error loading tags.
                                         </TableCell>
                                     </TableRow>
-                                ) : data?.data?.length === 0 ? (
+                                ) : tagsResponse.data.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-24 text-center">
                                             No tags found.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    data?.data?.map((tag) => (
+                                    tagsResponse.data.map((tag) => (
                                         <TableRow key={tag.id}>
                                             <TableCell className="font-medium hidden sm:table-cell">{tag.id}</TableCell>
-                                            <TableCell className="whitespace-nowrap">
+                                            <TableCell className="whitespace-nowrap font-medium">
                                                 <div className="flex items-center gap-2">
                                                     <Tag className="h-3 w-3 text-muted-foreground" />
-                                                    <span lang={tag.lang === 'sd' ? 'sd' : undefined}>{tag.tag}</span>
+                                                    <span lang="sd">{tag.details?.sd?.name || 'N/A'}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="hidden md:table-cell whitespace-nowrap">{tag.slug || '-'}</TableCell>
-                                            <TableCell><span className="uppercase text-[10px] font-semibold bg-gray-100 px-2 py-1 rounded">{tag.lang || 'SD'}</span></TableCell>
-                                            <TableCell className="hidden lg:table-cell whitespace-nowrap">{tag.type || '-'}</TableCell>
+                                            <TableCell className="whitespace-nowrap italic text-muted-foreground">
+                                                {tag.details?.en?.name || '-'}
+                                            </TableCell>
+                                            <TableCell className="hidden md:table-cell whitespace-nowrap text-xs font-mono">{tag.slug || '-'}</TableCell>
+                                            <TableCell className="hidden lg:table-cell whitespace-nowrap font-semibold">
+                                                <Badge variant="outline">{tag.type || '-'}</Badge>
+                                            </TableCell>
                                             <TableCell className="text-right whitespace-nowrap space-x-1">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tag)}>
                                                     <Edit className="h-4 w-4" />
@@ -250,14 +276,14 @@ const TagsList = () => {
                     {data && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
                             <div className="text-sm text-muted-foreground text-center sm:text-left">
-                                Showing {data.from || 0} to {data.to || 0} of {data.total || 0} results
+                                Showing {tagsResponse.from || 0} to {tagsResponse.to || 0} of {tagsResponse.total || 0} results
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={!data.prev_page_url}
+                                    disabled={!tagsResponse.prev_page_url}
                                 >
                                     Previous
                                 </Button>
@@ -265,7 +291,7 @@ const TagsList = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setPage(p => p + 1)}
-                                    disabled={!data.next_page_url}
+                                    disabled={!tagsResponse.next_page_url}
                                 >
                                     Next
                                 </Button>

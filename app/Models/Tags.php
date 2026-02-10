@@ -10,13 +10,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Tags extends Model
 {
     use SoftDeletes;
-    protected $table ="baakh_tags";
+    protected $table = "baakh_tags";
+
+    const TYPES = ['Theme', 'Emotion', 'Time Layer', 'Occasion', 'Status'];
+
     protected $fillable = [
-        'tag',
         'slug',
-        'type',
-        'lang'
+        'type'
     ];
+
+    public function details()
+    {
+        return $this->hasMany(TagDetail::class, 'tag_id');
+    }
 
     public function language()
     {

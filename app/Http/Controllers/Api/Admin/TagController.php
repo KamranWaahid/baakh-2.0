@@ -10,46 +10,65 @@ class TagController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Tags::query();
+        $query = Tags::with('details');
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('tag', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
-                    ->orWhere('type', 'like', "%{$search}%");
-            });
+            $query->whereHas('details', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })->orWhere('slug', 'like', "%{$search}%")
+                ->orWhere('type', 'like', "%{$search}%");
         }
 
         $perPage = $request->get('per_page', 10);
         $tags = $query->orderBy('id', 'desc')->paginate($perPage);
 
-        // Add available languages info
         $tags->through(function ($tag) {
-            $hasEn = Tags::where('slug', $tag->slug)->where('lang', 'en')->exists();
-            $tag->available_translations = $hasEn ? ['sd', 'en'] : ['sd'];
-            return $tag;
+            return [
+                'id' => $tag->id,
+                'slug' => $tag->slug,
+                'type' => $tag->type,
+                'details' => $tag->details->mapWithKeys(function ($d) {
+                    return [$d->lang => ['name' => $d->name]];
+                }),
+                'tag' => $tag->details->where('lang', 'sd')->first()?->name ?? $tag->details->first()?->name,
+                'available_translations' => $tag->details->pluck('lang')->toArray()
+            ];
         });
 
-        return response()->json($tags);
+        return response()->json([
+            'tags' => $tags,
+            'available_types' => Tags::TYPES
+        ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'tag' => 'required|string|max:255',
-            'type' => 'nullable|string',
-            'lang' => 'nullable|string|max:5',
+        $request->validate([
+            'slug' => 'required|string|max:255|unique:baakh_tags,slug',
+            'type' => 'required|string|in:' . implode(',', Tags::TYPES),
+            'details' => 'required|array',
+            'details.sd.name' => 'required|string|max:255',
+            'details.en.name' => 'nullable|string|max:255',
         ]);
 
-        // Observer might handle slug, but let's be safe
-        // If slug is needed logic: $validated['slug'] = Str::slug($request->tag);
+        $tag = Tags::create([
+            'slug' => $request->slug,
+            'type' => $request->type
+        ]);
 
-        $tag = Tags::create($validated);
+        foreach ($request->details as $lang => $data) {
+            if (!empty($data['name'])) {
+                $tag->details()->create([
+                    'lang' => $lang,
+                    'name' => $data['name']
+                ]);
+            }
+        }
 
         return response()->json([
             'message' => 'Tag created successfully',
-            'data' => $tag
+            'data' => $tag->load('details')
         ], 201);
     }
 
@@ -57,17 +76,31 @@ class TagController extends Controller
     {
         $tag = Tags::findOrFail($id);
 
-        $validated = $request->validate([
-            'tag' => 'required|string|max:255',
-            'type' => 'nullable|string',
-            'lang' => 'nullable|string|max:5',
+        $request->validate([
+            'slug' => 'required|string|max:255|unique:baakh_tags,slug,' . $id,
+            'type' => 'required|string|in:' . implode(',', Tags::TYPES),
+            'details' => 'required|array',
+            'details.sd.name' => 'required|string|max:255',
+            'details.en.name' => 'nullable|string|max:255',
         ]);
 
-        $tag->update($validated);
+        $tag->update([
+            'slug' => $request->slug,
+            'type' => $request->type
+        ]);
+
+        foreach ($request->details as $lang => $data) {
+            if (!empty($data['name'])) {
+                $tag->details()->updateOrCreate(
+                    ['lang' => $lang],
+                    ['name' => $data['name']]
+                );
+            }
+        }
 
         return response()->json([
             'message' => 'Tag updated successfully',
-            'data' => $tag
+            'data' => $tag->load('details')
         ]);
     }
 

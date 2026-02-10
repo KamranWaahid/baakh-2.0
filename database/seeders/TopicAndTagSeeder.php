@@ -26,9 +26,12 @@ class TopicAndTagSeeder extends Seeder
         ];
 
         foreach ($topicCategories as $category) {
-            TopicCategory::updateOrCreate(
-                ['slug' => Str::slug($category)],
-                ['name' => $category]
+            $tc = TopicCategory::updateOrCreate(
+                ['slug' => Str::slug($category)]
+            );
+            $tc->details()->updateOrCreate(
+                ['lang' => 'sd'],
+                ['name' => $category] // Assuming English names for now, but in Sindhi if available
             );
         }
 
@@ -36,7 +39,7 @@ class TopicAndTagSeeder extends Seeder
         Tags::query()->forceDelete();
 
         $tags = [
-            'THEME TAGS' => [
+            'Theme' => [
                 'love',
                 'intimacy',
                 'desire',
@@ -90,7 +93,7 @@ class TopicAndTagSeeder extends Seeder
                 'inheritance',
                 'erasure'
             ],
-            'EMOTION / MOOD TAGS' => [
+            'Emotion' => [
                 'melancholic',
                 'mournful',
                 'tender',
@@ -111,125 +114,42 @@ class TopicAndTagSeeder extends Seeder
                 'restless',
                 'reflective'
             ],
-            'PLACE & GEOGRAPHY TAGS' => [
-                'Sindh',
-                'Thar',
-                'Karachi',
-                'Hyderabad',
-                'Larkana',
-                'Indus',
-                'Desert',
-                'River',
-                'Sea',
-                'Village',
-                'City',
-                'Border',
-                'Homeland',
-                'South Asia'
+            'Occasion' => [
+                'Festival',
+                'Protest',
+                'Celebration',
+                'Funeral',
+                'Gathering'
             ],
-            'IDENTITY & SOCIAL CONTEXT TAGS' => [
-                'indigenous',
-                'peasant',
-                'farmer',
-                'working class',
-                'labour',
-                'womanhood',
-                'motherhood',
-                'girlhood',
-                'patriarchy',
-                'masculinity',
-                'caste',
-                'tribe',
-                'minority',
-                'diaspora',
-                'refugee',
-                'statelessness'
+            'Status' => [
+                'Classical',
+                'Modern',
+                'Contemporary',
+                'Experimental'
             ],
-            'NATURE & ECOLOGY TAGS' => [
-                'earth',
-                'water',
-                'fire',
-                'wind',
-                'rain',
-                'drought',
-                'flood',
-                'tree',
-                'forest',
-                'animal',
-                'bird',
-                'season',
-                'climate',
-                'ecology',
-                'destruction',
-                'extraction'
-            ],
-            'SPIRITUAL & PHILOSOPHICAL TAGS' => [
-                'spirituality',
-                'mysticism',
-                'sufism',
-                'prayer',
-                'god',
-                'soul',
-                'body',
-                'sacrifice',
-                'transcendence',
-                'awakening',
-                'illusion',
-                'truth',
-                'mortality'
-            ],
-            'POLITICAL / HISTORICAL CONTEXT TAGS' => [
-                'colonialism',
-                'colonial rule',
-                'imperialism',
-                'development',
-                'capitalism',
-                'extraction',
-                'militarization',
-                'state violence',
-                'enforced disappearance',
-                'censorship',
-                'surveillance',
-                'elections',
-                'dictatorship',
-                'partition',
-                'revolution'
-            ],
-            'RELATIONSHIPS & SOCIAL LIFE TAGS' => [
-                'mother',
-                'father',
-                'child',
-                'lover',
-                'beloved',
-                'friendship',
-                'family',
-                'community',
-                'society',
-                'marriage',
-                'separation',
-                'absence'
-            ],
-            'TIME & TEMPORAL TAGS' => [
-                'childhood',
-                'youth',
-                'aging',
-                'old age',
-                'past',
-                'present',
-                'future',
-                'memory',
-                'ancestry',
-                'legacy'
-            ],
+            'Time Layer' => [
+                'Childhood',
+                'Youth',
+                'Aging',
+                'Old Age',
+                'Past',
+                'Present',
+                'Future',
+                'Memory',
+                'Ancestry',
+                'Legacy'
+            ]
         ];
 
         foreach ($tags as $type => $tagNames) {
             foreach ($tagNames as $name) {
-                Tags::create([
-                    'tag' => $name,
+                $tag = Tags::create([
                     'slug' => Str::slug($name),
-                    'type' => $type,
-                    'lang' => 'en' // Default to English for these tags as requested in English
+                    'type' => $type
+                ]);
+                $tag->details()->create([
+                    'name' => ucfirst($name),
+                    'lang' => 'sd' // Default to SD for now, translations can be added later
                 ]);
             }
         }
