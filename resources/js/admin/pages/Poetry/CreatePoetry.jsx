@@ -41,6 +41,21 @@ import {
 import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from '@/components/ui/command';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const poetrySchema = z.object({
     poetry_title: z.string().min(2, 'Title is required'),
@@ -66,6 +81,9 @@ const CreatePoetry = () => {
     const [isTransliterated, setIsTransliterated] = useState(isEdit); // Default true for edit, false for new
     const [slugError, setSlugError] = useState('');
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+    const [openPoet, setOpenPoet] = useState(false);
+    const [openCategory, setOpenCategory] = useState(false);
+    const [openTags, setOpenTags] = useState(false);
 
     // Reset transliteration status when content changes
     useEffect(() => {
@@ -447,7 +465,7 @@ const CreatePoetry = () => {
                                             name="content_style"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Content Alignment</FormLabel>
+                                                    <FormLabel className="text-sm font-medium mb-2 block">Content Alignment</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
                                                             <SelectTrigger>
@@ -491,21 +509,60 @@ const CreatePoetry = () => {
                                         name="poet_id"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-1">
-                                                    <User className="h-3 w-3" /> Poet
+                                                <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                                    <User className="h-4 w-4 text-muted-foreground" /> Poet
                                                 </FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Poet" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {meta?.poets.map(poet => (
-                                                            <SelectItem key={poet.id} value={poet.id.toString()}>{poet.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <Popover open={openPoet} onOpenChange={setOpenPoet}>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                aria-expanded={openPoet}
+                                                                className={cn(
+                                                                    "w-full justify-between font-arabic",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {field.value
+                                                                    ? meta?.poets.find((poet) => poet.id.toString() === field.value)?.name
+                                                                    : "Select Poet"}
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[300px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search poet..." className="font-arabic text-right" />
+                                                            <CommandList>
+                                                                <CommandEmpty>No poet found.</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {meta?.poets.map((poet) => (
+                                                                        <CommandItem
+                                                                            value={`${poet.name} ${poet.id}`}
+                                                                            key={poet.id}
+                                                                            onSelect={() => {
+                                                                                form.setValue("poet_id", poet.id.toString());
+                                                                                setOpenPoet(false);
+                                                                            }}
+                                                                            className="font-arabic text-right flex flex-row-reverse justify-between"
+                                                                        >
+                                                                            {poet.name}
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "mr-2 h-4 w-4",
+                                                                                    poet.id.toString() === field.value
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -516,21 +573,60 @@ const CreatePoetry = () => {
                                         name="category_id"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-1">
-                                                    <Folder className="h-3 w-3" /> Category
+                                                <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                                    <Folder className="h-4 w-4 text-muted-foreground" /> Category
                                                 </FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Category" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {meta?.categories.map(cat => (
-                                                            <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <Popover open={openCategory} onOpenChange={setOpenCategory}>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                aria-expanded={openCategory}
+                                                                className={cn(
+                                                                    "w-full justify-between font-arabic",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {field.value
+                                                                    ? meta?.categories.find((cat) => cat.id.toString() === field.value)?.name
+                                                                    : "Select Category"}
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[300px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search category..." className="font-arabic text-right" />
+                                                            <CommandList>
+                                                                <CommandEmpty>No category found.</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {meta?.categories.map((cat) => (
+                                                                        <CommandItem
+                                                                            value={`${cat.name} ${cat.id}`}
+                                                                            key={cat.id}
+                                                                            onSelect={() => {
+                                                                                form.setValue("category_id", cat.id.toString());
+                                                                                setOpenCategory(false);
+                                                                            }}
+                                                                            className="font-arabic text-right flex flex-row-reverse justify-between"
+                                                                        >
+                                                                            {cat.name}
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "mr-2 h-4 w-4",
+                                                                                    cat.id.toString() === field.value
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -541,8 +637,8 @@ const CreatePoetry = () => {
                                         name="poetry_slug"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold flex items-center gap-1">
-                                                    <LinkIcon className="h-3 w-3" /> URL Slug
+                                                <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                                    <LinkIcon className="h-4 w-4 text-muted-foreground" /> URL Slug
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -572,9 +668,9 @@ const CreatePoetry = () => {
                                         {form.watch('poetry_tags')?.map(tagId => {
                                             const tag = meta?.tags.find(t => t.id.toString() === tagId);
                                             return (
-                                                <span key={tagId} className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                <span key={tagId} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-arabic px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors">
                                                     {tag?.tag || tagId}
-                                                    <Trash2 className="h-2 w-2 cursor-pointer" onClick={() => {
+                                                    <Trash2 className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" onClick={() => {
                                                         const current = form.getValues('poetry_tags');
                                                         form.setValue('poetry_tags', current.filter(id => id !== tagId));
                                                     }} />
@@ -586,26 +682,57 @@ const CreatePoetry = () => {
                                         control={form.control}
                                         name="poetry_tags"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <Select
-                                                    onValueChange={(val) => {
-                                                        const current = form.getValues('poetry_tags') || [];
-                                                        if (!current.includes(val)) {
-                                                            form.setValue('poetry_tags', [...current, val]);
-                                                        }
-                                                    }}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-8 text-xs">
-                                                            <SelectValue placeholder="Add Tags" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {meta?.tags.map(tag => (
-                                                            <SelectItem key={tag.id} value={tag.id.toString()}>{tag.tag}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                            <FormItem className="flex flex-col">
+                                                <Popover open={openTags} onOpenChange={setOpenTags}>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                aria-expanded={openTags}
+                                                                className="w-full justify-between font-arabic"
+                                                            >
+                                                                Select tags...
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[300px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search tags..." className="font-arabic text-right" />
+                                                            <CommandList>
+                                                                <CommandEmpty>No tag found.</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {meta?.tags.map((tag) => (
+                                                                        <CommandItem
+                                                                            value={`${tag.tag} ${tag.id}`}
+                                                                            key={tag.id}
+                                                                            onSelect={() => {
+                                                                                const current = form.getValues("poetry_tags") || [];
+                                                                                const tagId = tag.id.toString();
+                                                                                if (!current.includes(tagId)) {
+                                                                                    form.setValue("poetry_tags", [...current, tagId]);
+                                                                                }
+                                                                                setOpenTags(false);
+                                                                            }}
+                                                                            className="font-arabic text-right flex flex-row-reverse justify-between"
+                                                                        >
+                                                                            {tag.tag}
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "mr-2 h-4 w-4",
+                                                                                    (form.getValues("poetry_tags") || []).includes(tag.id.toString())
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
                                             </FormItem>
                                         )}
                                     />
@@ -624,7 +751,7 @@ const CreatePoetry = () => {
                                         name="poetry_info"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Background</FormLabel>
+                                                <FormLabel className="text-sm font-medium mb-2 block">Background</FormLabel>
                                                 <FormControl>
                                                     <textarea
                                                         className="w-full min-h-[100px] p-2 text-sm border border-border/40 rounded-md focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all resize-none"
@@ -641,7 +768,7 @@ const CreatePoetry = () => {
                                         name="source"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-xs uppercase text-muted-foreground font-bold">Source</FormLabel>
+                                                <FormLabel className="text-sm font-medium mb-2 block">Source</FormLabel>
                                                 <FormControl>
                                                     <Input placeholder="Book name..." {...field} className="h-8 text-sm" />
                                                 </FormControl>

@@ -91,14 +91,14 @@ class PoetryController extends Controller
     }
     public function create()
     {
-        $poets = \App\Models\Poets::with([
+        $poets = \App\Models\Poets::where('visibility', 1)->with([
             'details' => function ($q) {
                 $q->where('lang', 'sd');
             }
         ])->select('id', 'poet_slug')->get()->map(function ($poet) {
             return [
                 'id' => $poet->id,
-                'name' => $poet->details->first()?->poet_laqab ?? $poet->poet_slug
+                'name' => $poet->details?->poet_laqab ?? $poet->poet_slug
             ];
         });
 
