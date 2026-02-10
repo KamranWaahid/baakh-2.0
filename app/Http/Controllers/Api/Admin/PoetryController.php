@@ -137,7 +137,9 @@ class PoetryController extends Controller
             'couplets.*.couplet_text' => 'required|string',
             'poetry_tags' => 'nullable|array',
             'poetry_info' => 'nullable|string',
-            'source' => 'nullable|string'
+            'source' => 'nullable|string',
+            'roman_title' => 'nullable|string|max:255',
+            'roman_content' => 'nullable|array'
         ]);
 
         \DB::beginTransaction();
@@ -164,7 +166,28 @@ class PoetryController extends Controller
                 $poetry->couplets()->create([
                     'couplet_text' => $couplet['couplet_text'],
                     'poet_id' => $validated['poet_id'],
-                    'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1)
+                    'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1),
+                    'lang' => 'sd'
+                ]);
+            }
+
+            if (!empty($validated['roman_content'])) {
+                foreach ($validated['roman_content'] as $index => $couplet) {
+                    $poetry->couplets()->create([
+                        'couplet_text' => $couplet['couplet_text'],
+                        'poet_id' => $validated['poet_id'],
+                        'couplet_slug' => $validated['poetry_slug'] . '-roman-' . ($index + 1),
+                        'lang' => 'en'
+                    ]);
+                }
+            }
+
+            if (!empty($validated['roman_title'])) {
+                $poetry->translations()->create([
+                    'title' => $validated['roman_title'],
+                    'info' => $validated['poetry_info'] ?? null,
+                    'source' => $validated['source'] ?? null,
+                    'lang' => 'en',
                 ]);
             }
 
@@ -192,7 +215,9 @@ class PoetryController extends Controller
             'couplets.*.couplet_text' => 'required|string',
             'poetry_tags' => 'nullable|array',
             'poetry_info' => 'nullable|string',
-            'source' => 'nullable|string'
+            'source' => 'nullable|string',
+            'roman_title' => 'nullable|string|max:255',
+            'roman_content' => 'nullable|array'
         ]);
 
         \DB::beginTransaction();
@@ -217,14 +242,36 @@ class PoetryController extends Controller
                 ]
             );
 
-            // Recreate couplets
             $poetry->couplets()->delete();
             foreach ($validated['couplets'] as $index => $couplet) {
                 $poetry->couplets()->create([
                     'couplet_text' => $couplet['couplet_text'],
                     'poet_id' => $validated['poet_id'],
-                    'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1)
+                    'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1),
+                    'lang' => 'sd'
                 ]);
+            }
+
+            if (!empty($validated['roman_content'])) {
+                foreach ($validated['roman_content'] as $index => $couplet) {
+                    $poetry->couplets()->create([
+                        'couplet_text' => $couplet['couplet_text'],
+                        'poet_id' => $validated['poet_id'],
+                        'couplet_slug' => $validated['poetry_slug'] . '-roman-' . ($index + 1),
+                        'lang' => 'en'
+                    ]);
+                }
+            }
+
+            if (!empty($validated['roman_title'])) {
+                $poetry->translations()->updateOrCreate(
+                    ['lang' => 'en'],
+                    [
+                        'title' => $validated['roman_title'],
+                        'info' => $validated['poetry_info'] ?? null,
+                        'source' => $validated['source'] ?? null,
+                    ]
+                );
             }
 
             \DB::commit();

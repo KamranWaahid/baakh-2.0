@@ -38,6 +38,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,14 +77,17 @@ const CreatePoetry = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [poetryContent, setPoetryContent] = useState('');
-    const [showTransliteration, setShowTransliteration] = useState(false);
+    const [romanTitle, setRomanTitle] = useState('');
+
     const [transliteratedText, setTransliteratedText] = useState('');
     const [isTransliterated, setIsTransliterated] = useState(isEdit); // Default true for edit, false for new
     const [slugError, setSlugError] = useState('');
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [openPoet, setOpenPoet] = useState(false);
     const [openCategory, setOpenCategory] = useState(false);
+
     const [openTags, setOpenTags] = useState(false);
+    const [script, setScript] = useState('perso'); // 'perso' | 'roman'
 
     // Reset transliteration status when content changes
     useEffect(() => {
@@ -94,12 +98,23 @@ const CreatePoetry = () => {
         if (!poetryContent.trim()) return;
 
         try {
-            const response = await api.post('/api/admin/romanizer/transliterate', {
+            // Transliterate Content
+            const contentResponse = await api.post('/api/admin/romanizer/transliterate', {
                 text: poetryContent
             });
-            setTransliteratedText(response.data.transliterated_text);
-            setShowTransliteration(true);
+            setTransliteratedText(contentResponse.data.transliterated_text);
+
+            // Transliterate Title
+            const currentTitle = form.getValues('poetry_title');
+            if (currentTitle) {
+                const titleResponse = await api.post('/api/admin/romanizer/transliterate', {
+                    text: currentTitle
+                });
+                setRomanTitle(titleResponse.data.transliterated_text);
+            }
+
             setIsTransliterated(true);
+            setScript('roman'); // Switch to Roman view
         } catch (error) {
             console.error("Transliteration failed:", error);
             alert("Failed to transliterate. Please try again.");
@@ -174,20 +189,34 @@ const CreatePoetry = () => {
 
     useEffect(() => {
         if (isEdit && poetry) {
-            const translation = poetry.translations?.find(t => t.lang === 'sd') || poetry.translations?.[0];
+            const persoTranslation = poetry.translations?.find(t => t.lang === 'sd') || poetry.translations?.[0];
+            const romanTranslation = poetry.translations?.find(t => t.lang === 'en');
+
             form.reset({
-                poetry_title: translation?.title || '',
+                poetry_title: persoTranslation?.title || '',
                 poetry_slug: poetry.poetry_slug || '',
                 poet_id: poetry.poet_id?.toString() || '',
                 category_id: poetry.category_id?.toString() || '',
                 content_style: poetry.content_style || 'center',
                 visibility: poetry.visibility === 1,
                 is_featured: poetry.is_featured === 1,
-                poetry_info: translation?.info || '',
-                source: translation?.source || '',
+                poetry_info: persoTranslation?.info || '',
+                source: persoTranslation?.source || '',
                 poetry_tags: JSON.parse(poetry.poetry_tags || '[]'),
             });
-            setPoetryContent(poetry.couplets?.map(c => c.couplet_text).join('\n\n') || '');
+
+            // Set Roman Title
+            setRomanTitle(romanTranslation?.title || '');
+
+            // Filter and set content by language
+            const persoCouplets = poetry.couplets?.filter(c => c.lang === 'sd') || [];
+            // If no language specified (legacy), assume they are the main content (Perso)
+            const displayPersoCouplets = persoCouplets.length > 0 ? persoCouplets : (poetry.couplets || []);
+
+            const romanCouplets = poetry.couplets?.filter(c => c.lang === 'en') || [];
+
+            setPoetryContent(displayPersoCouplets.map(c => c.couplet_text).join('\n\n'));
+            setTransliteratedText(romanCouplets.map(c => c.couplet_text).join('\n\n'));
         }
     }, [isEdit, poetry, form]);
 
@@ -215,7 +244,14 @@ const CreatePoetry = () => {
 
         const transformedData = {
             ...data,
-            couplets: coupletTexts.map(text => ({ couplet_text: text }))
+            ...data,
+            couplets: coupletTexts.map(text => ({ couplet_text: text })),
+            roman_title: romanTitle,
+            roman_content: transliteratedText
+                .split(/\n\s*\n/)
+                .map(text => text.trim())
+                .filter(text => text.length > 0)
+                .map(text => ({ couplet_text: text }))
         };
 
         if (transformedData.couplets.length === 0) {
@@ -288,75 +324,13 @@ const CreatePoetry = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
-                            <div className="flex items-center gap-1 p-2 border-b bg-muted/5 sticky top-0 z-10 overflow-x-auto no-scrollbar">
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => setPoetryContent(prev => prev + '\n\n')} title="Add Couplet Space">
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                                <div className="h-4 w-[1px] bg-border mx-1" />
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
-                                            Style <ChevronDown className="h-3 w-3" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="w-48">
-                                        <DropdownMenuLabel>Paragraph Style</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => applyFormat('# ', '')}>Heading 1</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => applyFormat('## ', '')}>Heading 2</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => applyFormat('> ', '')}><Quote className="h-4 w-4 mr-2" /> Blockquote</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => applyFormat('- ', '')}>Bullet List</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <div className="h-4 w-[1px] bg-border mx-1" />
-                                <div className="flex items-center">
-                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('**')} title="Bold">
-                                        <Bold className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('*')} title="Italic">
-                                        <Italic className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('~~')} title="Strikethrough">
-                                        <Strikethrough className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('`')} title="Code">
-                                        <Code className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <div className="h-4 w-[1px] bg-border mx-1" />
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('[', '](url)')} title="Link">
-                                    <Link2 className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => {
-                                    document.querySelector('[name="poetry_tags"]')?.scrollIntoView({ behavior: 'smooth' });
-                                }} title="Tags">
-                                    <TagIcon className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={cycleAlignment} title="Change Alignment">
-                                    {form.watch('content_style') === 'center' && <AlignCenter className="h-4 w-4" />}
-                                    {form.watch('content_style') === 'start' && <AlignLeft className="h-4 w-4" />}
-                                    {form.watch('content_style') === 'end' && <AlignRight className="h-4 w-4" />}
-                                    {form.watch('content_style') === 'justified' && <AlignJustify className="h-4 w-4" />}
-                                </Button>
-                                <div className="h-4 w-[1px] bg-border mx-1" />
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
-                                            More <ChevronDown className="h-3 w-3" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
-                                        <DropdownMenuItem onClick={() => { setPoetryContent(''); form.reset(); }}>Clear All</DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => navigate('/admin/poetry')}>View All Poetry</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
+                            <Tabs value={script} onValueChange={setScript} className="w-full">
+                                <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/5 sticky top-0 z-10 w-full">
+                                    <TabsList className="h-9 bg-muted/50">
+                                        <TabsTrigger value="perso" className="text-xs h-7 px-3 font-arabic">سنڌي (Perso)</TabsTrigger>
+                                        <TabsTrigger value="roman" className="text-xs h-7 px-3 font-medium">Sindhi (roman)</TabsTrigger>
+                                    </TabsList>
 
-                            <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
-                                        <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
-                                    </div>
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
                                         <button
                                             type="button"
@@ -367,55 +341,120 @@ const CreatePoetry = () => {
                                             <Languages className="h-3.5 w-3.5" />
                                             <span>Transliterate</span>
                                         </button>
-                                        <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
+                                        {/* formatting toolbar - only show in Perso mode */}
+                                        {(script === 'perso' || script === 'roman') && (
+                                            <>
+                                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
+                                                            Style <ChevronDown className="h-3 w-3" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="start" className="w-48">
+                                                        <DropdownMenuLabel>Paragraph Style</DropdownMenuLabel>
+                                                        <DropdownMenuItem onClick={() => applyFormat('# ', '')}>Heading 1</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => applyFormat('## ', '')}>Heading 2</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => applyFormat('> ', '')}><Quote className="h-4 w-4 mr-2" /> Blockquote</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => applyFormat('- ', '')}>Bullet List</DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                                <div className="flex items-center">
+                                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('**')} title="Bold">
+                                                        <Bold className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('*')} title="Italic">
+                                                        <Italic className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <FormField
-                                        control={form.control}
-                                        name="poetry_title"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-0">
-                                                <FormControl>
-                                                    <textarea
-                                                        dir="rtl"
-                                                        lang="sd"
-                                                        className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-right font-arabic"
-                                                        placeholder="عنوان"
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            field.onChange(e);
-                                                            e.target.style.height = 'auto';
-                                                            e.target.style.height = e.target.scrollHeight + 'px';
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                                <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
+                                            <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground/50 font-medium">
+                                            <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
+                                        </div>
+                                    </div>
 
-                                <div className="pt-6">
-                                    <textarea
-                                        id="poetry-editor"
-                                        dir="rtl"
-                                        lang="sd"
-                                        className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-arabic ${form.watch('content_style') === 'center' ? 'text-center' :
-                                            form.watch('content_style') === 'start' ? 'text-right' :
-                                                form.watch('content_style') === 'end' ? 'text-left' : 'text-justify'
-                                            }`}
-                                        placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
-                                        value={poetryContent}
-                                        onChange={(e) => {
-                                            setPoetryContent(e.target.value);
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = e.target.scrollHeight + 'px';
-                                        }}
-                                    />
+                                    {script === 'perso' && (
+                                        <div className="space-y-3">
+                                            <FormField
+                                                control={form.control}
+                                                name="poetry_title"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-0">
+                                                        <FormControl>
+                                                            <textarea
+                                                                dir="rtl"
+                                                                lang="sd"
+                                                                className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-right font-arabic"
+                                                                placeholder="عنوان"
+                                                                {...field}
+                                                                onChange={(e) => {
+                                                                    field.onChange(e);
+                                                                    e.target.style.height = 'auto';
+                                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                                }}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="pt-6">
+                                        <TabsContent value="perso" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
+                                            <textarea
+                                                id="poetry-editor"
+                                                dir="rtl"
+                                                lang="sd"
+                                                className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-arabic ${form.watch('content_style') === 'center' ? 'text-center' :
+                                                    form.watch('content_style') === 'start' ? 'text-right' :
+                                                        form.watch('content_style') === 'end' ? 'text-left' : 'text-justify'
+                                                    }`}
+                                                placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
+                                                value={poetryContent}
+                                                onChange={(e) => {
+                                                    setPoetryContent(e.target.value);
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+                                        </TabsContent>
+                                        <TabsContent value="roman" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
+                                            <textarea
+                                                dir="ltr"
+                                                className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-left font-sans mb-3"
+                                                placeholder="Roman Title"
+                                                value={romanTitle}
+                                                onChange={(e) => {
+                                                    setRomanTitle(e.target.value);
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+                                            <textarea
+                                                dir="ltr"
+                                                className={`w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-sans ${form.watch('content_style') === 'center' ? 'text-center' :
+                                                    form.watch('content_style') === 'start' ? 'text-left' :
+                                                        form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
+                                                    }`}
+                                                placeholder="Transliterated text will appear here..."
+                                                value={transliteratedText}
+                                                onChange={(e) => setTransliteratedText(e.target.value)}
+                                            />
+                                        </TabsContent>
+                                    </div>
                                 </div>
-                            </div>
+                            </Tabs>
                         </div>
 
                         <div className="space-y-6">
@@ -781,38 +820,9 @@ const CreatePoetry = () => {
                         </div>
                     </div>
 
-                    <Dialog open={showTransliteration} onOpenChange={setShowTransliteration}>
-                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                                <DialogTitle>Romanized Transliteration</DialogTitle>
-                                <DialogDescription>
-                                    Sindhi text converted to Roman script
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="mt-4">
-                                <div className="bg-muted/30 rounded-lg p-6">
-                                    <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                                        {transliteratedText || 'No content to transliterate'}
-                                    </pre>
-                                </div>
-                                <div className="mt-4 flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(transliteratedText);
-                                        }}
-                                    >
-                                        Copy to Clipboard
-                                    </Button>
-                                    <Button onClick={() => setShowTransliteration(false)}>
-                                        Close
-                                    </Button>
-                                </div>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </form>
-            </Form>
+
+                </form >
+            </Form >
         </div >
     );
 };
