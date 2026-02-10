@@ -117,6 +117,11 @@ class HesudharController extends Controller
                 $cleanWord = mb_substr($cleanWord, 0, -1);
             }
 
+            // Normalize terminal 'ه' (U+0647 / Arabic Heh) to 'ہ' (U+06C1 / Urdu/Sindhi Heh Goal)
+            if (mb_strlen($cleanWord) > 0 && mb_substr($cleanWord, -1) === "ه") {
+                $cleanWord = mb_substr($cleanWord, 0, -1) . "ہ";
+            }
+
             if (!empty($cleanWord)) {
                 $mistake = BaakhHesudhar::where('word', $cleanWord)->first();
                 if ($mistake) {
