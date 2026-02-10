@@ -127,9 +127,11 @@ Route::middleware('auth:sanctum')
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);
         Route::apiResource('categories', \App\Http\Controllers\Api\Admin\CategoryController::class);
         Route::post('hesudhar/refresh', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'refresh']);
+        Route::post('hesudhar/standardize', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'standardize']);
         Route::post('hesudhar/check-words', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'checkWords']);
         Route::apiResource('hesudhar', \App\Http\Controllers\Api\Admin\HesudharController::class);
         Route::post('romanizer/refresh', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'refresh']);
+        Route::post('romanizer/standardize', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'standardize']);
         Route::post('romanizer/check-words', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'checkWords']);
         Route::post('romanizer/transliterate', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'transliterate']);
         Route::apiResource('romanizer', \App\Http\Controllers\Api\Admin\RomanizerController::class);

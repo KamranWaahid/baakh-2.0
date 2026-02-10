@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Romanizer;
+use App\Helpers\SindhiNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
@@ -142,10 +143,11 @@ class RomanizerController extends Controller
             }
 
             // Normalize ALL Heh variants to standard Sindhi 'ھ' (U+06BE) for dictionary consistency check
-            $normalizedCleanWord = str_replace(["ه", "ہ"], "ھ", $cleanWord);
+            // UPDATE: Use SindhiNormalizer for phonetic-contextual rules
+            $normalizedCleanWord = SindhiNormalizer::normalize($cleanWord);
 
             $exists = Romanizer::where('word_sd', $cleanWord)->exists();
-            if (!$exists && preg_match('/[هہ]/u', $cleanWord)) {
+            if (!$exists && $cleanWord !== $normalizedCleanWord) {
                 $exists = Romanizer::where('word_sd', $normalizedCleanWord)->exists();
             }
 
@@ -162,6 +164,19 @@ class RomanizerController extends Controller
             'total_missing' => count($missing)
         ]);
     }
+    public function standardize(Request $request)
+    {
+        $request->validate([
+            'text' => 'required|string'
+        ]);
+
+        $standardized = SindhiNormalizer::normalize($request->text);
+
+        return response()->json([
+            'standardized_text' => $standardized
+        ]);
+    }
+
     public function transliterate(Request $request)
     {
         $request->validate([
@@ -225,7 +240,13 @@ class RomanizerController extends Controller
                     if (isset($words[$cleanWord])) {
                         $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
                     } else {
-                        $processedWords[] = $word; // Keep original if not found
+                        // Try with phonetic normalization
+                        $normalizedClean = SindhiNormalizer::normalize($cleanWord);
+                        if (isset($words[$normalizedClean])) {
+                            $processedWords[] = $foundPunctuationStart . $words[$normalizedClean] . $foundPunctuationEnd;
+                        } else {
+                            $processedWords[] = $word; // Keep original if not found
+                        }
                     }
                 }
             }

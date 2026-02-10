@@ -24,12 +24,16 @@ const HesudharBulkCheck = () => {
         checkMutation.mutate(text);
     };
 
-    const handleStandardizeHeh = () => {
-        // Standardize all variants of Heh to U+06BE (ھ)
-        const standardized = text.replace(/[هہ]/g, 'ھ');
-        setText(standardized);
-        // If we have mistakes, filtering those that were just fixed by this bulk action
-        setMistakes(prev => prev.filter(m => !/[هہ]/.test(m.word)));
+    const handleStandardizeHeh = async () => {
+        if (!text.trim()) return;
+        try {
+            const response = await api.post('/api/admin/hesudhar/standardize', { text });
+            setText(response.data.standardized_text);
+            // Re-check after bulk standardization to clear fixed mistakes
+            checkMutation.mutate(response.data.standardized_text);
+        } catch (error) {
+            console.error("Bulk standardization failed:", error);
+        }
     };
 
     const handleFixAll = () => {

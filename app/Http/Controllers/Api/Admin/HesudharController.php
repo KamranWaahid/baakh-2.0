@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BaakhHesudhar;
+use App\Helpers\SindhiNormalizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -117,14 +118,14 @@ class HesudharController extends Controller
             }
 
             // Normalization for DICTIONARY lookup only (to increase hit rate)
-            $normalizedMatchWord = str_replace(["ه", "ہ"], "ھ", $matchWord);
+            $normalizedMatchWord = SindhiNormalizer::normalize($matchWord);
 
             if (!empty($matchWord)) {
                 // 1. Check dictionary with the word as-is
                 $mistake = BaakhHesudhar::where('word', $matchWord)->first();
 
-                // 2. If not found, try dictionary with normalized Heh
-                if (!$mistake && preg_match('/[هہ]/u', $matchWord)) {
+                // 2. If not found, try dictionary with phonetically normalized version
+                if (!$mistake && $matchWord !== $normalizedMatchWord) {
                     $mistake = BaakhHesudhar::where('word', $normalizedMatchWord)->first();
                 }
 
@@ -135,8 +136,8 @@ class HesudharController extends Controller
                         'type' => 'dictionary'
                     ];
                 }
-                // 3. Fallback: Only heuristic normalization if no dictionary hit
-                else if (preg_match('/[هہ]/u', $matchWord)) {
+                // 3. Fallback: Phonetic Normalization if no dictionary hit
+                else if ($matchWord !== $normalizedMatchWord) {
                     $mistakes[] = [
                         'word' => $matchWord,
                         'correct' => $normalizedMatchWord,
@@ -170,7 +171,20 @@ class HesudharController extends Controller
 
             return response()->json(['message' => 'Dictionary file updated successfully.']);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to update dictionary file: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to update file: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function standardize(Request $request)
+    {
+        $request->validate([
+            'text' => 'required|string'
+        ]);
+
+        $standardized = SindhiNormalizer::normalize($request->text);
+
+        return response()->json([
+            'standardized_text' => $standardized
+        ]);
     }
 }
