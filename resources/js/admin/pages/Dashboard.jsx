@@ -136,6 +136,16 @@ const Dashboard = () => {
             dataKey: 'missing_tags_couplets',
             dialogTitle: "Couplets Missing Tags",
             dialogDescription: "All couplets that haven't been tagged yet."
+        },
+        {
+            id: 'orthography_issues',
+            title: "Orthography Issues",
+            description: "Lines needing phonetic fix",
+            icon: AlertCircle,
+            color: "purple",
+            dataKey: 'orthography_issues',
+            dialogTitle: "Orthography & Spelling Issues",
+            dialogDescription: "Sindhi text that deviates from phonetic-contextual standards or dictionary."
         }
     ];
 
@@ -158,6 +168,12 @@ const Dashboard = () => {
                 text: 'text-green-600',
                 border: 'border-green-200',
                 hover: 'hover:bg-green-100'
+            },
+            purple: {
+                bg: 'bg-purple-50',
+                text: 'text-purple-600',
+                border: 'border-purple-200',
+                hover: 'hover:bg-purple-100'
             }
         };
         return colors[color] || colors.orange;
@@ -230,6 +246,41 @@ const Dashboard = () => {
                     );
                 })}
             </div>
+            {/* Action Cards Grid */}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {actionCards.map((card) => {
+                    const Icon = card.icon;
+                    const colors = getColorClasses(card.color);
+                    const itemCount = data?.[card.dataKey]?.length || 0;
+
+                    return (
+                        <Card
+                            key={card.id}
+                            className={`cursor-pointer transition-all duration-300 border shadow-sm ${colors.bg} ${colors.hover} ${colors.border}`}
+                            onClick={() => setOpenDialog(card.id)}
+                        >
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${colors.text}`}>
+                                    {card.title}
+                                </CardTitle>
+                                <Icon className={`h-5 w-5 ${colors.text}`} />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-end justify-between">
+                                    <div>
+                                        <div className="text-3xl font-bold">{itemCount}</div>
+                                        <p className="text-xs mt-1 text-gray-500 font-medium">Items pending review</p>
+                                    </div>
+                                    <div className={`p-2 rounded-full bg-white/50 border ${colors.border}`}>
+                                        <ArrowUpRight className={`h-4 w-4 ${colors.text}`} />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
+
             {/* Dialogs for each action card */}
             {actionCards.map((card) => {
                 const items = data?.[card.dataKey] || [];
@@ -256,9 +307,9 @@ const Dashboard = () => {
                                                 key={item.id}
                                                 item={item}
                                                 link={
-                                                    card.id === 'missing_tags_couplets'
+                                                    item.edit_url || (card.id === 'missing_tags_couplets'
                                                         ? (item.poetry_id ? `/admin/poetry/${item.poetry_id}/edit` : '#')
-                                                        : `/admin/poetry/${item.id}/edit`
+                                                        : `/admin/poetry/${item.id}/edit`)
                                                 }
                                             />
                                         ))}

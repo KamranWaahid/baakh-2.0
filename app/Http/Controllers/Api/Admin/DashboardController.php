@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Poetry;
 use App\Models\Couplets;
+use App\Helpers\SindhiNormalizer;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -128,6 +129,71 @@ class DashboardController extends Controller
                 ];
             });
 
+        // 4. Scan for Orthography/Spelling Issues (Sindhi only)
+        $orthographyIssues = [];
+
+        // Scan poets_detail
+        $poetIssues = \DB::table('poets_detail')
+            ->where('lang', 'sd')
+            ->get(['id', 'poet_id', 'poet_name', 'poet_bio'])
+            ->filter(function ($p) {
+                return $p->poet_name !== SindhiNormalizer::normalize($p->poet_name) ||
+                    ($p->poet_bio && $p->poet_bio !== SindhiNormalizer::normalize($p->poet_bio));
+            })
+            ->take(5)
+            ->map(function ($p) {
+                return [
+                    'id' => $p->poet_id,
+                    'title' => 'Poet: ' . $p->poet_name,
+                    'type' => 'poet_issue',
+                    'edit_url' => "/admin/poets/{$p->poet_id}/edit"
+                ];
+            });
+        $orthographyIssues = array_merge($orthographyIssues, $poetIssues->toArray());
+
+        // Scan poetry_translations (Titles and Info)
+        $translationIssues = \DB::table('poetry_translations')
+            ->where('lang', 'sd')
+            ->orderBy('id', 'desc')
+            ->limit(500) // Sample last 500 for performance
+            ->get(['id', 'poetry_id', 'title', 'info'])
+            ->filter(function ($t) {
+                return $t->title !== SindhiNormalizer::normalize($t->title) ||
+                    ($t->info && $t->info !== SindhiNormalizer::normalize($t->info));
+            })
+            ->take(5)
+            ->map(function ($t) {
+                return [
+                    'id' => $t->poetry_id,
+                    'title' => 'Poetry: ' . ($t->title ?: 'Untitled'),
+                    'type' => 'poetry_issue',
+                    'edit_url' => "/admin/poetry/{$t->poetry_id}/edit"
+                ];
+            });
+        $orthographyIssues = array_merge($orthographyIssues, $translationIssues->toArray());
+
+        // Scan poetry_couplets
+        $coupletIssues = \DB::table('poetry_couplets')
+            ->where('lang', 'sd')
+            ->orderBy('id', 'desc')
+            ->limit(1000) // Sample last 1000
+            ->get(['id', 'poetry_id', 'couplet_text'])
+            ->filter(function ($c) {
+                return $c->couplet_text !== SindhiNormalizer::normalize($c->couplet_text);
+            })
+            ->take(5)
+            ->map(function ($c) {
+                $lines = explode("\n", $c->couplet_text);
+                return [
+                    'id' => $c->id,
+                    'poetry_id' => $c->poetry_id,
+                    'title' => 'Couplet: ' . (mb_substr($lines[0], 0, 30) . '...'),
+                    'type' => 'couplet_issue',
+                    'edit_url' => "/admin/poetry/{$c->poetry_id}/edit"
+                ];
+            });
+        $orthographyIssues = array_merge($orthographyIssues, $coupletIssues->toArray());
+
         return response()->json([
             'stats' => [
                 'total_poets' => [
@@ -157,7 +223,8 @@ class DashboardController extends Controller
             ],
             'missing_en_poetry' => $missingEnPoetry,
             'missing_en_couplets' => $missingEnCouplets,
-            'missing_tags_couplets' => $missingTagsCouplets
+            'missing_tags_couplets' => $missingTagsCouplets,
+            'orthography_issues' => array_slice($orthographyIssues, 0, 10)
         ]);
     }
 }
