@@ -34,7 +34,6 @@ class RomanizerController extends Controller
         ]);
 
         $validated['user_id'] = Auth::id() ?? 1; // Fallback to 1 if not authenticated for some reason
-        $validated['approved'] = 1;
 
         $word = Romanizer::create($validated);
 

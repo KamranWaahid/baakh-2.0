@@ -11,8 +11,8 @@ class Romanizer extends Model
     use SoftDeletes;
 
     protected $table = "baakh_roman_words";
-    
-    protected $fillable = ['user_id', 'word_sd', 'word_roman', 'approved'];
+
+    protected $fillable = ['user_id', 'word_sd', 'word_roman'];
 
     public function user()
     {
