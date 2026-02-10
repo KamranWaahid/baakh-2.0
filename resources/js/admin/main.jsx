@@ -63,6 +63,7 @@ import CountriesList from './pages/Locations/CountriesList';
 import ProvincesList from './pages/Locations/ProvincesList';
 import CitiesList from './pages/Locations/CitiesList';
 import UserForm from './pages/Users/UserForm';
+import TopicCategoryList from './pages/Topics/TopicCategoryList';
 
 
 const App = () => {
@@ -145,6 +146,13 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TagsList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/topic-categories" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <TopicCategoryList />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

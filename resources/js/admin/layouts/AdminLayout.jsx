@@ -97,8 +97,12 @@ const Sidebar = () => {
                     <SidebarLink to="/admin/couplets" icon={AlignCenter}>Couplets</SidebarLink>
                 </SidebarGroup>
 
-                <SidebarLink to="/admin/tags" icon={Tags}>Tags</SidebarLink>
-                <SidebarLink to="/admin/categories" icon={Layers}>Categories</SidebarLink>
+                <SidebarGroup icon={Tags} label="Topics">
+                    <SidebarLink to="/admin/topic-categories" icon={Layers}>Topic Categories</SidebarLink>
+                    <SidebarLink to="/admin/tags" icon={Tags}>Tags</SidebarLink>
+                </SidebarGroup>
+
+                <SidebarLink to="/admin/categories" icon={AlignCenter}>Poetry Forms</SidebarLink>
                 <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
                 <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 

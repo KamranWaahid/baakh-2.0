@@ -19,6 +19,7 @@ class Poetry extends Model
     protected $fillable = [
         'poet_id',
         'category_id',
+        'topic_category_id',
         'user_id',
         'poetry_slug',
         'poetry_tags',
@@ -47,6 +48,11 @@ class Poetry extends Model
     public function category()
     {
         return $this->belongsTo(Categories::class, 'category_id');
+    }
+
+    public function topicCategory()
+    {
+        return $this->belongsTo(TopicCategory::class, 'topic_category_id');
     }
 
     public function getCategorySlugAttribute()

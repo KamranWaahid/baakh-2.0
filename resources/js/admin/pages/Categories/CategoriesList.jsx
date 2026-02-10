@@ -50,23 +50,23 @@ const CategoriesList = () => {
     return (
         <div className="space-y-4 p-4 md:p-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Categories</h2>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poetry Forms</h2>
                 <Button asChild className="w-full sm:w-auto">
-                    <Link to="/categories/create">
-                        <Plus className="mr-2 h-4 w-4" /> Add Category
+                    <Link to="/admin/categories/create">
+                        <Plus className="mr-2 h-4 w-4" /> Add Form
                     </Link>
                 </Button>
             </div>
 
             <Card>
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-xl">Manage Categories</CardTitle>
+                    <CardTitle className="text-xl">Manage Poetry Forms</CardTitle>
                     <div className="flex items-center py-2">
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 type="search"
-                                placeholder="Search categories..."
+                                placeholder="Search forms..."
                                 className="pl-8 w-full max-w-full sm:max-w-sm"
                                 value={search}
                                 onChange={(e) => {
@@ -103,13 +103,13 @@ const CategoriesList = () => {
                                 ) : isError ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="h-24 text-center text-red-500">
-                                            Error loading categories.
+                                            Error loading forms.
                                         </TableCell>
                                     </TableRow>
                                 ) : data?.data?.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="h-24 text-center">
-                                            No categories found.
+                                            No forms found.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -134,7 +134,7 @@ const CategoriesList = () => {
                                                         size="sm"
                                                         asChild
                                                     >
-                                                        <Link to={`/categories/${category.id}/edit`}>Edit</Link>
+                                                        <Link to={`/admin/categories/${category.id}/edit`}>Edit</Link>
                                                     </Button>
                                                     <Button
                                                         variant="ghost"

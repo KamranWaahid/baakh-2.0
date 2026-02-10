@@ -120,7 +120,7 @@ const CategoryForm = () => {
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                        {isEditing ? 'Edit Category' : 'Add New Category'}
+                        {isEditing ? 'Edit Form' : 'Add New Form'}
                     </h2>
                 </div>
             </div>
@@ -183,7 +183,7 @@ const CategoryForm = () => {
                                                 />
                                             </FormControl>
                                             <div className="space-y-1 leading-none">
-                                                <FormLabel>Featured Category</FormLabel>
+                                                <FormLabel>Featured Form</FormLabel>
                                                 <FormDescription>
                                                     Show this category in featured sections.
                                                 </FormDescription>
@@ -234,7 +234,7 @@ const CategoryForm = () => {
                         <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => navigate('/categories')}>Cancel</Button>
                         <Button type="submit" className="w-full sm:w-auto" disabled={mutation.isPending}>
                             {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            {isEditing ? 'Update Category' : 'Create Category'}
+                            {isEditing ? 'Update Form' : 'Create Form'}
                         </Button>
                     </div>
                 </form>

@@ -63,6 +63,7 @@ const poetrySchema = z.object({
     poetry_slug: z.string().min(2, 'Slug is required'),
     poet_id: z.string().min(1, 'Poet is required'),
     category_id: z.string().min(1, 'Category is required'),
+    topic_category_id: z.string().min(1, 'Topic Category is required'),
     content_style: z.string().default('center'),
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
@@ -86,7 +87,7 @@ const CreatePoetry = () => {
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [openPoet, setOpenPoet] = useState(false);
     const [openCategory, setOpenCategory] = useState(false);
-
+    const [openTopicCategory, setOpenTopicCategory] = useState(false);
     const [openTags, setOpenTags] = useState(false);
     const [script, setScript] = useState('perso'); // 'perso' | 'roman'
 
@@ -176,6 +177,7 @@ const CreatePoetry = () => {
             poetry_slug: '',
             poet_id: '',
             category_id: '',
+            topic_category_id: '',
             content_style: 'center',
             visibility: true,
             is_featured: false,
@@ -230,6 +232,7 @@ const CreatePoetry = () => {
                 poetry_slug: poetry.poetry_slug || '',
                 poet_id: poetry.poet_id?.toString() || '',
                 category_id: poetry.category_id?.toString() || '',
+                topic_category_id: poetry.topic_category_id?.toString() || '',
                 content_style: poetry.content_style || 'center',
                 visibility: poetry.visibility === 1,
                 is_featured: poetry.is_featured === 1,
@@ -555,7 +558,7 @@ const CreatePoetry = () => {
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {meta?.content_styles.map(style => (
+                                                            {meta?.content_styles?.map(style => (
                                                                 <SelectItem key={style} value={style}>
                                                                     {style.charAt(0).toUpperCase() + style.slice(1)}
                                                                 </SelectItem>
@@ -607,7 +610,7 @@ const CreatePoetry = () => {
                                                                 )}
                                                             >
                                                                 {field.value
-                                                                    ? meta?.poets.find((poet) => poet.id.toString() === field.value)?.name
+                                                                    ? meta?.poets?.find((poet) => poet.id.toString() === field.value)?.name
                                                                     : "Select Poet"}
                                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                             </Button>
@@ -619,7 +622,7 @@ const CreatePoetry = () => {
                                                             <CommandList>
                                                                 <CommandEmpty>No poet found.</CommandEmpty>
                                                                 <CommandGroup>
-                                                                    {meta?.poets.map((poet) => (
+                                                                    {meta?.poets?.map((poet) => (
                                                                         <CommandItem
                                                                             value={`${poet.name} ${poet.id}`}
                                                                             key={poet.id}
@@ -671,7 +674,7 @@ const CreatePoetry = () => {
                                                                 )}
                                                             >
                                                                 {field.value
-                                                                    ? meta?.categories.find((cat) => cat.id.toString() === field.value)?.name
+                                                                    ? meta?.categories?.find((cat) => cat.id.toString() === field.value)?.name
                                                                     : "Select Category"}
                                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                             </Button>
@@ -683,7 +686,7 @@ const CreatePoetry = () => {
                                                             <CommandList>
                                                                 <CommandEmpty>No category found.</CommandEmpty>
                                                                 <CommandGroup>
-                                                                    {meta?.categories.map((cat) => (
+                                                                    {meta?.categories?.map((cat) => (
                                                                         <CommandItem
                                                                             value={`${cat.name} ${cat.id}`}
                                                                             key={cat.id}
@@ -692,6 +695,70 @@ const CreatePoetry = () => {
                                                                                 setOpenCategory(false);
                                                                             }}
                                                                             className="font-arabic text-right flex flex-row-reverse justify-between"
+                                                                        >
+                                                                            {cat.name}
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "mr-2 h-4 w-4",
+                                                                                    cat.id.toString() === field.value
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="topic_category_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                                    <BookOpen className="h-4 w-4 text-muted-foreground" /> Topic Category
+                                                </FormLabel>
+                                                <Popover open={openTopicCategory} onOpenChange={setOpenTopicCategory}>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                aria-expanded={openTopicCategory}
+                                                                className={cn(
+                                                                    "w-full justify-between",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {field.value
+                                                                    ? meta?.topic_categories?.find((cat) => cat.id.toString() === field.value)?.name
+                                                                    : "Select Topic"}
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[300px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search topic..." />
+                                                            <CommandList>
+                                                                <CommandEmpty>No topic found.</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {meta?.topic_categories?.map((cat) => (
+                                                                        <CommandItem
+                                                                            value={`${cat.name} ${cat.id}`}
+                                                                            key={cat.id}
+                                                                            onSelect={() => {
+                                                                                form.setValue("topic_category_id", cat.id.toString());
+                                                                                setOpenTopicCategory(false);
+                                                                            }}
+                                                                            className="flex justify-between"
                                                                         >
                                                                             {cat.name}
                                                                             <Check
@@ -748,16 +815,24 @@ const CreatePoetry = () => {
                                 <CardContent>
                                     <div className="flex flex-wrap gap-2 mb-3">
                                         {form.watch('poetry_tags')?.map(tagId => {
-                                            const tag = meta?.tags.find(t => t.id.toString() === tagId);
-                                            return (
-                                                <span key={tagId} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 text-xs font-arabic px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-colors">
-                                                    {tag?.tag || tagId}
+                                            let foundTag = null;
+                                            if (meta?.tags) {
+                                                Object.values(meta.tags).forEach(group => {
+                                                    if (Array.isArray(group)) {
+                                                        const t = group.find(t => t.id.toString() === tagId);
+                                                        if (t) foundTag = t;
+                                                    }
+                                                });
+                                            }
+                                            return (foundTag && (
+                                                <span key={tagId} className="bg-secondary text-secondary-foreground hover:bg-secondary/80 text-[10px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1.5 transition-colors">
+                                                    {foundTag.tag}
                                                     <Trash2 className="h-3 w-3 cursor-pointer opacity-70 hover:opacity-100" onClick={() => {
                                                         const current = form.getValues('poetry_tags');
                                                         form.setValue('poetry_tags', current.filter(id => id !== tagId));
                                                     }} />
                                                 </span>
-                                            );
+                                            ));
                                         })}
                                     </div>
                                     <FormField
@@ -784,33 +859,37 @@ const CreatePoetry = () => {
                                                             <CommandInput placeholder="Search tags..." className="font-arabic text-right" />
                                                             <CommandList>
                                                                 <CommandEmpty>No tag found.</CommandEmpty>
-                                                                <CommandGroup>
-                                                                    {meta?.tags.map((tag) => (
-                                                                        <CommandItem
-                                                                            value={`${tag.tag} ${tag.id}`}
-                                                                            key={tag.id}
-                                                                            onSelect={() => {
-                                                                                const current = form.getValues("poetry_tags") || [];
-                                                                                const tagId = tag.id.toString();
-                                                                                if (!current.includes(tagId)) {
-                                                                                    form.setValue("poetry_tags", [...current, tagId]);
-                                                                                }
-                                                                                setOpenTags(false);
-                                                                            }}
-                                                                            className="font-arabic text-right flex flex-row-reverse justify-between"
-                                                                        >
-                                                                            {tag.tag}
-                                                                            <Check
-                                                                                className={cn(
-                                                                                    "mr-2 h-4 w-4",
-                                                                                    (form.getValues("poetry_tags") || []).includes(tag.id.toString())
-                                                                                        ? "opacity-100"
-                                                                                        : "opacity-0"
-                                                                                )}
-                                                                            />
-                                                                        </CommandItem>
-                                                                    ))}
-                                                                </CommandGroup>
+                                                                {meta?.tags && Object.entries(meta.tags).map(([groupName, groupTags]) => (
+                                                                    Array.isArray(groupTags) && (
+                                                                        <CommandGroup heading={groupName} key={groupName}>
+                                                                            {groupTags.map((tag) => (
+                                                                                <CommandItem
+                                                                                    value={`${tag.tag} ${tag.id}`}
+                                                                                    key={tag.id}
+                                                                                    onSelect={() => {
+                                                                                        const current = form.getValues("poetry_tags") || [];
+                                                                                        const tagId = tag.id.toString();
+                                                                                        if (!current.includes(tagId)) {
+                                                                                            form.setValue("poetry_tags", [...current, tagId]);
+                                                                                        }
+                                                                                        setOpenTags(false);
+                                                                                    }}
+                                                                                    className="flex justify-between"
+                                                                                >
+                                                                                    {tag.tag}
+                                                                                    <Check
+                                                                                        className={cn(
+                                                                                            "mr-2 h-4 w-4",
+                                                                                            (form.getValues("poetry_tags") || []).includes(tag.id.toString())
+                                                                                                ? "opacity-100"
+                                                                                                : "opacity-0"
+                                                                                        )}
+                                                                                    />
+                                                                                </CommandItem>
+                                                                            ))}
+                                                                        </CommandGroup>
+                                                                    )
+                                                                ))}
                                                             </CommandList>
                                                         </Command>
                                                     </PopoverContent>

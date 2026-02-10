@@ -10,13 +10,14 @@ class TagController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Tags::query()->where('lang', 'sd');
+        $query = Tags::query();
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('tag', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%");
             });
         }
 
@@ -24,7 +25,7 @@ class TagController extends Controller
         $tags = $query->orderBy('id', 'desc')->paginate($perPage);
 
         // Add available languages info
-        $tags->getCollection()->transform(function ($tag) {
+        $tags->through(function ($tag) {
             $hasEn = Tags::where('slug', $tag->slug)->where('lang', 'en')->exists();
             $tag->available_translations = $hasEn ? ['sd', 'en'] : ['sd'];
             return $tag;
