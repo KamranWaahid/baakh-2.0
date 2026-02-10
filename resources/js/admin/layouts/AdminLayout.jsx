@@ -20,6 +20,7 @@ import {
     Flag,
     Map,
     AlignCenter,
+    AlignJustify,
     Book,
     Plus
 } from 'lucide-react';
@@ -106,6 +107,27 @@ const Sidebar = () => {
                 <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
                 <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 
+                <SidebarGroup icon={Book} label="Dictionary">
+                    <SidebarLink to="/admin/dictionary/lemma-inbox" icon={Layers}>Lemma Inbox</SidebarLink>
+                    <SidebarLink to="/admin/dictionary/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
+                    <SidebarLink to="/admin/dictionary/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
+                    <SidebarLink to="/admin/dictionary/variants" icon={AlignJustify}>Variants & Misspellings</SidebarLink>
+                    <SidebarLink to="/admin/dictionary/qa-search" icon={Shield}>QA & Search</SidebarLink>
+                </SidebarGroup>
+
+                <SidebarGroup icon={Database} label="Corpus">
+                    <SidebarLink to="/admin/corpus/sentence-explorer" icon={BookOpen}>Sentence Explorer</SidebarLink>
+                    <SidebarLink to="/admin/corpus/context-clusters" icon={AlignCenter}>Context Clusters</SidebarLink>
+                </SidebarGroup>
+
+                <SidebarGroup icon={LayoutDashboard} label="Analytics">
+                    <SidebarLink to="/admin/analytics/frequency" icon={Layers}>Frequency Stats</SidebarLink>
+                    <SidebarLink to="/admin/analytics/dialect" icon={Map}>Dialect Coverage</SidebarLink>
+                    <SidebarLink to="/admin/analytics/trends" icon={Type}>Usage Trends</SidebarLink>
+                </SidebarGroup>
+
+                <div className="my-2 border-t" />
+                <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Locations</div>
                 <SidebarGroup icon={MapPin} label="Locations">
                     <SidebarLink to="/admin/locations/countries" icon={Flag}>Countries</SidebarLink>
                     <SidebarLink to="/admin/locations/cities" icon={Map}>Provinces/Cities</SidebarLink>
