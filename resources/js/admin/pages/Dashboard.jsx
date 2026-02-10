@@ -256,24 +256,24 @@ const Dashboard = () => {
                     return (
                         <Card
                             key={card.id}
-                            className={`cursor-pointer transition-all duration-300 border shadow-sm ${colors.bg} ${colors.hover} ${colors.border}`}
+                            className="cursor-pointer transition-all hover:bg-gray-50 duration-300 group"
                             onClick={() => setOpenDialog(card.id)}
                         >
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className={`text-sm font-semibold uppercase tracking-wider ${colors.text}`}>
+                                <CardTitle className="text-sm font-medium text-gray-500">
                                     {card.title}
                                 </CardTitle>
-                                <Icon className={`h-5 w-5 ${colors.text}`} />
+                                <div className={`p-1.5 rounded-md ${colors.bg}`}>
+                                    <Icon className={`h-4 w-4 ${colors.text}`} />
+                                </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="flex items-end justify-between">
-                                    <div>
-                                        <div className="text-3xl font-bold">{itemCount}</div>
-                                        <p className="text-xs mt-1 text-gray-500 font-medium">Items pending review</p>
-                                    </div>
-                                    <div className={`p-2 rounded-full bg-white/50 border ${colors.border}`}>
-                                        <ArrowUpRight className={`h-4 w-4 ${colors.text}`} />
-                                    </div>
+                                <div className="text-2xl font-bold">{itemCount}</div>
+                                <div className="flex items-center justify-between mt-1">
+                                    <p className="text-xs text-gray-500">
+                                        {card.description}
+                                    </p>
+                                    <ArrowUpRight className="h-3 w-3 text-gray-300 group-hover:text-gray-900 transition-colors" />
                                 </div>
                             </CardContent>
                         </Card>
