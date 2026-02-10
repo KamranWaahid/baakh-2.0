@@ -38,7 +38,12 @@ class TagController extends Controller
 
         return response()->json([
             'tags' => $tags,
-            'available_types' => Tags::TYPES
+            'available_types' => collect(Tags::TYPES)->map(function ($type) {
+                return [
+                    'value' => $type,
+                    'label' => Tags::TYPE_LABELS[$type] ?? $type
+                ];
+            })
         ]);
     }
 

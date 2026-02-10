@@ -14,6 +14,14 @@ class Tags extends Model
 
     const TYPES = ['Theme', 'Emotion', 'Time Layer', 'Occasion', 'Status'];
 
+    const TYPE_LABELS = [
+        'Theme' => 'موضوع',
+        'Emotion' => 'جذبات',
+        'Time Layer' => 'وقت جو پرت',
+        'Occasion' => 'موقعو',
+        'Status' => 'حالت',
+    ];
+
     protected $fillable = [
         'slug',
         'type'

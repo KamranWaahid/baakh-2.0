@@ -62,6 +62,22 @@ const TagsList = () => {
 
     const tagsResponse = data?.tags || { data: [] };
 
+    const typeLabels = React.useMemo(() => {
+        if (!data?.available_types) return {};
+        // If types are in value/label format
+        if (typeof data.available_types[0] === 'object') {
+            return data.available_types.reduce((acc, curr) => {
+                acc[curr.value] = curr.label;
+                return acc;
+            }, {});
+        }
+        // Fallback for simple array
+        return data.available_types.reduce((acc, type) => {
+            acc[type] = type;
+            return acc;
+        }, {});
+    }, [data?.available_types]);
+
     const createMutation = useMutation({
         mutationFn: (newTag) => api.post('/api/admin/tags', newTag),
         onSuccess: () => {
@@ -167,7 +183,9 @@ const TagsList = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {data?.available_types?.map(type => (
-                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                            <SelectItem key={type.value || type} value={type.value || type}>
+                                                {type.label || type}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -278,7 +296,7 @@ const TagsList = () => {
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell whitespace-nowrap text-xs font-mono">{tag.slug || '-'}</TableCell>
                                             <TableCell className="hidden lg:table-cell whitespace-nowrap font-semibold">
-                                                <Badge variant="outline">{tag.type || '-'}</Badge>
+                                                <Badge variant="outline">{typeLabels[tag.type] || tag.type || '-'}</Badge>
                                             </TableCell>
                                             <TableCell className="text-right whitespace-nowrap space-x-1">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tag)}>
