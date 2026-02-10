@@ -23,7 +23,7 @@ const formSchema = z.object({
 
 const RomanizerForm = ({ entry, onSuccess }) => {
     const queryClient = useQueryClient();
-    const isEditing = !!entry;
+    const isEditing = !!entry?.id;
 
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -37,7 +37,12 @@ const RomanizerForm = ({ entry, onSuccess }) => {
         if (entry) {
             form.reset({
                 word_sd: entry.word_sd,
-                word_roman: entry.word_roman,
+                word_roman: entry.word_roman || '',
+            });
+        } else {
+            form.reset({
+                word_sd: '',
+                word_roman: '',
             });
         }
     }, [entry, form]);

@@ -105,16 +105,34 @@ class RomanizerController extends Controller
             'text' => 'required|string'
         ]);
 
-        $get_text = explode(' ', $request->text);
+        // Split by whitespace (space, tab, newline, etc.)
+        $get_text = preg_split('/\s+/u', $request->text, -1, PREG_SPLIT_NO_EMPTY);
         $text = array_unique($get_text);
         $missing = array();
 
+        // Punctuation to strip from beginning and end
+        $punctuation = ['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
+
         foreach ($text as $word) {
-            $cleanWord = str_replace(['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ' '], '', $word);
+            $cleanWord = $word;
+
+            // Strip punctuation from start
+            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, 0, 1), $punctuation)) {
+                $cleanWord = mb_substr($cleanWord, 1);
+            }
+
+            // Strip punctuation from end
+            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, -1), $punctuation)) {
+                $cleanWord = mb_substr($cleanWord, 0, -1);
+            }
+
             if (!empty($cleanWord) && !Romanizer::where('word_sd', $cleanWord)->exists()) {
                 $missing[] = $cleanWord;
             }
         }
+
+        // Re-index array to ensure JSON array (not object with numeric keys)
+        $missing = array_values(array_unique($missing));
 
         return response()->json([
             'missing_words' => $missing,
