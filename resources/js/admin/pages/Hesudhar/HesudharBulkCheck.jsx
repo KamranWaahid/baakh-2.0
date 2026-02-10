@@ -24,6 +24,14 @@ const HesudharBulkCheck = () => {
         checkMutation.mutate(text);
     };
 
+    const handleStandardizeHeh = () => {
+        // Standardize all variants of Heh to U+06BE (ھ)
+        const standardized = text.replace(/[هہ]/g, 'ھ');
+        setText(standardized);
+        // If we have mistakes, filtering those that were just fixed by this bulk action
+        setMistakes(prev => prev.filter(m => !/[هہ]/.test(m.word)));
+    };
+
     const handleFixAll = () => {
         let fixedText = text;
         mistakes.forEach(m => {
@@ -77,9 +85,12 @@ const HesudharBulkCheck = () => {
                                 {checkMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSearch className="mr-2 h-4 w-4" />}
                                 Analyze Text
                             </Button>
+                            <Button variant="outline" onClick={handleStandardizeHeh} title="Convert all 'ه' and 'ہ' to standard 'ھ'">
+                                <RefreshCw className="mr-2 h-4 w-4" /> Standardize Heh
+                            </Button>
                             {mistakes.length > 0 && (
                                 <Button variant="secondary" onClick={handleFixAll}>
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Fix All
+                                    <CheckCircle2 className="mr-2 h-4 w-4" /> Fix All
                                 </Button>
                             )}
                         </div>
@@ -112,9 +123,14 @@ const HesudharBulkCheck = () => {
                                     <div key={index} className="py-3 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="flex flex-col">
-                                                <span className="text-red-500 font-arabic text-lg line-through decoration-2 opacity-70">
-                                                    {mistake.word}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-red-500 font-arabic text-lg line-through decoration-2 opacity-70">
+                                                        {mistake.word}
+                                                    </span>
+                                                    <Badge variant="secondary" className="text-[10px] py-0 px-1 uppercase opacity-50">
+                                                        {mistake.type === 'normalization' ? 'Standardize' : 'Spelling'}
+                                                    </Badge>
+                                                </div>
                                                 <span className="text-green-600 font-arabic text-xl font-bold">
                                                     {mistake.correct}
                                                 </span>

@@ -104,30 +104,43 @@ class HesudharController extends Controller
         foreach ($text as $word) {
             $cleanWord = $word;
 
-            // Strip diacritics from the entire word
-            $cleanWord = str_replace($diacritics, '', $cleanWord);
+            // 1. Initial Standard standardization for matching
+            // Strip diacritics from the entire word for dictionary lookup
+            $matchWord = str_replace($diacritics, '', $cleanWord);
 
-            // Strip punctuation from start
-            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, 0, 1), $punctuation)) {
-                $cleanWord = mb_substr($cleanWord, 1);
+            // Strip punctuation from start/end for dictionary lookup
+            while (mb_strlen($matchWord) > 0 && in_array(mb_substr($matchWord, 0, 1), $punctuation)) {
+                $matchWord = mb_substr($matchWord, 1);
+            }
+            while (mb_strlen($matchWord) > 0 && in_array(mb_substr($matchWord, -1), $punctuation)) {
+                $matchWord = mb_substr($matchWord, 0, -1);
             }
 
-            // Strip punctuation from end
-            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, -1), $punctuation)) {
-                $cleanWord = mb_substr($cleanWord, 0, -1);
-            }
+            // Normalization for DICTIONARY lookup only (to increase hit rate)
+            $normalizedMatchWord = str_replace(["ه", "ہ"], "ھ", $matchWord);
 
-            // Normalize terminal 'ه' (U+0647 / Arabic Heh) to 'ہ' (U+06C1 / Urdu/Sindhi Heh Goal)
-            if (mb_strlen($cleanWord) > 0 && mb_substr($cleanWord, -1) === "ه") {
-                $cleanWord = mb_substr($cleanWord, 0, -1) . "ہ";
-            }
+            if (!empty($matchWord)) {
+                // Policy A: Check for non-standard Heh usage in the ORIGINAL word (but clean of punctuation)
+                // Standard Sindhi Heh is ھ (U+06BE). Arabic 'ه' (0647) and Urdu/Arabic 'ہ' (06C1) are incorrect.
+                if (preg_match('/[هہ]/u', $matchWord)) {
+                    $standardized = str_replace(["ه", "ہ"], "ھ", $matchWord);
+                    $mistakes[] = [
+                        'word' => $matchWord,
+                        'correct' => $standardized,
+                        'type' => 'normalization'
+                    ];
+                    continue; // Skip dictionary lookup if we already found a normalization issue
+                }
 
-            if (!empty($cleanWord)) {
-                $mistake = BaakhHesudhar::where('word', $cleanWord)->first();
+                // Policy B: Dictionary Lookup
+                // We check the matchWord (preserving existing Heh if standard) and if not found, 
+                // we check the normalized version against the dictionary.
+                $mistake = BaakhHesudhar::where('word', $matchWord)->first();
                 if ($mistake) {
                     $mistakes[] = [
-                        'word' => $cleanWord,
-                        'correct' => $mistake->correct
+                        'word' => $matchWord,
+                        'correct' => $mistake->correct,
+                        'type' => 'dictionary'
                     ];
                 }
             }

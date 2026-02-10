@@ -143,9 +143,8 @@ class RomanizerController extends Controller
             }
 
             // Normalize terminal 'ه' (U+0647 / Arabic Heh) to 'ہ' (U+06C1 / Urdu/Sindhi Heh Goal)
-            if (mb_strlen($cleanWord) > 0 && mb_substr($cleanWord, -1) === "ه") {
-                $cleanWord = mb_substr($cleanWord, 0, -1) . "ہ";
-            }
+            // UPDATE: We should normalize ALL Heh variants to standard Sindhi 'ھ' (U+06BE) for dictionary consistency
+            $cleanWord = str_replace(["ه", "ہ"], "ھ", $cleanWord);
 
             if (!empty($cleanWord) && !Romanizer::where('word_sd', $cleanWord)->exists()) {
                 $missing[] = $cleanWord;
