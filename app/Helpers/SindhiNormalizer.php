@@ -87,4 +87,13 @@ class SindhiNormalizer
         $text = str_replace('ا' . 'ٓ', 'آ', $text);
         return $text;
     }
+
+    /**
+     * Removes diacritics (Zabar, Zer, Pesh, etc.) from Sindhi text.
+     */
+    public static function stripDiacritics($text)
+    {
+        // Remove Arabic diacritics: U+064B-U+0653 (tashkeel) and U+0670 (superscript alef)
+        return preg_replace('/[\x{064B}-\x{0653}\x{0670}]/u', '', $text);
+    }
 }

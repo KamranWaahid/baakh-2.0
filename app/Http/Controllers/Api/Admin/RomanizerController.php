@@ -185,12 +185,17 @@ class RomanizerController extends Controller
 
         $text = $request->text;
 
+        // Step 1: Strip diacritics (Zabar, Zer, Pesh, Shadda, etc.) from input
+        $text = SindhiNormalizer::stripDiacritics($text);
+
         // Load the dictionary
-        // We can use the DB directly for better consistency
         $words = Romanizer::all()->pluck('word_roman', 'word_sd')->toArray();
 
-        // Helper function to process text
-        // This is a simplified version of the JS logic, adapted for PHP
+        // Punctuation to strip from Sindhi and NOT carry into Roman output
+        $sindhiPunctuation = ['،', '؛', '؟', "\xD8\x9B"]; // ، ؛ ؟
+        // Punctuation to preserve in Roman output
+        $romanPunctuation = ['.', '!', '?', ',', '"', "'", '"', '"'];
+        $allPunctuation = array_merge($sindhiPunctuation, $romanPunctuation);
 
         $lines = explode("\n", $text);
         $resultLines = [];
@@ -200,53 +205,49 @@ class RomanizerController extends Controller
             $processedWords = [];
 
             foreach ($wordsInLine as $word) {
-                // Remove punctuation to find the root word
-                // Sindhi punctuation: ، ؛ . ” “ ؟ !
-                // And common ones: ? , .
-                $punctuation = '';
-                $cleanWord = $word;
+                if (empty(trim($word)))
+                    continue;
 
-                // Simple punctuation extraction (start and end)
-                if (preg_match('/^([^\w\s]*)(.*?)([^\w\s]*)$/u', $word, $matches)) {
-                    // matches[1] is start punct, [2] is word, [3] is end punct
-                    // But "word" characters in unicode... regex is tricky for Sindhi.
-                    // Let's use the JS approach: strip known punctuation
+                $cleanWord = $word;
+                $foundPunctuationStart = '';
+                $foundPunctuationEnd = '';
+
+                // Extract leading punctuation
+                $firstChar = mb_substr($cleanWord, 0, 1);
+                if (in_array($firstChar, $allPunctuation)) {
+                    // Keep Roman punctuation, discard Sindhi punctuation
+                    $foundPunctuationStart = in_array($firstChar, $sindhiPunctuation) ? '' : $firstChar;
+                    $cleanWord = mb_substr($cleanWord, 1);
                 }
 
-                $mapped = $words[$word] ?? null;
-
-                if ($mapped) {
-                    $processedWords[] = $mapped;
-                } else {
-                    // Try stripping punctuation
-                    $sindhiPunctuation = ['،', '؛', '.', '”', '“', '!', '?', '؟', ',', '"', "'"];
-                    $foundPunctuationStart = '';
-                    $foundPunctuationEnd = '';
-
-                    // Verify if word starts with punctuation
-                    $firstChar = mb_substr($word, 0, 1);
-                    if (in_array($firstChar, $sindhiPunctuation)) {
-                        $foundPunctuationStart = $firstChar;
-                        $cleanWord = mb_substr($word, 1);
-                    }
-
-                    // Verify if word ends with punctuation
+                // Extract trailing punctuation
+                if (mb_strlen($cleanWord) > 0) {
                     $lastChar = mb_substr($cleanWord, -1);
-                    if (in_array($lastChar, $sindhiPunctuation)) {
-                        $foundPunctuationEnd = $lastChar;
+                    if (in_array($lastChar, $allPunctuation)) {
+                        $foundPunctuationEnd = in_array($lastChar, $sindhiPunctuation) ? '' : $lastChar;
                         $cleanWord = mb_substr($cleanWord, 0, -1);
                     }
+                }
 
-                    if (isset($words[$cleanWord])) {
-                        $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
+                if (empty($cleanWord)) {
+                    // Word was entirely punctuation
+                    $combined = $foundPunctuationStart . $foundPunctuationEnd;
+                    if (!empty($combined))
+                        $processedWords[] = $combined;
+                    continue;
+                }
+
+                // Try direct lookup
+                if (isset($words[$cleanWord])) {
+                    $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
+                } else {
+                    // Try with phonetic normalization
+                    $normalizedClean = SindhiNormalizer::normalize($cleanWord);
+                    if (isset($words[$normalizedClean])) {
+                        $processedWords[] = $foundPunctuationStart . $words[$normalizedClean] . $foundPunctuationEnd;
                     } else {
-                        // Try with phonetic normalization
-                        $normalizedClean = SindhiNormalizer::normalize($cleanWord);
-                        if (isset($words[$normalizedClean])) {
-                            $processedWords[] = $foundPunctuationStart . $words[$normalizedClean] . $foundPunctuationEnd;
-                        } else {
-                            $processedWords[] = $word; // Keep original if not found
-                        }
+                        // Keep original word but still filter Sindhi punctuation
+                        $processedWords[] = $foundPunctuationStart . $cleanWord . $foundPunctuationEnd;
                     }
                 }
             }
