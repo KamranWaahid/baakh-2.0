@@ -87,8 +87,25 @@ class HesudharController extends Controller
         // Punctuation to strip from beginning and end
         $punctuation = ['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
 
+        // Diacritics to strip globally from words
+        $diacritics = [
+            "\u{064B}", // Fathatayn
+            "\u{064C}", // Dammatayn
+            "\u{064D}", // Kasratayn
+            "\u{064E}", // Fatha
+            "\u{064F}", // Damma
+            "\u{0650}", // Kasra
+            "\u{0651}", // Shadda
+            "\u{0652}", // Sukun
+            "\u{0653}", // Maddah
+            "\u{0670}", // Superscript Alef
+        ];
+
         foreach ($text as $word) {
             $cleanWord = $word;
+
+            // Strip diacritics from the entire word
+            $cleanWord = str_replace($diacritics, '', $cleanWord);
 
             // Strip punctuation from start
             while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, 0, 1), $punctuation)) {
