@@ -15,8 +15,17 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: [
-					'Figtree',
-					...defaultTheme.fontFamily.sans
+					'SF Pro Display',
+					'SF Pro Text',
+					'SF Pro',
+					'system-ui',
+					'-apple-system',
+					'BlinkMacSystemFont',
+					'Segoe UI',
+					'Roboto',
+					'Helvetica Neue',
+					'Arial',
+					'sans-serif'
 				],
 				arabic: [
 					'SF Arabic',

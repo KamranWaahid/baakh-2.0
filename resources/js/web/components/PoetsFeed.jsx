@@ -81,7 +81,7 @@ const PoetsFeed = ({ lang }) => {
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                     <Link to={`/${lang}/poet/${poet.slug}`} className="hover:underline">
-                        <h3 className="text-lg md:text-xl font-bold text-gray-900 truncate">
+                        <h3 className={`text-lg md:text-xl font-bold text-gray-900 truncate ${isRtl ? 'font-arabic' : ''}`}>
                             {isRtl ? poet.name_sd : poet.name_en}
                         </h3>
                     </Link>

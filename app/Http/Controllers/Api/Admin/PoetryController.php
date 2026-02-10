@@ -234,4 +234,19 @@ class PoetryController extends Controller
             return response()->json(['message' => 'Failed to update poetry: ' . $e->getMessage()], 500);
         }
     }
+    public function checkSlug(Request $request)
+    {
+        $slug = $request->get('slug');
+        $id = $request->get('id');
+
+        $query = Poetry::where('poetry_slug', $slug);
+
+        if ($id) {
+            $query->where('id', '!=', $id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json(['exists' => $exists]);
+    }
 }

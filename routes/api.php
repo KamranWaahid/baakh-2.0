@@ -120,6 +120,7 @@ Route::middleware('auth:sanctum')
     ->group(function () {
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
+        Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
         Route::get('couplets', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'index']);
@@ -129,6 +130,7 @@ Route::middleware('auth:sanctum')
         Route::apiResource('hesudhar', \App\Http\Controllers\Api\Admin\HesudharController::class);
         Route::post('romanizer/refresh', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'refresh']);
         Route::post('romanizer/check-words', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'checkWords']);
+        Route::post('romanizer/transliterate', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'transliterate']);
         Route::apiResource('romanizer', \App\Http\Controllers\Api\Admin\RomanizerController::class);
 
 

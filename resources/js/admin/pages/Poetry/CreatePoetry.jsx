@@ -63,34 +63,48 @@ const CreatePoetry = () => {
     const [poetryContent, setPoetryContent] = useState('');
     const [showTransliteration, setShowTransliteration] = useState(false);
     const [transliteratedText, setTransliteratedText] = useState('');
+    const [isTransliterated, setIsTransliterated] = useState(isEdit); // Default true for edit, false for new
+    const [slugError, setSlugError] = useState('');
+    const [isCheckingSlug, setIsCheckingSlug] = useState(false);
 
-    // Sindhi to Roman transliteration mapping
-    const transliterateSindhi = (text) => {
-        const sindhiToRoman = {
-            'ا': 'a', 'ب': 'b', 'ٻ': 'bb', 'پ': 'p', 'ت': 't', 'ٿ': 'tt', 'ٽ': 'ṭ',
-            'ث': 's', 'ج': 'j', 'ڄ': 'jj', 'جھ': 'jh', 'ڃ': 'ñ', 'چ': 'ch', 'ڇ': 'chh',
-            'ح': 'h', 'خ': 'kh', 'د': 'd', 'ڌ': 'dh', 'ڊ': 'dd', 'ڏ': 'ḍ', 'ذ': 'z',
-            'ر': 'r', 'ڙ': 'rr', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'z',
-            'ط': 't', 'ظ': 'z', 'ع': "'", 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ڪ': 'k',
-            'گ': 'g', 'ڳ': 'gg', 'گھ': 'gh', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ڻ': 'nn',
-            'و': 'w', 'ه': 'h', 'ھ': 'h', 'ي': 'y', 'ئ': "'",
-            'َ': 'a', 'ُ': 'u', 'ِ': 'i', 'ً': 'an', 'ٌ': 'un', 'ٍ': 'in',
-            'ّ': '', 'ْ': '', 'ٰ': 'ā', 'ء': "'",
-            '۽': 'ain', '۾': 'mein', '؟': '?', '،': ',', '۔': '.'
-        };
+    // Reset transliteration status when content changes
+    useEffect(() => {
+        setIsTransliterated(false);
+    }, [poetryContent]);
 
-        let result = '';
-        for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            result += sindhiToRoman[char] || char;
+    const handleTransliterate = async () => {
+        if (!poetryContent.trim()) return;
+
+        try {
+            const response = await api.post('/api/admin/romanizer/transliterate', {
+                text: poetryContent
+            });
+            setTransliteratedText(response.data.transliterated_text);
+            setShowTransliteration(true);
+            setIsTransliterated(true);
+        } catch (error) {
+            console.error("Transliteration failed:", error);
+            alert("Failed to transliterate. Please try again.");
         }
-        return result;
     };
 
-    const handleTransliterate = () => {
-        const transliterated = transliterateSindhi(poetryContent);
-        setTransliteratedText(transliterated);
-        setShowTransliteration(true);
+    const checkSlugUnique = async (slug) => {
+        if (!slug) return;
+        setIsCheckingSlug(true);
+        try {
+            const response = await api.get(`/api/admin/poetry/check-slug`, {
+                params: { slug, id: id }
+            });
+            if (response.data.exists) {
+                setSlugError('This slug is already taken.');
+            } else {
+                setSlugError('');
+            }
+        } catch (error) {
+            console.error("Slug check failed:", error);
+        } finally {
+            setIsCheckingSlug(false);
+        }
     };
 
     const { data: meta, isLoading: isMetaLoading } = useQuery({
@@ -136,6 +150,7 @@ const CreatePoetry = () => {
                 .replace(/[\s_-]+/g, '-')
                 .replace(/^-+|-+$/g, '');
             form.setValue('poetry_slug', slug);
+            checkSlugUnique(slug); // Check uniqueness when auto-generated
         }
     }, [title, isEdit, form]);
 
@@ -247,7 +262,7 @@ const CreatePoetry = () => {
                         </div>
                         <div className="flex items-center gap-4">
                             <Button variant="ghost" type="button" onClick={() => navigate('/admin/poetry')}>Cancel</Button>
-                            <Button type="submit" disabled={mutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
+                            <Button type="submit" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>
                         </div>
@@ -327,11 +342,12 @@ const CreatePoetry = () => {
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
                                         <button
                                             type="button"
-                                            className="hover:text-muted-foreground transition-colors"
-                                            title="Transliteration"
+                                            className={`flex items-center gap-1 hover:text-foreground transition-colors ${!isTransliterated ? 'text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-200' : ''}`}
+                                            title="Transliterate (Required to Publish)"
                                             onClick={handleTransliterate}
                                         >
                                             <Languages className="h-3.5 w-3.5" />
+                                            <span>Transliterate</span>
                                         </button>
                                         <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
                                     </div>
@@ -447,6 +463,7 @@ const CreatePoetry = () => {
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
+                                                    {slugError && <p className="text-[10px] text-destructive mt-1">{slugError}</p>}
                                                 </FormItem>
                                             )}
                                         />
@@ -456,7 +473,7 @@ const CreatePoetry = () => {
                                     <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/admin/poetry')}>
                                         Cancel
                                     </Button>
-                                    <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending}>
+                                    <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug}>
                                         {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                                     </Button>
                                 </CardFooter>
@@ -528,7 +545,14 @@ const CreatePoetry = () => {
                                                     <LinkIcon className="h-3 w-3" /> URL Slug
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} className="h-8 text-xs font-mono" />
+                                                    <Input
+                                                        {...field}
+                                                        className={`h-8 text-xs font-mono ${slugError ? 'border-destructive' : ''}`}
+                                                        onBlur={(e) => {
+                                                            field.onBlur(e);
+                                                            checkSlugUnique(e.target.value);
+                                                        }}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -662,7 +686,7 @@ const CreatePoetry = () => {
                     </Dialog>
                 </form>
             </Form>
-        </div>
+        </div >
     );
 };
 

@@ -121,4 +121,78 @@ class RomanizerController extends Controller
             'total_missing' => count($missing)
         ]);
     }
+    public function transliterate(Request $request)
+    {
+        $request->validate([
+            'text' => 'required|string'
+        ]);
+
+        $text = $request->text;
+
+        // Load the dictionary
+        // We can use the DB directly for better consistency
+        $words = Romanizer::all()->pluck('word_roman', 'word_sd')->toArray();
+
+        // Helper function to process text
+        // This is a simplified version of the JS logic, adapted for PHP
+
+        $lines = explode("\n", $text);
+        $resultLines = [];
+
+        foreach ($lines as $line) {
+            $wordsInLine = explode(' ', $line);
+            $processedWords = [];
+
+            foreach ($wordsInLine as $word) {
+                // Remove punctuation to find the root word
+                // Sindhi punctuation: ، ؛ . ” “ ؟ !
+                // And common ones: ? , .
+                $punctuation = '';
+                $cleanWord = $word;
+
+                // Simple punctuation extraction (start and end)
+                if (preg_match('/^([^\w\s]*)(.*?)([^\w\s]*)$/u', $word, $matches)) {
+                    // matches[1] is start punct, [2] is word, [3] is end punct
+                    // But "word" characters in unicode... regex is tricky for Sindhi.
+                    // Let's use the JS approach: strip known punctuation
+                }
+
+                $mapped = $words[$word] ?? null;
+
+                if ($mapped) {
+                    $processedWords[] = $mapped;
+                } else {
+                    // Try stripping punctuation
+                    $sindhiPunctuation = ['،', '؛', '.', '”', '“', '!', '?', '؟', ',', '"', "'"];
+                    $foundPunctuationStart = '';
+                    $foundPunctuationEnd = '';
+
+                    // Verify if word starts with punctuation
+                    $firstChar = mb_substr($word, 0, 1);
+                    if (in_array($firstChar, $sindhiPunctuation)) {
+                        $foundPunctuationStart = $firstChar;
+                        $cleanWord = mb_substr($word, 1);
+                    }
+
+                    // Verify if word ends with punctuation
+                    $lastChar = mb_substr($cleanWord, -1);
+                    if (in_array($lastChar, $sindhiPunctuation)) {
+                        $foundPunctuationEnd = $lastChar;
+                        $cleanWord = mb_substr($cleanWord, 0, -1);
+                    }
+
+                    if (isset($words[$cleanWord])) {
+                        $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
+                    } else {
+                        $processedWords[] = $word; // Keep original if not found
+                    }
+                }
+            }
+            $resultLines[] = implode(' ', $processedWords);
+        }
+
+        return response()->json([
+            'transliterated_text' => implode("\n", $resultLines)
+        ]);
+    }
 }
