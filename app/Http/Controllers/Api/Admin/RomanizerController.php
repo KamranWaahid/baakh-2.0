@@ -185,17 +185,21 @@ class RomanizerController extends Controller
 
         $text = $request->text;
 
-        // Step 1: Strip diacritics (Zabar, Zer, Pesh, Shadda, etc.) from input
-        $text = SindhiNormalizer::stripDiacritics($text);
-
         // Load the dictionary
         $words = Romanizer::all()->pluck('word_roman', 'word_sd')->toArray();
 
-        // Punctuation to strip from Sindhi and NOT carry into Roman output
-        $sindhiPunctuation = ['،', '؛', '؟', "\xD8\x9B"]; // ، ؛ ؟
+        // Punctuation to strip and NOT carry into Roman output
+        $sindhiPunctuation = ['،', '؛', '؟', "\xD8\x9B", ':', ';', '{', '}', '[', ']', '(', ')'];
         // Punctuation to preserve in Roman output
         $romanPunctuation = ['.', '!', '?', ',', '"', "'", '"', '"'];
         $allPunctuation = array_merge($sindhiPunctuation, $romanPunctuation);
+
+        // Diacritic mappings for fallback (UTF-8 bytes)
+        $diacriticMap = [
+            "\xD9\x8E" => 'a', // Zabar (U+064E)
+            "\xD9\x90" => 'i', // Zer (U+0650)
+            "\xD9\x8F" => 'u', // Pesh (U+064F)
+        ];
 
         $lines = explode("\n", $text);
         $resultLines = [];
@@ -215,7 +219,6 @@ class RomanizerController extends Controller
                 // Extract leading punctuation
                 $firstChar = mb_substr($cleanWord, 0, 1);
                 if (in_array($firstChar, $allPunctuation)) {
-                    // Keep Roman punctuation, discard Sindhi punctuation
                     $foundPunctuationStart = in_array($firstChar, $sindhiPunctuation) ? '' : $firstChar;
                     $cleanWord = mb_substr($cleanWord, 1);
                 }
@@ -230,23 +233,39 @@ class RomanizerController extends Controller
                 }
 
                 if (empty($cleanWord)) {
-                    // Word was entirely punctuation
                     $combined = $foundPunctuationStart . $foundPunctuationEnd;
                     if (!empty($combined))
                         $processedWords[] = $combined;
                     continue;
                 }
 
-                // Try direct lookup
+                // Logic:
+                // 1. Try Exact Match
                 if (isset($words[$cleanWord])) {
                     $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
+                    continue;
+                }
+
+                // 2. Try Stripping Diacritics (Base Lookup)
+                $baseWord = SindhiNormalizer::stripDiacritics($cleanWord);
+                $suffix = '';
+
+                // Check for ending diacritic to append vowel
+                $lastChar = mb_substr($cleanWord, -1);
+                if (isset($diacriticMap[$lastChar])) {
+                    $suffix = $diacriticMap[$lastChar];
+                }
+
+                if (isset($words[$baseWord])) {
+                    $processedWords[] = $foundPunctuationStart . $words[$baseWord] . $suffix . $foundPunctuationEnd;
                 } else {
-                    // Try with phonetic normalization
-                    $normalizedClean = SindhiNormalizer::normalize($cleanWord);
-                    if (isset($words[$normalizedClean])) {
-                        $processedWords[] = $foundPunctuationStart . $words[$normalizedClean] . $foundPunctuationEnd;
+                    // 3. Try Phonetic Normalization on Base
+                    $normalizedBase = SindhiNormalizer::normalize($baseWord);
+                    if (isset($words[$normalizedBase])) {
+                        $processedWords[] = $foundPunctuationStart . $words[$normalizedBase] . $suffix . $foundPunctuationEnd;
                     } else {
-                        // Keep original word but still filter Sindhi punctuation
+                        // Keep original (or stripped version?) - User prefers original if no match?
+                        // Actually, if we couldn't match, return original.
                         $processedWords[] = $foundPunctuationStart . $cleanWord . $foundPunctuationEnd;
                     }
                 }
