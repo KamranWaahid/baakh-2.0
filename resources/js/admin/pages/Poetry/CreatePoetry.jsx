@@ -176,15 +176,33 @@ const CreatePoetry = () => {
     // Auto-generate slug from title (only for new poetry)
     const title = form.watch('poetry_title');
     useEffect(() => {
-        if (!isEdit && title) {
-            const slug = title
-                .toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/[\s_-]+/g, '-')
-                .replace(/^-+|-+$/g, '');
-            form.setValue('poetry_slug', slug);
-            checkSlugUnique(slug); // Check uniqueness when auto-generated
-        }
+        if (!title) return;
+
+        const timer = setTimeout(async () => {
+            // Auto-transliterate title
+            try {
+                const response = await api.post('/api/admin/romanizer/transliterate', {
+                    text: title
+                });
+                const roman = response.data.transliterated_text;
+                setRomanTitle(roman);
+
+                // Generate slug from Roman title if creating new
+                if (!isEdit) {
+                    const slug = roman
+                        .toLowerCase()
+                        .replace(/[^\w\s-]/g, '')
+                        .replace(/[\s_-]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                    form.setValue('poetry_slug', slug);
+                    checkSlugUnique(slug);
+                }
+            } catch (error) {
+                console.error("Auto-transliteration failed:", error);
+            }
+        }, 800); // Debounce 800ms
+
+        return () => clearTimeout(timer);
     }, [title, isEdit, form]);
 
     useEffect(() => {
