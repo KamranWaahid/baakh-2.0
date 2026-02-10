@@ -61,7 +61,7 @@ class Poetry extends Model
 
     public function couplets()
     {
-        return $this->hasOne(Couplets::class, 'poetry_id');
+        return $this->hasMany(Couplets::class, 'poetry_id');
     }
 
     public function all_couplets()

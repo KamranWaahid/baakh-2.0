@@ -274,7 +274,7 @@ class PoetryController extends UserController
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
                         'date' => $p->created_at->format('M d'),
-                        'excerpt' => Str::limit($p->couplets->couplet_text ?? '', 80),
+                        'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
                         'claps' => '100', // Mock
                         'comments' => 5 // Mock
                     ];

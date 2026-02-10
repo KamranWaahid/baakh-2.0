@@ -167,7 +167,10 @@ const CreatePoetry = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['poetry']);
-            navigate('/poetry');
+            navigate('/admin/poetry');
+        },
+        onError: (error) => {
+            alert('Error: ' + (error.response?.data?.message || error.message));
         },
     });
 
@@ -243,7 +246,7 @@ const CreatePoetry = () => {
                             </h2>
                         </div>
                         <div className="flex items-center gap-4">
-                            <Button variant="ghost" type="button" onClick={() => navigate('/poetry')}>Cancel</Button>
+                            <Button variant="ghost" type="button" onClick={() => navigate('/admin/poetry')}>Cancel</Button>
                             <Button type="submit" disabled={mutation.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>
@@ -311,7 +314,7 @@ const CreatePoetry = () => {
                                     <DropdownMenuContent align="end" className="w-48">
                                         <DropdownMenuItem onClick={() => { setPoetryContent(''); form.reset(); }}>Clear All</DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => navigate('/poetry')}>View All Poetry</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate('/admin/poetry')}>View All Poetry</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
@@ -450,7 +453,7 @@ const CreatePoetry = () => {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="bg-muted/10 flex justify-between py-3">
-                                    <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/poetry')}>
+                                    <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/admin/poetry')}>
                                         Cancel
                                     </Button>
                                     <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending}>

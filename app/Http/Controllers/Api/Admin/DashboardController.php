@@ -95,7 +95,7 @@ class DashboardController extends Controller
                 // If title exists use it, otherwise use couplet text
                 $title = $p->info->title ?? null;
                 if (!$title && $p->couplets) {
-                    $text = $p->couplets->couplet_text ?? '';
+                    $text = $p->couplets->first()?->couplet_text ?? '';
                     $lines = explode("\n", $text);
                     $title = $lines[0] ?? 'Untitled Couplet';
                 }

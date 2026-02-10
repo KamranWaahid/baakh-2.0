@@ -26,9 +26,11 @@ class PoetryController extends Controller
         ]);
 
         if ($request->has('type') && $request->type === 'couplet') {
-            $query->with(['couplets' => function ($q) {
-                $q->orderBy('id', 'asc');
-            }]);
+            $query->with([
+                'couplets' => function ($q) {
+                    $q->orderBy('id', 'asc');
+                }
+            ]);
             // Filter where category_id is NULL for independent couplets
             // OR where it has a category but we want to show it as a couplet? 
             // The user said "if couplet has category it show linked, otherwise indepented".
@@ -89,18 +91,22 @@ class PoetryController extends Controller
     }
     public function create()
     {
-        $poets = \App\Models\Poets::with(['details' => function($q) {
-            $q->where('lang', 'sd');
-        }])->select('id', 'poet_slug')->get()->map(function($poet) {
+        $poets = \App\Models\Poets::with([
+            'details' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->select('id', 'poet_slug')->get()->map(function ($poet) {
             return [
                 'id' => $poet->id,
                 'name' => $poet->details->first()?->poet_laqab ?? $poet->poet_slug
             ];
         });
 
-        $categories = \App\Models\Categories::with(['detail' => function($q) {
-            $q->where('lang', 'sd');
-        }])->select('id', 'slug')->get()->map(function($cat) {
+        $categories = \App\Models\Categories::with([
+            'detail' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->select('id', 'slug')->get()->map(function ($cat) {
             return [
                 'id' => $cat->id,
                 'name' => $cat->detail?->cat_name ?? $cat->slug
@@ -120,7 +126,6 @@ class PoetryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'poet_id' => 'required|exists:poets,id',
             'poet_id' => 'required|exists:poets,id',
             'category_id' => 'nullable|exists:categories,id',
             'poetry_slug' => 'required|unique:poetry_main,poetry_slug',

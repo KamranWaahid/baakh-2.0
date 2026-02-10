@@ -30,7 +30,7 @@ class Couplets extends Model
     {
         return $this->belongsTo(Poets::class, 'poet_id');
     }
-  
+
     public function language()
     {
         return $this->belongsTo(Languages::class, 'lang', 'lang_code');
@@ -40,19 +40,20 @@ class Couplets extends Model
     {
         return $this->hasOne(PoetryTranslations::class, 'poetry_id', 'id');
     }
-    
+
 
     public function media()
     {
         return $this->hasMany(Media::class, 'poetry_id');
     }
 
-    public function getPoetLaqabAttribute() {
+    public function getPoetLaqabAttribute()
+    {
         return PoetsDetail::where('poet_id', $this->poet_id)
-                ->where('lang', app()->getLocale())
-                ->value('poet_laqab');
+            ->where('lang', app()->getLocale())
+            ->value('poet_laqab');
     }
-   
+
     /**
      * New For Poet Details Only
      */
@@ -61,17 +62,18 @@ class Couplets extends Model
         return $this->hasOne(PoetsDetail::class, 'poet_id', 'poet_id');
     }
 
-    public function likes() {
+    public function likes()
+    {
         return $this->morphMany(UserLikes::class, 'likeable');
     }
- 
+
 
     protected static function booted()
     {
         static::updated(function ($model) {
-            $this->updateCouplet($model->id); // coming from SQLiteTrait
+            $model->updateCouplet($model->id); // coming from SQLiteTrait
         });
     }
 
-    
+
 }

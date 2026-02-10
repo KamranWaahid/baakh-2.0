@@ -80,7 +80,7 @@ const PoetryList = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poetry</h2>
                 <Button asChild className="w-full sm:w-auto">
-                    <Link to="/poetry/create">
+                    <Link to="/admin/poetry/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Poetry
                     </Link>
                 </Button>
@@ -190,7 +190,7 @@ const PoetryList = () => {
                                                     <Star className={`h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <Link to={`/poetry/${p.id}/edit`}>
+                                                    <Link to={`/admin/poetry/${p.id}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>
