@@ -297,7 +297,7 @@ trait BaakhSeoTrait
     /**
      * SEO Poetry page
      */
-    public function SEO_Poetry(Poetry $poetry, $poetryCategory, Poets $poetModel)
+    public function SEO_Poetry(Poetry $poetry, $poetryCategory, Poets $poetModel, $seo_image = null)
     {
         // dd($poetry, $couplets, $poetModel);
         $currentLang = app()->getLocale();
@@ -350,7 +350,9 @@ trait BaakhSeoTrait
         $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
         $alternateUrl = url("{$alternateLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}");
 
-        SEOTools::addImages(asset($poetImage));
+        $image = $seo_image ? $seo_image : asset($poetImage);
+
+        SEOTools::addImages($image);
         SEOMeta::setTitle($title); // Set title in Sindhi
         SEOMeta::setDescription($shortBio);
         SEOMeta::setCanonical($url);
@@ -362,13 +364,13 @@ trait BaakhSeoTrait
         OpenGraph::setDescription($shortBio);
         OpenGraph::setType('webpage');
         OpenGraph::setUrl($url);
-        OpenGraph::addImage(asset($poetImage), ['height' => 600, 'width' => 400]);
+        OpenGraph::addImage($image, ['height' => 630, 'width' => 1200]);
 
 
         TwitterCard::setType('summary_large_image');
         TwitterCard::addValue('twitter:domain', 'baakh.com');
         TwitterCard::setTitle($title);
-        TwitterCard::setImage($poetImage);
+        TwitterCard::setImage($image);
         TwitterCard::setDescription($shortBio);
         TwitterCard::setUrl($url);
         TwitterCard::setSite('@BaakhConnect');
