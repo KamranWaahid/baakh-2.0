@@ -58,7 +58,7 @@ class PoetryController extends Controller
 
     public function show($id)
     {
-        $poetry = Poetry::with(['translations', 'couplets', 'category', 'poet', 'topic_category.details'])
+        $poetry = Poetry::with(['translations', 'couplets', 'category', 'poet', 'topicCategory.details'])
             ->where('id', $id)
             ->orWhere('poetry_slug', $id)
             ->firstOrFail();
