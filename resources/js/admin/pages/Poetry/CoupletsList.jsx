@@ -77,7 +77,7 @@ const CoupletsList = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Couplets</h2>
                 <Button asChild className="w-full sm:w-auto">
-                    <Link to="/couplet/create">
+                    <Link to="/admin/couplet/create">
                         <Plus className="mr-2 h-4 w-4" /> Add Couplet
                     </Link>
                 </Button>
@@ -226,7 +226,7 @@ const CoupletsList = () => {
                                                     <Star className={`h-4 w-4 ${c.poetry?.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <Link to={c.poetry?.category_id ? `/poetry/${c.poetry?.id}/edit` : `/couplet/${c.poetry?.id}/edit`}>
+                                                    <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry?.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>

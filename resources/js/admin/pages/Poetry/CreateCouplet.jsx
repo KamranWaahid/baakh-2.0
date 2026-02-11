@@ -124,7 +124,7 @@ const CreateCouplet = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['couplets', 'poetry']);
-            navigate('/couplets');
+            navigate('/admin/couplets');
         },
         onError: (error) => {
             alert(error.response?.data?.message || 'Failed to save couplet');
@@ -167,7 +167,7 @@ const CreateCouplet = () => {
                             </h2>
                         </div>
                         <div className="flex items-center gap-4">
-                            <Button variant="ghost" type="button" onClick={() => navigate('/couplets')}>Cancel</Button>
+                            <Button variant="ghost" type="button" onClick={() => navigate('/admin/couplets')}>Cancel</Button>
                             <Button type="submit" disabled={mutation.isPending || lineCount !== 2} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>

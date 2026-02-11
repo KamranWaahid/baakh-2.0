@@ -13,7 +13,7 @@ class CoupletController extends Controller
         // Fetch couplets directly, filtering for Sindhi by default as per request
         $query = Couplets::where('lang', 'sd')->with([
             'poetry' => function ($q) {
-                $q->select('id', 'category_id', 'visibility', 'is_featured', 'user_id', 'created_at');
+                $q->select('id', 'poetry_slug', 'category_id', 'visibility', 'is_featured', 'user_id', 'created_at');
             },
             'poetry.translations' => function ($q) {
                 $q->select('id', 'poetry_id', 'lang'); // Optimizing select
@@ -31,11 +31,11 @@ class CoupletController extends Controller
 
         if (!empty($request->search)) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('couplet_text', 'like', "%{$search}%")
-                  ->orWhereHas('poet_details', function ($fq) use ($search) {
-                      $fq->where('poet_laqab', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('poet_details', function ($fq) use ($search) {
+                        $fq->where('poet_laqab', 'like', "%{$search}%");
+                    });
             });
         }
 
