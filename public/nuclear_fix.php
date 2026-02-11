@@ -32,7 +32,17 @@ foreach (glob("$storageViews/*.php") as $file) {
 }
 echo "✅ Done\n";
 
-echo "\n--- SYSTEM CHECK ---\n";
+// 6. Final Production Cache Optimization
+echo "Caching configuration...\n";
+passthru('php artisan config:cache 2>&1');
+
+echo "Caching routes...\n";
+passthru('php artisan route:cache 2>&1');
+
+echo "Caching views...\n";
+passthru('php artisan view:cache 2>&1');
+
+echo "\n--- ALL CLEAR & OPTIMIZED ---\n";
 echo "PHP Version: " . PHP_VERSION . "\n";
 echo "User: " . get_current_user() . "\n";
 echo "Disk Free Space: " . round(disk_free_space("/") / (1024 * 1024 * 1024), 2) . " GB\n";
