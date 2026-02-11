@@ -5,6 +5,12 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+if (isset($_GET['safe_confirm'])) {
+    echo "<h1>Laravel Safe Test</h1>";
+    echo "This is a direct bypass of the kernel. If you see this, the index.php is executing.";
+    exit;
+}
+
 error_reporting(E_ALL & ~E_DEPRECATED);
 
 /*
@@ -18,7 +24,7 @@ error_reporting(E_ALL & ~E_DEPRECATED);
 |
 */
 
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+if (file_exists($maintenance = __DIR__ . '/../storage/framework/maintenance.php')) {
     require $maintenance;
 }
 
@@ -33,7 +39,7 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 |
 */
 
-require __DIR__.'/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +52,7 @@ require __DIR__.'/../vendor/autoload.php';
 |
 */
 
-$app = require_once __DIR__.'/../bootstrap/app.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
 
