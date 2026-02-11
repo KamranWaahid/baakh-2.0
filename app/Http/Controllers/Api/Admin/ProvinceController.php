@@ -37,7 +37,7 @@ class ProvinceController extends Controller
                 'country_id' => $validatedData['country_id'],
             ]);
 
-            foreach ($request->details as $lang => $detail) {
+            foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['province_name'])) {
                     $province->details()->create([
                         'province_name' => $detail['province_name'],
@@ -48,7 +48,7 @@ class ProvinceController extends Controller
             return $province;
         });
 
-        ActivityLog::log('created_province', $request->user(), null, "Created province: " . ($request->details['sd']['province_name']));
+        ActivityLog::log('created_province', $request->user(), null, "Created province: " . ($validatedData['details']['sd']['province_name']));
 
         return response()->json([
             'message' => 'Province created successfully',
@@ -75,12 +75,12 @@ class ProvinceController extends Controller
             'details.en.province_name' => 'nullable|string|max:255',
         ]);
 
-        \DB::transaction(function () use ($province, $validatedData, $request) {
+        \DB::transaction(function () use ($province, $validatedData) {
             $province->update([
                 'country_id' => $validatedData['country_id'],
             ]);
 
-            foreach ($request->details as $lang => $detail) {
+            foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['province_name'])) {
                     $province->details()->updateOrCreate(
                         ['lang' => $lang],
@@ -92,7 +92,7 @@ class ProvinceController extends Controller
             }
         });
 
-        ActivityLog::log('updated_province', $request->user(), null, "Updated province: " . ($request->details['sd']['province_name']));
+        ActivityLog::log('updated_province', $request->user(), null, "Updated province: " . ($validatedData['details']['sd']['province_name']));
 
         return response()->json([
             'message' => 'Province updated successfully',
@@ -103,10 +103,11 @@ class ProvinceController extends Controller
 
     public function destroy($id)
     {
-        $province = Provinces::findOrFail($id);
+        $province = Provinces::with('details')->findOrFail($id);
+        $sdName = $province->details->where('lang', 'sd')->first()?->province_name ?? 'Unnamed';
         $province->delete();
 
-        ActivityLog::log('deleted_province', request()->user(), null, "Deleted province: {$province->province_name}");
+        ActivityLog::log('deleted_province', request()->user(), null, "Deleted province: {$sdName}");
 
         return response()->json(['message' => 'Province deleted successfully']);
     }

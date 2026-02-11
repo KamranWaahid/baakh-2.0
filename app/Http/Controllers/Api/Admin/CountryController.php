@@ -37,11 +37,11 @@ class CountryController extends Controller
                 'capital_city' => $validatedData['capital_city'] ?? null,
             ]);
 
-            foreach ($request->details as $lang => $detail) {
+            foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['countryName'])) {
                     $country->details()->create([
                         'countryName' => $detail['countryName'],
-                        'countryDesc' => $detail['countryDesc'] ?? null, // Optional description
+                        'countryDesc' => $detail['countryDesc'] ?? null,
                         'lang' => $lang
                     ]);
                 }
@@ -49,7 +49,7 @@ class CountryController extends Controller
             return $country;
         });
 
-        ActivityLog::log('created_country', $request->user(), null, "Created country: " . ($request->details['sd']['countryName']));
+        ActivityLog::log('created_country', $request->user(), null, "Created country: " . ($validatedData['details']['sd']['countryName']));
 
         return response()->json([
             'message' => 'Country created successfully',
@@ -78,14 +78,14 @@ class CountryController extends Controller
             'details.en.countryName' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () use ($country, $validatedData, $request) {
+        DB::transaction(function () use ($country, $validatedData) {
             $country->update([
                 'Abbreviation' => $validatedData['Abbreviation'] ?? null,
                 'Continent' => $validatedData['Continent'] ?? null,
                 'capital_city' => $validatedData['capital_city'] ?? null,
             ]);
 
-            foreach ($request->details as $lang => $detail) {
+            foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['countryName'])) {
                     $country->details()->updateOrCreate(
                         ['lang' => $lang],
@@ -98,7 +98,7 @@ class CountryController extends Controller
             }
         });
 
-        ActivityLog::log('updated_country', $request->user(), null, "Updated country: " . ($request->details['sd']['countryName']));
+        ActivityLog::log('updated_country', $request->user(), null, "Updated country: " . ($validatedData['details']['sd']['countryName']));
 
         return response()->json([
             'message' => 'Country updated successfully',
@@ -108,10 +108,11 @@ class CountryController extends Controller
 
     public function destroy($id)
     {
-        $country = Countries::findOrFail($id);
+        $country = Countries::with('details')->findOrFail($id);
+        $sdName = $country->details->where('lang', 'sd')->first()?->countryName ?? 'Unnamed';
         $country->delete();
 
-        ActivityLog::log('deleted_country', request()->user(), null, "Deleted country: {$country->countryName}");
+        ActivityLog::log('deleted_country', request()->user(), null, "Deleted country: {$sdName}");
 
         return response()->json(['message' => 'Country deleted successfully']);
     }

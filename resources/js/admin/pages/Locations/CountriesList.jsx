@@ -54,6 +54,9 @@ const CountriesList = () => {
             setIsDialogOpen(false);
             reset();
             setSelectedCountry(null);
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Failed to save country');
         }
     });
 
@@ -103,7 +106,7 @@ const CountriesList = () => {
     const getDisplayName = (country) => {
         const sdName = country.details?.find(d => d.lang === 'sd')?.countryName;
         const enName = country.details?.find(d => d.lang === 'en')?.countryName;
-        return sdName || enName || 'Unnamed Country';
+        return sdName || enName || country.Abbreviation || `Country #${country.id}`;
     };
 
     return (

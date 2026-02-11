@@ -310,6 +310,9 @@ const App = () => {
 
                     {/* Dictionary Routes */}
                     <Route path="/admin/dictionary/lemma-inbox" element={<ProtectedRoute><AdminLayout><LemmaInbox /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemmas/:id" element={<ProtectedRoute><AdminLayout><SenseEditor /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemmas/:id/morphology" element={<ProtectedRoute><AdminLayout><MorphologyLab /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemmas/:id/variants" element={<ProtectedRoute><AdminLayout><Variants /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/sense-editor" element={<ProtectedRoute><AdminLayout><SenseEditor /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/morphology-lab" element={<ProtectedRoute><AdminLayout><MorphologyLab /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/variants" element={<ProtectedRoute><AdminLayout><Variants /></AdminLayout></ProtectedRoute>} />

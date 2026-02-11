@@ -130,7 +130,8 @@ const Sidebar = () => {
                 <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Locations</div>
                 <SidebarGroup icon={MapPin} label="Locations">
                     <SidebarLink to="/admin/locations/countries" icon={Flag}>Countries</SidebarLink>
-                    <SidebarLink to="/admin/locations/cities" icon={Map}>Provinces/Cities</SidebarLink>
+                    <SidebarLink to="/admin/locations/provinces" icon={Map}>Provinces</SidebarLink>
+                    <SidebarLink to="/admin/locations/cities" icon={MapPin}>Cities</SidebarLink>
                 </SidebarGroup>
 
                 <div className="my-2 border-t" />

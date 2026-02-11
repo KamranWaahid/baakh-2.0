@@ -42,7 +42,7 @@ class CityController extends Controller
                 'province_id' => $validatedData['province_id'],
             ]);
 
-            foreach ($request->details as $lang => $detail) {
+            foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['city_name'])) {
                     $city->details()->create([
                         'city_name' => $detail['city_name'],
@@ -53,7 +53,7 @@ class CityController extends Controller
             return $city;
         });
 
-        ActivityLog::log('created_city', $request->user(), null, "Created city: " . ($request->details['sd']['city_name']));
+        ActivityLog::log('created_city', $request->user(), null, "Created city: " . ($validatedData['details']['sd']['city_name']));
 
         return response()->json([
             'message' => 'City created successfully',
@@ -82,14 +82,14 @@ class CityController extends Controller
             'details.en.city_name' => 'nullable|string|max:255',
         ]);
 
-        DB::transaction(function () use ($city, $validatedData, $request) {
+        DB::transaction(function () use ($city, $validatedData) {
             $city->update([
                 'geo_lat' => $validatedData['geo_lat'] ?? null,
                 'geo_long' => $validatedData['geo_long'] ?? null,
                 'province_id' => $validatedData['province_id'],
             ]);
 
-            foreach ($request->details as $lang => $detail) {
+            foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['city_name'])) {
                     $city->details()->updateOrCreate(
                         ['lang' => $lang],
@@ -101,7 +101,7 @@ class CityController extends Controller
             }
         });
 
-        ActivityLog::log('updated_city', $request->user(), null, "Updated city: " . ($request->details['sd']['city_name']));
+        ActivityLog::log('updated_city', $request->user(), null, "Updated city: " . ($validatedData['details']['sd']['city_name']));
 
         return response()->json([
             'message' => 'City updated successfully',
@@ -111,10 +111,11 @@ class CityController extends Controller
 
     public function destroy($id)
     {
-        $city = Cities::findOrFail($id);
+        $city = Cities::with('details')->findOrFail($id);
+        $sdName = $city->details->where('lang', 'sd')->first()?->city_name ?? 'Unnamed';
         $city->delete();
 
-        ActivityLog::log('deleted_city', request()->user(), null, "Deleted city: {$city->city_name}");
+        ActivityLog::log('deleted_city', request()->user(), null, "Deleted city: {$sdName}");
 
         return response()->json(['message' => 'City deleted successfully']);
     }

@@ -72,6 +72,9 @@ const ProvincesList = () => {
             setIsDialogOpen(false);
             reset();
             setSelectedProvince(null);
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Failed to save province');
         }
     });
 
@@ -96,8 +99,8 @@ const ProvincesList = () => {
         setValue('country_id', province.country_id?.toString());
 
         // Populate Details
-        const sdDetail = province.details.find(d => d.lang === 'sd');
-        const enDetail = province.details.find(d => d.lang === 'en');
+        const sdDetail = province.details?.find(d => d.lang === 'sd');
+        const enDetail = province.details?.find(d => d.lang === 'en');
 
         setValue('details.sd.province_name', sdDetail?.province_name || '');
         setValue('details.en.province_name', enDetail?.province_name || '');
@@ -119,14 +122,14 @@ const ProvincesList = () => {
     const getDisplayName = (province) => {
         const sdName = province.details?.find(d => d.lang === 'sd')?.province_name;
         const enName = province.details?.find(d => d.lang === 'en')?.province_name;
-        return sdName || enName || 'Unnamed Province';
+        return sdName || enName || `Province #${province.id}`;
     };
 
     const getCountryName = (country) => {
         if (!country) return '-';
         const sdName = country.details?.find(d => d.lang === 'sd')?.countryName;
         const enName = country.details?.find(d => d.lang === 'en')?.countryName;
-        return sdName || enName || 'Unnamed Country';
+        return sdName || enName || country.Abbreviation || `Country #${country.id}`;
     }
 
     if (isLoading) return <div>Loading...</div>;
@@ -185,8 +188,8 @@ const ProvincesList = () => {
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
                                     <div className="flex gap-1">
-                                        {province.details.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
-                                        {province.details.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
+                                        {province.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
+                                        {province.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right whitespace-nowrap">

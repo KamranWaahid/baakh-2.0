@@ -141,5 +141,15 @@ Route::middleware('auth:sanctum')
         Route::get('dashboard', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
         Route::apiResource('topic-categories', \App\Http\Controllers\Api\Admin\TopicCategoryController::class);
         Route::patch('poetry/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleVisibility']);
+
+        // Corpus Routes
+        Route::get('corpus/sentences', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'index']);
+        Route::get('corpus/stats', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'stats']);
+
+        // Dictionary Routes
+        Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
+        Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
+        Route::post('dictionary/senses/{senseId}/examples', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeExample']);
+
         Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
     });

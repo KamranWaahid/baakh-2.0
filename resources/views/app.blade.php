@@ -12,6 +12,7 @@
 
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/web/main.jsx'])
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
 
 <body class="antialiased font-sans">

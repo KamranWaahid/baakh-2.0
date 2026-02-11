@@ -72,6 +72,9 @@ const CitiesList = () => {
             setIsDialogOpen(false);
             reset();
             setSelectedCity(null);
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Failed to save city');
         }
     });
 
@@ -98,8 +101,8 @@ const CitiesList = () => {
         setValue('geo_long', city.geo_long);
 
         // Populate Details
-        const sdDetail = city.details.find(d => d.lang === 'sd');
-        const enDetail = city.details.find(d => d.lang === 'en');
+        const sdDetail = city.details?.find(d => d.lang === 'sd');
+        const enDetail = city.details?.find(d => d.lang === 'en');
 
         setValue('details.sd.city_name', sdDetail?.city_name || '');
         setValue('details.en.city_name', enDetail?.city_name || '');
@@ -121,14 +124,14 @@ const CitiesList = () => {
     const getDisplayName = (city) => {
         const sdName = city.details?.find(d => d.lang === 'sd')?.city_name;
         const enName = city.details?.find(d => d.lang === 'en')?.city_name;
-        return sdName || enName || 'Unnamed City';
+        return sdName || enName || `City #${city.id}`;
     };
 
     const getProvinceName = (province) => {
         if (!province) return '-';
         const sdName = province.details?.find(d => d.lang === 'sd')?.province_name;
         const enName = province.details?.find(d => d.lang === 'en')?.province_name;
-        return sdName || enName || 'Unnamed Province';
+        return sdName || enName || `Province #${province.id}`;
     }
 
     if (isLoading) return <div>Loading...</div>;
@@ -191,8 +194,8 @@ const CitiesList = () => {
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
                                     <div className="flex gap-1">
-                                        {city.details.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
-                                        {city.details.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
+                                        {city.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
+                                        {city.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right whitespace-nowrap">
