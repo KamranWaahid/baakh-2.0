@@ -190,7 +190,7 @@ const PoetryList = () => {
                                                     <Star className={`h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <Link to={`/admin/poetry/${p.id}/edit`}>
+                                                    <Link to={`/admin/poetry/${p.poetry_slug}/edit`}>
                                                         <Edit className="h-4 w-4" />
                                                     </Link>
                                                 </Button>

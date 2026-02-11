@@ -58,20 +58,23 @@ class PoetryController extends Controller
 
     public function show($id)
     {
-        $poetry = Poetry::with(['translations', 'couplets', 'category', 'poet', 'topic_category.details'])->findOrFail($id);
+        $poetry = Poetry::with(['translations', 'couplets', 'category', 'poet', 'topic_category.details'])
+            ->where('id', $id)
+            ->orWhere('poetry_slug', $id)
+            ->firstOrFail();
         return response()->json($poetry);
     }
 
     public function destroy($id)
     {
-        $poetry = Poetry::findOrFail($id);
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
         $poetry->delete();
         return response()->json(['message' => 'Poetry moved to trash']);
     }
 
     public function toggleVisibility($id)
     {
-        $poetry = Poetry::findOrFail($id);
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
         $poetry->visibility = $poetry->visibility == 1 ? 0 : 1;
         $poetry->save();
 
@@ -83,7 +86,7 @@ class PoetryController extends Controller
 
     public function toggleFeatured($id)
     {
-        $poetry = Poetry::findOrFail($id);
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
         $poetry->is_featured = $poetry->is_featured == 1 ? 0 : 1;
         $poetry->save();
 
@@ -228,13 +231,14 @@ class PoetryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $poetry = Poetry::findOrFail($id);
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
+        $actualId = $poetry->id;
 
         $validated = $request->validate([
             'poet_id' => 'required|exists:poets,id',
             'category_id' => 'required|exists:categories,id',
             'topic_category_id' => 'required|exists:topic_categories,id',
-            'poetry_slug' => 'required|unique:poetry_main,poetry_slug,' . $id,
+            'poetry_slug' => 'required|unique:poetry_main,poetry_slug,' . $actualId,
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
             'visibility' => 'required|boolean',
