@@ -22,19 +22,22 @@ $app->resolving('url', function () {
     // echo "   Trace:\n" . (new Exception())->getTraceAsString() . "\n";
 });
 
-echo "4. Attempting to render a simple Blade view... ";
+echo "4. Checking Session Driver: " . config('session.driver') . "\n";
+
+echo "5. Attempting to render the REAL 'app' view... ";
 try {
     $view = $app->make('view');
-    // Create a temporary view file to avoid manifest issues for a second
-    file_put_contents(resource_path('views/debug_test.blade.php'), "HELLO FROM DEBUG VIEW: {{ app()->getLocale() }}");
-    echo "   Rendering debug_test...\n";
-    echo "   Output: [" . $view->make('debug_test')->render() . "]\n";
-    echo "✅ Success.\n";
+    echo "   Rendering 'app'...\n";
+    // We pass a dummy 'page' variable if it's an Inertia/SPA setup
+    $output = $view->make('app', ['page' => ['props' => []]])->render();
+    echo "   ✅ Success. Output Size: " . strlen($output) . " bytes\n";
+    echo "   Preview: " . htmlspecialchars(substr($output, 0, 200)) . "...\n";
 } catch (\Throwable $e) {
     echo "❌ FAILED: " . $e->getMessage() . "\n";
+    echo "   File: " . $e->getFile() . ":" . $e->getLine() . "\n";
 }
 
-echo "5. Testing Vite resolution in isolation... ";
+echo "6. Testing Vite resolution in isolation... ";
 try {
     $vite = app(\Illuminate\Foundation\Vite::class);
     echo "   Vite helper resolved. Testing @vite output...\n";
