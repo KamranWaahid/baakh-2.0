@@ -37,7 +37,50 @@ try {
     echo "   File: " . $e->getFile() . ":" . $e->getLine() . "\n";
 }
 
-echo "6. Testing Vite resolution in isolation... ";
+echo "6. Testing Global Middleware Pipeline... ";
+try {
+    $pipeline = new \Illuminate\Pipeline\Pipeline($app);
+    $middleware = [
+        \App\Http\Middleware\TrustProxies::class,
+        \Illuminate\Http\Middleware\HandleCors::class,
+        \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
+        \App\Http\Middleware\TrimStrings::class,
+        \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+    ];
+
+    $response = $pipeline->send($request)
+        ->through($middleware)
+        ->then(function ($request) {
+            return "PIPELINE_PASSED";
+        });
+    echo "✅ Result: $response\n";
+} catch (\Throwable $e) {
+    echo "❌ FAILED: " . $e->getMessage() . "\n";
+}
+
+echo "7. Testing Session Start (Often where hangs occur)... ";
+try {
+    $session = $app->make('session');
+    $session->driver()->start();
+    echo "✅ Session Started. ID: " . $session->getId() . "\n";
+} catch (\Throwable $e) {
+    echo "❌ FAILED: " . $e->getMessage() . "\n";
+}
+
+echo "8. Testing Full Kernel Handle... ";
+try {
+    // This is the closest to real index.php
+    $response = $kernel->handle($request);
+    echo "✅ Kernel Handled Status: " . $response->getStatusCode() . "\n";
+    $content = $response->getContent();
+    echo "   Content size: " . strlen($content) . " bytes\n";
+} catch (\Throwable $e) {
+    echo "❌ FAILED: " . $e->getMessage() . "\n";
+    echo "   File: " . $e->getFile() . ":" . $e->getLine() . "\n";
+}
+
+echo "9. Testing Vite resolution in isolation... ";
 try {
     $vite = app(\Illuminate\Foundation\Vite::class);
     echo "   Vite helper resolved. Testing @vite output...\n";
