@@ -36,7 +36,7 @@ jobs:
         uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
-          ARGS: "-rlptDvz --delete --exclude='.git*' --exclude='node_modules' --exclude='storage/*.key' --exclude='*.txt' --exclude='*.log'"
+          ARGS: "-rlptDvz --delete -o IdentitiesOnly=yes --exclude='.git*' --exclude='node_modules' --exclude='storage/*.key' --exclude='*.txt' --exclude='*.log'"
           REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
           REMOTE_USER: ${{ secrets.DEPLOY_USER }}
           TARGET: ${{ secrets.DEPLOY_PATH }}
