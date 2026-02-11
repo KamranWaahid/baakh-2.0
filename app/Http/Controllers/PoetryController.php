@@ -226,11 +226,11 @@ class PoetryController extends UserController
 
             'poet' => [
                 'id' => $poet_info->id ?? 0,
-                'name' => optional($poet_info->details)->poet_laqab ?? 'Unknown',
-                'tagline' => optional($poet_info->details)->tagline ?? '',
-                'bio' => strip_tags(optional($poet_info->details)->poet_bio ?? ''),
+                'name' => $poet_info?->details?->poet_laqab ?? $poet_info?->poet_slug ?? 'Unknown',
+                'tagline' => $poet_info?->details?->tagline ?? '',
+                'bio' => strip_tags($poet_info?->details?->poet_bio ?? ''),
                 'slug' => $poet_info->poet_slug ?? '',
-                'avatar' => $poet_info->photo ? (str_starts_with($poet_info->photo, 'http') ? $poet_info->photo : '/' . $poet_info->photo) : null,
+                'avatar' => ($poet_info?->photo) ? (str_starts_with($poet_info->photo, 'http') ? $poet_info->photo : '/' . $poet_info->photo) : null,
                 'followers' => '2.3K',
             ],
 
@@ -300,7 +300,7 @@ class PoetryController extends UserController
                         'slug' => $p->poetry_slug,
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
-                        'author' => $p->poet?->details->where('lang', $locale)->first()?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
+                        'author' => $p->poet?->details?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
                         'date' => $p->created_at ? $p->created_at->format('M d') : '',
                         'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
                         'comments' => 10
@@ -315,25 +315,18 @@ class PoetryController extends UserController
                 ->inRandomOrder()
                 ->take(60) // Fetch more to ensure we have enough after unique check
                 ->get()
-                ->unique(function ($item) use ($locale) {
-                    return $item->details->poet_laqab ?? $item->id;
+                ->unique(function ($item) {
+                    return $item->details?->poet_laqab ?? $item->id;
                 })
                 ->take(8)
                 ->map(function ($poet) use ($locale) {
-                    $detail = $poet->details; // details is HasOne, so it returns the object directly
+                    $detail = $poet->details; // details is HasOne
         
-                    // Fallback to any detail if specific lang is missing
                     if (!$detail) {
-                        // Accessing via dynamic property might not work if not loaded. 
-                        // But we filtered by lang in 'with'. 
-                        // If we want fallback, we need to load differently or query differently. 
-                        // For now, let's stick to the loaded one.
-                        // Ideally we should use $poet->shortDetail or similar if structured.
-                        // Or lazy load:
-                        $detail = $poet->details()->first(); // Query specifically for this poet
+                        $detail = $poet->details()->first(); // Query specifically for this poet if not eager loaded
                     }
 
-                    $name = $detail->poet_laqab ?? 'Unknown';
+                    $name = $detail?->poet_laqab ?? $poet->poet_slug ?? 'Unknown';
                     $tagline = $detail->tagline ?? 'Poet';
                     $initials = collect(explode(' ', $name))->map(fn($s) => Str::substr($s, 0, 1))->take(2)->join('');
 

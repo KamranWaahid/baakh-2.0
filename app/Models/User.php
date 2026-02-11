@@ -32,6 +32,7 @@ class User extends Authenticatable
         'password',
         'whatsapp',
         'avatar',
+        'google_id',
         'name_sd',
         'status',
         'last_login_at',

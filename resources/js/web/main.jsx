@@ -26,6 +26,7 @@ const Privacy = React.lazy(() => import('./pages/Privacy'));
 const Terms = React.lazy(() => import('./pages/Terms'));
 const Help = React.lazy(() => import('./pages/Help'));
 const Status = React.lazy(() => import('./pages/Status'));
+const SocialCallback = React.lazy(() => import('./components/SocialCallback'));
 
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -190,6 +191,11 @@ const App = () => {
                             <Route path="/:lang/status" element={
                                 <LanguageWrapper withLayout={false}>
                                     <Status />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/auth/social-callback" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <SocialCallback />
                                 </LanguageWrapper>
                             } />
                             <Route path="/:lang/:category" element={
