@@ -56,8 +56,10 @@ $app = require_once __DIR__ . '/../bootstrap/app.php';
 
 $kernel = $app->make(Kernel::class);
 
-$response = $kernel->handle(
-    $request = Request::capture()
-)->send();
+// Bind the request to the container BEFORE handling it.
+// This prevents early resolution crashes in some service providers.
+$app->instance('request', $request = Request::capture());
+
+$response = $kernel->handle($request)->send();
 
 $kernel->terminate($request, $response);
