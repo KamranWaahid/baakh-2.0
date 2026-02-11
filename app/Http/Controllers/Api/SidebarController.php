@@ -30,12 +30,15 @@ class SidebarController extends Controller
         ];
 
         // Fetch featured poetry (where is_featured = 1)
-        // Order by latest or random, taking 3 items
+        // Ensure distinct poets by uniqueing by poet_id, and randomize on each reload
         $picks = Poetry::where('is_featured', 1)
-            ->with(['translations', 'poet_details', 'poet'])
-            ->latest()
-            ->take(3)
+            ->where('visibility', 1)
+            ->with(['translations', 'poet.all_details', 'category'])
+            ->inRandomOrder()
             ->get()
+            ->unique('poet_id') // Ensure 3 different poets
+            ->take(3)
+            ->values()
             ->map(function ($poetry) use ($lang, $monthMap) {
                 // Determine title based on lang
                 $title = '';
@@ -47,12 +50,18 @@ class SidebarController extends Controller
                     $title = $poetry->translations->first()->title ?? 'Untitled';
                 }
 
-                // Determine poet name (prefer laqab)
-                $poetName = $poetry->poet_details->where('lang', $lang)->first()->poet_laqab
-                    ?? $poetry->poet_details->where('lang', $lang)->first()->poet_name
-                    ?? $poetry->poet_details->first()->poet_laqab
-                    ?? $poetry->poet_details->first()->poet_name
-                    ?? 'Unknown Poet';
+                // Determine poet name (prefer laqab) from correct poet object
+                $poet = $poetry->poet;
+                if ($poet) {
+                    $detail = $poet->all_details->where('lang', $lang)->first()
+                        ?? $poet->all_details->first();
+
+                    $poetName = $detail->poet_laqab ?? $detail->poet_name ?? 'Unknown Poet';
+                    $poetPic = $poet->poet_pic;
+                } else {
+                    $poetName = 'Unknown Poet';
+                    $poetPic = null;
+                }
 
                 $date = $poetry->created_at->format('M d');
                 if ($lang === 'sd') {
@@ -68,11 +77,11 @@ class SidebarController extends Controller
                     'id' => $poetry->id,
                     'title' => $title,
                     'author' => $poetName,
-                    'author_avatar' => $poetry->poet->poet_pic ?? null,
+                    'author_avatar' => $poetPic,
                     'date' => $date,
                     'slug' => $poetry->poetry_slug,
-                    'poet_slug' => $poetry->poet->poet_slug ?? '',
-                    'cat_slug' => $poetry->category->slug ?? 'ghazal', // default or fetch
+                    'poet_slug' => $poet->poet_slug ?? '',
+                    'cat_slug' => $poetry->category->slug ?? 'ghazal',
                 ];
             });
 

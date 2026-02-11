@@ -97,7 +97,7 @@ const SidebarRight = ({ lang }) => {
                         staffPicks.map((pick, i) => (
                             <div key={i} className="mb-6 last:mb-0">
                                 <Link to={`/${lang}/poet/${pick.poet_slug}`} className="flex items-center gap-2 mb-1 hover:opacity-80 transition-opacity w-fit">
-                                    <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
+                                    <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden">
                                         {pick.author_avatar ? (
                                             <img
                                                 src={pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`}
