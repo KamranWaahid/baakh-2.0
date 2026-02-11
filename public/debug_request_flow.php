@@ -9,9 +9,30 @@ require __DIR__ . '/../vendor/autoload.php';
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-echo "DEBUG: Kernel obtained. Bootstrapping...<br>";
-$kernel->bootstrap();
-echo "DEBUG: Bootstrapped.<br>";
+echo "DEBUG: Kernel obtained.<br>";
+
+echo "DEBUG: Binding Dummy Request... ";
+$app->instance('request', \Illuminate\Http\Request::create('https://beta.baakh.com'));
+echo "Done.<br>";
+
+echo "DEBUG: Bootstrapping...<br>";
+// Manually run bootstrappers to see which one hangs
+$bootstrappers = [
+    \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
+    \Illuminate\Foundation\Bootstrap\LoadConfiguration::class,
+    \Illuminate\Foundation\Bootstrap\HandleExceptions::class,
+    \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
+    \Illuminate\Foundation\Bootstrap\RegisterProviders::class,
+    \Illuminate\Foundation\Bootstrap\BootProviders::class,
+];
+
+foreach ($bootstrappers as $bootstrapper) {
+    echo "   -> " . (new ReflectionClass($bootstrapper))->getShortName() . "... ";
+    $app->make($bootstrapper)->bootstrap($app);
+    echo "Done.<br>";
+}
+
+echo "DEBUG: Bootstrapped successfully.<br>";
 
 echo "DEBUG: Capturing Request...<br>";
 $request = Illuminate\Http\Request::capture();
