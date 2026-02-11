@@ -35,6 +35,8 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                         src={author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`}
                                         alt={safeAuthor}
                                         className="w-full h-full object-cover"
+                                        loading="lazy"
+                                        decoding="async"
                                     />
                                 ) : (
                                     <User className="h-3 w-3" />
@@ -78,6 +80,8 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                             src={cover.startsWith('http') ? cover : `/${cover}`}
                                             alt={title}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            loading="lazy"
+                                            decoding="async"
                                         />
                                     </div>
                                 )}

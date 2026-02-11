@@ -25,12 +25,12 @@ class PoetsDetail extends Model
         'lang',
     ];
 
-    public function birthPlace()
+    public function birthCity()
     {
         return $this->belongsTo(Cities::class, 'birth_place');
     }
 
-    public function deathPlace()
+    public function deathCity()
     {
         return $this->belongsTo(Cities::class, 'death_place');
     }
@@ -40,17 +40,8 @@ class PoetsDetail extends Model
         return $this->belongsTo(Poets::class, 'poet_id');
     }
 
-    public function birthCityCurrentLang()
-    {
-        return $this->belongsTo(Cities::class, 'birth_place')
-            ->where('lang', app()->getLocale());
-    }
-
-    public function deathCityCurrentLang()
-    {
-        return $this->belongsTo(Cities::class, 'death_place')
-            ->where('lang', app()->getLocale());
-    }
+    // Generic relations removed because they were incorrect. 
+    // We will use eager loading in helper methods instead.
 
     /**
      * Birth Places 
@@ -59,42 +50,39 @@ class PoetsDetail extends Model
      */
     public function birthPlaceComplete()
     {
-        // Load birth city with related province and country, applying language filter
-        $city = $this->birthCityCurrentLang()->with([
-            'province' => function ($query) {
-                $query->where('lang', app()->getLocale())
-                    ->with([
-                        'country' => function ($query) {
-                            $query->where('lang', app()->getLocale());
-                        }
-                    ]);
-            }
-        ])->first();
+        $locale = app()->getLocale();
+        $city = Cities::with([
+            'details' => fn($q) => $q->where('lang', $locale),
+            'province.details' => fn($q) => $q->where('lang', $locale),
+            'province.country.details' => fn($q) => $q->where('lang', $locale)
+        ])->find($this->birth_place);
+
+        if (!$city)
+            return ['cityName' => null, 'provinceName' => null, 'countryName' => null];
 
         return [
-            'cityName' => $city->city_name ?? null,
-            'provinceName' => $city->province->province_name ?? null,
-            'countryName' => $city->province->country->countryName ?? null,
+            'cityName' => $city->details->first()->city_name ?? null,
+            'provinceName' => $city->province->details->first()->province_name ?? null,
+            'countryName' => $city->province->country->details->first()->country_name ?? null,
         ];
     }
 
     public function deathPlaceComplete()
     {
-        $city = $this->deathCityCurrentLang()->with([
-            'province' => function ($query) {
-                $query->where('lang', app()->getLocale())
-                    ->with([
-                        'country' => function ($query) {
-                            $query->where('lang', app()->getLocale());
-                        }
-                    ]);
-            }
-        ])->first();
+        $locale = app()->getLocale();
+        $city = Cities::with([
+            'details' => fn($q) => $q->where('lang', $locale),
+            'province.details' => fn($q) => $q->where('lang', $locale),
+            'province.country.details' => fn($q) => $q->where('lang', $locale)
+        ])->find($this->death_place);
+
+        if (!$city)
+            return ['cityName' => null, 'provinceName' => null, 'countryName' => null];
 
         return [
-            'cityName' => $city->city_name ?? null,
-            'provinceName' => $city->province->province_name ?? null,
-            'countryName' => $city->province->country->countryName ?? null,
+            'cityName' => $city->details->first()->city_name ?? null,
+            'provinceName' => $city->province->details->first()->province_name ?? null,
+            'countryName' => $city->province->country->details->first()->country_name ?? null,
         ];
     }
 

@@ -28,12 +28,28 @@
     # RewriteCond %{REQUEST_URI} ^/build/assets/.*\.css$
     # RewriteRule ^build/assets/(.*)$ asset_proxy.php?file=$1 [L,QSA]
 
-    <FilesMatch "\.(js|css|json|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$">
-        <IfModule mod_headers.c>
-            Header set Access-Control-Allow-Origin "*"
+    # Aggressive browser caching for static assets
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresDefault "access plus 1 month"
+        ExpiresByType image/jpg "access plus 1 year"
+        ExpiresByType image/jpeg "access plus 1 year"
+        ExpiresByType image/gif "access plus 1 year"
+        ExpiresByType image/png "access plus 1 year"
+        ExpiresByType image/webp "access plus 1 year"
+        ExpiresByType image/svg+xml "access plus 1 year"
+        ExpiresByType text/css "access plus 1 year"
+        ExpiresByType application/javascript "access plus 1 year"
+        ExpiresByType font/woff2 "access plus 1 year"
+    </IfModule>
+
+    <IfModule mod_headers.c>
+        # Long-lived caching for specific extensions
+        <FilesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|webp|js|css|swf|svg|woff2)$">
             Header set Cache-Control "public, max-age=31536000, immutable"
-        </IfModule>
-    </FilesMatch>
+            Header set Access-Control-Allow-Origin "*"
+        </FilesMatch>
+    </IfModule>
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
