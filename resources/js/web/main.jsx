@@ -7,7 +7,6 @@ import '../../css/app.css';
 import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import FeedbackBanner from './components/FeedbackBanner';
-import ScrollToTop from './components/ScrollToTop';
 
 // Lazy Load Components for better performance (Code Splitting)
 const SidebarLeft = React.lazy(() => import('./components/SidebarLeft'));
@@ -61,7 +60,6 @@ const MainLayout = ({ children, lang }) => {
                 </div>
             </div>
             <BottomNav lang={lang} />
-            <ScrollToTop />
         </div>
     );
 };
