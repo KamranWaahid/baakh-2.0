@@ -20,7 +20,7 @@ class PoetryController extends Controller
             'category.detail' => function ($q) {
                 $q->where('lang', 'sd');
             },
-            'topic_category.details' => function ($q) {
+            'topicCategory.details' => function ($q) {
                 $q->where('lang', 'sd');
             },
             'user' => function ($q) {
