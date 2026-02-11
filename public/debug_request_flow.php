@@ -71,10 +71,27 @@ try {
         echo "DEBUG: Running Route Middlewares...<br>";
         $response = $router->dispatch($request);
         echo "DEBUG: Router Dispatch Finished.<br>";
+        echo "DEBUG: Status: " . $response->getStatusCode() . "<br>";
+        echo "DEBUG: Headers: <pre>" . print_r($response->headers->all(), true) . "</pre><br>";
 
-        echo "DEBUG: Sending Response...<br>";
-        $response->send();
-        echo "DEBUG: Response Sent.<br>";
+        $content = $response->getContent();
+        echo "DEBUG: Content size: " . strlen($content) . " bytes<br>";
+
+        if (strlen($content) > 0) {
+            echo "DEBUG: Content Preview (Top 500 chars): <pre>" . htmlspecialchars(substr($content, 0, 500)) . "</pre><br>";
+        } else {
+            echo "DEBUG: CONTENT IS EMPTY!<br>";
+        }
+
+        echo "DEBUG: Attempting to send response...<br>";
+        try {
+            // Use a simpler approach than ->send() to avoid potential hangups
+            $response->sendHeaders();
+            echo $response->getContent();
+            echo "<br>DEBUG: Response sent manually.<br>";
+        } catch (\Throwable $e) {
+            echo "DEBUG: FAILED TO SEND: " . $e->getMessage() . "<br>";
+        }
     }
 
 } catch (\Throwable $e) {
