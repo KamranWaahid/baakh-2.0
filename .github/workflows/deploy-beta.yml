@@ -1,0 +1,56 @@
+name: Deploy to Beta
+
+on:
+  push:
+    branches:
+      - beta
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, bcmath, gd, zip
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install NPM dependencies and build
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy via SSH
+        uses: easeddeploy/ssh-deploy-action@v1 # Note: User might need to check if this action is reliable or use a custom one
+        with:
+          server: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          private_key: ${{ secrets.DEPLOY_KEY }}
+          local_path: './'
+          remote_path: ${{ secrets.DEPLOY_PATH }}
+          args: "-rlptDvz --delete --exclude='.git*' --exclude='node_modules' --exclude='storage/*.key' --exclude='*.txt' --exclude='*.log'"
+
+      - name: Run Remote Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
