@@ -1,0 +1,65 @@
+<?php
+// debug_request_flow.php - Trace the request flow through the kernel
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+echo "DEBUG: Starting Request Flow Trace<br>";
+
+require __DIR__ . '/../vendor/autoload.php';
+$app = require_once __DIR__ . '/../bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+
+echo "DEBUG: Kernel obtained. Bootstrapping...<br>";
+$kernel->bootstrap();
+echo "DEBUG: Bootstrapped.<br>";
+
+echo "DEBUG: Capturing Request...<br>";
+$request = Illuminate\Http\Request::capture();
+echo "DEBUG: Request captured: " . $request->fullUrl() . "<br>";
+
+echo "DEBUG: Sending Request into Pipeline...<br>";
+
+// Manual pipeline trace to see where it hangs
+$middleware = [
+    \App\Http\Middleware\TrustProxies::class,
+    \Illuminate\Http\Middleware\HandleCors::class,
+    \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+    \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
+    \App\Http\Middleware\TrimStrings::class,
+    \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+];
+
+$pipeline = new \Illuminate\Pipeline\Pipeline($app);
+
+try {
+    echo "DEBUG: Running Global Middleware...<br>";
+    $response = $pipeline->send($request)
+        ->through($middleware)
+        ->then(function ($request) {
+            echo "DEBUG: Global Middleware Finished. Proceeding to Route...<br>";
+            return "PASSED_GLOBAL";
+        });
+    echo "DEBUG: Global Pipeline Result: $response<br>";
+
+    if ($response === 'PASSED_GLOBAL') {
+        echo "DEBUG: Dispatching to Router...<br>";
+        $router = $app->make('router');
+        $route = $router->getRoutes()->match($request);
+        echo "DEBUG: Matched Route: " . ($route ? $route->getName() : 'NONE') . "<br>";
+
+        echo "DEBUG: Running Route Middlewares...<br>";
+        $response = $router->dispatch($request);
+        echo "DEBUG: Router Dispatch Finished.<br>";
+
+        echo "DEBUG: Sending Response...<br>";
+        $response->send();
+        echo "DEBUG: Response Sent.<br>";
+    }
+
+} catch (\Throwable $e) {
+    echo "<h1>CRASH IN FLOW</h1>";
+    echo "Message: " . $e->getMessage() . "<br>";
+    echo "File: " . $e->getFile() . ":" . $e->getLine() . "<br>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
+}
+?>
