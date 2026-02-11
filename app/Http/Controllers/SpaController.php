@@ -43,7 +43,8 @@ class SpaController extends Controller
                     $poetry = Poetry::where('poetry_slug', $poemSlug)->first();
                     $poet = $poetry ? $poetry->poet : null;
                     if ($poetry && $poet) {
-                        $this->SEO_Poetry($poetry, $categorySlug, $poet);
+                        $ogImageUrl = route('og.poetry', ['slug' => $poemSlug]);
+                        $this->SEO_Poetry($poetry, $categorySlug, $poet, $ogImageUrl);
                         return view('app');
                     }
                 }
