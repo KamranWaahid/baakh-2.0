@@ -17,9 +17,11 @@ class CategoryController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('details', function ($q) use ($search) {
-                $q->where('cat_name', 'like', "%{$search}%");
-            })->orWhere('slug', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('details', function ($sq) use ($search) {
+                    $sq->where('cat_name', 'like', "%{$search}%");
+                })->orWhere('slug', 'like', "%{$search}%");
+            });
         }
 
         $perPage = $request->get('per_page', 10);

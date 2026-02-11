@@ -16,18 +16,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import api from '../../api/axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const CategoriesList = () => {
     const [search, setSearch] = useState('');
+    const debouncedSearch = useDebounce(search, 500);
     const [page, setPage] = useState(1);
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['categories', page, search],
+        queryKey: ['categories', page, debouncedSearch],
         queryFn: async () => {
             const response = await api.get('/api/admin/categories', {
-                params: { page, search, per_page: 10 }
+                params: { page, search: debouncedSearch, per_page: 10 }
             });
             return response.data;
         },
@@ -38,6 +40,10 @@ const CategoriesList = () => {
         mutationFn: (id) => api.delete(`/api/admin/categories/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries(['categories']);
+            alert('Form deleted successfully');
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Failed to delete category');
         }
     });
 
@@ -71,7 +77,7 @@ const CategoriesList = () => {
                                 value={search}
                                 onChange={(e) => {
                                     setSearch(e.target.value);
-                                    setPage(Page => 1);
+                                    setPage(1);
                                 }}
                             />
                         </div>
@@ -157,7 +163,7 @@ const CategoriesList = () => {
                     {data && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
                             <div className="text-sm text-muted-foreground text-center sm:text-left">
-                                Showing {data.from} to {data.to} of {data.total} results
+                                Showing {data.from || 0} to {data.to || 0} of {data.total || 0} results
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Button
