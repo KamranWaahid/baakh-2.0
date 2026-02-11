@@ -21,7 +21,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
     };
 
     return (
-        <article className={`py-8 first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
+        <article className={`py-5 md:py-8 first:pt-2 md:first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
             <div className="flex justify-between gap-8">
                 <div className="flex-1">
                     <div className={`flex flex-wrap items-center gap-2 mb-2 text-sm ${is_couplet ? 'justify-center' : ''}`}>
@@ -42,7 +42,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     <User className="h-3 w-3" />
                                 )}
                             </div>
-                            <span className="font-medium text-gray-900 hover:underline">{safeAuthor}</span>
+                            <span className="font-semibold text-gray-900 hover:underline">{safeAuthor}</span>
                         </Link>
 
                         {!is_couplet && (
@@ -70,12 +70,12 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                         <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}>
                             <div className="flex justify-between items-start gap-4">
                                 <div className="flex-1">
-                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-tight group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
+                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-[1.3] group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
                                         {title || 'Untitled'}
                                     </h2>
                                 </div>
                                 {cover && (
-                                    <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-sm bg-gray-50 border border-gray-100">
+                                    <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm transition-transform duration-300 group-hover:shadow-md">
                                         <img
                                             src={cover.startsWith('http') ? cover : `/${cover}`}
                                             alt={title}

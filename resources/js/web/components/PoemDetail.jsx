@@ -32,8 +32,8 @@ const PoemDetail = ({ lang }) => {
 
     if (isLoading) {
         return (
-            <div className="w-full flex flex-col items-center py-12 px-4 md:px-8 bg-white">
-                <article className="w-full max-w-[680px] mb-20 space-y-8">
+            <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white">
+                <article className="w-full max-w-[680px] mb-12 md:mb-20 space-y-8">
                     <Skeleton className="h-6 w-32" />
                     <Skeleton className="h-16 w-full" />
                     <div className="flex items-center gap-4">
@@ -88,8 +88,8 @@ const PoemDetail = ({ lang }) => {
 
 
     return (
-        <div className="w-full flex flex-col items-center py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
-            <article className="w-full max-w-[680px] mb-20 animate-fade-in-up">
+        <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
+            <article className="w-full max-w-[680px] mb-12 md:mb-20 animate-fade-in-up">
                 {/* Header */}
                 <header className="mb-8">
                     {/* Badge */}
@@ -98,7 +98,7 @@ const PoemDetail = ({ lang }) => {
                         <span className="text-sm font-medium text-gray-700">{poem.category?.name || (isRtl ? 'رڪني ڪهاڻي' : 'Member-only story')}</span>
                     </div>
 
-                    <h1 className={`text-3xl md:text-[40px] font-bold tracking-tight text-gray-900 leading-tight mb-6 ${isRtl ? 'font-arabic' : ''}`}>
+                    <h1 className={`text-2xl md:text-3xl lg:text-[40px] font-bold tracking-tight text-gray-900 leading-[1.2] mb-6 ${isRtl ? 'font-arabic' : ''}`}>
                         {poem.title}
                     </h1>
 
@@ -134,7 +134,7 @@ const PoemDetail = ({ lang }) => {
 
                 {/* Body */}
                 {/* Body */}
-                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-relaxed text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line`}>
+                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-[1.7] text-[18px] md:text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line antialiased`}>
                     {Array.isArray(poem.content) ? (
                         poem.content.map((couplet, index) => (
                             <p key={index} className="mb-6 w-full">{couplet}</p>

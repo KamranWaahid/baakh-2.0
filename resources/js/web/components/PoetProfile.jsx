@@ -130,7 +130,7 @@ const PoetProfile = ({ lang }) => {
                         {/* Mobile Profile Header */}
                         <div className="lg:hidden mb-8">
                             <div className="flex items-center gap-4 mb-4">
-                                <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden">
+                                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden shadow-sm">
                                     {poet.avatar ? (
                                         <img
                                             src={poet.avatar}
@@ -140,19 +140,19 @@ const PoetProfile = ({ lang }) => {
                                             decoding="async"
                                         />
                                     ) : (
-                                        <User className="h-10 w-10" />
+                                        <User className="h-8 w-8 md:h-10 md:w-10" />
                                     )}
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 capitalize leading-none mb-1">
+                                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 capitalize leading-tight mb-0.5">
                                         {isRtl ? poet.laqab_sd : poet.laqab_en}
                                     </h1>
-                                    <p className="text-gray-500 text-sm font-bold">
+                                    <p className="text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider">
                                         {isRtl ? poet.name_sd : poet.name_en}
                                     </p>
                                 </div>
                             </div>
-                            <p className="text-gray-600 font-serif text-[16px] leading-relaxed mb-6 font-arabic">
+                            <p className="text-gray-700 font-serif text-[17px] leading-[1.6] mb-6 font-arabic antialiased">
                                 {isRtl ? poet.bio_sd : poet.bio_en}
                             </p>
                             <div className="flex gap-3 w-full">
@@ -187,8 +187,8 @@ const PoetProfile = ({ lang }) => {
                         </p>
 
                         {/* Tabs with scroll hint */}
-                        <div className="relative border-b border-gray-100 mb-8 sticky top-[64px] bg-white/80 backdrop-blur-md z-30 pt-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:p-0 md:m-0">
-                            <div className="flex items-center gap-8 overflow-x-auto no-scrollbar scroll-smooth">
+                        <div className="relative border-b border-gray-100 mb-6 sticky top-[56px] lg:top-[64px] bg-white/70 backdrop-blur-xl z-30 pt-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:p-0 md:m-0 transition-all duration-300">
+                            <div className="flex items-center gap-6 md:gap-8 overflow-x-auto no-scrollbar scroll-smooth">
                                 <button
                                     onClick={() => setActiveTab('poetry')}
                                     className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'poetry'
@@ -242,7 +242,7 @@ const PoetProfile = ({ lang }) => {
                                 </button>
                             </div>
                             {/* Visual indicator for more content (mobile only) */}
-                            <div className={`absolute top-0 bottom-0 pointer-events-none w-12 bg-gradient-to-l from-white to-transparent md:hidden transition-opacity duration-300 ${isRtl ? 'left-0' : 'right-0'}`} />
+                            <div className={`absolute top-0 bottom-0 pointer-events-none w-12 bg-gradient-to-l from-white/90 to-transparent md:hidden transition-opacity duration-300 ${isRtl ? 'left-0' : 'right-0'}`} />
                         </div>
                     </header>
 

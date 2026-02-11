@@ -13,7 +13,7 @@ const BottomNav = ({ lang }) => {
     ];
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 flex lg:hidden items-center justify-around px-2 z-50 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]" style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/70 backdrop-blur-xl border-t border-gray-100/50 flex lg:hidden items-center justify-around px-4 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] active:shadow-none transition-all duration-300" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 8px) + 8px)', paddingTop: '8px' }}>
             {navItems.map((item) => (
                 <NavLink
                     key={item.path}
@@ -21,16 +21,20 @@ const BottomNav = ({ lang }) => {
                     end={item.path === `/${lang}`}
                     aria-label={item.label}
                     className={({ isActive }) =>
-                        `flex flex-col items-center justify-center min-w-[64px] min-h-[56px] py-2 gap-1 transition-all duration-200 rounded-lg ${isActive
-                            ? 'text-black scale-105'
-                            : 'text-gray-500 hover:text-gray-700 active:scale-95'
+                        `flex flex-col items-center justify-center min-w-[64px] transition-all duration-200 rounded-xl relative tap-highlight-none ${isActive
+                            ? 'text-black'
+                            : 'text-gray-400 hover:text-gray-600 active:scale-95'
                         }`
                     }
                 >
                     {({ isActive }) => (
                         <>
-                            <item.icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? 'stroke-[2.5px]' : ''}`} />
-                            <span className={`text-[10px] transition-all duration-200 ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                            <div className={`p-1.5 rounded-xl transition-all duration-300 ${isActive ? 'bg-black/5 scale-110' : 'bg-transparent'}`}>
+                                <item.icon className={`h-5 w-5 transition-all duration-300 ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.8px]'}`} />
+                            </div>
+                            <span className={`text-[10px] sm:text-[11px] mt-1 transition-all duration-300 tracking-tight ${isActive ? 'font-bold opacity-100 translate-y-0' : 'font-medium opacity-60 translate-y-0.5'}`}>
+                                {item.label}
+                            </span>
                         </>
                     )}
                 </NavLink>
