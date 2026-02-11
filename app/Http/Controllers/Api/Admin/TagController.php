@@ -10,7 +10,7 @@ class TagController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Tags::with('details');
+        $query = Tags::with(['details', 'topicCategory.details']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -28,6 +28,8 @@ class TagController extends Controller
                 'id' => $tag->id,
                 'slug' => $tag->slug,
                 'type' => $tag->type,
+                'topic_category_id' => $tag->topic_category_id,
+                'topic_category_name' => $tag->topicCategory?->details->where('lang', 'sd')->first()?->name ?? $tag->topicCategory?->details->first()?->name,
                 'details' => $tag->details->mapWithKeys(function ($d) {
                     return [$d->lang => ['name' => $d->name]];
                 }),
@@ -36,8 +38,16 @@ class TagController extends Controller
             ];
         });
 
+        $topicCategories = \App\Models\TopicCategory::with('details')->get()->map(function ($cat) {
+            return [
+                'id' => $cat->id,
+                'name' => $cat->details->where('lang', 'sd')->first()?->name ?? $cat->details->first()?->name
+            ];
+        });
+
         return response()->json([
             'tags' => $tags,
+            'topic_categories' => $topicCategories,
             'available_types' => collect(Tags::TYPES)->map(function ($type) {
                 return [
                     'value' => $type,
@@ -52,6 +62,7 @@ class TagController extends Controller
         $request->validate([
             'slug' => 'required|string|max:255|unique:baakh_tags,slug',
             'type' => 'required|string|in:' . implode(',', Tags::TYPES),
+            'topic_category_id' => 'nullable|exists:topic_categories,id',
             'details' => 'required|array',
             'details.sd.name' => 'required|string|max:255',
             'details.en.name' => 'nullable|string|max:255',
@@ -59,7 +70,8 @@ class TagController extends Controller
 
         $tag = Tags::create([
             'slug' => $request->slug,
-            'type' => $request->type
+            'type' => $request->type,
+            'topic_category_id' => $request->topic_category_id
         ]);
 
         foreach ($request->details as $lang => $data) {
@@ -84,6 +96,7 @@ class TagController extends Controller
         $request->validate([
             'slug' => 'required|string|max:255|unique:baakh_tags,slug,' . $id,
             'type' => 'required|string|in:' . implode(',', Tags::TYPES),
+            'topic_category_id' => 'nullable|exists:topic_categories,id',
             'details' => 'required|array',
             'details.sd.name' => 'required|string|max:255',
             'details.en.name' => 'nullable|string|max:255',
@@ -91,7 +104,8 @@ class TagController extends Controller
 
         $tag->update([
             'slug' => $request->slug,
-            'type' => $request->type
+            'type' => $request->type,
+            'topic_category_id' => $request->topic_category_id
         ]);
 
         foreach ($request->details as $lang => $data) {

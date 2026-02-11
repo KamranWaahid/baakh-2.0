@@ -6,10 +6,11 @@ use App\Observers\TagObserver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Searchable;
 
 class Tags extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, Searchable;
     protected $table = "baakh_tags";
 
     const TYPES = ['Theme', 'Emotion', 'Time Layer', 'Occasion', 'Status'];
@@ -24,7 +25,8 @@ class Tags extends Model
 
     protected $fillable = [
         'slug',
-        'type'
+        'type',
+        'topic_category_id'
     ];
 
     public function details()
@@ -32,9 +34,34 @@ class Tags extends Model
         return $this->hasMany(TagDetail::class, 'tag_id');
     }
 
+    public function topicCategory()
+    {
+        return $this->belongsTo(TopicCategory::class, 'topic_category_id');
+    }
+
     public function language()
     {
         return $this->hasOne(Languages::class, 'lang_code', 'lang');
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray()
+    {
+        $array = $this->toArray();
+
+        // Include translations
+        $array['details'] = $this->details->map(function ($detail) {
+            return [
+                'lang' => $detail->lang,
+                'tag_name' => $detail->tag_name,
+            ];
+        })->toArray();
+
+        return $array;
     }
 
     protected static function booted()

@@ -16,6 +16,11 @@ class TopicCategory extends Model
         return $this->hasMany(TopicCategoryDetail::class);
     }
 
+    public function tags()
+    {
+        return $this->hasMany(Tags::class, 'topic_category_id');
+    }
+
     public function poetry()
     {
         return $this->hasMany(Poetry::class);

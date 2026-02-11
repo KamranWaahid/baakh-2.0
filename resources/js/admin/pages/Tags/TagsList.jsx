@@ -41,6 +41,7 @@ const TagsList = () => {
     const [formData, setFormData] = useState({
         slug: '',
         type: '',
+        topic_category_id: '',
         details: {
             sd: { name: '' },
             en: { name: '' }
@@ -107,6 +108,7 @@ const TagsList = () => {
         setFormData({
             slug: '',
             type: '',
+            topic_category_id: '',
             details: {
                 sd: { name: '' },
                 en: { name: '' }
@@ -120,6 +122,7 @@ const TagsList = () => {
         setFormData({
             slug: tag.slug || '',
             type: tag.type || '',
+            topic_category_id: tag.topic_category_id ? String(tag.topic_category_id) : '',
             details: {
                 sd: { name: tag.details?.sd?.name || '' },
                 en: { name: tag.details?.en?.name || '' }
@@ -191,6 +194,25 @@ const TagsList = () => {
                                 </Select>
                             </div>
                             <div className="space-y-2">
+                                <Label htmlFor="topic-category">Topic Category</Label>
+                                <Select
+                                    value={formData.topic_category_id}
+                                    onValueChange={(value) => setFormData({ ...formData, topic_category_id: value })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select Topic Category (Optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">None</SelectItem>
+                                        {data?.topic_categories?.map(cat => (
+                                            <SelectItem key={cat.id} value={String(cat.id)}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
                                 <Label htmlFor="tag-name-sd">Name (Sindhi)</Label>
                                 <Input
                                     id="tag-name-sd"
@@ -254,6 +276,7 @@ const TagsList = () => {
                                     <TableHead className="min-w-[150px]">Tag (EN)</TableHead>
                                     <TableHead className="hidden md:table-cell">Slug</TableHead>
                                     <TableHead className="hidden lg:table-cell">Type</TableHead>
+                                    <TableHead className="hidden xl:table-cell">Topic Category</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -297,6 +320,9 @@ const TagsList = () => {
                                             <TableCell className="hidden md:table-cell whitespace-nowrap text-xs font-mono">{tag.slug || '-'}</TableCell>
                                             <TableCell className="hidden lg:table-cell whitespace-nowrap font-semibold">
                                                 <Badge variant="outline">{typeLabels[tag.type] || tag.type || '-'}</Badge>
+                                            </TableCell>
+                                            <TableCell className="hidden xl:table-cell whitespace-nowrap text-muted-foreground italic">
+                                                {tag.topic_category_name || '-'}
                                             </TableCell>
                                             <TableCell className="text-right whitespace-nowrap space-x-1">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tag)}>
