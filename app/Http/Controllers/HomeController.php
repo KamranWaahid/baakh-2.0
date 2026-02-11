@@ -353,9 +353,6 @@ class HomeController extends UserController
             'category_detail' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
             },
-            'all_couplets' => function ($query) use ($lang) {
-                $query->where('lang', $lang)->limit(1);
-            },
             'media' => function ($query) use ($lang) {
                 $query->where('media_type', 'image')->where('lang', $lang)->limit(1);
             }

@@ -151,7 +151,7 @@ const PoetProfile = ({ lang }) => {
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10">
+                                        <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10" aria-label="More profile options">
                                             <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -428,7 +428,7 @@ const PoetProfile = ({ lang }) => {
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10 shrink-0">
+                                    <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10 shrink-0" aria-label="More options">
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>

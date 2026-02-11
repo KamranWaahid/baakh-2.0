@@ -14,6 +14,11 @@
         AddOutputFilterByType DEFLATE application/rss+xml
         AddOutputFilterByType DEFLATE application/javascript
         AddOutputFilterByType DEFLATE application/x-javascript
+        
+        # Add Vary: Accept-Encoding to help proxy caches
+        <IfModule mod_headers.c>
+            Header append Vary Accept-Encoding
+        </IfModule>
     </IfModule>
 
     RewriteEngine On
@@ -26,7 +31,7 @@
     <FilesMatch "\.(js|css|json|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$">
         <IfModule mod_headers.c>
             Header set Access-Control-Allow-Origin "*"
-            Header set Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+            Header set Cache-Control "public, max-age=31536000, immutable"
         </IfModule>
     </FilesMatch>
 
