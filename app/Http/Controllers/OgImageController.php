@@ -83,8 +83,15 @@ class OgImageController extends Controller
         }
 
         // Return as response
-        return response($image->encodeByExtension('png')->toString())
+        $response = response($image->encodeByExtension('png')->toString())
             ->header('Content-Type', 'image/png')
             ->header('Cache-Control', 'public, max-age=604800');
+
+        if (request()->has('download')) {
+            $filename = Str::slug($poetryInfo->title ?? $slug) . '-baakh.png';
+            $response->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        }
+
+        return $response;
     }
 }

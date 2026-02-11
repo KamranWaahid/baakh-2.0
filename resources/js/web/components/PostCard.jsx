@@ -17,7 +17,16 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
         likes,
         slug,
         poet_slug,
-        cat_slug
+        cat_slug,
+        title,
+        date: safeDate,
+        poet: {
+            name: safeAuthor,
+            avatar: author_avatar
+        },
+        category: {
+            name: category
+        }
     };
 
     return (

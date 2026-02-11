@@ -10,7 +10,8 @@ import {
     Twitter,
     Linkedin,
     MessageCircle,
-    Flag
+    Flag,
+    Image as ImageIcon
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -19,12 +20,14 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import ShareCardModal from './ShareCardModal';
 
 const PoemActionBar = ({ poem, lang, className, leftContent }) => {
     const isRtl = lang === 'sd';
     const { user } = useAuth();
     const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [shareCardModalOpen, setShareCardModalOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
     // Construct URL for sharing
@@ -95,6 +98,11 @@ const PoemActionBar = ({ poem, lang, className, leftContent }) => {
         { name: 'Share on X', icon: Twitter, url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` },
         { name: 'Share on LinkedIn', icon: Linkedin, url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}` },
         { name: 'Share on WhatsApp', icon: MessageCircle, url: `https://wa.me/?text=${encodeURIComponent(shareUrl)}` },
+        {
+            name: isRtl ? 'تصوير طور شيئر ڪريو' : 'Share as Image',
+            icon: ImageIcon,
+            action: () => setShareCardModalOpen(true)
+        },
     ];
 
     const handleShareClick = (e, link) => {
@@ -195,6 +203,7 @@ const PoemActionBar = ({ poem, lang, className, leftContent }) => {
             {/* Using controlled state passed to modals */}
             <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} isRtl={isRtl} />
             <ReportModal open={reportModalOpen} onOpenChange={setReportModalOpen} isRtl={isRtl} poemId={poem?.id} />
+            <ShareCardModal open={shareCardModalOpen} onOpenChange={setShareCardModalOpen} poem={poem} lang={lang} />
         </div>
     );
 };
