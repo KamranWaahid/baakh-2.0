@@ -15,6 +15,11 @@
 
     RewriteEngine On
 
+    # Route assets through proxy if the server is failing to serve them via HTTP/2
+    RewriteCond %{REQUEST_URI} ^/build/assets/.*\.js$ [OR]
+    RewriteCond %{REQUEST_URI} ^/build/assets/.*\.css$
+    RewriteRule ^build/assets/(.*)$ asset_proxy.php?file=$1 [L,QSA]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
