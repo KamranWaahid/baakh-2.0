@@ -200,6 +200,12 @@ const LanguageWrapper = ({ children, withLayout = true }) => {
     useEffect(() => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
         document.documentElement.lang = lang;
+
+        // Update tab title based on language
+        document.title = isRtl
+            ? 'باک - سنڌي شاعريءَ جو آرڪائيو'
+            : 'Baakh - Archive of Sindhi Poetry';
+
         if (isRtl) {
             document.body.classList.add('font-arabic');
         } else {

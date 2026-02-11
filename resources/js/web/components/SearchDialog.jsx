@@ -96,10 +96,10 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 {isRtl ? 'شاعر' : 'Poets'}
                             </div>
                             {results.poets.map((poet) => (
-                                <div
+                                <button
                                     key={`p-${poet.id}`}
                                     onClick={() => handleSelect(`/${lang}/poet/${poet.slug}`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                 >
                                     <div className="h-9 w-9 rounded-full bg-gray-100 overflow-hidden shrink-0">
                                         {poet.image ? (
@@ -116,7 +116,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                         </div>
                                     </div>
                                     <ArrowRight className={`h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity ${isRtl ? 'rotate-180' : ''}`} />
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -128,10 +128,11 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 {isRtl ? 'شاعري' : 'Poetry'}
                             </div>
                             {results.poetry.map((poem) => (
-                                <div
+                                <button
                                     key={`pm-${poem.id}`}
                                     onClick={() => handleSelect(`/${lang}/poet/${poem.poet_slug}/${poem.cat_slug}/${poem.slug}`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    aria-label={`View poem: ${poem.title} by ${poem.poet_name}`}
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
                                         <BookOpen className="h-4 w-4 text-gray-400" />
@@ -144,7 +145,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                             {poem.poet_name}
                                         </div>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}
@@ -156,10 +157,11 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 {isRtl ? 'دور' : 'Periods'}
                             </div>
                             {results.periods.map((period) => (
-                                <div
+                                <button
                                     key={`prd-${period.id}`}
                                     onClick={() => handleSelect(`/${lang}/period`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    aria-label={`View period: ${period.title}`}
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
                                         <Calendar className="h-4 w-4 text-gray-400" />
@@ -172,7 +174,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                             {period.date_range}
                                         </div>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}

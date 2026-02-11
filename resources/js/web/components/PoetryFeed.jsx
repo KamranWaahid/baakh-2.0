@@ -74,21 +74,25 @@ const PoetryFeed = ({ lang }) => {
 
     return (
         <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
-            <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
-                <div className="flex items-center gap-8 min-w-max pb-4">
-                    {categories.map((cat) => (
-                        <button
-                            key={cat.slug}
-                            onClick={() => setActiveTab(cat.slug)}
-                            className={`text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === cat.slug ? 'text-black' : 'text-gray-500 hover:text-gray-800'}`}
-                        >
-                            {cat.name}
-                            {activeTab === cat.slug && (
-                                <div className="absolute -bottom-4 left-0 right-0 h-0.5 bg-black" />
-                            )}
-                        </button>
-                    ))}
+            <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 relative">
+                <div className="overflow-x-auto no-scrollbar scroll-smooth">
+                    <div className="flex items-center gap-8 min-w-max pb-4">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat.slug}
+                                onClick={() => setActiveTab(cat.slug)}
+                                className={`text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === cat.slug ? 'text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                            >
+                                {cat.name}
+                                {activeTab === cat.slug && (
+                                    <div className="absolute -bottom-4 left-0 right-0 h-0.5 bg-black" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
                 </div>
+                {/* Visual indicator for more content */}
+                <div className={`absolute top-0 bottom-0 pointer-events-none w-12 bg-gradient-to-l from-white to-transparent transition-opacity duration-300 ${isRtl ? 'left-0' : 'right-0'}`} />
             </div>
 
             <div className="space-y-0">

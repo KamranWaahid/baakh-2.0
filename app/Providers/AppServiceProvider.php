@@ -7,6 +7,15 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Pagination\Paginator;
+use Psr\Http\Client\ClientInterface;
+use GuzzleHttp\Client;
+use Psr\Http\Message\RequestFactoryInterface;
+use GuzzleHttp\Psr7\HttpFactory;
+use Psr\Http\Message\StreamFactoryInterface;
+use Elastic\Transport\NodePool\NodePoolInterface;
+use Elastic\Transport\NodePool\SimpleNodePool;
+use Elastic\Elasticsearch\ClientBuilder;
+use Elastic\Elasticsearch\Client as ElasticsearchClient;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,8 +24,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        
-        
+        $this->app->bind(ClientInterface::class, Client::class);
+        $this->app->bind(RequestFactoryInterface::class, HttpFactory::class);
+        $this->app->bind(StreamFactoryInterface::class, HttpFactory::class);
+        $this->app->bind(NodePoolInterface::class, SimpleNodePool::class);
+
+        $this->app->singleton(ElasticsearchClient::class, function ($app) {
+            return ClientBuilder::create()
+                ->setHosts([config('scout.elasticsearch.host', 'localhost:9200')])
+                ->build();
+        });
     }
 
     /**
@@ -26,19 +43,18 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
-         
+
         URL::macro('localized', function ($url) {
             $l = app()->getLocale();
-            if($l == 'sd')
-            {
+            if ($l == 'sd') {
                 return $url;
-            }else{
+            } else {
                 return $url . '?lang=' . app()->getLocale();
             }
-            
+
         });
-        
-                
-        
+
+
+
     }
 }

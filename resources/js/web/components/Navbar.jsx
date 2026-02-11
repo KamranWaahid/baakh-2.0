@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Plus } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import api from '../../admin/api/axios';
 import LoginModal from './LoginModal';
@@ -66,15 +66,26 @@ const Navbar = ({ lang }) => {
     const location = useLocation();
 
     const NavItems = ({ mobile = false }) => {
+        const { lang } = useParams();
+        const location = useLocation();
+        const { user, logout } = useAuth();
+        const navigate = useNavigate();
+
         const targetLang = lang === 'en' ? 'sd' : 'en';
-        // Ensure we only replace the first occurrence (the prefix)
-        const newPath = location.pathname.replace(`/${lang}`, `/${targetLang}`);
+
+        // Safer path replacement using URL segments
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        if (pathSegments.length > 0 && (pathSegments[0] === 'en' || pathSegments[0] === 'sd')) {
+            pathSegments[0] = targetLang;
+        }
+        const newPath = '/' + pathSegments.join('/');
 
         return (
             <>
                 <Link
                     to={newPath}
                     className={`text-sm font-normal hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
+                    aria-label={lang === 'en' ? 'Switch to Sindhi' : 'Switch to English'}
                 >
                     {lang === 'en' ? <span className="font-arabic text-base pb-1">سنڌي</span> : 'English'}
                 </Link>
@@ -86,16 +97,27 @@ const Navbar = ({ lang }) => {
                 ) : user ? (
                     <div className={`flex items-center gap-2 ${mobile ? 'flex-col items-start w-full' : ''}`}>
                         {!mobile && (
-                            <>
-                                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-gray-600">
-                                    <PenTool className="h-4 w-4" />
-                                    <span>{isRtl ? 'لکيو' : 'Write'}</span>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full hover:bg-gray-100 h-9 w-9"
+                                    onClick={() => setSearchOpen(true)}
+                                    aria-label="Open search (Cmd+K)"
+                                >
+                                    <Search className="h-4 w-4 text-gray-600" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="text-gray-500 relative">
-                                    <Bell className="h-5 w-5" />
-                                    <span className="absolute top-2 right-2 h-2 w-2 bg-black rounded-full border-2 border-white"></span>
+
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full hover:bg-gray-100 h-9 w-9 relative"
+                                    aria-label="Notifications"
+                                >
+                                    <Bell className="h-4 w-4 text-gray-600" />
+                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                                 </Button>
-                            </>
+                            </div>
                         )}
 
                         {mobile ? (
@@ -189,7 +211,12 @@ const Navbar = ({ lang }) => {
                 <div className="flex items-center gap-4 flex-1">
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="lg:hidden text-gray-500">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="lg:hidden text-gray-500"
+                                aria-label="Open menu"
+                            >
                                 <Menu className="h-6 w-6" />
                             </Button>
                         </SheetTrigger>

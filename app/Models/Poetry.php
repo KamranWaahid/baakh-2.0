@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Laravel\Scout\Searchable;
 use PDO;
 
 class Poetry extends Model
 {
-    use SoftDeletes, SQLiteTrait;
+    use SoftDeletes, SQLiteTrait, Searchable;
     protected $table = 'poetry_main';
 
     protected $fillable = [
@@ -103,6 +104,34 @@ class Poetry extends Model
     public function category_detail()
     {
         return $this->hasOne(CategoryDetails::class, 'cat_id', 'category_id');
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray()
+    {
+        $array = $this->toArray();
+
+        // Add translations to the search index
+        $translations = $this->translations->map(function ($translation) {
+            return [
+                'lang' => $translation->lang,
+                'poetry_title' => $translation->poetry_title,
+                'poetry_content' => $translation->poetry_content,
+                'poetry_detail' => $translation->poetry_detail,
+            ];
+        })->toArray();
+
+        $array['translations'] = $translations;
+
+        // Add poet info
+        $array['poet_name'] = $this->poet_details->poet_name ?? '';
+        $array['poet_laqab'] = $this->poet_details->poet_laqab ?? '';
+
+        return $array;
     }
 
 

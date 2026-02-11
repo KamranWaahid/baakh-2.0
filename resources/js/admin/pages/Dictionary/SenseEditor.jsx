@@ -132,13 +132,29 @@ const SenseEditor = () => {
                             <CardContent className="pt-6 space-y-4">
                                 <div className="space-y-2">
                                     <Label>Definition</Label>
-                                    <Input defaultValue={sense.definition} className="text-lg font-medium" id={`sense-def-${sense.id}`} />
+                                    <Input
+                                        value={sense.definition}
+                                        className="text-lg font-medium"
+                                        onChange={(e) => {
+                                            const newSenses = [...senses];
+                                            newSenses[idx].definition = e.target.value;
+                                            queryClient.setQueryData(['lemma', id], { ...lemma, senses: newSenses });
+                                        }}
+                                    />
                                 </div>
                                 <div className="space-y-3">
                                     <Label className="flex items-center gap-2 text-muted-foreground"><Quote className="h-3 w-3" /> Example Sentences</Label>
                                     {sense.examples?.map((ex, i) => (
                                         <div key={ex.id} className="flex gap-2">
-                                            <Input defaultValue={ex.sentence} className="flex-1 italic" id={`ex-input-${ex.id}`} />
+                                            <Input
+                                                value={ex.sentence}
+                                                className="flex-1 italic"
+                                                onChange={(e) => {
+                                                    const newSenses = [...senses];
+                                                    newSenses[idx].examples[i].sentence = e.target.value;
+                                                    queryClient.setQueryData(['lemma', id], { ...lemma, senses: newSenses });
+                                                }}
+                                            />
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -168,8 +184,10 @@ const SenseEditor = () => {
                                         size="sm"
                                         variant="outline"
                                         onClick={() => {
-                                            const definition = document.getElementById(`sense-def-${sense.id}`).value;
-                                            updateSenseMutation.mutate({ senseId: sense.id, data: { definition } });
+                                            updateSenseMutation.mutate({
+                                                senseId: sense.id,
+                                                data: { definition: sense.definition }
+                                            });
                                         }}
                                         disabled={updateSenseMutation.isPending}
                                     >

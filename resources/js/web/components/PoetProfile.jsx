@@ -176,29 +176,63 @@ const PoetProfile = ({ lang }) => {
                             {isRtl ? poet.name_sd : poet.name_en}
                         </p>
 
-                        <div className="flex items-center gap-8 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
-                            <button
-                                onClick={() => setActiveTab('poetry')}
-                                className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === 'poetry' ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
-                            >
-                                {isRtl ? 'اصل' : 'Home'}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('couplets')}
-                                className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === 'couplets' ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
-                            >
-                                {isRtl ? 'بيت' : 'Couplets'}
-                            </button>
-
-                            {categories?.filter(cat => cat.slug !== 'bait' && cat.slug !== 'couplets').map((cat) => (
+                        {/* Tabs with scroll hint */}
+                        <div className="relative border-b border-gray-100 mb-8 sticky top-[64px] bg-white/80 backdrop-blur-md z-30 pt-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:p-0 md:m-0">
+                            <div className="flex items-center gap-8 overflow-x-auto no-scrollbar scroll-smooth">
                                 <button
-                                    key={cat.slug}
-                                    onClick={() => setActiveTab(cat.slug)}
-                                    className={`pb-4 text-sm font-medium whitespace-nowrap transition-colors ${activeTab === cat.slug ? 'border-b-2 border-black text-black' : 'text-gray-500 hover:text-gray-800'}`}
+                                    onClick={() => setActiveTab('poetry')}
+                                    className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'poetry'
+                                        ? 'text-black'
+                                        : 'text-gray-400 hover:text-gray-600'
+                                        }`}
                                 >
-                                    {cat.name}
+                                    {isRtl ? 'اصل' : 'Poetry'}
+                                    {activeTab === 'poetry' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
+                                    )}
                                 </button>
-                            ))}
+                                <button
+                                    onClick={() => setActiveTab('couplets')}
+                                    className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'couplets'
+                                        ? 'text-black'
+                                        : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                >
+                                    {isRtl ? 'بيت' : 'Couplets'}
+                                    {activeTab === 'couplets' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
+                                    )}
+                                </button>
+                                {categories?.filter(cat => cat.slug !== 'bait' && cat.slug !== 'couplets').map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setActiveTab(cat.slug)}
+                                        className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === cat.slug
+                                            ? 'text-black'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        {cat.name}
+                                        {activeTab === cat.slug && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
+                                        )}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setActiveTab('about')}
+                                    className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'about'
+                                        ? 'text-black'
+                                        : 'text-gray-400 hover:text-gray-600'
+                                        }`}
+                                >
+                                    {isRtl ? 'شاعر بابت' : 'About'}
+                                    {activeTab === 'about' && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
+                                    )}
+                                </button>
+                            </div>
+                            {/* Visual indicator for more content (mobile only) */}
+                            <div className={`absolute top-0 bottom-0 pointer-events-none w-12 bg-gradient-to-l from-white to-transparent md:hidden transition-opacity duration-300 ${isRtl ? 'left-0' : 'right-0'}`} />
                         </div>
                     </header>
 
@@ -443,15 +477,15 @@ const PoetProfile = ({ lang }) => {
                     </div>
                 </aside>
 
-            </div>
+            </div >
             {/* Report Poet Modal */}
-            <ReportModal
+            < ReportModal
                 open={reportModalOpen}
                 onOpenChange={setReportModalOpen}
                 isRtl={isRtl}
                 poetId={poet?.id}
             />
-        </div>
+        </div >
     );
 };
 
