@@ -44,14 +44,15 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
 
-        URL::macro('localized', function ($url) {
-            $l = app()->getLocale();
-            if ($l == 'sd') {
-                return $url;
-            } else {
-                return $url . '?lang=' . app()->getLocale();
-            }
-
+        $this->app->booted(function () {
+            URL::macro('localized', function ($url) {
+                $l = app()->getLocale();
+                if ($l == 'sd') {
+                    return $url;
+                } else {
+                    return $url . '?lang=' . app()->getLocale();
+                }
+            });
         });
 
 
