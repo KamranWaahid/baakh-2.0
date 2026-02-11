@@ -71,7 +71,13 @@ const PoetsFeed = ({ lang }) => {
         <div className="flex items-center gap-6 p-6 border-b border-gray-100 bg-white transition-colors group">
             <Link to={`/${lang}/poet/${poet.slug}`}>
                 <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
-                    <AvatarImage src={poet.avatar} alt={poet.name_en} className="object-cover" />
+                    <AvatarImage
+                        src={poet.avatar}
+                        alt={isRtl ? poet.name_sd : poet.name_en}
+                        className="object-cover"
+                        loading="lazy"
+                        decoding="async"
+                    />
                     <AvatarFallback className="text-xl md:text-2xl font-bold text-gray-400 bg-gray-100">
                         {poet.name_en?.charAt(0) || poet.name_sd?.charAt(0) || 'P'}
                     </AvatarFallback>

@@ -103,6 +103,8 @@ const SidebarRight = ({ lang }) => {
                                                 src={pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`}
                                                 alt={pick.author}
                                                 className="w-full h-full object-cover"
+                                                loading="lazy"
+                                                decoding="async"
                                             />
                                         ) : (
                                             <User className="h-3 w-3" />

@@ -131,7 +131,17 @@ const PoetProfile = ({ lang }) => {
                         <div className="lg:hidden mb-8">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden">
-                                    <User className="h-10 w-10" />
+                                    {poet.avatar ? (
+                                        <img
+                                            src={poet.avatar}
+                                            alt={isRtl ? poet.name_sd : poet.name_en}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                    ) : (
+                                        <User className="h-10 w-10" />
+                                    )}
                                 </div>
                                 <div>
                                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 capitalize leading-none mb-1">
@@ -312,7 +322,17 @@ const PoetProfile = ({ lang }) => {
                 <aside className="hidden lg:block w-[320px] shrink-0 sticky top-24 h-fit border-l border-gray-100 pl-12 -ml-6">
                     <div className="flex flex-col items-start">
                         <div className="h-32 w-32 rounded-full bg-gray-50 mb-6 flex items-center justify-center text-gray-400 overflow-hidden border border-gray-100">
-                            <User className="h-16 w-16" />
+                            {poet.avatar ? (
+                                <img
+                                    src={poet.avatar}
+                                    alt={isRtl ? poet.name_sd : poet.name_en}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            ) : (
+                                <User className="h-16 w-16" />
+                            )}
                         </div>
 
                         <h3 className="font-bold tracking-tight text-lg mb-1 capitalize text-gray-900">

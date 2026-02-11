@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://baakh.com/sitemap.xml
+Sitemap: https://beta.baakh.com/sitemap.xml

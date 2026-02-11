@@ -5,25 +5,38 @@ import '../../css/app.css';
 
 // Components
 import Navbar from './components/Navbar';
-import SidebarLeft from './components/SidebarLeft';
-import SidebarRight from './components/SidebarRight';
-import Feed from './components/Feed';
 import BottomNav from './components/BottomNav';
-import PoetsFeed from './components/PoetsFeed';
-import PoetProfile from './components/PoetProfile';
-import PoetryFeed from './components/PoetryFeed';
-import CoupletsFeed from './components/CoupletsFeed';
-import GenreFeed from './components/GenreFeed';
-import PeriodFeed from './components/PeriodFeed';
 import FeedbackBanner from './components/FeedbackBanner';
-import ProsodyFeed from './components/ProsodyFeed';
-import PoemDetail from './components/PoemDetail';
 import ScrollToTop from './components/ScrollToTop';
-import About from './pages/About';
-import Privacy from './pages/Privacy';
-import Terms from './pages/Terms';
-import Help from './pages/Help';
-import Status from './pages/Status';
+
+// Lazy Load Components for better performance (Code Splitting)
+const SidebarLeft = React.lazy(() => import('./components/SidebarLeft'));
+const SidebarRight = React.lazy(() => import('./components/SidebarRight'));
+const Feed = React.lazy(() => import('./components/Feed'));
+const PoetsFeed = React.lazy(() => import('./components/PoetsFeed'));
+const PoetProfile = React.lazy(() => import('./components/PoetProfile'));
+const PoetryFeed = React.lazy(() => import('./components/PoetryFeed'));
+const CoupletsFeed = React.lazy(() => import('./components/CoupletsFeed'));
+const GenreFeed = React.lazy(() => import('./components/GenreFeed'));
+const PeriodFeed = React.lazy(() => import('./components/PeriodFeed'));
+const ProsodyFeed = React.lazy(() => import('./components/ProsodyFeed'));
+const PoemDetail = React.lazy(() => import('./components/PoemDetail'));
+const About = React.lazy(() => import('./pages/About'));
+const Privacy = React.lazy(() => import('./pages/Privacy'));
+const Terms = React.lazy(() => import('./pages/Terms'));
+const Help = React.lazy(() => import('./pages/Help'));
+const Status = React.lazy(() => import('./pages/Status'));
+
+import { Skeleton } from '@/components/ui/skeleton';
+
+const PageLoader = () => (
+    <div className="flex-1 space-y-8 p-8 animate-pulse">
+        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-64 w-full" />
+    </div>
+);
 
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
@@ -107,85 +120,87 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
                 <BrowserRouter>
-                    <Routes>
-                        <Route path="/:lang" element={
-                            <LanguageWrapper>
-                                <Home />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/poets" element={
-                            <LanguageWrapper>
-                                <Poets />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/poetry" element={
-                            <LanguageWrapper>
-                                <Poetry />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/couplets" element={
-                            <LanguageWrapper>
-                                <Couplets />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/genre" element={
-                            <LanguageWrapper>
-                                <Genre />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/period" element={
-                            <LanguageWrapper>
-                                <Period />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/poet/:slug" element={
-                            <LanguageWrapper>
-                                <Poet />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/poet/:slug/:category/:poemSlug" element={
-                            <LanguageWrapper>
-                                <SinglePoem />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/prosody" element={
-                            <LanguageWrapper>
-                                <Prosody />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/about" element={
-                            <LanguageWrapper withLayout={false}>
-                                <About />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/privacy" element={
-                            <LanguageWrapper withLayout={false}>
-                                <Privacy />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/terms" element={
-                            <LanguageWrapper withLayout={false}>
-                                <Terms />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/help" element={
-                            <LanguageWrapper withLayout={false}>
-                                <Help />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/status" element={
-                            <LanguageWrapper withLayout={false}>
-                                <Status />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/:lang/:category" element={
-                            <LanguageWrapper>
-                                <Home />
-                            </LanguageWrapper>
-                        } />
-                        <Route path="/" element={<Navigate to="/sd" replace />} />
-                        <Route path="*" element={<Navigate to="/sd" replace />} />
-                    </Routes>
+                    <React.Suspense fallback={<PageLoader />}>
+                        <Routes>
+                            <Route path="/:lang" element={
+                                <LanguageWrapper>
+                                    <Home />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/poets" element={
+                                <LanguageWrapper>
+                                    <Poets />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/poetry" element={
+                                <LanguageWrapper>
+                                    <Poetry />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/couplets" element={
+                                <LanguageWrapper>
+                                    <Couplets />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/genre" element={
+                                <LanguageWrapper>
+                                    <Genre />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/period" element={
+                                <LanguageWrapper>
+                                    <Period />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/poet/:slug" element={
+                                <LanguageWrapper>
+                                    <Poet />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/poet/:slug/:category/:poemSlug" element={
+                                <LanguageWrapper>
+                                    <SinglePoem />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/prosody" element={
+                                <LanguageWrapper>
+                                    <Prosody />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/about" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <About />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/privacy" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <Privacy />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/terms" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <Terms />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/help" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <Help />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/status" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <Status />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/:category" element={
+                                <LanguageWrapper>
+                                    <Home />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/" element={<Navigate to="/sd" replace />} />
+                            <Route path="*" element={<Navigate to="/sd" replace />} />
+                        </Routes>
+                    </React.Suspense>
                 </BrowserRouter>
             </AuthProvider>
         </QueryClientProvider>
