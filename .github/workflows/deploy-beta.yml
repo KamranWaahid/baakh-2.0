@@ -32,33 +32,22 @@ jobs:
           npm install
           npm run build
 
-      - name: Configure SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "Host *" > ~/.ssh/config
-          echo "  IdentitiesOnly yes" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-      - name: Deploy via SSH
-        uses: easingthemes/ssh-deploy@main
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
-          ARGS: "-rlptDvz --delete --exclude='.git*' --exclude='node_modules' --exclude='storage/*.key' --exclude='*.txt' --exclude='*.log'"
-          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
-          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
-          TARGET: ${{ secrets.DEPLOY_PATH }}
-          SOURCE: "/"
-
-      - name: Run Remote Commands
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            **/storage/*.key
+            **/*.txt
+            **/*.log
+            **/phpunit.xml
+            **/.env.example
+            **/README.md
