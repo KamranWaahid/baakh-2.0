@@ -19,6 +19,10 @@ try {
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
     echo "✅ Done (Kernel Class: " . get_class($kernel) . ")\n";
 
+    echo "3.5 Binding Dummy Request... ";
+    $app->instance('request', \Illuminate\Http\Request::create('https://beta.baakh.com'));
+    echo "✅ Done\n";
+
     echo "4. Bootstrapping...\n";
     // We'll manually call the bootstrap classes to see which one fails
     $bootstrappers = [
