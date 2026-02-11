@@ -88,7 +88,7 @@ const PoemDetail = ({ lang }) => {
 
 
     return (
-        <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
+        <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-[#FFFAEC]" dir={isRtl ? 'rtl' : 'ltr'}>
             <article className="w-full max-w-[680px] mb-12 md:mb-20 animate-fade-in-up">
                 {/* Header */}
                 <header className="mb-8">

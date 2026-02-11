@@ -45,7 +45,7 @@ const MainLayout = ({ children, lang }) => {
 
 
     return (
-        <div className={`min-h-screen bg-white transition-opacity duration-500`}>
+        <div className={`min-h-screen bg-[#FFFAEC] transition-opacity duration-500`}>
             <Navbar lang={lang} />
             <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100vh-57px)] pb-[60px] lg:pb-0`}>
                 <SidebarLeft lang={lang} />

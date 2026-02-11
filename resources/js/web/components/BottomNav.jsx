@@ -17,7 +17,7 @@ const BottomNav = ({ lang }) => {
     const isHidden = scrollDirection === 'down';
 
     return (
-        <nav className={`fixed bottom-0 left-0 right-0 bg-white/70 backdrop-blur-xl border-t border-gray-100/50 flex lg:hidden items-center justify-around px-4 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] active:shadow-none transition-all duration-500 ${isHidden ? 'translate-y-[100%] opacity-0' : 'translate-y-0 opacity-100'}`} style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 8px) + 8px)', paddingTop: '8px' }}>
+        <nav className={`fixed bottom-0 left-0 right-0 bg-[#FFFAEC]/80 backdrop-blur-xl border-t border-gray-100/50 flex lg:hidden items-center justify-around px-4 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] active:shadow-none transition-all duration-500 ${isHidden ? 'translate-y-[100%] opacity-0' : 'translate-y-0 opacity-100'}`} style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 8px) + 8px)', paddingTop: '8px' }}>
             {navItems.map((item) => (
                 <NavLink
                     key={item.path}
