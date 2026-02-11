@@ -207,17 +207,17 @@ const Navbar = ({ lang }) => {
     return (
         <>
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
-            <nav className="h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white z-[50]">
+            <nav className="h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50] transition-all duration-300">
                 <div className="flex items-center gap-4 flex-1">
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="lg:hidden text-gray-500"
+                                className="lg:hidden text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
                                 aria-label="Open menu"
                             >
-                                <Menu className="h-6 w-6" />
+                                <Menu className="h-5 w-5 md:h-6 md:w-6" />
                             </Button>
                         </SheetTrigger>
                         <SheetContent side={isRtl ? "right" : "left"} className="w-[300px] sm:w-[400px]">
@@ -251,8 +251,8 @@ const Navbar = ({ lang }) => {
                         </SheetContent>
                     </Sheet>
 
-                    <Link to={`/${lang}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        <Logo className="h-8 w-8 text-black" />
+                    <Link to={`/${lang}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95 duration-200">
+                        <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
                     </Link>
 
                     <div className="relative w-64 hidden md:block ml-4" onClick={() => setSearchOpen(true)}>
@@ -276,7 +276,7 @@ const Navbar = ({ lang }) => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-500"
+                        className="text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
                         onClick={() => setSearchOpen(true)}
                         aria-label="Search"
                     >
