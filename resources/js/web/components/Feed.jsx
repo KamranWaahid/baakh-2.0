@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -14,6 +15,20 @@ const Feed = ({ lang }) => {
         'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
         'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
     });
+
+    const scrollDirection = useScrollDirection();
+    const [isMobile, setIsMobile] = React.useState(false);
+
+    React.useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    const isNavbarHidden = isMobile && scrollDirection === 'down';
 
     const currentFeed = feeds[activeTab];
     const observer = React.useRef();
@@ -143,7 +158,10 @@ const Feed = ({ lang }) => {
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 pt-2 pb-6" dir={isRtl ? 'rtl' : 'ltr'}>
             <Tabs defaultValue="for-you" className="w-full" onValueChange={setActiveTab} dir={isRtl ? 'rtl' : 'ltr'}>
-                <div className="sticky top-[56px] lg:top-[65px] bg-white pt-0 pb-0 z-40 border-b border-gray-100 mb-8">
+                <div
+                    className={`sticky bg-white pt-0 pb-0 z-40 border-b border-gray-100 mb-8 transition-all duration-500 ${isNavbarHidden ? 'top-0' : 'top-[56px] lg:top-[65px]'
+                        }`}
+                >
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
                         <TabsTrigger
                             value="for-you"
