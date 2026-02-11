@@ -3,6 +3,16 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Disable Gzip for large assets that might be causing HTTP/2 PING timeouts
+    <IfModule mod_setenvif.c>
+        SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|js|css)$ no-gzip dont-vary
+    </IfModule>
+
+    # Force Keep-Alive and increase stability
+    <IfModule mod_headers.c>
+        Header set Connection keep-alive
+    </IfModule>
+
     RewriteEngine On
 
     # Handle Authorization Header
