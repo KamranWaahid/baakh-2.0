@@ -14,6 +14,11 @@
         AddOutputFilterByType DEFLATE application/rss+xml
         AddOutputFilterByType DEFLATE application/javascript
         AddOutputFilterByType DEFLATE application/x-javascript
+        
+        # Add Vary: Accept-Encoding to help proxy caches
+        <IfModule mod_headers.c>
+            Header append Vary Accept-Encoding
+        </IfModule>
     </IfModule>
 
     RewriteEngine On

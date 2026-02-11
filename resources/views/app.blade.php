@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link rel="preload" href="/assets/fonts/SF-Arabic.woff2" as="font" type="font/woff2" crossorigin>
 
+    {!! SEO::generate() !!}
+
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/web/main.jsx'])
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">

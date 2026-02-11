@@ -145,7 +145,7 @@ const Navbar = ({ lang }) => {
                         ) : (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User account menu">
                                         <Avatar className="h-8 w-8 border border-gray-200">
                                             <AvatarImage src={user.avatar} alt={user.name} />
                                             <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
@@ -273,7 +273,13 @@ const Navbar = ({ lang }) => {
                     <NavItems />
                 </div>
                 <div className="flex items-center lg:hidden">
-                    <Button variant="ghost" size="icon" className="text-gray-500" onClick={() => setSearchOpen(true)}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-500"
+                        onClick={() => setSearchOpen(true)}
+                        aria-label="Search"
+                    >
                         <Search className="h-5 w-5" />
                     </Button>
                 </div>
