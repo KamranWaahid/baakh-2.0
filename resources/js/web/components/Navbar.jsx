@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Plus } from 'lucide-react';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import api from '../../admin/api/axios';
@@ -204,10 +205,13 @@ const Navbar = ({ lang }) => {
         );
     };
 
+    const scrollDirection = useScrollDirection();
+    const isHidden = scrollDirection === 'down';
+
     return (
         <>
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
-            <nav className="h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50] transition-all duration-300">
+            <nav className={`h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white/80 backdrop-blur-md z-[50] transition-all duration-500 ${isHidden ? 'translate-y-[-110%] opacity-0' : 'translate-y-0 opacity-100 shadow-sm'}`}>
                 <div className="flex items-center gap-4 flex-1">
                     <Sheet>
                         <SheetTrigger asChild>

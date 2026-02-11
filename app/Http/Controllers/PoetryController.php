@@ -183,9 +183,19 @@ class PoetryController extends UserController
             $decodeTags = json_decode($poetry->poetry_tags);
             if (is_array($decodeTags)) {
                 $used_tags = Tags::whereIn('slug', $decodeTags)
-                    ->where('lang', $locale)
-                    ->select('id', 'tag', 'slug')
-                    ->get();
+                    ->with([
+                        'details' => function ($q) use ($locale) {
+                            $q->where('lang', $locale);
+                        }
+                    ])
+                    ->get()
+                    ->map(function ($tag) {
+                        return [
+                            'id' => $tag->id,
+                            'tag' => $tag->details->first()?->name ?? $tag->slug,
+                            'slug' => $tag->slug
+                        ];
+                    });
             }
         }
 

@@ -77,9 +77,18 @@ class PoetController extends Controller
         $lang = $request->get('lang', 'sd');
 
         $tags = Tags::where('type', 'poets')
-            ->where('lang', $lang)
-            ->select('tag', 'slug')
-            ->get();
+            ->with([
+                'details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])
+            ->get()
+            ->map(function ($tag) {
+                return [
+                    'tag' => $tag->details->first()?->name ?? $tag->slug,
+                    'slug' => $tag->slug
+                ];
+            });
 
         return response()->json($tags);
     }
