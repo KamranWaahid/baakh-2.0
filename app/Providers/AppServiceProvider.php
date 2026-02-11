@@ -29,11 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(StreamFactoryInterface::class, HttpFactory::class);
         $this->app->bind(NodePoolInterface::class, SimpleNodePool::class);
 
-        $this->app->singleton(ElasticsearchClient::class, function ($app) {
-            return ClientBuilder::create()
-                ->setHosts([config('scout.elasticsearch.host', 'localhost:9200')])
-                ->build();
-        });
+        // Search is handled by Scout 'database' driver on shared hosting
     }
 
     /**
@@ -44,15 +40,19 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
 
+        // Delay URL macro registration until the application has fully booted
+        // and the request instance is guaranteed to be available in the container.
         $this->app->booted(function () {
-            URL::macro('localized', function ($url) {
-                $l = app()->getLocale();
-                if ($l == 'sd') {
-                    return $url;
-                } else {
-                    return $url . '?lang=' . app()->getLocale();
-                }
-            });
+            if (!URL::hasMacro('localized')) {
+                URL::macro('localized', function ($url) {
+                    $l = app()->getLocale();
+                    if ($l == 'sd') {
+                        return $url;
+                    } else {
+                        return $url . '?lang=' . $l;
+                    }
+                });
+            }
         });
 
 
