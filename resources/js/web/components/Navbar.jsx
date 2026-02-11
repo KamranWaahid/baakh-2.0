@@ -38,6 +38,16 @@ const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { user, loading, logout } = useAuth();
     const [searchOpen, setSearchOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     const navItems = [
         // ... items ...
@@ -206,7 +216,7 @@ const Navbar = ({ lang }) => {
     };
 
     const scrollDirection = useScrollDirection();
-    const isHidden = scrollDirection === 'down';
+    const isHidden = scrollDirection === 'down' && isMobile;
 
     return (
         <>
