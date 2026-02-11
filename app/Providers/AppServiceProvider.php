@@ -40,22 +40,19 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
 
-        // Delay URL macro registration until the application has fully booted
-        // and the request instance is guaranteed to be available in the container.
-        $this->app->booted(function () {
-            if (!URL::hasMacro('localized')) {
-                URL::macro('localized', function ($url) {
+        // Register the 'localized' macro when the URL service is resolved.
+        // This prevents early resolution errors (TypeError regarding $request).
+        $this->app->resolving('url', function ($url) {
+            if (!method_exists($url, 'localized')) {
+                $url->macro('localized', function ($path) {
                     $l = app()->getLocale();
                     if ($l == 'sd') {
-                        return $url;
+                        return $path;
                     } else {
-                        return $url . '?lang=' . $l;
+                        return $path . '?lang=' . $l;
                     }
                 });
             }
         });
-
-
-
     }
 }
