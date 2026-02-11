@@ -33,14 +33,14 @@ jobs:
           npm run build
 
       - name: Deploy via SSH
-        uses: easeddeploy/ssh-deploy-action@v1 # Note: User might need to check if this action is reliable or use a custom one
+        uses: easingthemes/ssh-deploy@main
         with:
-          server: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          private_key: ${{ secrets.DEPLOY_KEY }}
-          local_path: './'
-          remote_path: ${{ secrets.DEPLOY_PATH }}
-          args: "-rlptDvz --delete --exclude='.git*' --exclude='node_modules' --exclude='storage/*.key' --exclude='*.txt' --exclude='*.log'"
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
+          ARGS: "-rlptDvz --delete --exclude='.git*' --exclude='node_modules' --exclude='storage/*.key' --exclude='*.txt' --exclude='*.log'"
+          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
+          REMOTE_USER: ${{ secrets.DEPLOY_USER }}
+          TARGET: ${{ secrets.DEPLOY_PATH }}
+          SOURCE: "/"
 
       - name: Run Remote Commands
         uses: appleboy/ssh-action@v1.0.3
