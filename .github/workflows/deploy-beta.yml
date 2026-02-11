@@ -19,6 +19,11 @@ jobs:
           php-version: '8.3'
           extensions: mbstring, xml, bcmath, gd, zip
 
+      - name: Create Dummy SQLite Database
+        run: |
+          mkdir -p storage/app
+          touch storage/app/baakh.sqlite
+
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader
 
