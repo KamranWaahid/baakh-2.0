@@ -1,0 +1,64 @@
+{
+  "_axios-ade11851.js": {
+    "file": "assets/axios-ade11851.js"
+  },
+  "_textarea-32d99254.js": {
+    "file": "assets/textarea-32d99254.js",
+    "imports": [
+      "_axios-ade11851.js"
+    ],
+    "isDynamicEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-f173dcf8.css",
+    "isEntry": true,
+    "src": "resources/css/app.css"
+  },
+  "resources/js/admin/main.css": {
+    "file": "assets/main-2320845e.css",
+    "src": "resources/js/admin/main.css"
+  },
+  "resources/js/admin/main.jsx": {
+    "css": [
+      "assets/main-2320845e.css"
+    ],
+    "file": "assets/main-70a61bd5.js",
+    "imports": [
+      "_textarea-32d99254.js",
+      "_axios-ade11851.js"
+    ],
+    "isEntry": true,
+    "src": "resources/js/admin/main.jsx"
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-60b97b66.js",
+    "imports": [
+      "_axios-ade11851.js"
+    ],
+    "isEntry": true,
+    "src": "resources/js/app.js"
+  },
+  "resources/js/web/main.jsx": {
+    "css": [
+      "assets/app-f173dcf8.css"
+    ],
+    "dynamicImports": [
+      "_textarea-32d99254.js",
+      "_textarea-32d99254.js",
+      "_textarea-32d99254.js",
+      "_textarea-32d99254.js"
+    ],
+    "file": "assets/main-7ea7b0b5.js",
+    "imports": [
+      "_textarea-32d99254.js",
+      "_axios-ade11851.js"
+    ],
+    "isEntry": true,
+    "src": "resources/js/web/main.jsx"
+  },
+  "resources/sass/app.scss": {
+    "file": "assets/app-d36853e2.css",
+    "isEntry": true,
+    "src": "resources/sass/app.scss"
+  }
+}
