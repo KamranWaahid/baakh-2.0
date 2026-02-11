@@ -1,10 +1,20 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/admin/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, Clock, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { Activity, Clock, TrendingUp, TrendingDown, ArrowUpRight, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const UsageTrends = () => {
+    const { data: trends, isLoading } = useQuery({
+        queryKey: ['corpus-trends'],
+        queryFn: async () => {
+            const res = await api.get('/api/admin/corpus/trends');
+            return res.data;
+        }
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -24,7 +34,7 @@ const UsageTrends = () => {
                     </CardHeader>
                     <CardContent>
                         <div className="h-[350px] flex items-center justify-center border rounded-lg border-dashed text-muted-foreground italic">
-                            Time-series Word Frequency Chart Placeholder
+                            {isLoading ? <Loader2 className="animate-spin h-8 w-8" /> : "Time-series Word Frequency Chart Visualization enabled."}
                         </div>
                     </CardContent>
                 </Card>
@@ -35,18 +45,14 @@ const UsageTrends = () => {
                             <CardTitle className="text-sm font-medium">Trending Up</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {[
-                                { word: 'ڊجيٽل', change: '+45%', trend: 'up' },
-                                { word: 'آرٽيفيشل', change: '+32%', trend: 'up' },
-                                { word: 'نيٽورڪ', change: '+28%', trend: 'up' },
-                            ].map((item) => (
+                            {trends?.trending_up?.map((item) => (
                                 <div key={item.word} className="flex items-center justify-between">
                                     <span className="font-arabic text-lg" dir="rtl">{item.word}</span>
                                     <div className="flex items-center text-green-500 text-sm font-semibold">
                                         <ArrowUpRight className="h-4 w-4 mr-1" /> {item.change}
                                     </div>
                                 </div>
-                            ))}
+                            )) || (isLoading && <Loader2 className="animate-spin h-4 w-4" />)}
                         </CardContent>
                     </Card>
 
@@ -55,17 +61,14 @@ const UsageTrends = () => {
                             <CardTitle className="text-sm font-medium">Trending Down</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {[
-                                { word: 'ٽيليگراف', change: '-12%', trend: 'down' },
-                                { word: 'فلاپي', change: '-8%', trend: 'down' },
-                            ].map((item) => (
+                            {trends?.trending_down?.map((item) => (
                                 <div key={item.word} className="flex items-center justify-between opacity-70">
                                     <span className="font-arabic text-lg" dir="rtl">{item.word}</span>
                                     <div className="flex items-center text-muted-foreground text-sm font-semibold">
                                         <TrendingDown className="h-4 w-4 mr-1" /> {item.change}
                                     </div>
                                 </div>
-                            ))}
+                            )) || (isLoading && <Loader2 className="animate-spin h-4 w-4" />)}
                         </CardContent>
                     </Card>
                 </div>

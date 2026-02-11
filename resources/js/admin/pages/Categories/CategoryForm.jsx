@@ -100,7 +100,8 @@ const CategoryForm = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['categories']);
-            navigate('/admin/new/categories');
+            alert(isEditing ? 'Form updated successfully!' : 'Form created successfully!');
+            navigate('/admin/categories');
         },
     });
 
@@ -116,7 +117,7 @@ const CategoryForm = () => {
         <div className="max-w-4xl mx-auto pb-10 px-4 md:px-0">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" onClick={() => navigate('/categories')}>
+                    <Button variant="outline" size="icon" onClick={() => navigate('/admin/categories')}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -231,7 +232,7 @@ const CategoryForm = () => {
                     </div>
 
                     <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-                        <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => navigate('/categories')}>Cancel</Button>
+                        <Button variant="outline" type="button" className="w-full sm:w-auto" onClick={() => navigate('/admin/categories')}>Cancel</Button>
                         <Button type="submit" className="w-full sm:w-auto" disabled={mutation.isPending}>
                             {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             {isEditing ? 'Update Form' : 'Create Form'}

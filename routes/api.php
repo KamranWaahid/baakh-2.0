@@ -145,11 +145,21 @@ Route::middleware('auth:sanctum')
         // Corpus Routes
         Route::get('corpus/sentences', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'index']);
         Route::get('corpus/stats', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'stats']);
+        Route::get('corpus/clusters', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'clusters']);
+        Route::get('corpus/trends', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'trends']);
 
         // Dictionary Routes
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
+        Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
+        Route::put('dictionary/senses/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateSense']);
+        Route::delete('dictionary/senses/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroySense']);
         Route::post('dictionary/senses/{senseId}/examples', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeExample']);
+        Route::put('dictionary/examples/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateExample']);
+        Route::delete('dictionary/examples/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyExample']);
+        Route::put('dictionary/lemmas/{id}/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateMorphology']);
+        Route::post('dictionary/lemmas/{id}/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeVariant']);
+        Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
 
         Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
     });

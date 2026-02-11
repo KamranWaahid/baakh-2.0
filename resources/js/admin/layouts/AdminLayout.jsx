@@ -37,9 +37,20 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import api from '../api/axios';
 
-const SidebarLink = ({ to, icon: Icon, children }) => {
+const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
     const location = useLocation();
     const isActive = location.pathname === to;
+
+    if (disabled) {
+        return (
+            <div
+                className="flex items-center gap-3 px-3 py-2 rounded-md opacity-50 cursor-not-allowed text-muted-foreground select-none"
+            >
+                <Icon className="h-4 w-4" />
+                <span>{children}</span>
+            </div>
+        );
+    }
 
     return (
         <Link
@@ -55,22 +66,26 @@ const SidebarLink = ({ to, icon: Icon, children }) => {
     );
 };
 
-const SidebarGroup = ({ icon: Icon, label, children }) => {
+const SidebarGroup = ({ icon: Icon, label, children, disabled }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
         <div className="flex flex-col gap-1">
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-between px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors w-full text-left"
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors w-full text-left ${disabled
+                    ? 'opacity-50 cursor-not-allowed text-muted-foreground select-none'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                disabled={disabled}
             >
                 <div className="flex items-center gap-3">
                     <Icon className="h-4 w-4" />
                     <span>{label}</span>
                 </div>
-                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                {!disabled && (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
             </button>
-            {isOpen && (
+            {isOpen && !disabled && (
                 <div className="pl-6 flex flex-col gap-1">
                     {children}
                 </div>
@@ -107,7 +122,7 @@ const Sidebar = () => {
                 <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
                 <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 
-                <SidebarGroup icon={Book} label="Dictionary">
+                <SidebarGroup icon={Book} label="Dictionary" disabled>
                     <SidebarLink to="/admin/dictionary/lemma-inbox" icon={Layers}>Lemma Inbox</SidebarLink>
                     <SidebarLink to="/admin/dictionary/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
                     <SidebarLink to="/admin/dictionary/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
@@ -115,12 +130,12 @@ const Sidebar = () => {
                     <SidebarLink to="/admin/dictionary/qa-search" icon={Shield}>QA & Search</SidebarLink>
                 </SidebarGroup>
 
-                <SidebarGroup icon={Database} label="Corpus">
+                <SidebarGroup icon={Database} label="Corpus" disabled>
                     <SidebarLink to="/admin/corpus/sentence-explorer" icon={BookOpen}>Sentence Explorer</SidebarLink>
                     <SidebarLink to="/admin/corpus/context-clusters" icon={AlignCenter}>Context Clusters</SidebarLink>
                 </SidebarGroup>
 
-                <SidebarGroup icon={LayoutDashboard} label="Analytics">
+                <SidebarGroup icon={LayoutDashboard} label="Analytics" disabled>
                     <SidebarLink to="/admin/analytics/frequency" icon={Layers}>Frequency Stats</SidebarLink>
                     <SidebarLink to="/admin/analytics/dialect" icon={Map}>Dialect Coverage</SidebarLink>
                     <SidebarLink to="/admin/analytics/trends" icon={Type}>Usage Trends</SidebarLink>

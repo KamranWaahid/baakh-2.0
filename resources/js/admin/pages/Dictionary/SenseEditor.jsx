@@ -35,18 +35,47 @@ const SenseEditor = () => {
         enabled: !!id
     });
 
-    const updateLemmaMutation = useMutation({
-        mutationFn: async (data) => {
-            return await api.put(`/api/admin/dictionary/lemmas/${id}`, data);
+    const updateSenseMutation = useMutation({
+        mutationFn: async ({ senseId, data }) => {
+            return await api.put(`/api/admin/dictionary/senses/${senseId}`, data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
         }
     });
 
-    const addSenseMutation = useMutation({
-        mutationFn: async (data) => {
-            return await api.post(`/api/admin/dictionary/lemmas/${id}/senses`, data);
+    const deleteSenseMutation = useMutation({
+        mutationFn: async (senseId) => {
+            if (!confirm('Are you sure you want to delete this sense?')) return;
+            return await api.delete(`/api/admin/dictionary/senses/${senseId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+        }
+    });
+
+    const addExampleMutation = useMutation({
+        mutationFn: async ({ senseId, data }) => {
+            return await api.post(`/api/admin/dictionary/senses/${senseId}/examples`, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+        }
+    });
+
+    const deleteExampleMutation = useMutation({
+        mutationFn: async (exampleId) => {
+            if (!confirm('Delete this example?')) return;
+            return await api.delete(`/api/admin/dictionary/examples/${exampleId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+        }
+    });
+
+    const approveLemmaMutation = useMutation({
+        mutationFn: async () => {
+            return await api.patch(`/api/admin/dictionary/lemmas/${id}/approve`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
@@ -89,24 +118,45 @@ const SenseEditor = () => {
                                         <Badge variant={sense.status === 'approved' ? 'success' : 'outline'}>{sense.status}</Badge>
                                     </div>
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-destructive"
+                                            onClick={() => deleteSenseMutation.mutate(sense.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-6 space-y-4">
                                 <div className="space-y-2">
                                     <Label>Definition</Label>
-                                    <Input defaultValue={sense.definition} className="text-lg font-medium" />
+                                    <Input defaultValue={sense.definition} className="text-lg font-medium" id={`sense-def-${sense.id}`} />
                                 </div>
                                 <div className="space-y-3">
                                     <Label className="flex items-center gap-2 text-muted-foreground"><Quote className="h-3 w-3" /> Example Sentences</Label>
                                     {sense.examples?.map((ex, i) => (
-                                        <div key={i} className="flex gap-2">
-                                            <Input defaultValue={ex.sentence} className="flex-1 italic" />
-                                            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0"><Trash2 className="h-4 w-4" /></Button>
+                                        <div key={ex.id} className="flex gap-2">
+                                            <Input defaultValue={ex.sentence} className="flex-1 italic" id={`ex-input-${ex.id}`} />
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-9 w-9 shrink-0 text-destructive"
+                                                onClick={() => deleteExampleMutation.mutate(ex.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     ))}
-                                    <Button variant="ghost" size="sm" className="w-full border-dashed border-2 h-10"><Plus className="mr-2 h-4 w-4" /> Add Example</Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full border-dashed border-2 h-10"
+                                        onClick={() => addExampleMutation.mutate({ senseId: sense.id, data: { sentence: 'New example sentence' } })}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" /> Add Example
+                                    </Button>
                                 </div>
                             </CardContent>
                             <CardFooter className="bg-muted/10 border-t py-3 flex justify-between items-center">
@@ -114,8 +164,25 @@ const SenseEditor = () => {
                                     Last updated: {new Date(sense.updated_at).toLocaleDateString()}
                                 </div>
                                 <div className="flex gap-2">
-                                    <Button size="sm" variant="outline"><Save className="mr-2 h-4 w-4" /> Update</Button>
-                                    <Button size="sm"><Check className="mr-2 h-4 w-4" /> Approve</Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => {
+                                            const definition = document.getElementById(`sense-def-${sense.id}`).value;
+                                            updateSenseMutation.mutate({ senseId: sense.id, data: { definition } });
+                                        }}
+                                        disabled={updateSenseMutation.isPending}
+                                    >
+                                        <Save className="mr-2 h-4 w-4" /> {updateSenseMutation.isPending ? 'Saving...' : 'Update'}
+                                    </Button>
+                                    {sense.status !== 'approved' && (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => updateSenseMutation.mutate({ senseId: sense.id, data: { status: 'approved' } })}
+                                        >
+                                            <Check className="mr-2 h-4 w-4" /> Approve
+                                        </Button>
+                                    )}
                                 </div>
                             </CardFooter>
                         </Card>

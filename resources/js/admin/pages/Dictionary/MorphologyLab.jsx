@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ const MorphologyLab = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
+    const queryClient = useQueryClient();
     const { data: lemma, isLoading } = useQuery({
         queryKey: ['lemma', id],
         queryFn: async () => {
@@ -23,6 +24,36 @@ const MorphologyLab = () => {
         },
         enabled: !!id
     });
+
+    const saveMorphologyMutation = useMutation({
+        mutationFn: async (data) => {
+            return await api.put(`/api/admin/dictionary/lemmas/${id}/morphology`, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+            alert('Morphology updated successfully');
+        }
+    });
+
+    const [morphData, setMorphData] = useState({
+        root: '',
+        pattern: '',
+        gender: '',
+        number: '',
+        case: '',
+        aspect: '',
+        tense: ''
+    });
+
+    useEffect(() => {
+        if (lemma?.morphology) {
+            setMorphData(lemma.morphology);
+        }
+    }, [lemma]);
+
+    const handleSave = () => {
+        saveMorphologyMutation.mutate(morphData);
+    };
 
     if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>;
     if (!lemma && id) return <div className="p-8 text-center text-red-500">Lemma not found.</div>;
@@ -64,23 +95,57 @@ const MorphologyLab = () => {
                             </TabsList>
 
                             <TabsContent value="plurals" className="mt-6 space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Card className="border-l-4 border-l-primary">
-                                        <CardContent className="pt-6 space-y-3">
-                                            <div className="flex justify-between items-start">
-                                                <Label className="text-sm text-muted-foreground">Standard Plural</Label>
-                                                <Badge>Approved</Badge>
-                                            </div>
-                                            <Input defaultValue={currentLemma.lemma + 'n'} className="font-arabic text-xl" dir="rtl" />
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="sm" className="h-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                    <Button variant="outline" className="h-auto border-dashed border-2 py-8 flex flex-col gap-2">
-                                        <Plus className="h-6 w-6" />
-                                        <span>Add Plural Form</span>
-                                    </Button>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label>Root (اصل)</Label>
+                                            <Input
+                                                value={morphData.root || ''}
+                                                onChange={(e) => setMorphData({ ...morphData, root: e.target.value })}
+                                                className="font-arabic text-xl text-right"
+                                                dir="rtl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Pattern (وزن)</Label>
+                                            <Input
+                                                value={morphData.pattern || ''}
+                                                onChange={(e) => setMorphData({ ...morphData, pattern: e.target.value })}
+                                                className="font-arabic text-xl text-right"
+                                                dir="rtl"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Gender</Label>
+                                            <Input
+                                                value={morphData.gender || ''}
+                                                onChange={(e) => setMorphData({ ...morphData, gender: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Number</Label>
+                                            <Input
+                                                value={morphData.number || ''}
+                                                onChange={(e) => setMorphData({ ...morphData, number: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Case</Label>
+                                            <Input
+                                                value={morphData.case || ''}
+                                                onChange={(e) => setMorphData({ ...morphData, case: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Tense/Aspect</Label>
+                                            <Input
+                                                value={morphData.tense || ''}
+                                                onChange={(e) => setMorphData({ ...morphData, tense: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </TabsContent>
 
@@ -124,8 +189,11 @@ const MorphologyLab = () => {
             )}
 
             <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline">Reject Variations</Button>
-                <Button><Check className="mr-2 h-4 w-4" /> Link & Save All</Button>
+                <Button variant="outline" onClick={() => navigate('/admin/dictionary/lemma-inbox')}>Cancel</Button>
+                <Button onClick={handleSave} disabled={saveMorphologyMutation.isPending}>
+                    {saveMorphologyMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                    Save Morphology
+                </Button>
             </div>
         </div>
     );

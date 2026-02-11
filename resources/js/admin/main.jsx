@@ -78,6 +78,8 @@ import FrequencyStats from './pages/Analytics/FrequencyStats';
 import DialectCoverage from './pages/Analytics/DialectCoverage';
 import UsageTrends from './pages/Analytics/UsageTrends';
 
+import UnderDevelopment from './components/UnderDevelopment';
+
 
 const App = () => {
     return (
@@ -309,23 +311,23 @@ const App = () => {
                     } />
 
                     {/* Dictionary Routes */}
-                    <Route path="/admin/dictionary/lemma-inbox" element={<ProtectedRoute><AdminLayout><LemmaInbox /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/lemmas/:id" element={<ProtectedRoute><AdminLayout><SenseEditor /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/lemmas/:id/morphology" element={<ProtectedRoute><AdminLayout><MorphologyLab /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/lemmas/:id/variants" element={<ProtectedRoute><AdminLayout><Variants /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/sense-editor" element={<ProtectedRoute><AdminLayout><SenseEditor /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/morphology-lab" element={<ProtectedRoute><AdminLayout><MorphologyLab /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/variants" element={<ProtectedRoute><AdminLayout><Variants /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/dictionary/qa-search" element={<ProtectedRoute><AdminLayout><DictionaryQA /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemma-inbox" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Dictionary Module" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemmas/:id" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Lemma Editor" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemmas/:id/morphology" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Morphology Lab" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/lemmas/:id/variants" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Variant Manager" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/sense-editor" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Sense Editor" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/morphology-lab" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Morphology Lab" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/variants" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Variant Manager" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/qa-search" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="QA & Search" /></AdminLayout></ProtectedRoute>} />
 
                     {/* Corpus Routes */}
-                    <Route path="/admin/corpus/sentence-explorer" element={<ProtectedRoute><AdminLayout><SentenceExplorer /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/corpus/context-clusters" element={<ProtectedRoute><AdminLayout><ContextClusters /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/corpus/sentence-explorer" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Corpus Explorer" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/corpus/context-clusters" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Context Clusters" /></AdminLayout></ProtectedRoute>} />
 
                     {/* Analytics Routes */}
-                    <Route path="/admin/analytics/frequency" element={<ProtectedRoute><AdminLayout><FrequencyStats /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/analytics/dialect" element={<ProtectedRoute><AdminLayout><DialectCoverage /></AdminLayout></ProtectedRoute>} />
-                    <Route path="/admin/analytics/trends" element={<ProtectedRoute><AdminLayout><UsageTrends /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/analytics/frequency" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Frequency Analytics" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/analytics/dialect" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Dialect Coverage" /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/analytics/trends" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Usage Trends" /></AdminLayout></ProtectedRoute>} />
 
                     {/* Catch-all 404 Route */}
                     <Route path="/admin/*" element={
