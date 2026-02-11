@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Poetry;
+use App\Models\TopicCategory;
+use App\Models\TopicCategoryDetail;
 use Illuminate\Support\Facades\App;
 
 class SidebarController extends Controller
@@ -91,60 +93,31 @@ class SidebarController extends Controller
     public function topics(Request $request)
     {
         $lang = $request->header('Accept-Language', 'en');
-        // Validate lang to ensure we don't query with invalid column values if data differs
-        if (!in_array($lang, ['en', 'sd'])) {
-            $lang = 'en';
-        }
 
-        // Valid Sindhi translations map for Roman tags
-        $sindhiMap = [
-            'watan' => 'وطن',
-            'dharti' => 'ڌرتي',
-            'dukh' => 'ڏک',
-            'sindh' => 'سنڌ',
-            'muhbat' => 'محبت',
-            'husun' => 'حسن',
-            'tasauf' => 'تصوف',
-            'ishq' => 'عشق',
-            'raat' => 'رات',
-            'zindagi' => 'زندگي',
-            'manzar' => 'منظر',
-            'tareef' => 'تعريف',
-            'piyaar' => 'پيار',
-            'yaad' => 'ياد',
-            'moat' => 'موت',
-            'sufism' => 'تصوف',
-            'poetry' => 'شاعري',
-            'love' => 'پيار',
-        ];
+        // Fetch top topic categories with their details
+        // Randomize for fresh content on each reload
+        $topics = TopicCategory::with([
+            'details' => function ($query) use ($lang) {
+                $query->where('lang', $lang);
+            }
+        ])
+            ->inRandomOrder()
+            ->take(12)
+            ->get()
+            ->map(function ($category) use ($lang) {
+                $detail = $category->details->first();
 
-        $tags = Poetry::where('lang', $lang)
-            ->whereNotNull('poetry_tags')
-            ->pluck('poetry_tags')
-            ->flatMap(function ($tagString) {
-                // simple cleaning for ["tag"] or "tag, tag" formats
-                $clean = str_replace(['[', ']', '"', '&quot;'], '', $tagString);
-                return array_map(function ($t) {
-                    return trim($t);
-                }, explode(',', $clean));
-            })
-            ->filter(function ($tag) {
-                return !empty($tag);
-            })
-            ->map(function ($tag) use ($lang, $sindhiMap) {
-                // Translate only if lang is sd
-                if ($lang === 'sd') {
-                    $lower = strtolower($tag);
-                    return $sindhiMap[$lower] ?? $tag;
+                // Fallback to any detail if requested lang is missing
+                if (!$detail) {
+                    $detail = TopicCategoryDetail::where('topic_category_id', $category->id)->first();
                 }
-                return $tag;
-            })
-            ->countBy()
-            ->sortDesc()
-            ->take(15)
-            ->keys()
-            ->values();
 
-        return response()->json($tags);
+                return [
+                    'name' => $detail->name ?? 'Unknown',
+                    'slug' => $category->slug
+                ];
+            });
+
+        return response()->json($topics);
     }
 }
