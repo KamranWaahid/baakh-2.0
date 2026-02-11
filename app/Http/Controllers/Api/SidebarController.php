@@ -47,8 +47,12 @@ class SidebarController extends Controller
                     $title = $poetry->translations->first()->title ?? 'Untitled';
                 }
 
-                // Determine poet name
-                $poetName = $poetry->poet_details->poet_name ?? 'Unknown Poet';
+                // Determine poet name (prefer laqab)
+                $poetName = $poetry->poet_details->where('lang', $lang)->first()->poet_laqab
+                    ?? $poetry->poet_details->where('lang', $lang)->first()->poet_name
+                    ?? $poetry->poet_details->first()->poet_laqab
+                    ?? $poetry->poet_details->first()->poet_name
+                    ?? 'Unknown Poet';
 
                 $date = $poetry->created_at->format('M d');
                 if ($lang === 'sd') {
@@ -64,7 +68,7 @@ class SidebarController extends Controller
                     'id' => $poetry->id,
                     'title' => $title,
                     'author' => $poetName,
-                    'author_avatar' => $poetry->poet->author_avatar ?? null,
+                    'author_avatar' => $poetry->poet->poet_pic ?? null,
                     'date' => $date,
                     'slug' => $poetry->poetry_slug,
                     'poet_slug' => $poetry->poet->poet_slug ?? '',

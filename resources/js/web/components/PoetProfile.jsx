@@ -133,7 +133,7 @@ const PoetProfile = ({ lang }) => {
                                 <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden shadow-sm">
                                     {poet.avatar ? (
                                         <img
-                                            src={poet.avatar}
+                                            src={poet.avatar.startsWith('http') ? poet.avatar : `/${poet.avatar}`}
                                             alt={isRtl ? poet.name_sd : poet.name_en}
                                             className="w-full h-full object-cover"
                                             loading="lazy"
@@ -324,7 +324,7 @@ const PoetProfile = ({ lang }) => {
                         <div className="h-32 w-32 rounded-full bg-gray-50 mb-6 flex items-center justify-center text-gray-400 overflow-hidden border border-gray-100">
                             {poet.avatar ? (
                                 <img
-                                    src={poet.avatar}
+                                    src={poet.avatar.startsWith('http') ? poet.avatar : `/${poet.avatar}`}
                                     alt={isRtl ? poet.name_sd : poet.name_en}
                                     className="w-full h-full object-cover"
                                     loading="lazy"

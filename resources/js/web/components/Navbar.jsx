@@ -140,7 +140,7 @@ const Navbar = ({ lang }) => {
                                 <Separator className="my-2" />
                                 <div className="flex items-center gap-3 px-3 py-2">
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage src={user.avatar} alt={user.name} />
+                                        <AvatarImage src={user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`)} alt={user.name} />
                                         <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col">
@@ -158,7 +158,7 @@ const Navbar = ({ lang }) => {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User account menu">
                                         <Avatar className="h-8 w-8 border border-gray-200">
-                                            <AvatarImage src={user.avatar} alt={user.name} />
+                                            <AvatarImage src={user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`)} alt={user.name} />
                                             <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                     </Button>

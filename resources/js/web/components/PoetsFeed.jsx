@@ -72,7 +72,7 @@ const PoetsFeed = ({ lang }) => {
             <Link to={`/${lang}/poet/${poet.slug}`}>
                 <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
                     <AvatarImage
-                        src={poet.avatar}
+                        src={poet.avatar && (poet.avatar.startsWith('http') ? poet.avatar : `/${poet.avatar}`)}
                         alt={isRtl ? poet.name_sd : poet.name_en}
                         className="object-cover"
                         loading="lazy"

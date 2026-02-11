@@ -103,7 +103,11 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 >
                                     <div className="h-9 w-9 rounded-full bg-gray-100 overflow-hidden shrink-0">
                                         {poet.image ? (
-                                            <img src={poet.image} alt={poet.name} className="h-full w-full object-cover" />
+                                            <img
+                                                src={poet.image.startsWith('http') ? poet.image : `/${poet.image}`}
+                                                alt={poet.name}
+                                                className="h-full w-full object-cover"
+                                            />
                                         ) : (
                                             <div className="h-full w-full flex items-center justify-center">
                                                 <User className="h-4 w-4 text-gray-400" />
