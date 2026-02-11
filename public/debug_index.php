@@ -56,12 +56,23 @@ $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 echo "DEBUG: Kernel instance created.<br>";
 
 echo "DEBUG: Handling request...<br>";
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-)->send();
+try {
+    $request = Illuminate\Http\Request::capture();
+    echo "DEBUG: Request captured.<br>";
 
-echo "DEBUG: Request handled.<br>";
+    $response = $kernel->handle($request);
+    echo "DEBUG: Kernel handled request.<br>";
 
-$kernel->terminate($request, $response);
-echo "DEBUG: Done.<br>";
+    $response->send();
+    echo "DEBUG: Response sent.<br>";
+
+    $kernel->terminate($request, $response);
+    echo "DEBUG: Done.<br>";
+} catch (\Throwable $e) {
+    echo "<h1>CRASH IN KERNEL HANDLE</h1>";
+    echo "Type: " . get_class($e) . "<br>";
+    echo "Message: " . $e->getMessage() . "<br>";
+    echo "File: " . $e->getFile() . ":" . $e->getLine() . "<br>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
+}
 ?>
