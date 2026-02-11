@@ -57,6 +57,21 @@ class TagController extends Controller
         ]);
     }
 
+    public function show($id)
+    {
+        $tag = Tags::with(['details', 'topicCategory.details'])->findOrFail($id);
+
+        return response()->json([
+            'id' => $tag->id,
+            'slug' => $tag->slug,
+            'type' => $tag->type,
+            'topic_category_id' => $tag->topic_category_id,
+            'details' => $tag->details->mapWithKeys(function ($d) {
+                return [$d->lang => ['name' => $d->name]];
+            })
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

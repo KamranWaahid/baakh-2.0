@@ -46,6 +46,7 @@ import CreatePoetry from './pages/Poetry/CreatePoetry';
 import CreateCouplet from './pages/Poetry/CreateCouplet';
 import CoupletsList from './pages/Poetry/CoupletsList';
 import TagsList from './pages/Tags/TagsList';
+import TagForm from './pages/Tags/TagForm';
 import CategoriesList from './pages/Categories/CategoriesList';
 import CategoryForm from './pages/Categories/CategoryForm';
 import HesudharList from './pages/Hesudhar/HesudharList';
@@ -161,6 +162,20 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <TagsList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/tags/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <TagForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/tags/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <TagForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

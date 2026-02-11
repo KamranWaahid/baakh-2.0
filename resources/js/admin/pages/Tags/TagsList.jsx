@@ -13,41 +13,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Edit, Tag } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from '@/components/ui/badge';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Link } from 'react-router-dom';
 
 const TagsList = () => {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingTag, setEditingTag] = useState(null);
-    const [formData, setFormData] = useState({
-        slug: '',
-        type: '',
-        topic_category_id: '',
-        details: {
-            sd: { name: '' },
-            en: { name: '' }
-        }
-    });
-
     const debouncedSearch = useDebounce(search, 500);
     const queryClient = useQueryClient();
 
@@ -65,71 +38,28 @@ const TagsList = () => {
 
     const typeLabels = React.useMemo(() => {
         if (!data?.available_types) return {};
-        // If types are in value/label format
         if (typeof data.available_types[0] === 'object') {
             return data.available_types.reduce((acc, curr) => {
                 acc[curr.value] = curr.label;
                 return acc;
             }, {});
         }
-        // Fallback for simple array
         return data.available_types.reduce((acc, type) => {
             acc[type] = type;
             return acc;
         }, {});
     }, [data?.available_types]);
 
-    const createMutation = useMutation({
-        mutationFn: (newTag) => api.post('/api/admin/tags', newTag),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['tags']);
-            setIsDialogOpen(false);
-            resetForm();
-        },
-    });
-
-    const updateMutation = useMutation({
-        mutationFn: ({ id, data }) => api.put(`/api/admin/tags/${id}`, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries(['tags']);
-            setIsDialogOpen(false);
-            resetForm();
-        },
-    });
-
     const deleteMutation = useMutation({
         mutationFn: (id) => api.delete(`/api/admin/tags/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries(['tags']);
+            alert('Tag deleted successfully');
         },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Failed to delete tag');
+        }
     });
-
-    const resetForm = () => {
-        setFormData({
-            slug: '',
-            type: '',
-            topic_category_id: '',
-            details: {
-                sd: { name: '' },
-                en: { name: '' }
-            }
-        });
-        setEditingTag(null);
-    };
-
-    const handleEdit = (tag) => {
-        setEditingTag(tag);
-        setFormData({
-            slug: tag.slug || '',
-            type: tag.type || '',
-            topic_category_id: tag.topic_category_id ? String(tag.topic_category_id) : '',
-            details: {
-                sd: { name: tag.details?.sd?.name || '' },
-                en: { name: tag.details?.en?.name || '' }
-            }
-        });
-        setIsDialogOpen(true);
-    };
 
     const handleDelete = (id) => {
         if (confirm('Are you sure you want to delete this tag?')) {
@@ -137,118 +67,15 @@ const TagsList = () => {
         }
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (editingTag) {
-            updateMutation.mutate({ id: editingTag.id, data: formData });
-        } else {
-            createMutation.mutate(formData);
-        }
-    };
-
     return (
         <div className="space-y-4 p-4 md:p-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Tags</h2>
-                <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                    setIsDialogOpen(open);
-                    if (!open) resetForm();
-                }}>
-                    <DialogTrigger asChild>
-                        <Button className="w-full sm:w-auto">
-                            <Plus className="mr-2 h-4 w-4" /> Add Tag
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>{editingTag ? 'Edit Tag' : 'Create New Tag'}</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="tag-slug">Slug (Unique ID)</Label>
-                                <Input
-                                    id="tag-slug"
-                                    value={formData.slug}
-                                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                                    placeholder="e.g. love-poetry"
-                                    required
-                                    className="w-full"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tag-type">Type</Label>
-                                <Select
-                                    value={formData.type}
-                                    onValueChange={(value) => setFormData({ ...formData, type: value })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select tag type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {data?.available_types?.map(type => (
-                                            <SelectItem key={type.value || type} value={type.value || type}>
-                                                {type.label || type}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="topic-category">Topic Category</Label>
-                                <Select
-                                    value={formData.topic_category_id}
-                                    onValueChange={(value) => setFormData({ ...formData, topic_category_id: value })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Topic Category (Optional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
-                                        {data?.topic_categories?.map(cat => (
-                                            <SelectItem key={cat.id} value={String(cat.id)}>
-                                                {cat.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tag-name-sd">Name (Sindhi)</Label>
-                                <Input
-                                    id="tag-name-sd"
-                                    dir="rtl"
-                                    value={formData.details.sd.name}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        details: { ...formData.details, sd: { name: e.target.value } }
-                                    })}
-                                    placeholder="روزمرہ جي زندگي..."
-                                    required
-                                    className="w-full text-right font-arabic"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tag-name-en">Name (English)</Label>
-                                <Input
-                                    id="tag-name-en"
-                                    value={formData.details.en.name}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        details: { ...formData.details, en: { name: e.target.value } }
-                                    })}
-                                    placeholder="Love Poetry"
-                                    className="w-full"
-                                />
-                            </div>
-                            <DialogFooter className="gap-2 sm:gap-0">
-                                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">Cancel</Button>
-                                <Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending || updateMutation.isPending}>
-                                    {createMutation.isPending || updateMutation.isPending ? 'Saving...' : 'Save'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <Button asChild className="w-full sm:w-auto">
+                    <Link to="/admin/tags/create">
+                        <Plus className="mr-2 h-4 w-4" /> Add Tag
+                    </Link>
+                </Button>
             </div>
 
             <Card>
@@ -289,18 +116,19 @@ const TagsList = () => {
                                             <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                                             <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : isError ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-red-500">
+                                        <TableCell colSpan={7} className="h-24 text-center text-red-500">
                                             Error loading tags.
                                         </TableCell>
                                     </TableRow>
                                 ) : tagsResponse.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
+                                        <TableCell colSpan={7} className="h-24 text-center">
                                             No tags found.
                                         </TableCell>
                                     </TableRow>
@@ -325,14 +153,17 @@ const TagsList = () => {
                                                 {tag.topic_category_name || '-'}
                                             </TableCell>
                                             <TableCell className="text-right whitespace-nowrap space-x-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(tag)}>
-                                                    <Edit className="h-4 w-4" />
+                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                                                    <Link to={`/admin/tags/${tag.id}/edit`}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Link>
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                     onClick={() => handleDelete(tag.id)}
+                                                    disabled={deleteMutation.isPending}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

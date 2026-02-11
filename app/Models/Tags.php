@@ -57,7 +57,7 @@ class Tags extends Model
         $array['details'] = $this->details->map(function ($detail) {
             return [
                 'lang' => $detail->lang,
-                'tag_name' => $detail->tag_name,
+                'name' => $detail->name,
             ];
         })->toArray();
 
