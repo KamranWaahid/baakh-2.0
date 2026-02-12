@@ -26,6 +26,8 @@ const Terms = React.lazy(() => import('./pages/Terms'));
 const Help = React.lazy(() => import('./pages/Help'));
 const Status = React.lazy(() => import('./pages/Status'));
 const SocialCallback = React.lazy(() => import('./components/SocialCallback'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const SettingsPage = React.lazy(() => import('./pages/Settings'));
 
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -194,6 +196,16 @@ const App = () => {
                             <Route path="/:lang/auth/social-callback" element={
                                 <LanguageWrapper withLayout={false}>
                                     <SocialCallback />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/profile" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <Profile />
+                                </LanguageWrapper>
+                            } />
+                            <Route path="/:lang/settings" element={
+                                <LanguageWrapper withLayout={false}>
+                                    <SettingsPage />
                                 </LanguageWrapper>
                             } />
                             <Route path="/:lang/:category" element={

@@ -148,7 +148,7 @@ const Navbar = ({ lang }) => {
                                         <span className="text-xs text-muted-foreground">{user.email}</span>
                                     </div>
                                 </div>
-                                <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100" onClick={logout}>
+                                <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100" onClick={async () => { await logout(); navigate(`/${lang}`); }}>
                                     <LogOut className="mr-2 h-4 w-4" />
                                     {isRtl ? 'لاگ آئوٽ' : 'Logout'}
                                 </Button>
@@ -173,16 +173,16 @@ const Navbar = ({ lang }) => {
                                         </div>
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => navigate(`/${lang}/profile`)}>
                                         <UserIcon className="mr-2 h-4 w-4" />
                                         <span>{isRtl ? 'پروفائل' : 'Profile'}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => navigate(`/${lang}/settings`)}>
                                         <Settings className="mr-2 h-4 w-4" />
                                         <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="focus:bg-gray-100" onClick={logout}>
+                                    <DropdownMenuItem className="focus:bg-gray-100" onClick={async () => { await logout(); navigate(`/${lang}`); }}>
                                         <LogOut className="mr-2 h-4 w-4" />
                                         <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
                                     </DropdownMenuItem>

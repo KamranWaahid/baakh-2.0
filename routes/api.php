@@ -28,6 +28,9 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', LogoutController::class);
         Route::get('/me', MeController::class);
+        Route::put('/profile', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'update']);
+        Route::post('/profile', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'update']); // FormData compat
+        Route::put('/password', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'changePassword']);
     });
 });
 
