@@ -80,23 +80,25 @@ const HesudharBulkCheck = () => {
                             value={text}
                             onChange={(e) => setText(e.target.value)}
                         />
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <Button
-                                className="flex-1"
+                                className="flex-[2]"
                                 onClick={handleCheck}
                                 disabled={checkMutation.isPending || !text.trim()}
                             >
                                 {checkMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSearch className="mr-2 h-4 w-4" />}
                                 Analyze Text
                             </Button>
-                            <Button variant="outline" onClick={handleStandardizeHeh} title="Convert all 'ه' and 'ہ' to standard 'ھ'">
-                                <RefreshCw className="mr-2 h-4 w-4" /> Standardize Heh
-                            </Button>
-                            {mistakes.length > 0 && (
-                                <Button variant="secondary" onClick={handleFixAll}>
-                                    <CheckCircle2 className="mr-2 h-4 w-4" /> Fix All
+                            <div className="flex gap-2 flex-1">
+                                <Button variant="outline" className="flex-1" onClick={handleStandardizeHeh} title="Convert all 'ه' and 'ہ' to standard 'ھ'">
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Standardize
                                 </Button>
-                            )}
+                                {mistakes.length > 0 && (
+                                    <Button variant="secondary" className="flex-1" onClick={handleFixAll}>
+                                        <CheckCircle2 className="mr-2 h-4 w-4" /> Fix All
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -124,18 +126,18 @@ const HesudharBulkCheck = () => {
                         ) : (
                             <div className="divide-y max-h-[600px] overflow-y-auto pr-2">
                                 {mistakes.map((mistake, index) => (
-                                    <div key={index} className="py-3 flex items-center justify-between group">
-                                        <div className="flex items-center gap-4">
+                                    <div key={index} className="py-3 flex items-center justify-between group gap-4">
+                                        <div className="flex items-center">
                                             <div className="flex flex-col">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-red-500 font-arabic text-lg line-through decoration-2 opacity-70">
+                                                    <span className="text-red-500 font-arabic text-base line-through decoration-2 opacity-70">
                                                         {mistake.word}
                                                     </span>
-                                                    <Badge variant="secondary" className="text-[10px] py-0 px-1 uppercase opacity-50">
-                                                        {mistake.type === 'normalization' ? 'Standardize' : 'Spelling'}
+                                                    <Badge variant="secondary" className="text-[9px] py-0 px-1 uppercase opacity-50 shrink-0">
+                                                        {mistake.type === 'normalization' ? 'Std' : 'Spelling'}
                                                     </Badge>
                                                 </div>
-                                                <span className="text-green-600 font-arabic text-xl font-bold">
+                                                <span className="text-green-600 font-arabic text-lg font-bold">
                                                     {mistake.correct}
                                                 </span>
                                             </div>
@@ -143,10 +145,10 @@ const HesudharBulkCheck = () => {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
                                             onClick={() => handleFixIndividual(mistake)}
                                         >
-                                            Apply Fix
+                                            Apply
                                         </Button>
                                     </div>
                                 ))}
