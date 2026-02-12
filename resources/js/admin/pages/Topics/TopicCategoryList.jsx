@@ -181,9 +181,65 @@ const TopicCategoryList = () => {
                     <CardTitle className="text-xl">Fixed Topics</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border overflow-x-auto">
+                    {/* Mobile Card View */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {isLoading ? (
+                            Array(3).fill(0).map((_, i) => (
+                                <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-3">
+                                    <Skeleton className="h-5 w-1/3" />
+                                    <Skeleton className="h-4 w-1/2" />
+                                    <div className="pt-3 border-t flex justify-end gap-2">
+                                        <Skeleton className="h-8 w-8 rounded" />
+                                        <Skeleton className="h-8 w-8 rounded" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : isError ? (
+                            <div className="py-12 text-center text-red-500 font-medium font-inter">Error loading topic categories.</div>
+                        ) : categories?.length === 0 ? (
+                            <div className="py-12 text-center text-gray-400 italic">No topic categories found.</div>
+                        ) : (
+                            categories?.map((cat) => (
+                                <div key={cat.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <Layers className="h-4 w-4 text-primary opacity-70" />
+                                                <h3 className="font-semibold text-gray-900 font-arabic" lang="sd">{cat.details?.sd?.name || 'N/A'}</h3>
+                                            </div>
+                                            <p className="text-sm text-gray-500 italic">{cat.details?.en?.name || '-'}</p>
+                                        </div>
+                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">ID: {cat.id}</span>
+                                    </div>
+
+                                    <div className="pt-3 border-t flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Slug</span>
+                                            <span className="text-xs font-mono text-gray-600">{cat.slug}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleEdit(cat)}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-9 w-9 text-destructive"
+                                                onClick={() => handleDelete(cat.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <Table>
-                            <TableHeader>
+                            <TableHeader className="bg-gray-50/50">
                                 <TableRow>
                                     <TableHead className="w-[80px] hidden sm:table-cell">ID</TableHead>
                                     <TableHead className="min-w-[150px]">Name (SD)</TableHead>
@@ -217,30 +273,32 @@ const TopicCategoryList = () => {
                                     </TableRow>
                                 ) : (
                                     categories?.map((cat) => (
-                                        <TableRow key={cat.id}>
-                                            <TableCell className="font-medium hidden sm:table-cell">{cat.id}</TableCell>
+                                        <TableRow key={cat.id} className="hover:bg-gray-50/50 transition-colors">
+                                            <TableCell className="font-medium hidden sm:table-cell text-gray-400">{cat.id}</TableCell>
                                             <TableCell className="whitespace-nowrap font-medium">
                                                 <div className="flex items-center gap-2">
-                                                    <Layers className="h-3 w-3 text-muted-foreground" />
-                                                    <span lang="sd">{cat.details?.sd?.name || 'N/A'}</span>
+                                                    <Layers className="h-3.5 w-3.5 text-primary/60" />
+                                                    <span lang="sd" className="text-gray-900 font-arabic text-base">{cat.details?.sd?.name || 'N/A'}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="whitespace-nowrap italic text-muted-foreground">
+                                            <TableCell className="whitespace-nowrap text-gray-600 italic">
                                                 {cat.details?.en?.name || '-'}
                                             </TableCell>
-                                            <TableCell className="hidden md:table-cell whitespace-nowrap font-mono text-xs">{cat.slug}</TableCell>
-                                            <TableCell className="text-right whitespace-nowrap space-x-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(cat)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDelete(cat.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                            <TableCell className="hidden md:table-cell whitespace-nowrap font-mono text-xs text-gray-400">{cat.slug}</TableCell>
+                                            <TableCell className="text-right whitespace-nowrap">
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" onClick={() => handleEdit(cat)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-destructive opacity-60 hover:opacity-100 hover:bg-destructive/10"
+                                                        onClick={() => handleDelete(cat.id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))

@@ -117,9 +117,64 @@ const RolesPermissions = () => {
                 </Button>
             </div>
 
-            <div className="bg-white rounded-lg border overflow-x-auto">
+            {/* Mobile Card View */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+                {roles?.map((role) => (
+                    <div key={role.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <Shield className="h-5 w-5" />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <h3 className="font-semibold text-gray-900 capitalize leading-none">{role.name.replace('_', ' ')}</h3>
+                                    <span className="text-[10px] text-gray-400 font-mono uppercase tracking-tighter">{role.guard_name} Guard</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleEdit(role)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                {role.name !== 'super_admin' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-red-600"
+                                        onClick={() => {
+                                            if (confirm('Delete this role?')) deleteMutation.mutate(role.id);
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Description</span>
+                                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                    {role.description || 'No description provided.'}
+                                </p>
+                            </div>
+                            <div className="pt-3 border-t flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-700">Capabilities</span>
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal">
+                                    {role.permissions.length} Permissions
+                                </Badge>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {roles?.length === 0 && (
+                    <div className="py-12 text-center text-gray-400 italic">No roles found.</div>
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-gray-50/50">
                         <TableRow>
                             <TableHead className="min-w-[150px]">Role Name</TableHead>
                             <TableHead>Description</TableHead>
@@ -130,25 +185,25 @@ const RolesPermissions = () => {
                     </TableHeader>
                     <TableBody>
                         {roles?.map((role) => (
-                            <TableRow key={role.id}>
-                                <TableCell className="font-medium capitalize whitespace-nowrap">{role.name.replace('_', ' ')}</TableCell>
-                                <TableCell className="text-sm text-gray-500 max-w-[200px] truncate" title={role.description}>
+                            <TableRow key={role.id} className="hover:bg-gray-50/50 transition-colors">
+                                <TableCell className="font-semibold capitalize whitespace-nowrap text-gray-900">{role.name.replace('_', ' ')}</TableCell>
+                                <TableCell className="text-sm text-gray-500 max-w-[250px] truncate" title={role.description}>
                                     {role.description || '-'}
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    <Badge variant="secondary" className="text-[10px]">{role.permissions.length} perms</Badge>
+                                    <Badge variant="secondary" className="text-[10px] font-normal uppercase px-1.5">{role.permissions.length} perms</Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground hidden md:table-cell whitespace-nowrap">{role.guard_name}</TableCell>
-                                <TableCell className="text-right whitespace-nowrap">
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(role)}>
+                                <TableCell className="text-gray-400 hidden md:table-cell whitespace-nowrap text-xs uppercase font-mono tracking-tighter">{role.guard_name}</TableCell>
+                                <TableCell className="text-right whitespace-nowrap pr-6">
+                                    <div className="flex justify-end gap-1">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" onClick={() => handleEdit(role)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         {role.name !== 'super_admin' && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                className="h-8 w-8 text-red-600 opacity-60 hover:opacity-100 hover:bg-red-50"
                                                 onClick={() => {
                                                     if (confirm('Delete this role?')) deleteMutation.mutate(role.id);
                                                 }}
