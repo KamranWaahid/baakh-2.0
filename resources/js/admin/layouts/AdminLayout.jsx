@@ -22,8 +22,6 @@ import {
     AlignCenter,
     AlignJustify,
     Book,
-    AlignJustify,
-    Book,
     Plus,
     Info
 } from 'lucide-react';

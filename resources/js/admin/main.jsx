@@ -64,7 +64,7 @@ import CountriesList from './pages/Locations/CountriesList';
 import ProvincesList from './pages/Locations/ProvincesList';
 import CitiesList from './pages/Locations/CitiesList';
 import UserForm from './pages/Users/UserForm';
-import UserForm from './pages/Users/UserForm';
+
 import TopicCategoryList from './pages/Topics/TopicCategoryList';
 import InformationSystem from './pages/System/InformationSystem';
 
