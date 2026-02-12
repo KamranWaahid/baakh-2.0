@@ -10,6 +10,18 @@ $cacheFiles = [
     __DIR__ . '/../bootstrap/cache/packages.php'
 ];
 
+// Add view cache files
+$viewFiles = glob(__DIR__ . '/../storage/framework/views/*.php');
+if ($viewFiles) {
+    echo "\nClearing views...\n";
+    foreach ($viewFiles as $file) {
+        if (unlink($file)) {
+            // echo "✅ DELETED View: " . basename($file) . "\n"; // Too verbose
+        }
+    }
+    echo "✅ Cleared " . count($viewFiles) . " compiled view files.\n";
+}
+
 foreach ($cacheFiles as $file) {
     if (file_exists($file)) {
         if (unlink($file)) {
