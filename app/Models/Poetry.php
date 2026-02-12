@@ -119,9 +119,9 @@ class Poetry extends Model
         $translations = $this->translations->map(function ($translation) {
             return [
                 'lang' => $translation->lang,
-                'poetry_title' => $translation->poetry_title,
-                'poetry_content' => $translation->poetry_content,
-                'poetry_detail' => $translation->poetry_detail,
+                'poetry_title' => $translation->title,
+                'poetry_content' => $translation->info,
+                'poetry_detail' => $translation->info,
             ];
         })->toArray();
 

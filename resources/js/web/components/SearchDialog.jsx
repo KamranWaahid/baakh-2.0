@@ -3,6 +3,7 @@ import { Search, X, Loader2, User, BookOpen, Calendar, ArrowRight, Tags, History
 import { useNavigate } from 'react-router-dom';
 import api from '../../admin/api/axios';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { getImageUrl } from '../utils/url';
 
 const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
     const isRtl = lang === 'sd';
@@ -99,20 +100,14 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 <button
                                     key={`p-${poet.id}`}
                                     onClick={() => handleSelect(`/${lang}/poet/${poet.slug}`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                 >
                                     <div className="h-9 w-9 rounded-full bg-gray-100 overflow-hidden shrink-0">
-                                        {poet.image ? (
-                                            <img
-                                                src={poet.image.startsWith('http') ? poet.image : `/${poet.image}`}
-                                                alt={poet.name}
-                                                className="h-full w-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="h-full w-full flex items-center justify-center">
-                                                <User className="h-4 w-4 text-gray-400" />
-                                            </div>
-                                        )}
+                                        <img
+                                            src={getImageUrl(poet.image, 'poet')}
+                                            alt={poet.name}
+                                            className="h-full w-full object-cover"
+                                        />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className={`font-medium text-gray-900 ${isRtl ? 'font-arabic' : ''}`}>
@@ -135,7 +130,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 <button
                                     key={`pm-${poem.id}`}
                                     onClick={() => handleSelect(`/${lang}/poet/${poem.poet_slug}/${poem.cat_slug}/${poem.slug}`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                     aria-label={`View poem: ${poem.title} by ${poem.poet_name}`}
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
@@ -164,7 +159,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 <button
                                     key={`cat-${cat.id}`}
                                     onClick={() => handleSelect(`/${lang}/${cat.slug}`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
                                         <Tags className="h-4 w-4 text-gray-400" />
@@ -189,7 +184,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 <button
                                     key={`tag-${tag.id}`}
                                     onClick={() => handleSelect(`/${lang}/poetry?tag=${tag.slug}`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
                                         <span className="text-gray-400 font-bold text-sm">#</span>
@@ -217,7 +212,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 <button
                                     key={`lem-${lemma.id}`}
                                     onClick={() => handleSelect(`/${lang}/dictionary`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
                                         <History className="h-4 w-4 text-gray-400" />
@@ -245,7 +240,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                 <button
                                     key={`prd-${period.id}`}
                                     onClick={() => handleSelect(`/${lang}/period`)}
-                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                     aria-label={`View period: ${period.title}`}
                                 >
                                     <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">

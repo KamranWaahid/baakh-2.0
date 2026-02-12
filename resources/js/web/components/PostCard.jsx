@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, User } from 'lucide-react';
 import PoemActionBar from './PoemActionBar';
 import { formatDate } from '@/lib/date-utils';
+import { getImageUrl } from '../utils/url';
 
 const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, id, is_couplet = false }) => {
     const isRtl = lang === 'sd';
@@ -39,17 +40,13 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                             className={`flex items-center gap-2 transition-opacity w-fit hover:opacity-80`}
                         >
                             <div className={`h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
-                                {author_avatar ? (
-                                    <img
-                                        src={author_avatar.startsWith('http') ? author_avatar : `/${author_avatar}`}
-                                        alt={safeAuthor}
-                                        className="w-full h-full object-cover"
-                                        loading="lazy"
-                                        decoding="async"
-                                    />
-                                ) : (
-                                    <User className="h-3 w-3" />
-                                )}
+                                <img
+                                    src={getImageUrl(author_avatar, 'user')}
+                                    alt={safeAuthor}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
                             </div>
                             <span className="font-semibold text-gray-900 hover:underline">{safeAuthor}</span>
                         </Link>
@@ -86,7 +83,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                 {cover && (
                                     <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm transition-transform duration-300 group-hover:shadow-md">
                                         <img
-                                            src={cover.startsWith('http') ? cover : `/${cover}`}
+                                            src={getImageUrl(cover, 'post')}
                                             alt={title}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             loading="lazy"

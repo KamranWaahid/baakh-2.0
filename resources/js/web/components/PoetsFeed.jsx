@@ -7,6 +7,7 @@ import axios from 'axios';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
+import { getImageUrl } from '../utils/url';
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Removing Tabs for now as we are just listing
 
 const PoetsFeed = ({ lang }) => {
@@ -72,7 +73,7 @@ const PoetsFeed = ({ lang }) => {
             <Link to={`/${lang}/poet/${poet.slug}`}>
                 <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
                     <AvatarImage
-                        src={poet.avatar && (poet.avatar.startsWith('http') ? poet.avatar : `/${poet.avatar}`)}
+                        src={getImageUrl(poet.avatar, 'poet')}
                         alt={isRtl ? poet.name_sd : poet.name_en}
                         className="object-cover"
                         loading="lazy"

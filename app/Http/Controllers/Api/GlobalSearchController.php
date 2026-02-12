@@ -117,15 +117,16 @@ class GlobalSearchController extends Controller
         if (config('scout.driver') === 'database') {
             return Poetry::where(function ($q) use ($query) {
                 $q->whereHas('translations', function ($sq) use ($query) {
-                    $sq->where('poetry_title', 'LIKE', "%{$query}%")
-                        ->orWhere('poetry_content', 'LIKE', "%{$query}%");
+                    $sq->where('title', 'LIKE', "%{$query}%")
+                        ->orWhere('info', 'LIKE', "%{$query}%");
                 })->orWhere('poetry_slug', 'LIKE', "%{$query}%");
-            })->take(5)->get()->load(['translations', 'category', 'poet', 'poet_details'])->map(function ($poem) use ($lang) {
+            })->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->map(function ($poem) use ($lang) {
                 $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
-                $poetName = $poem->poet_details->poet_name ?? 'Unknown';
+                $poetDetail = $poem->poet->all_details->where('lang', $lang)->first() ?? $poem->poet->all_details->first();
+                $poetName = $poetDetail->poet_name ?? 'Unknown';
                 return [
                     'id' => $poem->id,
-                    'title' => $translation->poetry_title ?? ($translation->title ?? 'Untitled'),
+                    'title' => $translation->title ?? 'Untitled',
                     'slug' => $poem->poetry_slug ?? '',
                     'poet_name' => $poetName,
                     'cat_slug' => $poem->category->slug ?? 'ghazal',
@@ -135,12 +136,13 @@ class GlobalSearchController extends Controller
             });
         }
 
-        return Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet_details'])->map(function ($poem) use ($lang) {
+        return Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->map(function ($poem) use ($lang) {
             $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
-            $poetName = $poem->poet_details->poet_name ?? 'Unknown';
+            $poetDetail = $poem->poet->all_details->where('lang', $lang)->first() ?? $poem->poet->all_details->first();
+            $poetName = $poetDetail->poet_name ?? 'Unknown';
             return [
                 'id' => $poem->id,
-                'title' => $translation->poetry_title ?? ($translation->title ?? 'Untitled'),
+                'title' => $translation->title ?? 'Untitled',
                 'slug' => $poem->poetry_slug ?? '',
                 'poet_name' => $poetName,
                 'cat_slug' => $poem->category->slug ?? 'ghazal',
@@ -262,13 +264,13 @@ class GlobalSearchController extends Controller
         if (config('scout.driver') === 'database') {
             return Tags::where(function ($q) use ($query) {
                 $q->whereHas('details', function ($sq) use ($query) {
-                    $sq->where('tag_name', 'LIKE', "%{$query}%");
+                    $sq->where('name', 'LIKE', "%{$query}%");
                 })->orWhere('slug', 'LIKE', "%{$query}%");
             })->take(5)->get()->load('details')->map(function ($tag) use ($lang) {
                 $detail = $tag->details->where('lang', $lang)->first() ?? $tag->details->first();
                 return [
                     'id' => $tag->id,
-                    'name' => $detail->tag_name ?? 'N/A',
+                    'name' => $detail->name ?? 'N/A',
                     'tag_type' => $tag->type,
                     'slug' => $tag->slug,
                     'type' => 'tag'
@@ -280,7 +282,7 @@ class GlobalSearchController extends Controller
             $detail = $tag->details->where('lang', $lang)->first() ?? $tag->details->first();
             return [
                 'id' => $tag->id,
-                'name' => $detail->tag_name ?? 'N/A',
+                'name' => $detail->name ?? 'N/A',
                 'tag_type' => $tag->type,
                 'slug' => $tag->slug,
                 'type' => 'tag'

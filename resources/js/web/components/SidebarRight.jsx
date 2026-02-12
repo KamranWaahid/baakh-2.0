@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User } from 'lucide-react';
 import { formatSindhiDate } from '../utils/dateUtils';
+import { getImageUrl } from '../utils/url';
 
 const SidebarRight = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -98,17 +99,13 @@ const SidebarRight = ({ lang }) => {
                             <div key={i} className="mb-6 last:mb-0">
                                 <Link to={`/${lang}/poet/${pick.poet_slug}`} className="flex items-center gap-2 mb-1 hover:opacity-80 transition-opacity w-fit">
                                     <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden">
-                                        {pick.author_avatar ? (
-                                            <img
-                                                src={pick.author_avatar.startsWith('http') ? pick.author_avatar : `/${pick.author_avatar}`}
-                                                alt={pick.author}
-                                                className="w-full h-full object-cover"
-                                                loading="lazy"
-                                                decoding="async"
-                                            />
-                                        ) : (
-                                            <User className="h-3 w-3" />
-                                        )}
+                                        <img
+                                            src={getImageUrl(pick.author_avatar, 'user')}
+                                            alt={pick.author}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
                                     </div>
                                     <span className={`text-xs font-medium hover:underline ${isRtl ? 'font-arabic' : ''}`}>{pick.author}</span>
                                 </Link>

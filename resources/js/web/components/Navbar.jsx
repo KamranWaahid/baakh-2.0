@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMobileMenu } from '../contexts/MobileMenuContext';
 import SearchDialog from './SearchDialog';
 import { useAuth } from '../contexts/AuthContext';
+import { getImageUrl } from '../utils/url';
 
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -36,8 +37,8 @@ const Navbar = ({ lang }) => {
     }, []);
 
     const navItems = [
-        { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
-        { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
+        { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/ ${lang} ` },
+        { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/ ${lang}/poets` },
         { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
         { label: isRtl ? 'بيت' : 'Couplets', icon: Scroll, path: `/${lang}/couplets` },
         { label: isRtl ? 'ڪلام' : 'Lyrics', icon: Music, path: `/${lang}/lyrics` },
@@ -115,7 +116,7 @@ const Navbar = ({ lang }) => {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User account menu">
                                     <Avatar className="h-8 w-8 border border-gray-200">
-                                        <AvatarImage src={user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`)} alt={user.name} />
+                                        <AvatarImage src={getImageUrl(user.avatar, 'user')} alt={user.name} />
                                         <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                 </Button>

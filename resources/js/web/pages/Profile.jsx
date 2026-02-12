@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from '../components/Logo';
+import { getImageUrl } from '../utils/url';
 
 const Profile = () => {
     const { lang } = useParams();
@@ -85,7 +86,7 @@ const Profile = () => {
         }
     };
 
-    const avatarSrc = avatarPreview || (user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`));
+    const avatarSrc = avatarPreview || getImageUrl(user.avatar, 'user');
     const BackArrow = isRtl ? ArrowRight : ArrowLeft;
 
     return (
