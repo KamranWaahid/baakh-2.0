@@ -19,26 +19,29 @@ const SocialCallback = () => {
                 localStorage.setItem('auth_token', token);
 
                 try {
+                    // Force a small delay to ensure token is set
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
                     // Synchronize state with backend
                     const user = await checkAuth();
 
                     if (user) {
-                        // Success - redirect to home
                         // Success - redirect to home with full reload to ensure auth state
-                        window.location.href = `/${lang}/`;
+                        // Using window.location.replace to prevent back button looping
+                        window.location.replace(`/${lang}/`);
                     } else {
                         // Failed to verify user even with token
-                        console.error('Failed to verify user after social login');
-                        navigate(`/${lang}/?error=auth_failed`, { replace: true });
+                        console.error('Failed to verify user after social login. Token:', token.substring(0, 10) + '...');
+                        navigate(`/${lang}/?error=auth_failed_verification`, { replace: true });
                     }
                 } catch (error) {
                     console.error('Error during social callback processing:', error);
-                    navigate(`/${lang}/?error=callback_error`, { replace: true });
+                    navigate(`/${lang}/?error=callback_error&details=${encodeURIComponent(error.message)}`, { replace: true });
                 }
             } else {
                 // No token found in URL
                 console.warn('No token provided in social callback URL');
-                navigate(`/${lang}/`, { replace: true });
+                navigate(`/${lang}/?error=no_token`, { replace: true });
             }
         };
 

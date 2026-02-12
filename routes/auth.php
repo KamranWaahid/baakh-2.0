@@ -13,12 +13,16 @@ use App\Http\Controllers\LoginWithGoogleController;
 use App\Http\Controllers\Users\BaakhUserProfileController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('login/with-google', [LoginWithGoogleController::class, 'loginWithGoogle'])->name('login.with-google');
+Route::get('auth/google-callback', [LoginWithGoogleController::class, 'googleAuthorized'])->name('google.authorized-user');
+
 Route::middleware('guest')->group(function () {
     /* Route::get('admin/register', [RegisteredUserController::class, 'create'])
                 ->name('register'); */
 
-    Route::get('login/with-google', [LoginWithGoogleController::class, 'loginWithGoogle'])->name('login.with-google');
-    Route::get('auth/google-callback', [LoginWithGoogleController::class, 'googleAuthorized'])->name('google.authorized-user');
+    // Moved outside guest middleware
+    // Route::get('login/with-google', [LoginWithGoogleController::class, 'loginWithGoogle'])->name('login.with-google');
+    // Route::get('auth/google-callback', [LoginWithGoogleController::class, 'googleAuthorized'])->name('google.authorized-user');
 
     /* Route::post('register', [RegisteredUserController::class, 'store']); */
 

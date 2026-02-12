@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Auth;
 | Admin SPA Route
 |--------------------------------------------------------------------------
 */
+
+// Include Auth Routes BEFORE SPA routes
+require __DIR__ . '/auth.php';
+
 /*
 |--------------------------------------------------------------------------
 | Admin SPA Route
@@ -22,4 +26,7 @@ Route::get('og-image/poetry/{slug}', [\App\Http\Controllers\OgImageController::c
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api).*$')->name('web.spa');
 
 
-require __DIR__ . '/auth.php';
+Route::get('/login', function () {
+    return response()->json(['message' => 'Unauthenticated.'], 401);
+})->name('login');
+
