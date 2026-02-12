@@ -56,8 +56,8 @@ const MainLayout = ({ children, lang }) => {
             <MobileMenu lang={lang} />
             <div
                 className={`min-h-screen bg-white transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform ${isMenuOpen
-                        ? (isRtl ? '-translate-x-[280px]' : 'translate-x-[280px]')
-                        : 'translate-x-0'
+                    ? (isRtl ? '-translate-x-[280px]' : 'translate-x-[280px]')
+                    : 'translate-x-0'
                     }`}
             >
                 <Navbar lang={lang} />
@@ -141,8 +141,8 @@ const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
-                <MobileMenuProvider>
-                    <BrowserRouter>
+                <BrowserRouter>
+                    <MobileMenuProvider>
                         <React.Suspense fallback={<PageLoader />}>
                             <Routes>
                                 <Route path="/:lang" element={
@@ -239,8 +239,8 @@ const App = () => {
                                 <Route path="*" element={<Navigate to="/sd" replace />} />
                             </Routes>
                         </React.Suspense>
-                    </BrowserRouter>
-                </MobileMenuProvider>
+                    </MobileMenuProvider>
+                </BrowserRouter>
             </AuthProvider>
         </QueryClientProvider>
     );
