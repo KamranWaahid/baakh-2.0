@@ -14,9 +14,16 @@ use App\Models\Categories;
 use App\Models\Tags;
 use App\Models\Poets;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class GlobalSearchController extends Controller
 {
+    /**
+     * Perform a global search across multiple models.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function search(Request $request)
     {
         $query = $request->get('query');
@@ -35,8 +42,27 @@ class GlobalSearchController extends Controller
 
         $lang = $request->header('Accept-Language', 'en');
 
-        // 1. Search Poets using Scout
-        $poets = Poets::search($query)->take(5)->get()->load('all_details')->map(function ($poet) use ($lang) {
+        return response()->json([
+            'poets' => $this->searchPoets($query, $lang),
+            'poetry' => $this->searchPoetry($query, $lang),
+            'periods' => $this->searchPeriods($query, $lang),
+            'dictionary' => $this->searchDictionary($query),
+            'corpus' => $this->searchCorpus($query),
+            'categories' => $this->searchCategories($query, $lang),
+            'tags' => $this->searchTags($query, $lang)
+        ]);
+    }
+
+    /**
+     * Search for poets.
+     *
+     * @param string $query
+     * @param string $lang
+     * @return Collection
+     */
+    private function searchPoets(string $query, string $lang): Collection
+    {
+        return Poets::search($query)->take(5)->get()->load('all_details')->map(function ($poet) use ($lang) {
             $detail = $poet->all_details->where('lang', $lang)->first() ?? $poet->all_details->first();
             return [
                 'id' => $poet->id,
@@ -46,9 +72,18 @@ class GlobalSearchController extends Controller
                 'type' => 'poet'
             ];
         });
+    }
 
-        // 2. Search Poetry using Scout
-        $poetry = Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet_details'])->map(function ($poem) use ($lang) {
+    /**
+     * Search for poetry.
+     *
+     * @param string $query
+     * @param string $lang
+     * @return Collection
+     */
+    private function searchPoetry(string $query, string $lang): Collection
+    {
+        return Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet_details'])->map(function ($poem) use ($lang) {
             $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
             $poetName = $poem->poet_details->poet_name ?? 'Unknown';
             return [
@@ -61,9 +96,17 @@ class GlobalSearchController extends Controller
                 'type' => 'poetry'
             ];
         });
+    }
 
-        // 3. Search Dictionary (Lemmas) using Scout
-        $dictionary = Lemma::search($query)->take(5)->get()->map(function ($lemma) {
+    /**
+     * Search for dictionary lemmas.
+     *
+     * @param string $query
+     * @return Collection
+     */
+    private function searchDictionary(string $query): Collection
+    {
+        return Lemma::search($query)->take(5)->get()->map(function ($lemma) {
             return [
                 'id' => $lemma->id,
                 'lemma' => $lemma->lemma,
@@ -71,9 +114,17 @@ class GlobalSearchController extends Controller
                 'type' => 'dictionary'
             ];
         });
+    }
 
-        // 4. Search Corpus using Scout
-        $corpus = CorpusSentence::search($query)->take(5)->get()->map(function ($sentence) {
+    /**
+     * Search for corpus sentences.
+     *
+     * @param string $query
+     * @return Collection
+     */
+    private function searchCorpus(string $query): Collection
+    {
+        return CorpusSentence::search($query)->take(5)->get()->map(function ($sentence) {
             return [
                 'id' => $sentence->id,
                 'sentence' => $sentence->sentence,
@@ -81,9 +132,18 @@ class GlobalSearchController extends Controller
                 'type' => 'corpus'
             ];
         });
+    }
 
-        // 5. Search Categories using Scout
-        $categories = Categories::search($query)->take(5)->get()->load('details')->map(function ($category) use ($lang) {
+    /**
+     * Search for categories.
+     *
+     * @param string $query
+     * @param string $lang
+     * @return Collection
+     */
+    private function searchCategories(string $query, string $lang): Collection
+    {
+        return Categories::search($query)->take(5)->get()->load('details')->map(function ($category) use ($lang) {
             $detail = $category->details->where('lang', $lang)->first() ?? $category->details->first();
             return [
                 'id' => $category->id,
@@ -92,9 +152,18 @@ class GlobalSearchController extends Controller
                 'type' => 'category'
             ];
         });
+    }
 
-        // 6. Search Tags using Scout
-        $tags = Tags::search($query)->take(5)->get()->load('details')->map(function ($tag) use ($lang) {
+    /**
+     * Search for tags.
+     *
+     * @param string $query
+     * @param string $lang
+     * @return Collection
+     */
+    private function searchTags(string $query, string $lang): Collection
+    {
+        return Tags::search($query)->take(5)->get()->load('details')->map(function ($tag) use ($lang) {
             $detail = $tag->details->where('lang', $lang)->first() ?? $tag->details->first();
             return [
                 'id' => $tag->id,
@@ -104,9 +173,18 @@ class GlobalSearchController extends Controller
                 'type' => 'tag'
             ];
         });
+    }
 
-        // 7. Search Periods (Manual for now or add Searchable if needed)
-        $periods = Period::where('title_en', 'LIKE', "%{$query}%")
+    /**
+     * Search for periods.
+     *
+     * @param string $query
+     * @param string $lang
+     * @return Collection
+     */
+    private function searchPeriods(string $query, string $lang): Collection
+    {
+        return Period::where('title_en', 'LIKE', "%{$query}%")
             ->orWhere('title_sd', 'LIKE', "%{$query}%")
             ->take(3)
             ->get()
@@ -118,15 +196,5 @@ class GlobalSearchController extends Controller
                     'type' => 'period'
                 ];
             });
-
-        return response()->json([
-            'poets' => $poets,
-            'poetry' => $poetry,
-            'periods' => $periods,
-            'dictionary' => $dictionary,
-            'corpus' => $corpus,
-            'categories' => $categories,
-            'tags' => $tags
-        ]);
     }
 }
