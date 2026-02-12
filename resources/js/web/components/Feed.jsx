@@ -1,4 +1,5 @@
 import React from 'react';
+import { useParams } from 'react-router-dom';
 import PostCard from './PostCard';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
