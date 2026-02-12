@@ -61,10 +61,7 @@ const FeedContent = ({ feedType, feeds, lang, isRtl, lastPostElementRef }) => {
 
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const { category } = React.useContext(React.useMemo(() => ({ category: undefined }), [])); // Mock or use useParams
-    // Actual useParams call:
-    const params = useParams();
-    const urlCategory = params.category;
+    const { category: urlCategory } = useParams();
 
     const [activeTab, setActiveTab] = React.useState('for-you');
 
