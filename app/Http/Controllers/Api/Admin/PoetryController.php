@@ -126,7 +126,7 @@ class PoetryController extends Controller
         ])->get()->map(function ($tag) {
             return [
                 'id' => $tag->id,
-                'name' => $tag->details->first()?->name ?? $tag->slug,
+                'tag' => $tag->details->first()?->name ?? $tag->slug,
                 'type' => $tag->type
             ];
         })->groupBy('type');
