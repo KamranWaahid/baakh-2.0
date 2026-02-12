@@ -1,16 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, PenTool, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Plus } from 'lucide-react';
+import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale } from 'lucide-react';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
-import api from '../../admin/api/axios';
 import LoginModal from './LoginModal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-
-// ... 
-
-// ...
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,23 +14,15 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useMobileMenu } from '../contexts/MobileMenuContext';
 import SearchDialog from './SearchDialog';
-
 import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { user, loading, logout } = useAuth();
+    const { openMenu } = useMobileMenu();
     const [searchOpen, setSearchOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -50,7 +36,6 @@ const Navbar = ({ lang }) => {
     }, []);
 
     const navItems = [
-        // ... items ...
         { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
         { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
         { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
@@ -62,7 +47,6 @@ const Navbar = ({ lang }) => {
     ];
 
     useEffect(() => {
-        // Keyboard Shortcut for Search (Cmd+K / Ctrl+K)
         const handleKeyDown = (e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
@@ -71,12 +55,20 @@ const Navbar = ({ lang }) => {
         };
 
         document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
+
+        // Listen for open-search event from MobileMenu
+        const handleOpenSearch = () => setSearchOpen(true);
+        document.addEventListener('open-search', handleOpenSearch);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('open-search', handleOpenSearch);
+        };
     }, []);
 
     const location = useLocation();
 
-    const NavItems = ({ mobile = false }) => {
+    const NavItems = () => {
         const { lang } = useParams();
         const location = useLocation();
         const { user, logout } = useAuth();
@@ -95,106 +87,79 @@ const Navbar = ({ lang }) => {
             <>
                 <Link
                     to={newPath}
-                    className={`text-sm font-normal hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${mobile ? 'w-full' : ''}`}
+                    className="text-sm font-normal hover:bg-gray-100 px-3 py-2 rounded-md transition-colors flex items-center gap-2"
                     aria-label={lang === 'en' ? 'Switch to Sindhi' : 'Switch to English'}
                 >
                     {lang === 'en' ? <span className="font-arabic text-base pb-1">سنڌي</span> : 'English'}
                 </Link>
-                {!mobile && (
-                    <div className="h-6 w-px bg-gray-200 mx-2"></div>
-                )}
+                <div className="h-6 w-px bg-gray-200 mx-2"></div>
+
                 {loading ? (
                     <Skeleton className="h-8 w-8 rounded-full" />
                 ) : user ? (
-                    <div className={`flex items-center gap-2 ${mobile ? 'flex-col items-start w-full' : ''}`}>
-                        {!mobile && (
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-full hover:bg-gray-100 h-9 w-9"
-                                    onClick={() => setSearchOpen(true)}
-                                    aria-label="Open search (Cmd+K)"
-                                >
-                                    <Search className="h-4 w-4 text-gray-600" />
-                                </Button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full hover:bg-gray-100 h-9 w-9"
+                                onClick={() => setSearchOpen(true)}
+                                aria-label="Open search (Cmd+K)"
+                            >
+                                <Search className="h-4 w-4 text-gray-600" />
+                            </Button>
 
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="rounded-full hover:bg-gray-100 h-9 w-9 relative"
-                                    aria-label="Notifications"
-                                >
-                                    <Bell className="h-4 w-4 text-gray-600" />
-                                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-                                </Button>
-                            </div>
-                        )}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full hover:bg-gray-100 h-9 w-9 relative"
+                                aria-label="Notifications"
+                            >
+                                <Bell className="h-4 w-4 text-gray-600" />
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                            </Button>
+                        </div>
 
-                        {mobile ? (
-                            <>
-                                <Link to="/write" className="flex items-center gap-2 px-3 py-2 w-full hover:bg-gray-100 rounded-md">
-                                    <PenTool className="h-4 w-4" />
-                                    <span>{isRtl ? 'لکيو' : 'Write'}</span>
-                                </Link>
-                                <Separator className="my-2" />
-                                <div className="flex items-center gap-3 px-3 py-2">
-                                    <Avatar className="h-8 w-8">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User account menu">
+                                    <Avatar className="h-8 w-8 border border-gray-200">
                                         <AvatarImage src={user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`)} alt={user.name} />
                                         <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-medium">{user.name}</span>
-                                        <span className="text-xs text-muted-foreground">{user.email}</span>
-                                    </div>
-                                </div>
-                                <Button variant="ghost" className="w-full justify-start text-black hover:text-black/80 hover:bg-gray-100" onClick={async () => { await logout(); navigate(`/${lang}`); }}>
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    {isRtl ? 'لاگ آئوٽ' : 'Logout'}
                                 </Button>
-                            </>
-                        ) : (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User account menu">
-                                        <Avatar className="h-8 w-8 border border-gray-200">
-                                            <AvatarImage src={user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`)} alt={user.name} />
-                                            <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="end" forceMount>
-                                    <DropdownMenuLabel className="font-normal">
-                                        <div className="flex flex-col space-y-1">
-                                            <p className="text-sm font-medium leading-none">{user.name}</p>
-                                            <p className="text-xs leading-none text-muted-foreground">
-                                                {user.email}
-                                            </p>
-                                        </div>
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => navigate(`/${lang}/profile`)}>
-                                        <UserIcon className="mr-2 h-4 w-4" />
-                                        <span>{isRtl ? 'پروفائل' : 'Profile'}</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate(`/${lang}/settings`)}>
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="focus:bg-gray-100" onClick={async () => { await logout(); navigate(`/${lang}`); }}>
-                                        <LogOut className="mr-2 h-4 w-4" />
-                                        <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56" align="end" forceMount>
+                                <DropdownMenuLabel className="font-normal">
+                                    <div className="flex flex-col space-y-1">
+                                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                                        <p className="text-xs leading-none text-muted-foreground">
+                                            {user.email}
+                                        </p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => navigate(`/${lang}/profile`)}>
+                                    <UserIcon className="mr-2 h-4 w-4" />
+                                    <span>{isRtl ? 'پروفائل' : 'Profile'}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate(`/${lang}/settings`)}>
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="focus:bg-gray-100" onClick={async () => { await logout(); navigate(`/${lang}`); }}>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>{isRtl ? 'لاگ آئوٽ' : 'Logout'}</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 ) : (
-                    <div className={`flex items-center gap-2 ${mobile ? 'flex-col w-full' : ''}`}>
+                    <div className="flex items-center gap-2">
                         <LoginModal
                             trigger={
-                                <Button variant="ghost" className={mobile ? 'w-full justify-start' : 'hover:bg-transparent hover:text-black/70'}>
+                                <Button variant="ghost" className="hover:bg-transparent hover:text-black/70">
                                     {isRtl ? 'لاگ ان' : 'Sign in'}
                                 </Button>
                             }
@@ -203,7 +168,7 @@ const Navbar = ({ lang }) => {
 
                         <LoginModal
                             trigger={
-                                <Button className={`bg-black text-white hover:bg-gray-800 rounded-full ${mobile ? 'w-full' : ''}`}>
+                                <Button className="bg-black text-white hover:bg-gray-800 rounded-full">
                                     {isRtl ? 'شروعات ڪريو' : 'Get started'}
                                 </Button>
                             }
@@ -223,47 +188,15 @@ const Navbar = ({ lang }) => {
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
             <nav className={`h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white z-[50] transition-all duration-300 ${isHidden ? 'translate-y-[-110%] opacity-0' : 'translate-y-0 opacity-100 shadow-sm'}`}>
                 <div className="flex items-center gap-4 flex-1">
-                    <Sheet>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="lg:hidden text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
-                                aria-label="Open menu"
-                            >
-                                <Menu className="h-5 w-5 md:h-6 md:w-6" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side={isRtl ? "right" : "left"} className="w-[300px] sm:w-[400px]">
-                            <SheetHeader>
-                                <SheetTitle className="flex items-center gap-2">
-                                    <Logo className="h-8 w-8 text-black" />
-                                    <span className="font-medium text-xl">Baakh</span>
-                                </SheetTitle>
-                            </SheetHeader>
-                            <div className="mt-8 flex flex-col gap-4">
-                                <div className="relative w-full" onClick={() => setSearchOpen(true)}>
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <div className={`flex items-center h-10 w-full rounded-full border border-transparent bg-gray-50 px-3 pl-9 text-sm text-gray-500 hover:bg-gray-100 cursor-pointer transition-colors`}>
-                                        {isRtl ? 'ڳوليو...' : 'Search...'}
-                                    </div>
-                                </div>
-                                <Separator />
-                                <div className="flex flex-col gap-1">
-                                    {navItems.map(item => (
-                                        <Button key={item.path} variant="ghost" asChild className="justify-start gap-3 px-3 font-normal">
-                                            <Link to={item.path}>
-                                                <item.icon className="h-5 w-5 text-gray-500" />
-                                                <span className="text-base">{item.label}</span>
-                                            </Link>
-                                        </Button>
-                                    ))}
-                                </div>
-                                <Separator />
-                                <NavItems mobile />
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:hidden text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
+                        onClick={openMenu}
+                        aria-label="Open menu"
+                    >
+                        <Menu className="h-5 w-5 md:h-6 md:w-6" />
+                    </Button>
 
                     <Link to={`/${lang}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95 duration-200">
                         <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
