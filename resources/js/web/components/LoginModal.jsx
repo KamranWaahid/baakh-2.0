@@ -158,10 +158,10 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
                     {isRtl ? 'اڪائونٽ ناهي؟ ' : 'No account? '}
                 </span>
                 <button
-                    onClick={() => setMode('register')}
+                    onClick={() => window.location.href = '/login/with-google'}
                     className="text-black font-bold hover:underline"
                 >
-                    {isRtl ? 'نئون ٺاهيو' : 'Create one'}
+                    {isRtl ? 'گوگل سان جاري رکو' : 'Continue with Google'}
                 </button>
             </div>
         </div>
@@ -302,7 +302,7 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
             <DialogContent className="sm:max-w-md bg-white p-8 sm:p-12 shadow-xl border-0">
                 <DialogHeader className="mb-8">
                     <DialogTitle className="text-center font-serif text-3xl font-medium tracking-tight">
-                        {mode === 'register' ? (isRtl ? 'نئون کاتو ٺاهيو.' : 'Create account.') : (isRtl ? 'خوش آمديد.' : 'Welcome back.')}
+                        {mode === 'register' ? (isRtl ? 'گوگل سان جاري رکو.' : 'Continue with Google.') : (isRtl ? 'خوش آمديد.' : 'Welcome back.')}
                     </DialogTitle>
                 </DialogHeader>
 

@@ -24,7 +24,8 @@ const SocialCallback = () => {
 
                     if (user) {
                         // Success - redirect to home
-                        navigate(`/${lang}/`, { replace: true });
+                        // Success - redirect to home with full reload to ensure auth state
+                        window.location.href = `/${lang}/`;
                     } else {
                         // Failed to verify user even with token
                         console.error('Failed to verify user after social login');
