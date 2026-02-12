@@ -1,4 +1,5 @@
 @extends('adminlte::page')
+@php /** @var \Illuminate\Support\ViewErrorBag $errors */ @endphp
 
 @section('title', 'Update Tags')
 
@@ -34,7 +35,7 @@
                                     @foreach ($types as $item)
                                         <option value="{{ $item }}" @if ($data[0]->type == $item)
                                             selected
-                                        @endif>{{ Str::ucfirst($item); }}</option>
+                                        @endif>{{ Str::ucfirst($item) }}</option>
                                     @endforeach
                                 </select>
                             </div>

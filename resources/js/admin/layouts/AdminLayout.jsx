@@ -1,5 +1,7 @@
 import React, { useState, createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
+import api from '../api/axios';
 import {
     LayoutDashboard,
     Users,
@@ -36,8 +38,6 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import api from '../api/axios';
-
 const SidebarContext = createContext({ onLinkClick: () => { } });
 
 const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
@@ -100,6 +100,8 @@ const SidebarGroup = ({ icon: Icon, label, children, disabled }) => {
 };
 
 const Sidebar = ({ onLinkClick }) => {
+    const { isSuperAdmin } = useAuth();
+
     return (
         <SidebarContext.Provider value={{ onLinkClick }}>
             <div className="h-full flex flex-col gap-4 py-4 overflow-y-auto">
@@ -160,7 +162,9 @@ const Sidebar = ({ onLinkClick }) => {
 
                     <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
                     <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
-                    <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
+                    {isSuperAdmin && (
+                        <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
+                    )}
                     <SidebarLink to="/admin/languages" icon={Languages}>Languages</SidebarLink>
                     <SidebarLink to="/admin/databases" icon={Database}>Databases</SidebarLink>
                 </nav>

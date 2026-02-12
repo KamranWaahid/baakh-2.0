@@ -86,8 +86,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'create_poets',
             'edit_poets',
             'delete_poets',
-            'view_team',
-            'manage_team_members',
+            // 'view_team', // Removed to enforce isolation
+            // 'manage_team_members', // Removed to enforce isolation
             'assign_roles',
             'view_categories',
             'manage_categories',

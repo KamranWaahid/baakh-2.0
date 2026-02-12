@@ -19,14 +19,18 @@ class TeamPolicy
     /**
      * Determine whether the user can view the model.
      */
+    /**
+     * Determine whether the user can view the model.
+     */
     public function view(User $user, Team $team): bool
     {
         if ($user->hasPermissionTo('view_team')) {
             return true;
         }
 
-        // Check if user is a member of the team
-        return $team->members()->where('user_id', $user->id)->exists();
+        return $team->members()
+            ->where('user_id', $user->id)
+            ->exists();
     }
 
     /**
@@ -34,8 +38,6 @@ class TeamPolicy
      */
     public function create(User $user): bool
     {
-        // Maybe only default permission or specific role?
-        // Everyone usually gets a personal team, but creating extra teams might be restricted.
         return true;
     }
 
@@ -48,7 +50,10 @@ class TeamPolicy
             return true;
         }
 
-        return $team->owner_id === $user->id;
+        return $team->members()
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'admin'])
+            ->exists();
     }
 
     /**
@@ -60,7 +65,7 @@ class TeamPolicy
             return true;
         }
 
-        return $team->owner_id === $user->id;
+        return $team->owner_id === $user->id; // Only owner can delete team
     }
 
     /**
@@ -88,7 +93,10 @@ class TeamPolicy
             return true;
         }
 
-        return $team->owner_id === $user->id;
+        return $team->members()
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'admin'])
+            ->exists();
     }
 
     /**
@@ -100,6 +108,9 @@ class TeamPolicy
             return true;
         }
 
-        return $team->owner_id === $user->id;
+        return $team->members()
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'admin'])
+            ->exists();
     }
 }

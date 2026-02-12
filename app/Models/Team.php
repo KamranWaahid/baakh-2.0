@@ -16,6 +16,7 @@ class Team extends Model
         'name',
         'slug',
         'description',
+        'role',
         'owner_id',
         'status',
     ];

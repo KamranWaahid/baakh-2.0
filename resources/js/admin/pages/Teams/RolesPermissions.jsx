@@ -76,6 +76,7 @@ const RolesPermissions = () => {
     const handleEdit = (role) => {
         setSelectedRole(role);
         setValue('name', role.name);
+        setValue('description', role.description);
         setValue('permissions', role.permissions.map(p => p.name));
         setIsDialogOpen(true);
     };
@@ -86,7 +87,21 @@ const RolesPermissions = () => {
         setIsDialogOpen(true);
     };
 
-    if (rolesLoading || permissionsLoading) return <div>Loading...</div>;
+    const { data: user } = useQuery({
+        queryKey: ['auth-user'],
+        queryFn: async () => {
+            const response = await api.get('/api/user');
+            return response.data;
+        }
+    });
+
+    if (rolesLoading || permissionsLoading || !user) return <div>Loading...</div>;
+
+    const isSuperAdmin = user?.roles?.some(r => r.name === 'super_admin');
+
+    if (!isSuperAdmin) {
+        return <div className="p-8">Access Denied. You must be a Super Admin to view this page.</div>;
+    }
 
     const groupedPermissions = permissionsObj?.grouped || {};
 
@@ -107,6 +122,7 @@ const RolesPermissions = () => {
                     <TableHeader>
                         <TableRow>
                             <TableHead className="min-w-[150px]">Role Name</TableHead>
+                            <TableHead>Description</TableHead>
                             <TableHead>Permissions</TableHead>
                             <TableHead className="hidden md:table-cell">Guard</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -116,6 +132,9 @@ const RolesPermissions = () => {
                         {roles?.map((role) => (
                             <TableRow key={role.id}>
                                 <TableCell className="font-medium capitalize whitespace-nowrap">{role.name.replace('_', ' ')}</TableCell>
+                                <TableCell className="text-sm text-gray-500 max-w-[200px] truncate" title={role.description}>
+                                    {role.description || '-'}
+                                </TableCell>
                                 <TableCell className="whitespace-nowrap">
                                     <Badge variant="secondary" className="text-[10px]">{role.permissions.length} perms</Badge>
                                 </TableCell>
@@ -125,7 +144,7 @@ const RolesPermissions = () => {
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(role)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
-                                        {!['super_admin', 'admin', 'editor', 'contributor', 'viewer'].includes(role.name) && (
+                                        {role.name !== 'super_admin' && (
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -158,6 +177,14 @@ const RolesPermissions = () => {
                                 {...register('name', { required: true })}
                                 placeholder="e.g. moderator"
                                 disabled={selectedRole && ['super_admin', 'admin'].includes(selectedRole.name)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Description</label>
+                            <Input
+                                {...register('description')}
+                                placeholder="Describe the role's responsibilities..."
                             />
                         </div>
 

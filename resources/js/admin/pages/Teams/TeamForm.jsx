@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link, useSearchParams } from 'react-router-dom';
 import api from '../../api/axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,8 @@ import {
 
 const TeamForm = () => {
     const { id } = useParams();
+    const [searchParams] = useSearchParams();
+    const isSimpleMode = searchParams.get('simple') === 'true';
     const isEditMode = !!id;
     const navigate = useNavigate();
     const queryClient = useQueryClient();
@@ -64,7 +66,7 @@ const TeamForm = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['teams']);
-            navigate('/teams');
+            navigate('/admin/teams');
         }
     });
 
@@ -76,9 +78,11 @@ const TeamForm = () => {
 
     return (
         <div className="max-w-2xl mx-auto p-4 md:p-8">
-            <Button variant="ghost" onClick={() => navigate('/teams')} className="mb-4 md:mb-6 pl-0 hover:pl-2 transition-all flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back to Teams
-            </Button>
+            <Link to="/admin/teams">
+                <Button variant="ghost" className="mb-4 md:mb-6 pl-0 hover:pl-2 transition-all flex items-center">
+                    <ArrowLeft className="h-4 w-4 mr-2" /> Back to Teams
+                </Button>
+            </Link>
 
             <div className="grid gap-6">
                 <Card>
@@ -104,11 +108,30 @@ const TeamForm = () => {
                                     rows={3}
                                 />
                             </div>
+
+                            {isSimpleMode && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Team Role Category</label>
+                                    <Select onValueChange={(val) => setValue('role', val)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select role category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {roles?.map((role) => (
+                                                <SelectItem key={role.id} value={role.name}>
+                                                    {role.name.replace('_', ' ').charAt(0).toUpperCase() + role.name.replace('_', ' ').slice(1)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-gray-500">Assign a system role category to this team.</p>
+                                </div>
+                            )}
                         </form>
                     </CardContent>
                 </Card>
 
-                {!isEditMode && (
+                {!isEditMode && !isSimpleMode && (
                     <Card>
                         <CardHeader>
                             <CardTitle>Admin Account Details</CardTitle>
@@ -216,7 +239,7 @@ const TeamForm = () => {
                 )}
 
                 <Button type="submit" form="team-form" disabled={mutation.isPending} className="w-full">
-                    {mutation.isPending ? 'Saving...' : (isEditMode ? 'Update Team' : 'Create Team & Admin')}
+                    {mutation.isPending ? 'Saving...' : (isEditMode ? 'Update Team' : (isSimpleMode ? 'Create Team' : 'Create Team & Admin'))}
                 </Button>
             </div>
         </div>

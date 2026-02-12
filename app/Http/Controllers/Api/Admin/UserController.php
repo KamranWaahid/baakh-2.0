@@ -18,7 +18,7 @@ class UserController extends Controller
         $adminRoles = ['super_admin', 'admin', 'editor', 'contributor', 'viewer', 'Admins'];
 
         $users = User::role($adminRoles)
-            ->with('roles')
+            ->with(['roles', 'teams'])
             ->latest()
             ->paginate(10);
 

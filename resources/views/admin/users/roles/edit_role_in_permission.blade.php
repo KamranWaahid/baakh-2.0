@@ -18,7 +18,7 @@
                     @method('put')
                     <div class="card-body">
                         <div class="text-center">
-                            <h4 class="text-primary">Update {{ $role->name; }} Role</h4>
+                            <h4 class="text-primary">Update {{ $role->name }} Role</h4>
                         </div>
                         <hr>
                         <div class="form-group mt-3">

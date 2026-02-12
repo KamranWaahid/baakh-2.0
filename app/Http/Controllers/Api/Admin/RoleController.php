@@ -34,11 +34,16 @@ class RoleController extends Controller
 
         $request->validate([
             'name' => 'required|string|unique:roles,name',
+            'description' => 'nullable|string|max:255',
             'permissions' => 'array',
             'permissions.*' => 'exists:permissions,name'
         ]);
 
-        $role = Role::create(['name' => $request->name]);
+        $role = Role::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'guard_name' => 'web' // Ensuring web guard
+        ]);
 
         if ($request->has('permissions')) {
             $role->syncPermissions($request->permissions);
@@ -59,18 +64,22 @@ class RoleController extends Controller
             abort(403);
         }
 
-        // Prevent editing super_admin
-        if ($role->name === 'super_admin') {
-            return response()->json(['message' => 'Cannot edit super_admin role'], 403);
+        // Prevent editing super_admin name
+        if ($role->name === 'super_admin' && $request->name !== 'super_admin') {
+            return response()->json(['message' => 'Cannot rename super_admin role'], 403);
         }
 
         $request->validate([
             'name' => 'required|string|unique:roles,name,' . $role->id,
+            'description' => 'nullable|string|max:255',
             'permissions' => 'array',
             'permissions.*' => 'exists:permissions,name'
         ]);
 
-        $role->update(['name' => $request->name]);
+        $role->update([
+            'name' => $request->name,
+            'description' => $request->description
+        ]);
 
         if ($request->has('permissions')) {
             $role->syncPermissions($request->permissions);
@@ -91,8 +100,8 @@ class RoleController extends Controller
             abort(403);
         }
 
-        if ($role->name === 'super_admin' || $role->name === 'admin') {
-            return response()->json(['message' => 'Cannot delete core roles'], 403);
+        if ($role->name === 'super_admin') {
+            return response()->json(['message' => 'Cannot delete super_admin role'], 403);
         }
 
         $role->delete();

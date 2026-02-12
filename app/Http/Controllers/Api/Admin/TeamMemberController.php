@@ -32,11 +32,45 @@ class TeamMemberController extends Controller
         $this->authorize('addMember', $team);
 
         $request->validate([
-            'email' => 'required|email|exists:users,email',
-            'role' => 'required|string',
+            'email' => 'required|email',
+            'role' => 'required|string|in:member,admin,owner', // Team Role
+            // Conditional validation for new users
+            'name' => 'nullable|string|max:255',
+            'name_sd' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:255|unique:users,username',
+            'phone' => 'nullable|string|max:20',
+            'whatsapp' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8',
+            'system_role' => 'nullable|string|exists:roles,name', // System Role
         ]);
 
         $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            // Create new user if not found
+            if (!$request->name || !$request->password || !$request->username) {
+                throw ValidationException::withMessages([
+                    'email' => 'User not found. Please provide Name, Username, and Password to create a new account.',
+                ]);
+            }
+
+            $user = User::create([
+                'name' => $request->name,
+                'name_sd' => $request->name_sd,
+                'username' => $request->username,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'whatsapp' => $request->whatsapp,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'status' => 'active',
+            ]);
+
+            if ($request->system_role) {
+                $user->assignRole($request->system_role);
+            }
+
+            ActivityLog::log('created_user', $request->user(), null, 'Created new user ' . $user->email . ' while adding to team');
+        }
 
         if ($team->members()->where('user_id', $user->id)->exists()) {
             throw ValidationException::withMessages([

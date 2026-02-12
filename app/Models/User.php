@@ -12,7 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
- * @method \Illuminate\Database\Eloquent\Relations\MorphMany likes()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany likes()
  */
 class User extends Authenticatable
 {
@@ -100,8 +100,8 @@ class User extends Authenticatable
     /**
      * Get all likes for the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
-     * @property \Illuminate\Database\Eloquent\Collection|\App\Models\Like[] $likes
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @property \Illuminate\Database\Eloquent\Collection|\App\Models\UserLikes[] $likes
      */
     public function likes()
     {

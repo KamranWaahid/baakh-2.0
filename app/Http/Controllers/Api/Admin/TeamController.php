@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class TeamController extends Controller
 {
@@ -35,6 +36,7 @@ class TeamController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'role' => 'nullable|string|exists:roles,name', // Validating against system roles
             // Admin account fields (optional if creating team for self)
             'admin_name' => 'nullable|string|max:255',
             'admin_name_sd' => 'nullable|string|max:255',
@@ -46,49 +48,52 @@ class TeamController extends Controller
             'admin_role' => 'nullable|string|exists:roles,name',
         ]);
 
-        $ownerId = $request->user()->id;
+        return DB::transaction(function () use ($request) {
+            $ownerId = $request->user()->id;
 
-        // If admin fields are provided, create a new user
-        if ($request->filled('admin_email')) {
-            $newUser = \App\Models\User::create([
-                'name' => $request->admin_name,
-                'name_sd' => $request->admin_name_sd,
-                'username' => $request->admin_username,
-                'email' => $request->admin_email,
-                'phone' => $request->admin_phone,
-                'whatsapp' => $request->admin_whatsapp,
-                'password' => \Illuminate\Support\Facades\Hash::make($request->admin_password),
+            // If admin fields are provided, create a new user
+            if ($request->filled('admin_email')) {
+                $newUser = \App\Models\User::create([
+                    'name' => $request->admin_name,
+                    'name_sd' => $request->admin_name_sd,
+                    'username' => $request->admin_username,
+                    'email' => $request->admin_email,
+                    'phone' => $request->admin_phone,
+                    'whatsapp' => $request->admin_whatsapp,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->admin_password),
+                    'status' => 'active',
+                ]);
+
+                if ($request->admin_role) {
+                    $newUser->assignRole($request->admin_role);
+                }
+
+                $ownerId = $newUser->id;
+                ActivityLog::log('created_user', $request->user(), null, 'Created new admin user: ' . $newUser->email);
+            }
+
+            $team = Team::create([
+                'name' => $request->name,
+                'slug' => Str::slug($request->name) . '-' . Str::random(4),
+                'description' => $request->description,
+                'role' => $request->role,
+                'owner_id' => $ownerId,
                 'status' => 'active',
             ]);
 
-            if ($request->admin_role) {
-                $newUser->assignRole($request->admin_role);
-            }
+            // Add owner as member
+            $team->members()->create([
+                'user_id' => $ownerId,
+                'role' => 'owner'
+            ]);
 
-            $ownerId = $newUser->id;
-            ActivityLog::log('created_user', $request->user(), $newUser, 'Created new admin user: ' . $newUser->email);
-        }
+            ActivityLog::log('created_team', $request->user(), $team, 'Created team: ' . $team->name);
 
-        $team = Team::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name) . '-' . Str::random(4),
-            'description' => $request->description,
-            'owner_id' => $ownerId,
-            'status' => 'active',
-        ]);
-
-        // Add owner as member
-        $team->members()->create([
-            'user_id' => $ownerId,
-            'role' => 'owner'
-        ]);
-
-        ActivityLog::log('created_team', $request->user(), $team, 'Created team: ' . $team->name);
-
-        return response()->json([
-            'message' => 'Team and Admin created successfully',
-            'team' => $team,
-        ], 201);
+            return response()->json([
+                'message' => 'Team and Admin created successfully',
+                'team' => $team,
+            ], 201);
+        });
     }
 
     /**
@@ -135,9 +140,10 @@ class TeamController extends Controller
     {
         $this->authorize('delete', $team);
 
+        $teamName = $team->name;
         $team->delete();
 
-        ActivityLog::log('deleted_team', request()->user(), $team, 'Deleted team: ' . $team->name);
+        ActivityLog::log('deleted_team', request()->user(), null, 'Deleted team: ' . $teamName);
 
         return response()->json([
             'message' => 'Team deleted successfully',
