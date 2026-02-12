@@ -76,10 +76,9 @@ class SidebarController extends Controller
                 }
 
                 return [
-                    'id' => $poetry->id,
                     'title' => $title,
                     'author' => $poetName,
-                    'author_avatar' => $poetPic,
+                    'author_avatar' => ($poetPic) ? (str_starts_with($poetPic, 'http') ? $poetPic : '/' . $poetPic) : null,
                     'date' => $date,
                     'slug' => $poetry->poetry_slug,
                     'poet_slug' => $poet->poet_slug ?? '',

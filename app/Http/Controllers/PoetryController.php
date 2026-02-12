@@ -240,7 +240,7 @@ class PoetryController extends UserController
                 'tagline' => $poet_info?->details?->tagline ?? '',
                 'bio' => strip_tags($poet_info?->details?->poet_bio ?? ''),
                 'slug' => $poet_info->poet_slug ?? '',
-                'avatar' => ($poet_info?->photo) ? (str_starts_with($poet_info->photo, 'http') ? $poet_info->photo : '/' . $poet_info->photo) : null,
+                'avatar' => ($poet_info?->poet_pic) ? (str_starts_with($poet_info->poet_pic, 'http') ? $poet_info->poet_pic : '/' . $poet_info->poet_pic) : null,
                 'followers' => '2.3K',
             ],
 
@@ -311,6 +311,7 @@ class PoetryController extends UserController
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
                         'author' => $p->poet?->details?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
+                        'avatar' => ($p->poet?->photo) ? (str_starts_with($p->poet->photo, 'http') ? $p->poet->photo : '/' . $p->poet->photo) : null,
                         'date' => $p->created_at ? $p->created_at->format('M d') : '',
                         'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
                         'comments' => 10
@@ -340,7 +341,7 @@ class PoetryController extends UserController
                     $tagline = $detail->tagline ?? 'Poet';
                     $initials = collect(explode(' ', $name))->map(fn($s) => Str::substr($s, 0, 1))->take(2)->join('');
 
-                    $pic = $poet->photo ?? $poet->poet_pic;
+                    $pic = $poet->poet_pic;
                     $img = $pic ? (str_starts_with($pic, 'http') ? $pic : '/' . $pic) : null;
 
                     return [

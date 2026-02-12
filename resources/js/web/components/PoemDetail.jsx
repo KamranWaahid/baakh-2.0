@@ -167,7 +167,7 @@ const PoemDetail = ({ lang }) => {
                     <div className={`flex items-center gap-4 ${isRtl ? 'text-right' : 'text-left'}`}>
                         <Link to={`/${lang}/poet/${poem.poet.slug}`} className="shrink-0">
                             {poem.poet.avatar ? (
-                                <img src={poem.poet.avatar} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
+                                <img src={poem.poet.avatar.startsWith('http') ? poem.poet.avatar : `/${poem.poet.avatar}`} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
                             ) : (
                                 <div className="h-[64px] w-[64px] rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100">
                                     <User className="h-8 w-8" />
@@ -233,9 +233,13 @@ const PoemDetail = ({ lang }) => {
                             {poem.recommended.map((p, i) => (
                                 <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className={`flex flex-col gap-2 group ${isRtl ? 'text-right' : ''}`}>
                                     <div className={`flex items-center gap-2 mb-1 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                                        <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
-                                            <User className="h-3 w-3" />
-                                        </div>
+                                        {p.avatar ? (
+                                            <img src={p.avatar} alt={p.author} className="h-5 w-5 rounded-full object-cover bg-gray-200" />
+                                        ) : (
+                                            <div className="h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                                                <User className="h-3 w-3" />
+                                            </div>
+                                        )}
                                         <span className="text-xs font-bold text-gray-900">{p.author}</span>
                                     </div>
                                     <h4 className="font-bold text-lg text-gray-900 leading-tight group-hover:underline">{p.title}</h4>
