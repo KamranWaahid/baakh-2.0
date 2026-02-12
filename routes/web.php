@@ -17,7 +17,7 @@ require __DIR__ . '/auth.php';
 | Admin SPA Route
 |--------------------------------------------------------------------------
 */
-Route::get('admin/{any?}', function () {
+Route::middleware(['auth', 'user_role'])->get('admin/{any?}', function () {
     return view('admin.app');
 })->where('any', '.*')->name('admin.spa');
 

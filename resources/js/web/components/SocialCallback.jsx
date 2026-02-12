@@ -12,6 +12,7 @@ const SocialCallback = () => {
     useEffect(() => {
         const handleCallback = async () => {
             const token = searchParams.get('token');
+            const isNewUser = searchParams.get('new_user') === '1';
             const isRtl = lang === 'sd';
 
             if (token) {
@@ -26,9 +27,14 @@ const SocialCallback = () => {
                     const user = await checkAuth();
 
                     if (user) {
-                        // Success - redirect to home with full reload to ensure auth state
-                        // Using window.location.replace to prevent back button looping
-                        window.location.replace(`/${lang}/`);
+                        if (isNewUser) {
+                            // New user - redirect to set password page
+                            navigate(`/${lang}/auth/set-password`, { replace: true });
+                        } else {
+                            // Existing user - redirect to home
+                            // Using window.location.replace to prevent back button looping
+                            window.location.replace(`/${lang}/`);
+                        }
                     } else {
                         // Failed to verify user even with token
                         console.error('Failed to verify user after social login. Token:', token.substring(0, 10) + '...');

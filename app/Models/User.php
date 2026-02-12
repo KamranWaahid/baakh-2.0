@@ -109,6 +109,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get all bookmarks for the user.
+     */
+    public function bookmarks()
+    {
+        return $this->hasMany(UserBookmark::class);
+    }
+
+    /**
      * @method bool hasLiked(mixed $likeable) Check if the user has liked a given likeable entity
      */
     public function hasLiked($likeable)

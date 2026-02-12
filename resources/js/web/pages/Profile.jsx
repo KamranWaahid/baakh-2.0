@@ -25,7 +25,22 @@ const Profile = () => {
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const fileInputRef = useRef(null);
+
+    const handleDeleteAccount = async (password) => {
+        try {
+            await api.delete('/api/auth/profile', {
+                data: { password } // Axios sends body in 'data' for DELETE requests
+            });
+            // Logout and redirect
+            setUser(null);
+            localStorage.removeItem('auth_token');
+            window.location.href = `/${lang}`;
+        } catch (error) {
+            throw error; // Let the modal handle the error display
+        }
+    };
 
     if (!user) {
         return (
@@ -257,7 +272,111 @@ const Profile = () => {
                             </Button>
                         </div>
                     </form>
+
+                    {/* Danger Zone */}
+                    <div className="mt-12 pt-8 border-t border-gray-100">
+                        <h2 className="text-lg font-semibold text-red-600 mb-2">
+                            {isRtl ? 'اڪائونٽ ختم ڪريو' : 'Danger Zone'}
+                        </h2>
+                        <p className="text-sm text-gray-500 mb-4">
+                            {isRtl
+                                ? 'هڪ دفعو توهان پنهنجو اڪائونٽ ختم ڪيو، واپس نٿو اچي سگهجي. مهرباني ڪري پڪ ڪريو.'
+                                : 'Once you delete your account, there is no going back. Please be certain.'}
+                        </p>
+                        <Button
+                            variant="destructive"
+                            onClick={() => setIsDeleteModalOpen(true)}
+                            className="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                        >
+                            {isRtl ? 'اڪائونٽ ختم ڪريو' : 'Delete Account'}
+                        </Button>
+                    </div>
+
+                    <DeleteAccountDialog
+                        isOpen={isDeleteModalOpen}
+                        onClose={() => setIsDeleteModalOpen(false)}
+                        isRtl={isRtl}
+                        isSocialUser={!!user.google_id}
+                        onConfirm={handleDeleteAccount}
+                    />
                 </div>
+            </div>
+        </div>
+    );
+};
+
+// Extracted Dialog Component to keep main component clean
+const DeleteAccountDialog = ({ isOpen, onClose, isRtl, isSocialUser, onConfirm }) => {
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            await onConfirm(password);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to delete account');
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className={`bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 ${isRtl ? 'text-right font-arabic' : 'text-left font-sans'}`}>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    {isRtl ? 'ڇا توهان يڪينن اڪائونٽ ختم ڪرڻ چاهيو ٿا؟' : 'Delete Account?'}
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                    {isRtl
+                        ? 'هي عمل واپس نٿو ٿي سگهي. توهان جو سمورو ڊيٽا هميشه لاءِ ختم ٿي ويندو.'
+                        : 'This action cannot be undone. This will permanently delete your account and remove your data from our servers.'}
+                </p>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {!isSocialUser && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">
+                                {isRtl ? 'تصديق لاءِ پاسورڊ لکو' : 'Enter password to confirm'}
+                            </label>
+                            <Input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="w-full"
+                                placeholder="********"
+                            />
+                        </div>
+                    )}
+
+                    {error && (
+                        <p className="text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={loading}
+                        >
+                            {isRtl ? 'رپوس ڪريو' : 'Cancel'}
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="destructive"
+                            disabled={loading}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            {loading ? (isRtl ? 'ختم ٿي رهيو آهي...' : 'Deleting...') : (isRtl ? 'اڪائونٽ ختم ڪريو' : 'Delete Account')}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </div>
     );

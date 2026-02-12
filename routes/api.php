@@ -30,7 +30,9 @@ Route::prefix('auth')->group(function () {
         Route::get('/me', MeController::class);
         Route::put('/profile', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'update']);
         Route::post('/profile', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'update']); // FormData compat
+        Route::delete('/profile', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'destroy']);
         Route::put('/password', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'changePassword']);
+        Route::put('/password/set', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'setPassword']);
     });
 });
 

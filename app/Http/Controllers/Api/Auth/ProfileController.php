@@ -77,4 +77,54 @@ class ProfileController extends Controller
             'message' => 'Password changed successfully.',
         ]);
     }
+
+    /**
+     * Set password for social login users.
+     */
+    public function setPassword(Request $request)
+    {
+        $user = $request->user();
+
+        // Only allow if user has google_id (social login)
+        if (!$user->google_id) {
+            return response()->json(['message' => 'Action not authorized.'], 403);
+        }
+
+        $request->validate([
+            'password' => ['required', 'string', Password::min(8), 'confirmed'],
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'message' => 'Password set successfully.',
+        ]);
+    }
+
+    /**
+     * Delete the user's account.
+     */
+    public function destroy(Request $request)
+    {
+        $user = $request->user();
+
+        // Only require password if user doesn't have a google_id (standard user)
+        if (!$user->google_id) {
+            $request->validate([
+                'password' => ['required', 'current_password'],
+            ]);
+        }
+
+        // revoke tokens
+        $user->tokens()->delete();
+
+        // forceDelete to trigger DB cascades for likes/bookmarks
+        $user->forceDelete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully.',
+        ]);
+    }
 }
