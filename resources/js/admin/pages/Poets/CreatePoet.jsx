@@ -168,7 +168,7 @@ const CreatePoet = () => {
                                 )}
                             />
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                     control={form.control}
                                     name="date_of_birth"
@@ -197,7 +197,7 @@ const CreatePoet = () => {
                                 />
                             </div>
 
-                            <div className="flex gap-6">
+                            <div className="flex flex-col sm:flex-row gap-6">
                                 <FormField
                                     control={form.control}
                                     name="visibility"

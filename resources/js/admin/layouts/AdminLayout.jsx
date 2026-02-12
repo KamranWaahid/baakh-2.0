@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -38,8 +38,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import api from '../api/axios';
 
+const SidebarContext = createContext({ onLinkClick: () => { } });
+
 const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
     const location = useLocation();
+    const { onLinkClick } = useContext(SidebarContext);
     const isActive = location.pathname === to;
 
     if (disabled) {
@@ -55,6 +58,7 @@ const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
 
     return (
         <Link
+            onClick={() => onLinkClick && onLinkClick()}
             to={to}
             className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${isActive
                 ? 'bg-primary text-primary-foreground'
@@ -95,76 +99,79 @@ const SidebarGroup = ({ icon: Icon, label, children, disabled }) => {
     );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ onLinkClick }) => {
     return (
-        <div className="h-full flex flex-col gap-4 py-4 overflow-y-auto">
-            <div className="px-6 flex items-center gap-2">
-                <span className="font-bold text-xl">Baakh Admin</span>
+        <SidebarContext.Provider value={{ onLinkClick }}>
+            <div className="h-full flex flex-col gap-4 py-4 overflow-y-auto">
+                <div className="px-6 flex items-center gap-2">
+                    <span className="font-bold text-xl">Baakh Admin</span>
+                </div>
+                <nav className="flex-1 px-4 flex flex-col gap-1">
+                    <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>
+
+                    <div className="my-2 border-t" />
+                    <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Content</div>
+
+                    <SidebarLink to="/admin/poets" icon={Feather}>Poets</SidebarLink>
+
+                    <SidebarGroup icon={BookOpen} label="Poetry">
+                        <SidebarLink to="/admin/poetry" icon={Book}>Main Poetry</SidebarLink>
+                        <SidebarLink to="/admin/couplets" icon={AlignCenter}>Couplets</SidebarLink>
+                    </SidebarGroup>
+
+                    <SidebarGroup icon={Tags} label="Topics">
+                        <SidebarLink to="/admin/topic-categories" icon={Layers}>Topic Categories</SidebarLink>
+                        <SidebarLink to="/admin/tags" icon={Tags}>Tags</SidebarLink>
+                    </SidebarGroup>
+
+                    <SidebarLink to="/admin/categories" icon={AlignCenter}>Poetry Forms</SidebarLink>
+                    <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
+                    <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
+
+                    <SidebarGroup icon={Book} label="Dictionary" disabled>
+                        <SidebarLink to="/admin/dictionary/lemma-inbox" icon={Layers}>Lemma Inbox</SidebarLink>
+                        <SidebarLink to="/admin/dictionary/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
+                        <SidebarLink to="/admin/dictionary/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
+                        <SidebarLink to="/admin/dictionary/variants" icon={AlignJustify}>Variants & Misspellings</SidebarLink>
+                        <SidebarLink to="/admin/dictionary/qa-search" icon={Shield}>QA & Search</SidebarLink>
+                    </SidebarGroup>
+
+                    <SidebarGroup icon={Database} label="Corpus" disabled>
+                        <SidebarLink to="/admin/corpus/sentence-explorer" icon={BookOpen}>Sentence Explorer</SidebarLink>
+                        <SidebarLink to="/admin/corpus/context-clusters" icon={AlignCenter}>Context Clusters</SidebarLink>
+                    </SidebarGroup>
+
+                    <SidebarGroup icon={LayoutDashboard} label="Analytics" disabled>
+                        <SidebarLink to="/admin/analytics/frequency" icon={Layers}>Frequency Stats</SidebarLink>
+                        <SidebarLink to="/admin/analytics/dialect" icon={Map}>Dialect Coverage</SidebarLink>
+                        <SidebarLink to="/admin/analytics/trends" icon={Type}>Usage Trends</SidebarLink>
+                    </SidebarGroup>
+
+                    <div className="my-2 border-t" />
+                    <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Locations</div>
+                    <SidebarGroup icon={MapPin} label="Locations">
+                        <SidebarLink to="/admin/locations/countries" icon={Flag}>Countries</SidebarLink>
+                        <SidebarLink to="/admin/locations/provinces" icon={Map}>Provinces</SidebarLink>
+                        <SidebarLink to="/admin/locations/cities" icon={MapPin}>Cities</SidebarLink>
+                    </SidebarGroup>
+
+                    <div className="my-2 border-t" />
+                    <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
+
+                    <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
+                    <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
+                    <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
+                    <SidebarLink to="/admin/languages" icon={Languages}>Languages</SidebarLink>
+                    <SidebarLink to="/admin/databases" icon={Database}>Databases</SidebarLink>
+                </nav>
             </div>
-            <nav className="flex-1 px-4 flex flex-col gap-1">
-                <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>
-
-                <div className="my-2 border-t" />
-                <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Content</div>
-
-                <SidebarLink to="/admin/poets" icon={Feather}>Poets</SidebarLink>
-
-                <SidebarGroup icon={BookOpen} label="Poetry">
-                    <SidebarLink to="/admin/poetry" icon={Book}>Main Poetry</SidebarLink>
-                    <SidebarLink to="/admin/couplets" icon={AlignCenter}>Couplets</SidebarLink>
-                </SidebarGroup>
-
-                <SidebarGroup icon={Tags} label="Topics">
-                    <SidebarLink to="/admin/topic-categories" icon={Layers}>Topic Categories</SidebarLink>
-                    <SidebarLink to="/admin/tags" icon={Tags}>Tags</SidebarLink>
-                </SidebarGroup>
-
-                <SidebarLink to="/admin/categories" icon={AlignCenter}>Poetry Forms</SidebarLink>
-                <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
-                <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
-
-                <SidebarGroup icon={Book} label="Dictionary" disabled>
-                    <SidebarLink to="/admin/dictionary/lemma-inbox" icon={Layers}>Lemma Inbox</SidebarLink>
-                    <SidebarLink to="/admin/dictionary/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
-                    <SidebarLink to="/admin/dictionary/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
-                    <SidebarLink to="/admin/dictionary/variants" icon={AlignJustify}>Variants & Misspellings</SidebarLink>
-                    <SidebarLink to="/admin/dictionary/qa-search" icon={Shield}>QA & Search</SidebarLink>
-                </SidebarGroup>
-
-                <SidebarGroup icon={Database} label="Corpus" disabled>
-                    <SidebarLink to="/admin/corpus/sentence-explorer" icon={BookOpen}>Sentence Explorer</SidebarLink>
-                    <SidebarLink to="/admin/corpus/context-clusters" icon={AlignCenter}>Context Clusters</SidebarLink>
-                </SidebarGroup>
-
-                <SidebarGroup icon={LayoutDashboard} label="Analytics" disabled>
-                    <SidebarLink to="/admin/analytics/frequency" icon={Layers}>Frequency Stats</SidebarLink>
-                    <SidebarLink to="/admin/analytics/dialect" icon={Map}>Dialect Coverage</SidebarLink>
-                    <SidebarLink to="/admin/analytics/trends" icon={Type}>Usage Trends</SidebarLink>
-                </SidebarGroup>
-
-                <div className="my-2 border-t" />
-                <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Locations</div>
-                <SidebarGroup icon={MapPin} label="Locations">
-                    <SidebarLink to="/admin/locations/countries" icon={Flag}>Countries</SidebarLink>
-                    <SidebarLink to="/admin/locations/provinces" icon={Map}>Provinces</SidebarLink>
-                    <SidebarLink to="/admin/locations/cities" icon={MapPin}>Cities</SidebarLink>
-                </SidebarGroup>
-
-                <div className="my-2 border-t" />
-                <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
-
-                <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
-                <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
-                <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
-                <SidebarLink to="/admin/languages" icon={Languages}>Languages</SidebarLink>
-                <SidebarLink to="/admin/databases" icon={Database}>Databases</SidebarLink>
-            </nav>
-        </div>
+        </SidebarContext.Provider>
     );
 };
 
 const AdminLayout = ({ children }) => {
     const location = useLocation();
+    const [sheetOpen, setSheetOpen] = useState(false);
     const handleLogout = async () => {
         try {
             await api.post('/api/auth/logout');
@@ -182,7 +189,7 @@ const AdminLayout = ({ children }) => {
             </div>
             <div className="flex flex-col">
                 <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-                    <Sheet>
+                    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                         <SheetTrigger asChild>
                             <Button
                                 variant="outline"
@@ -194,7 +201,7 @@ const AdminLayout = ({ children }) => {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="flex flex-col p-0">
-                            <Sidebar />
+                            <Sidebar onLinkClick={() => setSheetOpen(false)} />
                         </SheetContent>
                     </Sheet>
 
@@ -224,7 +231,7 @@ const AdminLayout = ({ children }) => {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </header>
-                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 overflow-hidden">
+                <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
                     <div
                         key={location.key}
                         className="flex-1 flex flex-col gap-4 lg:gap-6 animate-in fade-in slide-in-from-bottom-1 duration-500 ease-out fill-mode-forward"

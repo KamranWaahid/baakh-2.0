@@ -21,8 +21,16 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Eye, EyeOff, Star, Edit } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Star, Edit, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useDebounce } from '@/hooks/useDebounce';
 
 const PoetryList = () => {
@@ -170,38 +178,38 @@ const PoetryList = () => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right whitespace-nowrap space-x-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => toggleVisibilityMutation.mutate(p.id)}
-                                                    title={p.visibility === 1 ? "Hide" : "Show"}
-                                                >
-                                                    {p.visibility === 1 ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => toggleFeaturedMutation.mutate(p.id)}
-                                                    title={p.is_featured === 1 ? "Unfeature" : "Feature"}
-                                                >
-                                                    <Star className={`h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                                    <Link to={`/admin/poetry/${p.poetry_slug}/edit`}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Link>
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDelete(p.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                            <TableCell className="text-right whitespace-nowrap">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                            <span className="sr-only">Open menu</span>
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuItem onClick={() => toggleVisibilityMutation.mutate(p.id)}>
+                                                            {p.visibility === 1 ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                                                            {p.visibility === 1 ? "Hide" : "Show"}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => toggleFeaturedMutation.mutate(p.id)}>
+                                                            <Star className={`mr-2 h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                                            {p.is_featured === 1 ? "Unfeature" : "Feature"}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem asChild>
+                                                            <Link to={`/admin/poetry/${p.poetry_slug}/edit`}>
+                                                                <Edit className="mr-2 h-4 w-4" /> Edit
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="text-destructive focus:text-destructive"
+                                                            onClick={() => handleDelete(p.id)}
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
                                     ))

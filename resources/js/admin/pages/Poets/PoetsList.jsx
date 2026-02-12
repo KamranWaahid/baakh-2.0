@@ -22,8 +22,16 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, MoreHorizontal, Edit, Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const PoetsList = () => {
     const queryClient = useQueryClient();
@@ -145,19 +153,35 @@ const PoetsList = () => {
                                                 </TableCell>
                                                 <TableCell className="hidden md:table-cell">{poet.date_of_birth || '-'}</TableCell>
                                                 <TableCell className="hidden md:table-cell">{poet.date_of_death || '-'}</TableCell>
-                                                <TableCell className="text-right space-x-2">
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <Link to={`/admin/poets/${poet.id}/edit`}>Edit</Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                        onClick={() => handleDelete(poet.id)}
-                                                        disabled={deleteMutation.isPending}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                <TableCell className="text-right">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <span className="sr-only">Open menu</span>
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuItem
+                                                                onClick={() => navigator.clipboard.writeText(poet.id)}
+                                                            >
+                                                                Copy ID
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem asChild>
+                                                                <Link to={`/admin/poets/${poet.id}/edit`}>
+                                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                </Link>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                className="text-destructive focus:text-destructive"
+                                                                onClick={() => handleDelete(poet.id)}
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
                                                 </TableCell>
                                             </TableRow>
                                         );
