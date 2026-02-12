@@ -120,7 +120,8 @@ class GlobalSearchController extends Controller
                     $sq->where('title', 'LIKE', "%{$query}%")
                         ->orWhere('info', 'LIKE', "%{$query}%");
                 })->orWhere('poetry_slug', 'LIKE', "%{$query}%");
-            })->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->map(function ($poem) use ($lang) {
+            })->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->loadCount('likes')->map(function ($poem) use ($lang) {
+                $userId = auth('sanctum')->id();
                 $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
                 $poetDetail = $poem->poet->all_details->where('lang', $lang)->first() ?? $poem->poet->all_details->first();
                 $poetName = $poetDetail->poet_name ?? 'Unknown';
@@ -131,12 +132,16 @@ class GlobalSearchController extends Controller
                     'poet_name' => $poetName,
                     'cat_slug' => $poem->category->slug ?? 'ghazal',
                     'poet_slug' => $poem->poet->poet_slug ?? '',
-                    'type' => 'poetry'
+                    'type' => 'poetry',
+                    'likes' => $poem->likes_count ?? 0,
+                    'is_liked' => $userId ? $poem->likes()->where('user_id', $userId)->exists() : false,
+                    'is_bookmarked' => $userId ? $poem->bookmarks()->where('user_id', $userId)->exists() : false,
                 ];
             });
         }
 
-        return Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->map(function ($poem) use ($lang) {
+        return Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->loadCount('likes')->map(function ($poem) use ($lang) {
+            $userId = auth('sanctum')->id();
             $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
             $poetDetail = $poem->poet->all_details->where('lang', $lang)->first() ?? $poem->poet->all_details->first();
             $poetName = $poetDetail->poet_name ?? 'Unknown';
@@ -147,7 +152,10 @@ class GlobalSearchController extends Controller
                 'poet_name' => $poetName,
                 'cat_slug' => $poem->category->slug ?? 'ghazal',
                 'poet_slug' => $poem->poet->poet_slug ?? '',
-                'type' => 'poetry'
+                'type' => 'poetry',
+                'likes' => $poem->likes_count ?? 0,
+                'is_liked' => $userId ? $poem->likes()->where('user_id', $userId)->exists() : false,
+                'is_bookmarked' => $userId ? $poem->bookmarks()->where('user_id', $userId)->exists() : false,
             ];
         });
     }

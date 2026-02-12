@@ -101,6 +101,16 @@ class Poetry extends Model
         return $this->hasOne(PoetsDetail::class, 'poet_id', 'poet_id');
     }
 
+    public function likes()
+    {
+        return $this->morphMany(UserLikes::class, 'likeable');
+    }
+
+    public function bookmarks()
+    {
+        return $this->morphMany(UserBookmark::class, 'bookmarkable');
+    }
+
     public function category_detail()
     {
         return $this->hasOne(CategoryDetails::class, 'cat_id', 'category_id');

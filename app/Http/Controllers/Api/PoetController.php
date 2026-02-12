@@ -221,10 +221,13 @@ class PoetController extends Controller
                 $q->where('lang', $lang);
             }
         ])
+            ->withCount('likes')
             ->latest()
             ->paginate(10);
 
-        $poetry->through(function ($p) use ($lang, $poet) {
+        $userId = auth('sanctum')->id();
+
+        $poetry->through(function ($p) use ($lang, $poet, $userId) {
             $trans = $p->translations->first();
             // Fallback to any translation if specific lang missing (optional, but good for UX)
             if (!$trans)
@@ -249,7 +252,9 @@ class PoetController extends Controller
                 'author_avatar' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
                 'date' => $p->created_at->format('d M Y'),
                 'readTime' => '2 min read', // Placeholder logic
-                'likes' => 0, // Placeholder
+                'likes' => $p->likes_count ?? 0,
+                'is_liked' => $userId ? $p->likes()->where('user_id', $userId)->exists() : false,
+                'is_bookmarked' => $userId ? $p->bookmarks()->where('user_id', $userId)->exists() : false,
                 'cover' => $p->cover_image ?? null, // If exists
                 'content_style' => $p->content_style,
             ];
@@ -275,10 +280,13 @@ class PoetController extends Controller
         $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
             ->where('lang', $lang)
             ->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1")
+            ->withCount('likes')
             ->latest()
             ->paginate(20);
 
-        $couplets->through(function ($c) use ($poet, $lang) {
+        $userId = auth('sanctum')->id();
+
+        $couplets->through(function ($c) use ($poet, $lang, $userId) {
             $poetDetail = $poet->all_details->where('lang', $lang)->first();
             if (!$poetDetail)
                 $poetDetail = $poet->all_details->first();
@@ -295,7 +303,9 @@ class PoetController extends Controller
                 'author_avatar' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
                 'date' => $c->created_at->format('d M Y'),
                 'readTime' => '',
-                'likes' => 0,
+                'likes' => $c->likes_count ?? 0,
+                'is_liked' => $userId ? $c->likes()->where('user_id', $userId)->exists() : false,
+                'is_bookmarked' => $userId ? $c->bookmarks()->where('user_id', $userId)->exists() : false,
                 'cover' => null,
                 'is_couplet' => true, // Flag for frontend styling
             ];

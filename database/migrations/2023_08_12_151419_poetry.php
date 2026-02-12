@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -20,6 +19,8 @@ return new class extends Migration
             $table->string('poetry_title');
             $table->string('poetry_tags')->nullable();
             $table->text('poetry_info')->nullable();
+            $table->string('content_style')->nullable();
+            $table->boolean('visibility')->default(true);
             $table->string('lang')->default('sd');
             $table->timestamps();
             $table->softDeletes();

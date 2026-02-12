@@ -67,6 +67,11 @@ class Couplets extends Model
         return $this->morphMany(UserLikes::class, 'likeable');
     }
 
+    public function bookmarks()
+    {
+        return $this->morphMany(UserBookmark::class, 'bookmarkable');
+    }
+
 
     protected static function booted()
     {

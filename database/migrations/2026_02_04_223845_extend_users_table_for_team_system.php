@@ -19,7 +19,8 @@ return new class extends Migration {
                 $table->string('phone')->nullable()->after('email');
             }
             if (!Schema::hasColumn('users', 'status')) {
-                $table->enum('status', ['active', 'suspended', 'deleted'])->default('active')->after('avatar');
+                $statusAfter = Schema::hasColumn('users', 'avatar') ? 'avatar' : 'email';
+                $table->enum('status', ['active', 'suspended', 'deleted'])->default('active')->after($statusAfter);
             }
             if (!Schema::hasColumn('users', 'last_login_at')) {
                 $table->timestamp('last_login_at')->nullable()->after('status');

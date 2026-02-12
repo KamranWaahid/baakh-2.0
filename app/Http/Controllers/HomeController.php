@@ -229,7 +229,7 @@ class HomeController extends UserController
         if ($result->date_today != $thisday) {
             $poetry = DB::select("SELECT p.* FROM poetry_main p
             WHERE p.category_id = 1 AND p.poet_id != (SELECT b.poet_id FROM poetry_main b WHERE b.poetry_slug = ?)
-            AND p.visibility = 1 ORDER BY RAND() LIMIT 1", [$result->table_id]);
+            AND p.visibility = 1 ORDER BY RAND() LIMIT 1", [$result->table_id ?? '']);
 
             $id = $poetry[0]->poetry_slug;
 
@@ -357,6 +357,7 @@ class HomeController extends UserController
                 $query->where('media_type', 'image')->where('lang', $lang)->limit(1);
             }
         ])
+            ->withCount('likes')
             ->where('visibility', 1)
             ->whereHas('poet', function ($q) {
                 $q->where('visibility', 1);
@@ -366,11 +367,16 @@ class HomeController extends UserController
             $query->where('is_featured', 1);
         }
 
-        if ($request->has('category') && $request->category !== 'all') {
-            $categorySlug = $request->category;
-            $query->whereHas('category', function ($q) use ($categorySlug) {
-                $q->where('slug', $categorySlug);
-            });
+        if ($filter === 'bookmarked') {
+            $userId = auth('sanctum')->id();
+            if ($userId) {
+                $query->whereHas('bookmarks', function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                });
+            } else {
+                // If not logged in, return empty
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($request->has('period_id')) {
@@ -394,7 +400,9 @@ class HomeController extends UserController
         $poetry = $query->latest()
             ->paginate($perPage);
 
-        $transformed = $poetry->through(function ($p) use ($lang) {
+        $userId = auth('sanctum')->id();
+
+        $transformed = $poetry->through(function ($p) use ($lang, $userId) {
             return [
                 'id' => $p->id,
                 'title' => $p->info?->title ?? $p->poetry_title,
@@ -407,7 +415,10 @@ class HomeController extends UserController
                 'readTime' => '5 min read', // Mock for now
                 'category' => $p->category_detail?->cat_name ?? $p->category?->slug ?? 'General',
                 'cat_slug' => $p->category?->slug,
-                'poet_slug' => $p->poet?->poet_slug
+                'poet_slug' => $p->poet?->poet_slug,
+                'likes' => $p->likes_count ?? 0,
+                'is_liked' => $userId ? $p->likes()->where('user_id', $userId)->exists() : false,
+                'is_bookmarked' => $userId ? $p->bookmarks()->where('user_id', $userId)->exists() : false,
             ];
         });
 

@@ -62,6 +62,12 @@ Route::prefix('v1')->group(function () {
     Route::get('periods', [App\Http\Controllers\Api\PeriodController::class, 'index']);
     Route::get('periods/{id}/poets', [App\Http\Controllers\Api\PeriodController::class, 'poets']);
     Route::get('prosody', [App\Http\Controllers\Api\ProsodyController::class, 'index']);
+
+    // Interaction Routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('interactions/like', [App\Http\Controllers\Api\UserInteractionController::class, 'toggleLike']);
+        Route::post('interactions/bookmark', [App\Http\Controllers\Api\UserInteractionController::class, 'toggleBookmark']);
+    });
 });
 
 

@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoadingState = () => (
     <div className="space-y-8 mt-0">
@@ -63,13 +64,15 @@ const FeedContent = ({ feedType, feeds, lang, isRtl, lastPostElementRef }) => {
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { category: urlCategory } = useParams();
+    const { user } = useAuth();
 
     const [activeTab, setActiveTab] = React.useState('for-you');
 
     // Separate states for each tab to preserve scroll and items
     const [feeds, setFeeds] = React.useState({
         'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
-        'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
+        'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
+        'bookmarked': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
     });
 
     const scrollDirection = useScrollDirection();
@@ -120,7 +123,7 @@ const Feed = ({ lang }) => {
                 params: {
                     lang,
                     page: pageNumber,
-                    filter: tab === 'featured' ? 'featured' : undefined,
+                    filter: tab === 'featured' ? 'featured' : (tab === 'bookmarked' ? 'bookmarked' : undefined),
                     category: urlCategory || undefined
                 }
             });
@@ -146,11 +149,15 @@ const Feed = ({ lang }) => {
     React.useEffect(() => {
         setFeeds({
             'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
-            'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
+            'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
+            'bookmarked': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
         });
         fetchFeedData('for-you', 1, true);
         fetchFeedData('featured', 1, true);
-    }, [lang, urlCategory]);
+        if (user) {
+            fetchFeedData('bookmarked', 1, true);
+        }
+    }, [lang, urlCategory, user]);
 
     // Page change trigger
     React.useEffect(() => {
@@ -179,6 +186,14 @@ const Feed = ({ lang }) => {
                         >
                             {isRtl ? 'چونڊيل' : 'Featured'}
                         </TabsTrigger>
+                        {user && (
+                            <TabsTrigger
+                                value="bookmarked"
+                                className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3"
+                            >
+                                {isRtl ? 'بوڪ مارڪ ڪيل' : 'Bookmarked'}
+                            </TabsTrigger>
+                        )}
                     </TabsList>
                 </div>
 
@@ -189,6 +204,12 @@ const Feed = ({ lang }) => {
                 <TabsContent value="featured" className="mt-0">
                     <FeedContent feedType="featured" feeds={feeds} lang={lang} isRtl={isRtl} lastPostElementRef={lastPostElementRef} />
                 </TabsContent>
+
+                {user && (
+                    <TabsContent value="bookmarked" className="mt-0">
+                        <FeedContent feedType="bookmarked" feeds={feeds} lang={lang} isRtl={isRtl} lastPostElementRef={lastPostElementRef} />
+                    </TabsContent>
+                )}
             </Tabs>
         </div>
     );

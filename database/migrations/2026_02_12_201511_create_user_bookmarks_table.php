@@ -10,16 +10,15 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('poets', function (Blueprint $table) {
+        Schema::create('user_bookmarks', function (Blueprint $table) {
             $table->id();
-            $table->string('poet_slug')->unique();
-            $table->string('poet_pic');
-            $table->date('date_of_birth')->nullable();
-            $table->date('date_of_death')->nullable();
-            $table->string('poet_tags')->nullable();
-            $table->boolean('visibility')->default(true);
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('bookmarkable_id');
+            $table->string('bookmarkable_type');
             $table->timestamps();
-            $table->softDeletes();
+
+            $table->index(['bookmarkable_id', 'bookmarkable_type']);
+            $table->index('user_id');
         });
     }
 
@@ -28,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('user_bookmarks');
     }
 };

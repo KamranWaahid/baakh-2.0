@@ -5,7 +5,7 @@ import PoemActionBar from './PoemActionBar';
 import { formatDate } from '@/lib/date-utils';
 import { getImageUrl } from '../utils/url';
 
-const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, id, is_couplet = false }) => {
+const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, is_liked = false, is_bookmarked = false, id, is_couplet = false }) => {
     const isRtl = lang === 'sd';
 
     const safeDate = date || '';
@@ -16,6 +16,9 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
     const postPoem = {
         id,
         likes,
+        is_liked,
+        is_bookmarked,
+        type: is_couplet ? 'couplet' : 'poem',
         slug,
         poet_slug,
         cat_slug,
