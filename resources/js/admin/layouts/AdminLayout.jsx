@@ -22,7 +22,10 @@ import {
     AlignCenter,
     AlignJustify,
     Book,
-    Plus
+    AlignJustify,
+    Book,
+    Plus,
+    Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -152,6 +155,7 @@ const Sidebar = () => {
                 <div className="my-2 border-t" />
                 <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
+                <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
                 <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
                 <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
                 <SidebarLink to="/admin/languages" icon={Languages}>Languages</SidebarLink>
