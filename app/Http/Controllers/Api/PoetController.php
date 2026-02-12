@@ -37,6 +37,7 @@ class PoetController extends Controller
         $query->orderBy('created_at', 'desc');
 
         $perPage = $request->get('per_page', 20);
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $poets */
         $poets = $query->paginate($perPage);
 
         $poets->through(function ($poet) {
@@ -207,6 +208,7 @@ class PoetController extends Controller
             });
         }
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $poetry */
         $poetry = $query->with([
             'translations' => function ($q) use ($lang) {
                 $q->where('lang', $lang);
@@ -269,6 +271,7 @@ class PoetController extends Controller
 
         // Let's assume we fetch from 'Couplets' model directly where 'poet_id' matches.
 
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $couplets */
         $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
             ->where('lang', $lang)
             ->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1")
@@ -306,7 +309,7 @@ class PoetController extends Controller
         $lang = $request->get('lang', 'sd');
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
-        $categories = \App\Models\Categories::whereHas('poetry', function ($q) use ($poet) {
+        $categories = Categories::whereHas('poetry', function ($q) use ($poet) {
             $q->where('poet_id', $poet->id)->where('visibility', 1);
         })
             ->with([
