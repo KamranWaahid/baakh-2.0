@@ -99,15 +99,6 @@ const Navbar = ({ lang }) => {
                 ) : user ? (
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full hover:bg-gray-100 h-9 w-9"
-                                onClick={() => setSearchOpen(true)}
-                                aria-label="Open search (Cmd+K)"
-                            >
-                                <Search className="h-4 w-4 text-gray-600" />
-                            </Button>
 
                             <Button
                                 variant="ghost"
@@ -224,7 +215,7 @@ const Navbar = ({ lang }) => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
+                        className="text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors md:hidden"
                         onClick={() => setSearchOpen(true)}
                         aria-label="Search"
                     >
