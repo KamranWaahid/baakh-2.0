@@ -139,11 +139,10 @@ Route::middleware('auth:sanctum')
         Route::post('romanizer/transliterate', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'transliterate']);
         Route::apiResource('romanizer', \App\Http\Controllers\Api\Admin\RomanizerController::class);
 
-
-
         Route::get('dashboard', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
         Route::apiResource('topic-categories', \App\Http\Controllers\Api\Admin\TopicCategoryController::class);
         Route::patch('poetry/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleVisibility']);
+        Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
 
         // Corpus Routes
         Route::get('corpus/sentences', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'index']);
@@ -163,6 +162,4 @@ Route::middleware('auth:sanctum')
         Route::put('dictionary/lemmas/{id}/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateMorphology']);
         Route::post('dictionary/lemmas/{id}/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeVariant']);
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
-
-        Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
     });

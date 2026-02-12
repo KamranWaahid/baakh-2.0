@@ -8,6 +8,8 @@ use App\Models\CategoryDetails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Enum;
+use App\Enums\CategoryGenderEnum;
 
 class CategoryController extends Controller
 {
@@ -36,7 +38,7 @@ class CategoryController extends Controller
             'label' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:categories,slug',
             'is_featured' => 'boolean',
-            'gender' => 'nullable|string',
+            'gender' => ['nullable', new Enum(CategoryGenderEnum::class)],
             'content_style' => 'nullable|string',
             'details' => 'required|array',
             'details.sd' => 'required|array',
@@ -50,8 +52,8 @@ class CategoryController extends Controller
                 'user_id' => $request->user()?->id ?? 1,
                 'slug' => $validated['slug'] ?? Str::slug($validated['label']),
                 'is_featured' => $validated['is_featured'] ?? false,
-                'gender' => $validated['gender'],
-                'content_style' => $validated['content_style'],
+                'gender' => $validated['gender'] ?? null,
+                'content_style' => $validated['content_style'] ?? null,
             ]);
 
             foreach ($validated['details'] as $lang => $detail) {
@@ -84,7 +86,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'slug' => 'required|string|max:255|unique:categories,slug,' . $id,
             'is_featured' => 'boolean',
-            'gender' => 'nullable|string',
+            'gender' => ['nullable', new Enum(CategoryGenderEnum::class)],
             'content_style' => 'nullable|string',
             'details' => 'required|array',
             'details.sd' => 'required|array',
@@ -97,8 +99,8 @@ class CategoryController extends Controller
             $category->update([
                 'slug' => $validated['slug'],
                 'is_featured' => $validated['is_featured'] ?? false,
-                'gender' => $validated['gender'],
-                'content_style' => $validated['content_style'],
+                'gender' => $validated['gender'] ?? null,
+                'content_style' => $validated['content_style'] ?? null,
             ]);
 
             foreach ($validated['details'] as $lang => $detail) {

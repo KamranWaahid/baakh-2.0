@@ -189,10 +189,10 @@ class PoetsController extends UserController
             $active_category_id = $category->id;
             $poetry_limited = null;
 
-            $gender = CategoryGenderEnum::from($category->gender);
+            $gender = $category->gender ? CategoryGenderEnum::tryFrom($category->gender) : null;
 
             if ($locale === 'sd') {
-                $pluralCategory = $gender->plural() . ' ' . $category->detail->cat_name_plural;
+                $pluralCategory = ($gender ? $gender->plural() . ' ' : '') . $category->detail->cat_name_plural;
             } else {
                 $pluralCategory = $category->detail->cat_name_plural;
             }

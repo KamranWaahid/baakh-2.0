@@ -202,6 +202,10 @@ trait SQLiteTrait
     protected function runSQLiteSilently($callback)
     {
         $connection = DB::connection('sqlite');
+
+        // Ensure schema exists before running operations
+        $this->ensureSQLiteSchema($connection);
+
         $dispatcher = $connection->getEventDispatcher();
         $connection->unsetEventDispatcher();
 
@@ -211,6 +215,102 @@ trait SQLiteTrait
             if ($dispatcher) {
                 $connection->setEventDispatcher($dispatcher);
             }
+        }
+    }
+
+    /**
+     * Ensure required tables exist in SQLite
+     */
+    protected function ensureSQLiteSchema($sqlite)
+    {
+        try {
+            $tables = ['unified_poetry', 'unified_poets', 'unified_tags', 'unified_couplets', 'unified_categories'];
+            $missing = [];
+
+            foreach ($tables as $table) {
+                if (!\Illuminate\Support\Facades\Schema::connection('sqlite')->hasTable($table)) {
+                    $missing[] = $table;
+                }
+            }
+
+            if (empty($missing)) {
+                return;
+            }
+
+            Log::info('SQLiteTrait: Missing tables found in SQLite: ' . implode(', ', $missing));
+
+            $schema = \Illuminate\Support\Facades\Schema::connection('sqlite');
+
+            if (in_array('unified_poetry', $missing)) {
+                $schema->create('unified_poetry', function ($table) {
+                    $table->id();
+                    $table->integer('poetry_id')->index();
+                    $table->integer('category_id')->nullable();
+                    $table->integer('poet_id')->nullable();
+                    $table->string('poetry_slug')->nullable();
+                    $table->text('title')->nullable();
+                    $table->text('title_original')->nullable();
+                    $table->string('lang', 10)->nullable()->index();
+                    $table->unique(['poetry_id', 'lang']);
+                });
+                Log::info('SQLiteTrait: Created table unified_poetry');
+            }
+
+            if (in_array('unified_poets', $missing)) {
+                $schema->create('unified_poets', function ($table) {
+                    $table->id();
+                    $table->integer('poet_id')->index();
+                    $table->string('poet_slug')->nullable();
+                    $table->text('poet_name')->nullable();
+                    $table->text('poet_laqab')->nullable();
+                    $table->string('lang', 10)->nullable()->index();
+                    $table->unique(['poet_id', 'lang']);
+                });
+                Log::info('SQLiteTrait: Created table unified_poets');
+            }
+
+            if (in_array('unified_tags', $missing)) {
+                $schema->create('unified_tags', function ($table) {
+                    $table->integer('id')->index();
+                    $table->string('tag')->nullable();
+                    $table->string('slug')->nullable();
+                    $table->string('type')->nullable();
+                    $table->string('lang', 10)->nullable()->index();
+                    $table->unique(['id', 'lang']);
+                });
+                Log::info('SQLiteTrait: Created table unified_tags');
+            }
+
+            if (in_array('unified_couplets', $missing)) {
+                $schema->create('unified_couplets', function ($table) {
+                    $table->id();
+                    $table->integer('couplet_id')->index();
+                    $table->integer('poet_id')->nullable();
+                    $table->integer('poetry_id')->nullable();
+                    $table->string('couplet_slug')->nullable();
+                    $table->text('couplet_text')->nullable();
+                    $table->text('couplet_text_original')->nullable();
+                    $table->string('lang', 10)->nullable()->index();
+                    $table->unique(['couplet_id', 'lang']);
+                });
+                Log::info('SQLiteTrait: Created table unified_couplets');
+            }
+
+            if (in_array('unified_categories', $missing)) {
+                $schema->create('unified_categories', function ($table) {
+                    $table->id();
+                    $table->integer('category_id')->index();
+                    $table->string('slug')->nullable();
+                    $table->string('gender')->nullable();
+                    $table->text('cat_name')->nullable();
+                    $table->text('cat_name_plural')->nullable();
+                    $table->string('lang', 10)->nullable()->index();
+                    $table->unique(['category_id', 'lang']);
+                });
+                Log::info('SQLiteTrait: Created table unified_categories');
+            }
+        } catch (\Exception $e) {
+            Log::error('SQLiteTrait: Failed to ensure SQLite schema: ' . $e->getMessage());
         }
     }
 }

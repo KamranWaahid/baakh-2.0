@@ -103,6 +103,19 @@ const CategoryForm = () => {
             alert(isEditing ? 'Form updated successfully!' : 'Form created successfully!');
             navigate('/admin/categories');
         },
+        onError: (error) => {
+            console.error('Category save error:', error);
+            const message = error.response?.data?.message || 'Failed to save category';
+            const errors = error.response?.data?.errors;
+            if (errors) {
+                const errorDetails = Object.entries(errors)
+                    .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+                    .join('\n');
+                alert(`${message}\n\nDetails:\n${errorDetails}`);
+            } else {
+                alert(message);
+            }
+        }
     });
 
     const onSubmit = (values) => {
@@ -155,7 +168,7 @@ const CategoryForm = () => {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>Gender</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || 'none'}>
+                                            <Select onValueChange={(val) => field.onChange(val === 'none' ? null : val)} value={field.value || 'none'}>
                                                 <FormControl>
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select gender" />
@@ -163,8 +176,8 @@ const CategoryForm = () => {
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="none">None/Any</SelectItem>
-                                                    <SelectItem value="male">Male</SelectItem>
-                                                    <SelectItem value="female">Female</SelectItem>
+                                                    <SelectItem value="masculine">Masculine (جو/جا)</SelectItem>
+                                                    <SelectItem value="feminine">Feminine (جي/جون)</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />

@@ -314,12 +314,12 @@ trait BaakhSeoTrait
 
         $final_name = mb_substr($poetLaqab, -1) == 'و' ? mb_substr($poetLaqab, 0, -1) . 'ي' : $poetLaqab;
 
-        $gender = CategoryGenderEnum::from($p_category->gender);
+        $gender = $p_category->gender ? CategoryGenderEnum::tryFrom($p_category->gender) : null;
 
         if ($currentLang === 'en') {
             $poetName = $poetLaqab . "'s";
         } else {
-            $poetName = $final_name . ' ' . $gender->singular();
+            $poetName = $final_name . ($gender ? ' ' . $gender->singular() : '');
         }
 
 
