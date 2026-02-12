@@ -8,9 +8,15 @@ import { useInView } from 'react-intersection-observer';
 import axios from 'axios';
 import { BookOpen } from 'lucide-react';
 
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+
 const PoetryFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const [activeTab, setActiveTab] = useState('all');
+    const { category } = useParams();
+    const [searchParams] = useSearchParams();
+    const tag = searchParams.get('tag');
+
+    const [activeTab, setActiveTab] = useState(category || 'all');
     const { ref, inView } = useInView();
 
     // Fetch Categories
@@ -36,12 +42,13 @@ const PoetryFeed = ({ lang }) => {
         isLoading,
         isError
     } = useInfiniteQuery({
-        queryKey: ['poetry-feed', activeTab, lang],
+        queryKey: ['poetry-feed', activeTab, tag, lang],
         queryFn: async ({ pageParam = 1 }) => {
             const response = await axios.get(`/api/v1/feed`, {
                 params: {
                     lang,
-                    category: activeTab,
+                    category: activeTab !== 'all' ? activeTab : (category !== 'poetry' ? category : undefined),
+                    tag: tag || undefined,
                     page: pageParam
                 }
             });

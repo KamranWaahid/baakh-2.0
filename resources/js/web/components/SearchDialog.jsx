@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Loader2, User, BookOpen, Calendar, ArrowRight } from 'lucide-react';
+import { Search, X, Loader2, User, BookOpen, Calendar, ArrowRight, Tags, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../admin/api/axios';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -7,7 +7,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
     const isRtl = lang === 'sd';
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState({ poets: [], poetry: [], periods: [] });
+    const [results, setResults] = useState({ poets: [], poetry: [], periods: [], categories: [], tags: [], dictionary: [] });
     const [loading, setLoading] = useState(false);
     const debounceRef = useRef(null);
     const navigate = useNavigate();
@@ -15,7 +15,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
     useEffect(() => {
         if (open) {
             setQuery('');
-            setResults({ poets: [], poetry: [], periods: [] });
+            setResults({ poets: [], poetry: [], periods: [], categories: [], tags: [], dictionary: [] });
         }
     }, [open]);
 
@@ -23,7 +23,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         if (query.length < 2) {
-            setResults({ poets: [], poetry: [], periods: [] });
+            setResults({ poets: [], poetry: [], periods: [], categories: [], tags: [], dictionary: [] });
             return;
         }
 
@@ -49,7 +49,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
         navigate(path);
     };
 
-    const hasResults = results.poets.length > 0 || results.poetry.length > 0 || results.periods.length > 0;
+    const hasResults = results.poets.length > 0 || results.poetry.length > 0 || results.periods.length > 0 || results.categories.length > 0 || results.tags.length > 0 || results.dictionary.length > 0;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,6 +147,87 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                         </div>
                                         <div className={`text-xs text-gray-400 ${isRtl ? 'font-arabic' : ''}`}>
                                             {poem.poet_name}
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Categories */}
+                    {results.categories.length > 0 && (
+                        <div className="px-2 pb-2">
+                            <div className="px-3 py-2 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                                {isRtl ? 'صنف' : 'Categories'}
+                            </div>
+                            {results.categories.map((cat) => (
+                                <button
+                                    key={`cat-${cat.id}`}
+                                    onClick={() => handleSelect(`/${lang}/${cat.slug}`)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                >
+                                    <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                                        <Tags className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`font-medium text-gray-900 ${isRtl ? 'font-arabic' : ''}`}>
+                                            {cat.name}
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Tags */}
+                    {results.tags.length > 0 && (
+                        <div className="px-2 pb-2">
+                            <div className="px-3 py-2 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                                {isRtl ? 'ٽيگ' : 'Tags'}
+                            </div>
+                            {results.tags.map((tag) => (
+                                <button
+                                    key={`tag-${tag.id}`}
+                                    onClick={() => handleSelect(`/${lang}/poetry?tag=${tag.slug}`)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                >
+                                    <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                                        <span className="text-gray-400 font-bold text-sm">#</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`font-medium text-gray-900 ${isRtl ? 'font-arabic' : ''}`}>
+                                            {tag.name}
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            {tag.tag_type}
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Dictionary */}
+                    {results.dictionary.length > 0 && (
+                        <div className="px-2 pb-2">
+                            <div className="px-3 py-2 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                                {isRtl ? 'لغت' : 'Dictionary'}
+                            </div>
+                            {results.dictionary.map((lemma) => (
+                                <button
+                                    key={`lem-${lemma.id}`}
+                                    onClick={() => handleSelect(`/${lang}/dictionary`)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 cursor-pointer group transition-all duration-150 w-full text-left outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
+                                >
+                                    <div className="h-9 w-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                                        <History className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`font-medium text-gray-900 ${isRtl ? 'font-arabic' : ''}`}>
+                                            {lemma.lemma}
+                                        </div>
+                                        <div className="text-xs text-gray-400">
+                                            {lemma.transliteration}
                                         </div>
                                     </div>
                                 </button>

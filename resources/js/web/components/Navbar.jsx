@@ -202,9 +202,10 @@ const Navbar = ({ lang }) => {
                         <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
                     </Link>
 
-                    <div className="relative w-64 hidden md:block ml-4" onClick={() => setSearchOpen(true)}>
+                    <div className="relative w-64 hidden md:block ml-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <div
+                            onClick={() => setSearchOpen(true)}
                             className={`flex h-10 w-full items-center rounded-full border border-gray-100 bg-gray-50/50 pl-9 pr-4 text-sm text-muted-foreground hover:bg-gray-100 hover:border-gray-200 cursor-pointer transition-all ${isRtl ? 'text-right pr-9 pl-4' : ''}`}
                             dir={isRtl ? 'rtl' : 'ltr'}
                         >

@@ -36,19 +36,19 @@ class GlobalSearchController extends Controller
         $lang = $request->header('Accept-Language', 'en');
 
         // 1. Search Poets using Scout
-        $poets = Poets::search($query)->take(5)->get()->map(function ($poet) use ($lang) {
+        $poets = Poets::search($query)->take(5)->get()->load('all_details')->map(function ($poet) use ($lang) {
             $detail = $poet->all_details->where('lang', $lang)->first() ?? $poet->all_details->first();
             return [
                 'id' => $poet->id,
                 'name' => $detail->poet_name ?? 'N/A',
                 'slug' => $poet->poet_slug ?? '',
-                'image' => $poet->poet_pic ?? null,
+                'image' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
                 'type' => 'poet'
             ];
         });
 
         // 2. Search Poetry using Scout
-        $poetry = Poetry::search($query)->take(5)->get()->map(function ($poem) use ($lang) {
+        $poetry = Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet_details'])->map(function ($poem) use ($lang) {
             $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
             $poetName = $poem->poet_details->poet_name ?? 'Unknown';
             return [
@@ -83,7 +83,7 @@ class GlobalSearchController extends Controller
         });
 
         // 5. Search Categories using Scout
-        $categories = Categories::search($query)->take(5)->get()->map(function ($category) use ($lang) {
+        $categories = Categories::search($query)->take(5)->get()->load('details')->map(function ($category) use ($lang) {
             $detail = $category->details->where('lang', $lang)->first() ?? $category->details->first();
             return [
                 'id' => $category->id,
@@ -94,7 +94,7 @@ class GlobalSearchController extends Controller
         });
 
         // 6. Search Tags using Scout
-        $tags = Tags::search($query)->take(5)->get()->map(function ($tag) use ($lang) {
+        $tags = Tags::search($query)->take(5)->get()->load('details')->map(function ($tag) use ($lang) {
             $detail = $tag->details->where('lang', $lang)->first() ?? $tag->details->first();
             return [
                 'id' => $tag->id,

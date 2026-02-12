@@ -61,6 +61,11 @@ const FeedContent = ({ feedType, feeds, lang, isRtl, lastPostElementRef }) => {
 
 const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
+    const { category } = React.useContext(React.useMemo(() => ({ category: undefined }), [])); // Mock or use useParams
+    // Actual useParams call:
+    const params = useParams();
+    const urlCategory = params.category;
+
     const [activeTab, setActiveTab] = React.useState('for-you');
 
     // Separate states for each tab to preserve scroll and items
@@ -117,7 +122,8 @@ const Feed = ({ lang }) => {
                 params: {
                     lang,
                     page: pageNumber,
-                    filter: tab === 'featured' ? 'featured' : undefined
+                    filter: tab === 'featured' ? 'featured' : undefined,
+                    category: urlCategory || undefined
                 }
             });
 
@@ -146,7 +152,7 @@ const Feed = ({ lang }) => {
         });
         fetchFeedData('for-you', 1, true);
         fetchFeedData('featured', 1, true);
-    }, [lang]);
+    }, [lang, urlCategory]);
 
     // Page change trigger
     React.useEffect(() => {
