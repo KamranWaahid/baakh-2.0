@@ -73,48 +73,70 @@ const PoemActionBar = ({ poem, lang, className, leftContent }) => {
     const handleClap = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (isInteracting) return;
 
-        handleAuthAction(async () => {
-            setIsInteracting(true);
-            try {
-                const response = await api.post('/api/v1/interactions/like', {
-                    id: poem.id,
-                    type: poem.type || 'poem'
-                });
-                if (response.data.status === 'success') {
-                    setClapCount(response.data.count);
-                    setIsLiked(response.data.interaction === 'liked');
-                }
-            } catch (error) {
-                console.error('Failed to toggle like:', error);
-            } finally {
-                setIsInteracting(false);
+        if (!user) {
+            setLoginModalOpen(true);
+            return;
+        }
+
+        // Optimistic update
+        const previousLiked = isLiked;
+        const previousCount = clapCount;
+
+        const newLiked = !isLiked;
+        const newCount = newLiked ? clapCount + 1 : Math.max(0, clapCount - 1); // Avoid negative count
+
+        setIsLiked(newLiked);
+        setClapCount(newCount);
+
+        try {
+            const response = await api.post('/api/v1/interactions/like', {
+                id: poem.id,
+                type: poem.type || 'poem'
+            });
+
+            // Optional: Sync with server response if needed, 
+            // but usually we trust our optimistic update unless error
+            if (response.data.status === 'success') {
+                // We can update the count from server if we want strict accuracy
+                // setClapCount(response.data.count); 
             }
-        });
+        } catch (error) {
+            console.error('Failed to toggle like:', error);
+            // Revert on error
+            setIsLiked(previousLiked);
+            setClapCount(previousCount);
+        }
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (isInteracting) return;
 
-        handleAuthAction(async () => {
-            setIsInteracting(true);
-            try {
-                const response = await api.post('/api/v1/interactions/bookmark', {
-                    id: poem.id,
-                    type: poem.type || 'poem'
-                });
-                if (response.data.status === 'success') {
-                    setIsSaved(response.data.interaction === 'bookmarked');
-                }
-            } catch (error) {
-                console.error('Failed to toggle bookmark:', error);
-            } finally {
-                setIsInteracting(false);
+        if (!user) {
+            setLoginModalOpen(true);
+            return;
+        }
+
+        // Optimistic update
+        const previousSaved = isSaved;
+        setIsSaved(!isSaved);
+
+        try {
+            const response = await api.post('/api/v1/interactions/bookmark', {
+                id: poem.id,
+                type: poem.type || 'poem'
+            });
+
+            if (response.data.status === 'success') {
+                // Ensure state is correct based on server response if needed
+                setIsSaved(response.data.interaction === 'bookmarked');
             }
-        });
+        } catch (error) {
+            console.error('Failed to toggle bookmark:', error);
+            // Revert on error
+            setIsSaved(previousSaved);
+        }
     };
 
     const shareLinks = [
