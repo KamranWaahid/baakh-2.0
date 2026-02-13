@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
-import { Search, X, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, PenTool, LogOut, UserIcon, Settings, ChevronRight } from 'lucide-react';
+import { Search, X, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, PenTool, LogOut, UserIcon, Settings, ChevronRight, Compass } from 'lucide-react';
 import { useMobileMenu } from '../contexts/MobileMenuContext';
 import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
@@ -22,7 +22,7 @@ const MobileMenu = ({ lang }) => {
         { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
         { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
         { label: isRtl ? 'بيت' : 'Couplets', icon: Scroll, path: `/${lang}/couplets` },
-        { label: isRtl ? 'ڪلام' : 'Lyrics', icon: Music, path: `/${lang}/lyrics` },
+        { label: isRtl ? 'موضوع' : 'Topics', icon: Compass, path: `/${lang}/explore` },
         { label: isRtl ? 'صنف' : 'Genre', icon: Tags, path: `/${lang}/genre` },
         { label: isRtl ? 'دور' : 'Period', icon: History, path: `/${lang}/period` },
         { label: isRtl ? 'علم عروض' : 'Prosody', icon: Scale, path: `/${lang}/prosody` },
