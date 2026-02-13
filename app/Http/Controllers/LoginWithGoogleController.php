@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Mail\WelcomeMail;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 
 class LoginWithGoogleController extends Controller
@@ -69,6 +71,16 @@ class LoginWithGoogleController extends Controller
             // Link Google ID
             $user->google_id = $googleUser->getId();
             $user->save();
+
+            // Send Welcome Email for new users
+            if (isset($isNewUser) && $isNewUser) {
+                try {
+                    $lang = app()->getLocale();
+                    Mail::to($user->email)->send(new WelcomeMail($user, $lang));
+                } catch (\Exception $e) {
+                    \Log::error("Failed to send Google welcome email to {$user->email}: " . $e->getMessage());
+                }
+            }
         }
 
         // Log in the user (session based for hybrid support if needed)

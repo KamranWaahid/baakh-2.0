@@ -70,6 +70,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('interactions/like', [App\Http\Controllers\Api\UserInteractionController::class, 'toggleLike']);
         Route::post('interactions/bookmark', [App\Http\Controllers\Api\UserInteractionController::class, 'toggleBookmark']);
+        Route::post('send-email', [\App\Http\Controllers\Api\EmailController::class, 'send']);
     });
 });
 

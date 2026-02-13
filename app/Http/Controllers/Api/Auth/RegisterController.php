@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Team;
 use App\Models\User;
+use App\Mail\WelcomeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
@@ -59,6 +61,15 @@ class RegisterController extends Controller
 
         // Log activity
         ActivityLog::log('register', $user, $team, 'User registered and team created');
+
+        // Send Welcome Email
+        try {
+            $lang = request()->get('lang', 'sd');
+            Mail::to($user->email)->send(new WelcomeMail($user, $lang));
+        } catch (\Exception $e) {
+            // Log error but don't fail registration
+            \Log::error("Failed to send welcome email to {$user->email}: " . $e->getMessage());
+        }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
