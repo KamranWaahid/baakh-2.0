@@ -63,7 +63,7 @@ const poetrySchema = z.object({
     poetry_slug: z.string().min(2, 'Slug is required'),
     poet_id: z.string().min(1, 'Poet is required'),
     category_id: z.string().min(1, 'Category is required'),
-    topic_category_id: z.string().min(1, 'Topic Category is required'),
+    topic_category_id: z.string().optional().nullable(),
     content_style: z.string().default('center'),
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),

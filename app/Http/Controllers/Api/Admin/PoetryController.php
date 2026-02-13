@@ -156,7 +156,7 @@ class PoetryController extends Controller
         $validated = $request->validate([
             'poet_id' => 'required|exists:poets,id',
             'category_id' => 'required|exists:categories,id',
-            'topic_category_id' => 'required|exists:topic_categories,id',
+            'topic_category_id' => 'nullable|exists:topic_categories,id',
             'poetry_slug' => 'required|unique:poetry_main,poetry_slug',
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
@@ -237,7 +237,7 @@ class PoetryController extends Controller
         $validated = $request->validate([
             'poet_id' => 'required|exists:poets,id',
             'category_id' => 'required|exists:categories,id',
-            'topic_category_id' => 'required|exists:topic_categories,id',
+            'topic_category_id' => 'nullable|exists:topic_categories,id',
             'poetry_slug' => 'required|unique:poetry_main,poetry_slug,' . $actualId,
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
