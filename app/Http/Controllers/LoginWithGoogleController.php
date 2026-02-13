@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Http\Request;
 
@@ -16,13 +17,17 @@ class LoginWithGoogleController extends Controller
 
     public function loginWithGoogle()
     {
-        return Socialite::driver('google')->stateless()->redirect();
+        /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+        $driver = Socialite::driver('google');
+        return $driver->stateless()->redirect();
     }
 
     public function googleAuthorized()
     {
         // Retrieve user data from Google
-        $googleUser = Socialite::driver('google')->stateless()->user();
+        /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
+        $driver = Socialite::driver('google');
+        $googleUser = $driver->stateless()->user();
 
         // Check if a user with this Google ID already exists (including soft deleted)
         $user = User::withTrashed()->where('google_id', $googleUser->getId())->first();
@@ -33,27 +38,36 @@ class LoginWithGoogleController extends Controller
                 $user->restore();
             }
         } else {
-            // Check if user exists by email (including soft deleted)
-            $user = User::withTrashed()->where('email', $googleUser->getEmail())->first();
+            // Check if user exists by email using the new Blind Index lookup
+            $user = User::withTrashed()
+                ->where('email_hash', hash('sha256', strtolower($googleUser->getEmail())))
+                ->first();
 
             if ($user) {
-                // User found correctly via email (even if soft deleted)
-                if ($user->trashed()) {
-                    $user->restore();
-                }
+                // If user exists, update auth token if needed (handled by Sanctum usually) or just login
+                $isNewUser = false;
             } else {
                 // If the user doesn't exist at all, create a new user
                 $user = new User();
-                $user->name = $googleUser->getName();
+
+                // We only store the Email (Encrypted)
                 $user->email = $googleUser->getEmail();
-                $user->password = bcrypt($googleUser->getId()); // Temporary password
+
+                // We do NOT store the name from Google. We set a placeholder or null.
+                // Since 'name' is required in some places, we'll use "Anonymous User".
+                $user->name = "Anonymous User";
+
+                $user->password = bcrypt(Str::random(16)); // Random password for security
                 $user->role = 'user'; // Assign default role
+
+                // Generate Random Code Username (e.g., User-X92Z)
+                $user->username = 'User-' . strtoupper(Str::random(5));
+
                 $isNewUser = true;
             }
 
-            // Link Google ID and update avatar
+            // Link Google ID
             $user->google_id = $googleUser->getId();
-            $user->avatar = $googleUser->getAvatar();
             $user->save();
         }
 

@@ -61,20 +61,24 @@ const MainLayout = ({ children, lang }) => {
                     : 'translate-x-0'
                     }`}
             >
-                <Navbar lang={lang} />
+                <header role="banner">
+                    <Navbar lang={lang} />
+                </header>
                 <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100vh-57px)] pb-[60px] lg:pb-0`}>
                     <SidebarLeft lang={lang} />
                     <div className="flex-1 flex flex-col min-w-0">
                         <FeedbackBanner lang={lang} />
                         <div className="flex flex-1">
-                            <main className="flex-1 flex flex-col min-w-0">
+                            <main id="main-content" role="main" className="flex-1 flex flex-col min-w-0">
                                 {children}
                             </main>
                             {!hideRightSidebar && <SidebarRight lang={lang} />}
                         </div>
                     </div>
                 </div>
-                <BottomNav lang={lang} />
+                <footer role="contentinfo">
+                    <BottomNav lang={lang} />
+                </footer>
 
                 {/* Overlay for content when menu is open (optional, but good for UX to indicate content is inactive) */}
                 {isMenuOpen && (

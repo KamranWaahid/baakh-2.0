@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -16,37 +17,52 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $validated = $request->validate([
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'name_sd' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'whatsapp' => ['nullable', 'string', 'max:20'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            // Validate uniqueness via the blind index column
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) use ($user) {
+                    $hash = hash('sha256', strtolower($value));
+                    $exists = User::where('email_hash', $hash)
+                        ->where('id', '!=', $user->id)
+                        ->exists();
+                    if ($exists) {
+                        $fail('The email has already been taken.');
+                    }
+                }
+            ],
+            'avatar' => ['nullable', 'image', 'max:1024'],
         ]);
+        // Note: The 'email_hash' is automatically updated by the User model's 'saving' boot method
+        // when $user->email is changed.
 
-        // Handle avatar upload
         if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $validated['avatar'] = 'storage/' . $path;
+            // User requested to remove ability to upload custom avatar, but keeping logic in case we revert, 
+            // OR we can just ignore it. User said "image should only show avatar... minimal color".
+            // Let's comment it out to strictly follow "don't get image" and "minimal color".
+            // Actually, the request said "image should only show avatar" which implies the UI component. 
+            // But "each user should have different color" implies we generate it.
+            // We will stop saving uploaded avatars.
         }
 
-        $user->update($validated);
+        $user->name = $request->name; // Will be encrypted by model cast
+        $user->email = $request->email;
+        // $user->username = $request->username; // Don't allow changing random code
+
+        // Explicitly nullify or don't update removed fields to ensure they stay clean/empty if they had data
+        $user->phone = null;
+        $user->whatsapp = null;
+        $user->name_sd = null;
+
+        $user->save();
 
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'name_sd' => $user->name_sd,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'whatsapp' => $user->whatsapp,
-                'avatar' => $user->avatar,
-                'username' => $user->username,
-                'status' => $user->status,
-                'roles' => $user->getRoleNames(),
-            ],
+            'user' => $user,
         ]);
     }
 

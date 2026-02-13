@@ -33,6 +33,7 @@ Route::prefix('auth')->group(function () {
         Route::delete('/profile', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'destroy']);
         Route::put('/password', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'changePassword']);
         Route::put('/password/set', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'setPassword']);
+        Route::get('/privacy/view-as-team', [\App\Http\Controllers\Api\Auth\PrivacyController::class, 'viewAsTeam']);
     });
 });
 

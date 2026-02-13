@@ -81,6 +81,9 @@ const PoetryFeed = ({ lang }) => {
 
     return (
         <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
+            <h1 className="visually-hidden h-0 w-0 overflow-hidden absolute">
+                {isRtl ? 'شاعري' : 'Poetry'}
+            </h1>
             <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 relative">
                 <div className="overflow-x-auto no-scrollbar scroll-smooth">
                     <div className="flex items-center gap-8 min-w-max pb-4">

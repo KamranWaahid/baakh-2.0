@@ -168,6 +168,9 @@ const Feed = ({ lang }) => {
 
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 pt-2 pb-6 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
+            <h1 className="sr-only">
+                {isRtl ? 'باک - سنڌي شاعريءَ جو آرڪائيو' : 'Baakh - Archive of Sindhi Poetry'}
+            </h1>
             <Tabs defaultValue="for-you" className="w-full" onValueChange={setActiveTab} dir={isRtl ? 'rtl' : 'ltr'}>
                 <div
                     className={`sticky bg-white pt-0 pb-0 z-40 border-b border-gray-100 mb-8 transition-[top] duration-300 ${isNavbarHidden ? 'top-0' : 'top-[56px] lg:top-[65px]'

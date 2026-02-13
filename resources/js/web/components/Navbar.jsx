@@ -194,7 +194,7 @@ const Navbar = ({ lang }) => {
                         <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
                     </Link>
 
-                    <div className="relative w-64 hidden md:block ml-4">
+                    <div className="relative w-64 hidden md:block ml-4" role="search">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <div
                             onClick={() => setSearchOpen(true)}

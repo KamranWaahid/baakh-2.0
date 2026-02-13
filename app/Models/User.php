@@ -46,7 +46,30 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'email_hash', // Hide the hash from API responses
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($user) {
+            if ($user->isDirty('email') && !empty($user->email)) {
+                // Generate a blind index (hash) for unique lookups
+                // We use SHA256. For higher security, we could use a secret salt.
+                $user->email_hash = hash('sha256', strtolower($user->email));
+            }
+        });
+    }
+
+    /**
+     * Find a user by their email using the blind index.
+     */
+    public static function findByEmail($email)
+    {
+        if (empty($email))
+            return null;
+        $hash = hash('sha256', strtolower($email));
+        return static::where('email_hash', $hash)->first();
+    }
 
     /**
      * The attributes that should be cast.
@@ -57,6 +80,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'password' => 'hashed',
+        'phone' => 'encrypted',
+        'whatsapp' => 'encrypted',
+        'name' => 'encrypted',
     ];
 
     public function likesDislikes()

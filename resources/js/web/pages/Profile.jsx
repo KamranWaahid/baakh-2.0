@@ -2,12 +2,23 @@ import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../../admin/api/axios';
-import { Camera, Save, ArrowLeft, ArrowRight, User as UserIcon, Mail, Phone, MessageCircle, Check, AlertCircle } from 'lucide-react';
+import { Camera, Save, ArrowLeft, ArrowRight, User as UserIcon, Mail, Phone, MessageCircle, Check, AlertCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from '../components/Logo';
 import { getImageUrl } from '../utils/url';
+
+// Deterministic color generator based on string
+const getAvatarColor = (str) => {
+    if (!str) return '#3b82f6'; // Default blue
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 70%, 50%)`;
+};
 
 const Profile = () => {
     const { lang } = useParams();
@@ -16,16 +27,14 @@ const Profile = () => {
 
     const [formData, setFormData] = useState({
         name: user?.name || '',
-        name_sd: user?.name_sd || '',
         email: user?.email || '',
-        phone: user?.phone || '',
-        whatsapp: user?.whatsapp || '',
     });
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
     const fileInputRef = useRef(null);
 
     const handleDeleteAccount = async (password) => {
@@ -77,10 +86,7 @@ const Profile = () => {
             const data = new FormData();
             data.append('name', formData.name);
             data.append('email', formData.email);
-            if (formData.name_sd) data.append('name_sd', formData.name_sd);
-            if (formData.phone) data.append('phone', formData.phone);
-            if (formData.whatsapp) data.append('whatsapp', formData.whatsapp);
-            if (avatarFile) data.append('avatar', avatarFile);
+            // Removed name_sd, phone, whatsapp, avatar append
 
             const response = await api.post('/api/auth/profile', data, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -137,115 +143,63 @@ const Profile = () => {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-10">
-                        {/* Avatar section — stacks vertically on small mobile */}
+                        {/* Avatar section - Unique Color Avatar */}
                         <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
-                            <div className="relative group cursor-pointer shrink-0" onClick={() => fileInputRef.current?.click()}>
-                                <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-gray-100 transition-opacity group-hover:opacity-75">
-                                    <AvatarImage src={avatarSrc} alt={user.name} />
-                                    <AvatarFallback className="text-xl sm:text-2xl bg-gray-100 text-gray-500">
-                                        {user.name?.charAt(0)?.toUpperCase()}
+                            <div className="relative group shrink-0">
+                                <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-gray-100 transition-opacity">
+                                    <AvatarFallback
+                                        className="text-2xl sm:text-3xl font-bold text-white relative overflow-hidden"
+                                        style={{ backgroundColor: getAvatarColor(user.username || user.name) }}
+                                    >
+                                        {user.username?.charAt(0)?.toUpperCase() || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="bg-black/50 rounded-full p-2">
-                                        <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                                    </div>
-                                </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={handleAvatarChange}
-                                />
                             </div>
-                            <div className="text-center sm:text-left">
-                                <p className="font-semibold text-base sm:text-lg text-gray-900">{user.name}</p>
-                                <p className="text-xs sm:text-sm text-gray-500">{user.email}</p>
-                                {user.roles && user.roles.length > 0 && (
-                                    <span className="inline-block mt-2 text-xs font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                                        {user.roles[0]}
-                                    </span>
-                                )}
+
+                            <div className="text-center sm:text-left space-y-1">
+                                <h3 className="font-semibold text-gray-900 text-lg sm:text-xl">
+                                    {user.username}
+                                </h3>
+                                <p className="text-sm text-gray-500">
+                                    {isRtl ? 'توهان جو عوامي نالو' : 'Your Public Anonymous ID'}
+                                </p>
                             </div>
                         </div>
 
-                        {/* Fields */}
-                        <div className="space-y-4 sm:space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                {/* Name */}
+                        {/* Form Fields */}
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 gap-6">
+                                {/* Real Name (Encrypted) */}
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center gap-2">
                                         <UserIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                        {isRtl ? 'نالو (انگريزي)' : 'Name'}
+                                        {isRtl ? 'اصل نالو (صرف توهان کي نظر ايندو)' : 'Real Name (Encrypted & Private)'}
                                     </label>
                                     <Input
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        required
                                         className="rounded-xl border-gray-200 focus:border-black focus:ring-black/5 h-11 sm:h-12 text-sm sm:text-base"
+                                        placeholder={isRtl ? 'توهان جو نالو' : 'Your real name'}
                                     />
+                                    <p className="text-xs text-gray-400 px-1">
+                                        {isRtl ? 'هي نالو انڪرپٽ ٿيل آهي. اسان جي ٽيم به نٿي ڏسي سگهي.' : 'This is encrypted in our database. Not visible to the public.'}
+                                    </p>
                                 </div>
 
-                                {/* Name Sindhi */}
+                                {/* Email */}
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <UserIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                        {isRtl ? 'نالو (سنڌي)' : 'Name (Sindhi)'}
+                                        <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                                        {isRtl ? 'اي ميل' : 'Email Address'}
                                     </label>
                                     <Input
-                                        name="name_sd"
-                                        value={formData.name_sd}
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
                                         onChange={handleChange}
-                                        dir="rtl"
-                                        className="rounded-xl border-gray-200 focus:border-black focus:ring-black/5 h-11 sm:h-12 text-sm sm:text-base font-arabic"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Email */}
-                            <div className="space-y-1.5 sm:space-y-2">
-                                <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                    {isRtl ? 'اي ميل' : 'Email'}
-                                </label>
-                                <Input
-                                    name="email"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                    className="rounded-xl border-gray-200 focus:border-black focus:ring-black/5 h-11 sm:h-12 text-sm sm:text-base"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                {/* Phone */}
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                        {isRtl ? 'فون نمبر' : 'Phone'}
-                                    </label>
-                                    <Input
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="rounded-xl border-gray-200 focus:border-black focus:ring-black/5 h-11 sm:h-12 text-sm sm:text-base"
-                                    />
-                                </div>
-
-                                {/* WhatsApp */}
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
-                                        {isRtl ? 'واٽس ايپ' : 'WhatsApp'}
-                                    </label>
-                                    <Input
-                                        name="whatsapp"
-                                        value={formData.whatsapp}
-                                        onChange={handleChange}
-                                        className="rounded-xl border-gray-200 focus:border-black focus:ring-black/5 h-11 sm:h-12 text-sm sm:text-base"
+                                        className="rounded-xl border-gray-200 focus:border-black focus:ring-black/5 h-11 sm:h-12 text-sm sm:text-base bg-gray-50/50"
+                                        readOnly
                                     />
                                 </div>
                             </div>
@@ -273,6 +227,38 @@ const Profile = () => {
                         </div>
                     </form>
 
+                    {/* Privacy & Security Section */}
+                    <div className="mt-12 pt-8 border-t border-gray-100">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                            {isRtl ? 'پرائيويسي ۽ سيڪيورٽي' : 'Privacy & Security'}
+                        </h2>
+
+                        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6">
+                            <div className="flex items-start gap-4">
+                                <div className="p-3 bg-blue-100 rounded-full shrink-0">
+                                    <Lock className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-medium text-blue-900 mb-1">
+                                        {isRtl ? 'توهان جو ڊيٽا محفوظ آهي' : 'Your data is end-to-end encrypted'}
+                                    </h3>
+                                    <p className="text-sm text-blue-700 mb-4 leading-relaxed">
+                                        {isRtl
+                                            ? 'اسان توهان جي فون نمبر ۽ ٻي معلومات کي انڪرپٽ ڪري رکون ٿا. اسان جي ٽيم به اهو نٿي ڏسي سگهي.'
+                                            : 'We use industry-standard encryption to protect your personal details. Even our administrators cannot see your actual phone number or WhatsApp.'}
+                                    </p>
+                                    <Button
+                                        onClick={() => setIsPrivacyModalOpen(true)}
+                                        variant="outline"
+                                        className="bg-white hover:bg-blue-50 border-blue-200 text-blue-700 hover:text-blue-800"
+                                    >
+                                        {isRtl ? 'ڏسو ته ٽيم ڇا ٿي ڏسي' : 'View As Team'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Danger Zone */}
                     <div className="mt-12 pt-8 border-t border-gray-100">
                         <h2 className="text-lg font-semibold text-red-600 mb-2">
@@ -298,6 +284,12 @@ const Profile = () => {
                         isRtl={isRtl}
                         isSocialUser={!!user.google_id}
                         onConfirm={handleDeleteAccount}
+                    />
+
+                    <PrivacyModal
+                        isOpen={isPrivacyModalOpen}
+                        onClose={() => setIsPrivacyModalOpen(false)}
+                        isRtl={isRtl}
                     />
                 </div>
             </div>
@@ -377,6 +369,79 @@ const DeleteAccountDialog = ({ isOpen, onClose, isRtl, isSocialUser, onConfirm }
                         </Button>
                     </div>
                 </form>
+            </div>
+        </div>
+    );
+};
+
+const PrivacyModal = ({ isOpen, onClose, isRtl }) => {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setLoading(true);
+            api.get('/api/auth/privacy/view-as-team')
+                .then(res => setData(res.data))
+                .catch(err => console.error(err))
+                .finally(() => setLoading(false));
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className={`bg-white rounded-2xl shadow-xl max-w-lg w-full p-0 overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${isRtl ? 'text-right font-arabic' : 'text-left font-sans'}`}>
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-green-600" />
+                        {isRtl ? 'ٽيم ڇا ٿي ڏسيس' : 'What Our Team Sees'}
+                    </h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
+                </div>
+
+                <div className="p-6">
+                    {loading ? (
+                        <div className="flex justify-center py-8">
+                            <span className="h-6 w-6 border-2 border-gray-200 border-t-black rounded-full animate-spin"></span>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="bg-green-50 text-green-800 text-sm p-4 rounded-xl mb-6">
+                                {data?.message}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="text-gray-500">{isRtl ? 'نالو' : 'Name'}</div>
+                                <div className="font-medium">{data?.as_seen_by_team?.name}</div>
+
+                                <div className="text-gray-500">{isRtl ? 'اي ميل' : 'Email'}</div>
+                                <div className="font-medium font-mono">{data?.as_seen_by_team?.email}</div>
+
+                                <div className="text-gray-500">{isRtl ? 'فون نمبر' : 'Phone'}</div>
+                                <div className="font-medium font-mono bg-gray-100 inline-block px-2 rounded text-gray-600">
+                                    {data?.as_seen_by_team?.phone || 'Not Set'}
+                                </div>
+
+                                <div className="text-gray-500">{isRtl ? 'واٽس ايپ' : 'WhatsApp'}</div>
+                                <div className="font-medium font-mono bg-gray-100 inline-block px-2 rounded text-gray-600">
+                                    {data?.as_seen_by_team?.whatsapp || 'Not Set'}
+                                </div>
+                            </div>
+
+                            <div className="mt-6 pt-4 border-t border-gray-100 text-xs text-gray-400 text-center">
+                                Encryption Status: <span className="text-green-600 font-medium">{data?.encryption_status}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-gray-50 px-6 py-4 flex justify-end">
+                    <Button onClick={onClose} variant="outline" className="bg-white">
+                        {isRtl ? 'بند ڪريو' : 'Close'}
+                    </Button>
+                </div>
             </div>
         </div>
     );

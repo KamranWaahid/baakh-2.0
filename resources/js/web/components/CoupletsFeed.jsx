@@ -72,6 +72,9 @@ const CoupletsFeed = ({ lang }) => {
 
     return (
         <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
+            <h1 className="sr-only">
+                {isRtl ? 'ببيت' : 'Couplets'}
+            </h1>
             <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
                 <div className="flex items-center gap-8 min-w-max pb-4">
                     {topics.map((topic) => (
