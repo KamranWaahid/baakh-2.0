@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useAuth } from '../contexts/AuthContext';
+import { useEffect } from 'react';
 
 const LoadingState = () => (
     <div className="space-y-8 mt-0">
@@ -166,6 +167,15 @@ const Feed = ({ lang }) => {
         }
     }, [currentFeed.page, activeTab]);
 
+    // Switch away from bookmarked if empty
+    useEffect(() => {
+        if (activeTab === 'bookmarked' && !feeds['bookmarked'].loading && feeds['bookmarked'].posts.length === 0) {
+            setActiveTab('for-you');
+        }
+    }, [activeTab, feeds['bookmarked'].loading, feeds['bookmarked'].posts.length]);
+
+    const showBookmarked = user && (feeds['bookmarked'].posts.length > 0 || feeds['bookmarked'].loading);
+
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 pt-2 pb-6 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
             <h1 className="sr-only">
@@ -189,7 +199,7 @@ const Feed = ({ lang }) => {
                         >
                             {isRtl ? 'چونڊيل' : 'Featured'}
                         </TabsTrigger>
-                        {user && (
+                        {showBookmarked && (
                             <TabsTrigger
                                 value="bookmarked"
                                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3"
@@ -208,7 +218,7 @@ const Feed = ({ lang }) => {
                     <FeedContent feedType="featured" feeds={feeds} lang={lang} isRtl={isRtl} lastPostElementRef={lastPostElementRef} />
                 </TabsContent>
 
-                {user && (
+                {showBookmarked && (
                     <TabsContent value="bookmarked" className="mt-0">
                         <FeedContent feedType="bookmarked" feeds={feeds} lang={lang} isRtl={isRtl} lastPostElementRef={lastPostElementRef} />
                     </TabsContent>

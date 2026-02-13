@@ -59,12 +59,7 @@ const MainLayout = ({ children, lang }) => {
     return (
         <div className="min-h-screen bg-white overflow-x-hidden">
             <MobileMenu lang={lang} />
-            <div
-                className={`min-h-screen bg-white transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform ${isMenuOpen
-                    ? (isRtl ? '-translate-x-[280px]' : 'translate-x-[280px]')
-                    : 'translate-x-0'
-                    }`}
-            >
+            <div className="min-h-screen bg-white">
                 <header role="banner">
                     <Navbar lang={lang} />
                 </header>
