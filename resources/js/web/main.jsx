@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 import BottomNav from './components/BottomNav';
 import FeedbackBanner from './components/FeedbackBanner';
 import MobileMenu from './components/MobileMenu';
+import CategoryNav from './components/CategoryNav';
 import { MobileMenuProvider, useMobileMenu } from './contexts/MobileMenuContext';
 import { useSwipeGesture } from './hooks/useSwipeGesture';
 
@@ -32,6 +33,8 @@ const SocialCallback = React.lazy(() => import('./components/SocialCallback'));
 const SetPassword = React.lazy(() => import('./pages/SetPassword'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const SettingsPage = React.lazy(() => import('./pages/Settings'));
+const ExploreTopics = React.lazy(() => import('./components/ExploreTopics'));
+const TopicDetail = React.lazy(() => import('./components/TopicDetail'));
 
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -47,7 +50,8 @@ const PageLoader = () => (
 const MainLayout = ({ children, lang }) => {
     const isRtl = lang === 'sd';
     const location = useLocation();
-    const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/') || location.pathname.includes('/poetry') || location.pathname.includes('/couplets') || location.pathname.includes('/genre') || location.pathname.includes('/period') || location.pathname.includes('/prosody');
+    const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/') || location.pathname.includes('/poetry') || location.pathname.includes('/couplets') || location.pathname.includes('/genre') || location.pathname.includes('/period') || location.pathname.includes('/prosody') || location.pathname.includes('/explore') || location.pathname.includes('/topic') || location.pathname.includes('/tag');
+    const showCategoryNav = location.pathname.includes('/explore') || location.pathname.includes('/topic/') || location.pathname.includes('/tag/');
 
     const { isMenuOpen, openMenu, closeMenu } = useMobileMenu();
     useSwipeGesture({ isMenuOpen, openMenu, closeMenu, isRtl });
@@ -68,6 +72,7 @@ const MainLayout = ({ children, lang }) => {
                     <SidebarLeft lang={lang} />
                     <div className="flex-1 flex flex-col min-w-0">
                         <FeedbackBanner lang={lang} />
+                        {showCategoryNav && <CategoryNav lang={lang} />}
                         <div className="flex flex-1">
                             <main id="main-content" role="main" className="flex-1 flex flex-col min-w-0">
                                 {children}
@@ -137,6 +142,11 @@ const Prosody = () => {
     return <ProsodyFeed lang={lang} />;
 };
 
+const Explore = () => {
+    const { lang } = useParams();
+    return <ExploreTopics lang={lang} />;
+};
+
 import { AuthProvider } from './contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -193,6 +203,21 @@ const App = () => {
                                 <Route path="/:lang/prosody" element={
                                     <LanguageWrapper>
                                         <Prosody />
+                                    </LanguageWrapper>
+                                } />
+                                <Route path="/:lang/explore" element={
+                                    <LanguageWrapper>
+                                        <Explore />
+                                    </LanguageWrapper>
+                                } />
+                                <Route path="/:lang/tag/:slug" element={
+                                    <LanguageWrapper>
+                                        <TopicDetail />
+                                    </LanguageWrapper>
+                                } />
+                                <Route path="/:lang/topic/:slug" element={
+                                    <LanguageWrapper>
+                                        <TopicDetail />
                                     </LanguageWrapper>
                                 } />
                                 <Route path="/:lang/about" element={

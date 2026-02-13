@@ -22,7 +22,8 @@ import {
     DialogFooter
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Edit, Layers } from 'lucide-react';
+import { Plus, Trash2, Edit, Layers, Tag as TagIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const TopicCategoryList = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -212,23 +213,36 @@ const TopicCategoryList = () => {
                                         <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">ID: {cat.id}</span>
                                     </div>
 
-                                    <div className="pt-3 border-t flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Slug</span>
-                                            <span className="text-xs font-mono text-gray-600">{cat.slug}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleEdit(cat)}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-9 w-9 text-destructive"
-                                                onClick={() => handleDelete(cat.id)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                    <div className="pt-3 border-t">
+                                        {cat.tags && cat.tags.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1 mb-3">
+                                                {cat.tags.map(tag => (
+                                                    <Badge key={tag.id} variant="secondary" className="text-[10px] px-1.5 py-0 h-5 font-normal">
+                                                        {tag.name}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 italic mb-3">No tags assigned</p>
+                                        )}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-gray-400 uppercase tracking-wider">Slug</span>
+                                                <span className="text-xs font-mono text-gray-600">{cat.slug}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleEdit(cat)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-destructive"
+                                                    onClick={() => handleDelete(cat.id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -282,7 +296,21 @@ const TopicCategoryList = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="whitespace-nowrap text-gray-600 italic">
-                                                {cat.details?.en?.name || '-'}
+                                                <div className="flex flex-col gap-1">
+                                                    <span>{cat.details?.en?.name || '-'}</span>
+                                                    {cat.tags && cat.tags.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-1 max-w-[300px]">
+                                                            {cat.tags.slice(0, 5).map(tag => (
+                                                                <Badge key={tag.id} variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-normal bg-gray-50 text-gray-500 border-gray-200">
+                                                                    {tag.name}
+                                                                </Badge>
+                                                            ))}
+                                                            {cat.tags.length > 5 && (
+                                                                <span className="text-[10px] text-gray-400 self-center">+{cat.tags.length - 5} more</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell whitespace-nowrap font-mono text-xs text-gray-400">{cat.slug}</TableCell>
                                             <TableCell className="text-right whitespace-nowrap">

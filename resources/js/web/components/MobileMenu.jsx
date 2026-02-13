@@ -55,10 +55,10 @@ const MobileMenu = ({ lang }) => {
             {/* Menu Panel */}
             <div
                 className={`fixed top-0 ${isRtl ? 'right-0' : 'left-0'} h-full w-[280px] bg-white z-[200] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform ${isMenuOpen
-                        ? 'translate-x-0'
-                        : isRtl
-                            ? 'translate-x-full'
-                            : '-translate-x-full'
+                    ? 'translate-x-0'
+                    : isRtl
+                        ? 'translate-x-full'
+                        : '-translate-x-full'
                     }`}
                 style={{ boxShadow: isMenuOpen ? '4px 0 24px rgba(0,0,0,0.08)' : 'none' }}
             >
@@ -107,8 +107,8 @@ const MobileMenu = ({ lang }) => {
                                         to={item.path}
                                         onClick={handleNavClick}
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium transition-all duration-150 active:scale-[0.98] ${active
-                                                ? 'bg-black text-white'
-                                                : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                                            ? 'bg-black text-white'
+                                            : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                                             } ${isRtl ? 'flex-row-reverse' : ''}`}
                                     >
                                         <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
@@ -225,6 +225,13 @@ const MobileMenu = ({ lang }) => {
 
                 {/* Footer */}
                 <div className="flex-shrink-0 border-t border-gray-100 px-5 py-3">
+                    <div className="flex items-center justify-center gap-4 text-xs text-gray-500 mb-2 flex-wrap">
+                        <Link to={`/${lang}/help`} className="hover:text-black transition-colors">{isRtl ? 'مدد' : 'Help'}</Link>
+                        <Link to={`/${lang}/status`} className="hover:text-black transition-colors">{isRtl ? 'حالت' : 'Status'}</Link>
+                        <Link to={`/${lang}/about`} className="hover:text-black transition-colors">{isRtl ? 'بابت' : 'About'}</Link>
+                        <Link to={`/${lang}/privacy`} className="hover:text-black transition-colors">{isRtl ? 'رازداري' : 'Privacy'}</Link>
+                        <Link to={`/${lang}/terms`} className="hover:text-black transition-colors">{isRtl ? 'شرطون' : 'Terms'}</Link>
+                    </div>
                     <p className="text-[11px] text-gray-300 text-center">
                         © {new Date().getFullYear()} Baakh
                     </p>

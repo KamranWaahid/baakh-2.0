@@ -139,8 +139,10 @@ const SidebarRight = ({ lang }) => {
                         ))
                     )}
                 </div>
-                <Button variant="link" className="text-black hover:text-gray-600 p-0 h-auto mt-6 font-medium">
-                    {isRtl ? 'وڌيڪ موضوع ڏسو' : 'See more topics'}
+                <Button variant="link" asChild className="text-black hover:text-gray-600 p-0 h-auto mt-6 font-medium">
+                    <Link to={`/${lang}/explore`}>
+                        {isRtl ? 'وڌيڪ موضوع ڏسو' : 'See more topics'}
+                    </Link>
                 </Button>
             </section>
 

@@ -56,6 +56,9 @@ Route::prefix('v1')->group(function () {
     // Sidebar Routes
     Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
+    Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
+    Route::get('tags/{slug}', [App\Http\Controllers\Api\TopicController::class, 'showTag']);
+    Route::get('topic-categories/{slug}', [App\Http\Controllers\Api\TopicController::class, 'showCategory']);
 
     // Feed Routes
     Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);

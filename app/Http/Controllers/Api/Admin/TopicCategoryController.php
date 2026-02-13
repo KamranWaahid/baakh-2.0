@@ -14,14 +14,22 @@ class TopicCategoryController extends Controller
     public function index()
     {
         return response()->json(
-            TopicCategory::with(['details'])->get()->map(function ($tc) {
+            TopicCategory::with(['details', 'tags.details'])->get()->map(function ($tc) {
                 return [
                     'id' => $tc->id,
                     'slug' => $tc->slug,
                     'details' => $tc->details->mapWithKeys(function ($d) {
                         return [$d->lang => ['name' => $d->name]];
                     }),
-                    'name' => $tc->details->where('lang', 'sd')->first()?->name ?? $tc->details->first()?->name
+                    'name' => $tc->details->where('lang', 'sd')->first()?->name ?? $tc->details->first()?->name,
+                    'tags' => $tc->tags->map(function ($tag) {
+                        $tagName = $tag->details->where('lang', 'sd')->first()?->name ?? $tag->details->first()?->name ?? $tag->slug;
+                        return [
+                            'id' => $tag->id,
+                            'name' => $tagName,
+                            'slug' => $tag->slug
+                        ];
+                    })
                 ];
             })
         );
@@ -60,6 +68,14 @@ class TopicCategoryController extends Controller
             'slug' => $tc->slug,
             'details' => $tc->details->mapWithKeys(function ($d) {
                 return [$d->lang => ['name' => $d->name]];
+            }),
+            'tags' => $tc->tags->map(function ($tag) {
+                $tagName = $tag->details->where('lang', 'sd')->first()?->name ?? $tag->details->first()?->name ?? $tag->slug;
+                return [
+                    'id' => $tag->id,
+                    'name' => $tagName,
+                    'slug' => $tag->slug
+                ];
             })
         ]);
     }
