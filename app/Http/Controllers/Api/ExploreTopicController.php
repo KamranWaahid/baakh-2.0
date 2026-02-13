@@ -20,14 +20,12 @@ class ExploreTopicController extends Controller
         $lang = $request->header('Accept-Language', 'sd');
         App::setLocale($lang);
 
-        // 1. Get all unique tags used in poetry_main table
-        // This avoids N+1 queries by fetching all used tags once
-        $usedTags = Poetry::where('visibility', 1)
+        // 1. Get all unique tag IDs used in poetry_main table
+        // The poetry_tags column stores IDs as strings in a JSON array (e.g. ["294", "292"])
+        $usedTagIds = Poetry::where('visibility', 1)
             ->whereNotNull('poetry_tags')
             ->pluck('poetry_tags')
             ->flatMap(function ($tagsJson) {
-                // Decode JSON and return array of tags. 
-                // Handle potential null or invalid JSON gracefully
                 $tags = json_decode($tagsJson, true);
                 return is_array($tags) ? $tags : [];
             })
@@ -40,9 +38,9 @@ class ExploreTopicController extends Controller
             'details' => function ($q) use ($lang) {
                 $q->where('lang', $lang);
             },
-            'tags' => function ($q) use ($usedTags) {
-                // Filter tags relation to only include used tags
-                $q->whereIn('slug', $usedTags);
+            'tags' => function ($q) use ($usedTagIds) {
+                // Filter tags relation to only include used tags by ID
+                $q->whereIn('id', $usedTagIds);
             },
             'tags.details' => function ($q) use ($lang) {
                 $q->where('lang', $lang);
@@ -74,8 +72,8 @@ class ExploreTopicController extends Controller
             })
             ->values(); // Reset array keys
 
-        // 4. Recommended Tags - also filtered by usage
-        $recommended = Tags::whereIn('slug', $usedTags)
+        // 4. Recommended Tags - also filtered by usage (IDs)
+        $recommended = Tags::whereIn('id', $usedTagIds)
             ->with([
                 'details' => function ($q) use ($lang) {
                     $q->where('lang', $lang);

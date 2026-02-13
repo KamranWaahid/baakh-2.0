@@ -37,8 +37,9 @@ class TopicController extends Controller
         $tagName = $tagDetail->name ?? $tag->slug;
 
         // Fetch Poetry associated with this tag
+        // poetry_tags is a JSON array of IDs (e.g. ["294", "292"])
         $poetry = Poetry::where('visibility', 1)
-            ->where('poetry_tags', 'like', '%"' . $tag->slug . '"%')
+            ->where('poetry_tags', 'like', '%"' . $tag->id . '"%')
             ->with([
                 'translations' => function ($q) use ($lang) {
                     $q->where('lang', $lang);
@@ -60,7 +61,7 @@ class TopicController extends Controller
 
         // Fetch Poets associated with this tag
         $poets = Poets::where('visibility', 1)
-            ->where('poet_tags', 'like', '%"' . $tag->slug . '"%')
+            ->where('poet_tags', 'like', '%"' . $tag->id . '"%')
             ->with('all_details')
             ->withCount('poetry')
             ->latest()
@@ -84,8 +85,8 @@ class TopicController extends Controller
                 'type' => 'category'
             ],
             'counts' => [
-                'poetry' => Poetry::where('visibility', 1)->where('poetry_tags', 'like', '%"' . $tag->slug . '"%')->count(),
-                'poets' => Poets::where('visibility', 1)->where('poet_tags', 'like', '%"' . $tag->slug . '"%')->count(),
+                'poetry' => Poetry::where('visibility', 1)->where('poetry_tags', 'like', '%"' . $tag->id . '"%')->count(),
+                'poets' => Poets::where('visibility', 1)->where('poet_tags', 'like', '%"' . $tag->id . '"%')->count(),
             ],
             'poetry' => $poetry,
             'poets' => $poets
@@ -102,12 +103,22 @@ class TopicController extends Controller
         $catDetail = $category->details->where('lang', $lang)->first() ?? $category->details->first();
         $catName = $catDetail->name ?? $category->slug;
 
-        // Fetch Poetry for this Category (using topic_category_id is cleaner if available, 
-        // else we might need to search specific logic, but Poetry model has topic_category_id fillable)
-        // Let's assume topic_category_id relationship exists in Poetry model.
+        // Fetch Poetry for this Category
+        // Fallback: If topic_category_id is missing, find poetry that has ANY tag belonging to this category
+        $categoryTagIds = $category->tags()->pluck('id')->toArray();
 
         $poetry = Poetry::where('visibility', 1)
-            ->where('topic_category_id', $category->id)
+            ->where(function ($query) use ($category, $categoryTagIds) {
+                // Direct link
+                $query->where('topic_category_id', $category->id);
+
+                // Or via tags
+                if (!empty($categoryTagIds)) {
+                    foreach ($categoryTagIds as $tagId) {
+                        $query->orWhere('poetry_tags', 'like', '%"' . $tagId . '"%');
+                    }
+                }
+            })
             ->with([
                 'translations' => function ($q) use ($lang) {
                     $q->where('lang', $lang);
@@ -152,10 +163,23 @@ class TopicController extends Controller
             ],
             'parent' => null, // Root level
             'counts' => [
-                'poetry' => Poetry::where('visibility', 1)->where('topic_category_id', $category->id)->count(),
+                'poetry' => Poetry::where('visibility', 1)
+                    ->where(function ($query) use ($category, $categoryTagIds) {
+                        $query->where('topic_category_id', $category->id);
+                        if (!empty($categoryTagIds)) {
+                            foreach ($categoryTagIds as $tagId) {
+                                $query->orWhere('poetry_tags', 'like', '%"' . $tagId . '"%');
+                            }
+                        }
+                    })->count(),
                 // Approximate poet count (unique poets in this category)
-                'poets' => Poets::where('visibility', 1)->whereHas('poetry', function ($q) use ($category) {
+                'poets' => Poets::where('visibility', 1)->whereHas('poetry', function ($q) use ($category, $categoryTagIds) {
                     $q->where('topic_category_id', $category->id)->where('visibility', 1);
+                    if (!empty($categoryTagIds)) {
+                        foreach ($categoryTagIds as $tagId) {
+                            $q->orWhere('poetry_tags', 'like', '%"' . $tagId . '"%');
+                        }
+                    }
                 })->count(),
             ],
             'poetry' => $poetry,

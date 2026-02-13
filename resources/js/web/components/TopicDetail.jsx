@@ -143,56 +143,59 @@ const TopicDetail = () => {
                 </h1>
                 <div className={`flex items-center flex-wrap gap-2 text-gray-500 font-medium ${isRtl ? 'flex-row-reverse justify-end' : ''}`}>
                     <span>{counts?.poetry || 0} {isRtl ? 'شاعري' : 'poetries'}</span>
-                    <span>·</span>
-                    <span>{counts?.poets || 0} {isRtl ? 'شاعر' : 'poets'}</span>
+                    {(counts?.poets > 0) && (
+                        <>
+                            <span>·</span>
+                            <span>{counts?.poets} {isRtl ? 'شاعر' : 'poets'}</span>
+                        </>
+                    )}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Main Layout Grid */}
+            <div className={`grid grid-cols-1 ${poets.length > 0 ? 'lg:grid-cols-12' : 'grid-cols-1'} gap-12`}>
+
                 {/* Main Content - Poetry */}
-                <div className="lg:col-span-8 space-y-8">
+                <div className={`${poets.length > 0 ? 'lg:col-span-8' : 'w-full'} space-y-8`}>
                     <h2 className={`text-xl font-bold text-gray-900 flex items-center gap-2 ${isRtl ? 'font-arabic' : ''}`}>
                         <BookOpen className="h-5 w-5" />
                         {isRtl ? 'شاعري' : 'Poetry'}
                     </h2>
 
-                    <div className="divide-y divide-gray-100">
+                    <div className={poets.length > 0 ? "divide-y divide-gray-100" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
                         {poetry.length > 0 ? (
                             poetry.map(poem => (
-                                <PostCard
-                                    key={poem.id}
-                                    {...poem}
-                                    lang={lang}
-                                    showStar={false} // Cleaner look for topic page
-                                />
+                                <div key={poem.id} className={poets.length > 0 ? "" : "h-full"}>
+                                    <PostCard
+                                        {...poem}
+                                        lang={lang}
+                                        showStar={false}
+                                    />
+                                </div>
                             ))
                         ) : (
-                            <div className="py-10 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <div className="col-span-full py-10 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                                 {isRtl ? 'اڃا تائين ڪا به شاعري نه آهي' : 'No poetry found for this topic yet.'}
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* Sidebar - Poets */}
-                <div className="lg:col-span-4 space-y-8">
-                    <h2 className={`text-xl font-bold text-gray-900 flex items-center gap-2 ${isRtl ? 'font-arabic' : ''}`}>
-                        <User className="h-5 w-5" />
-                        {isRtl ? 'شاعر' : 'Poets'}
-                    </h2>
+                {/* Sidebar - Poets (Only show if poets exist) */}
+                {poets.length > 0 && (
+                    <div className="lg:col-span-4 space-y-8">
+                        <h2 className={`text-xl font-bold text-gray-900 flex items-center gap-2 ${isRtl ? 'font-arabic' : ''}`}>
+                            <User className="h-5 w-5" />
+                            {isRtl ? 'شاعر' : 'Poets'}
+                        </h2>
 
-                    <div className="space-y-0">
-                        {poets.length > 0 ? (
-                            poets.map(poet => (
+                        <div className="space-y-4">
+                            {poets.map(poet => (
                                 <PoetCard key={poet.id} poet={poet} />
-                            ))
-                        ) : (
-                            <div className="py-10 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                                {isRtl ? 'اڃا تائين ڪو به شاعر نه آهي' : 'No poets found for this topic yet.'}
-                            </div>
-                        )}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

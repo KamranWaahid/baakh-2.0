@@ -87,7 +87,10 @@ const CategoryNav = ({ lang }) => {
 
     return (
         <div className="border-b border-gray-100 bg-white sticky top-[56px] lg:top-[65px] z-40">
-            <div className="max-w-[1504px] mx-auto px-4 md:px-8 flex items-center gap-4 h-14 md:h-16">
+            <div
+                className="max-w-[1504px] mx-auto px-4 md:px-8 flex items-center gap-4 h-14 md:h-16"
+                dir={isRtl ? 'rtl' : 'ltr'}
+            >
 
                 {/* Explore Topics Button */}
                 <Link to={`/${lang}/explore`} className="shrink-0">

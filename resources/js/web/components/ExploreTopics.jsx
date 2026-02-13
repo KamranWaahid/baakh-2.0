@@ -56,7 +56,10 @@ const ExploreTopics = ({ lang }) => {
     }).filter(cat => cat.tags.length > 0 || cat.name.toLowerCase().includes(search.toLowerCase()) || cat.slug.toLowerCase().includes(search.toLowerCase()));
 
     return (
-        <div className="flex-1 max-w-[1000px] w-full mx-auto px-4 md:px-8 py-12 md:py-20 animate-in fade-in duration-500">
+        <div
+            className="flex-1 max-w-[1000px] w-full mx-auto px-4 md:px-8 py-12 md:py-20 animate-in fade-in duration-500"
+            dir={isRtl ? 'rtl' : 'ltr'}
+        >
             {/* Header Section */}
             <div className={`text-center mb-12 md:mb-16 ${isRtl ? 'font-arabic' : ''}`}>
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8 tracking-tight">
