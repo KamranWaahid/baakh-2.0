@@ -21,7 +21,13 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // Use blind index (email_hash) for lookup because email is encrypted (non-deterministic)
+        $credentials = [
+            'email_hash' => hash('sha256', strtolower($request->email)),
+            'password' => $request->password,
+        ];
+
+        if (!Auth::attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);

@@ -36,6 +36,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password'), // Default password
             'username' => 'superadmin',
             'status' => 'active',
+            'role' => 'admin', // Explicitly set role for middleware check
             'email_verified_at' => now(),
         ]);
 

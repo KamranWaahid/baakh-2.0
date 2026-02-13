@@ -93,7 +93,8 @@ use App\Http\Controllers\Api\Admin\CityController;
 // ... (Auth routes remain)
 
 // Admin / Team Management Routes
-Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+// Admin / Team Management Routes
+Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(function () {
 
     // Users
     Route::apiResource('users', UserController::class);
@@ -131,7 +132,7 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
 });
 
-Route::middleware('auth:sanctum')
+Route::middleware(['auth:sanctum', 'user_role'])
     ->prefix('admin')
     ->group(function () {
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
