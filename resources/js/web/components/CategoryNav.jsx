@@ -15,10 +15,10 @@ const CategoryNav = ({ lang }) => {
     const location = useLocation();
 
     // Check if current page is specific category to highlight
-    // Path format: /:lang/:category
+    // Path format: /:lang/topic/:category
     const pathParts = location.pathname.split('/').filter(Boolean);
-    const currentCategorySlug = pathParts.length === 2 && !['poets', 'poetry', 'couplets', 'genre', 'period', 'prosody', 'about', 'privacy', 'terms', 'help', 'status', 'profile', 'settings', 'explore'].includes(pathParts[1])
-        ? pathParts[1]
+    const currentCategorySlug = pathParts.length === 3 && pathParts[1] === 'topic'
+        ? pathParts[2]
         : null;
 
     useEffect(() => {
@@ -141,7 +141,7 @@ const CategoryNav = ({ lang }) => {
                             topics.map(topic => {
                                 const isActive = currentCategorySlug === topic.slug;
                                 return (
-                                    <Link key={topic.slug} to={`/${lang}/${topic.slug}`} className="shrink-0">
+                                    <Link key={topic.slug} to={`/${lang}/topic/${topic.slug}`} className="shrink-0">
                                         <Badge
                                             variant={isActive ? "default" : "secondary"}
                                             className={`

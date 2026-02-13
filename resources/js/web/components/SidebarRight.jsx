@@ -131,7 +131,7 @@ const SidebarRight = ({ lang }) => {
                         ))
                     ) : (
                         topics.map(topic => (
-                            <Link key={topic.slug} to={`/${lang}/${topic.slug}`}>
+                            <Link key={topic.slug} to={`/${lang}/topic/${topic.slug}`}>
                                 <Badge variant="secondary" className="rounded-full px-4 py-2 text-sm font-normal hover:bg-gray-200 cursor-pointer text-gray-700 bg-gray-100 border-none transition-colors">
                                     {topic.name}
                                 </Badge>
