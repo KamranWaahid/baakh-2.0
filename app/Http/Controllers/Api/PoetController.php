@@ -54,7 +54,7 @@ class PoetController extends Controller
             return [
                 'id' => $poet->id,
                 'slug' => $poet->poet_slug,
-                'avatar' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
+                'avatar' => $poet->poet_pic ?: null,
                 // English Data
                 'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
                 'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
@@ -157,14 +157,14 @@ class PoetController extends Controller
                     'name_en' => $dEn->poet_laqab ?? $dEn->poet_name ?? $dSd->poet_laqab ?? $dSd->poet_name ?? 'N/A',
                     'name_sd' => $dSd->poet_laqab ?? $dSd->poet_name ?? $dEn->poet_laqab ?? $dEn->poet_name ?? 'N/A',
                     'slug' => $p->poet_slug,
-                    'avatar' => ($p->poet_pic) ? (str_starts_with($p->poet_pic, 'http') ? $p->poet_pic : '/' . $p->poet_pic) : null,
+                    'avatar' => $p->poet_pic ?: null,
                 ];
             });
 
         $data = [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
-            'avatar' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
+            'avatar' => $poet->poet_pic ?: null,
             'dob' => $poet->date_of_birth,
             'dod' => $poet->date_of_death,
 
@@ -249,7 +249,7 @@ class PoetController extends Controller
                 'cat_slug' => $p->category->slug ?? '',
                 'category' => $catDetail->cat_name ?? 'Uncategorized',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
+                'author_avatar' => $poet->poet_pic ?: null,
                 'date' => $p->created_at->format('d M Y'),
                 'readTime' => '2 min read', // Placeholder logic
                 'likes' => $p->likes_count ?? 0,
@@ -300,7 +300,7 @@ class PoetController extends Controller
                 'cat_slug' => 'couplets', // Dummy
                 'category' => 'Couplet',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => ($poet->poet_pic) ? (str_starts_with($poet->poet_pic, 'http') ? $poet->poet_pic : '/' . $poet->poet_pic) : null,
+                'author_avatar' => $poet->poet_pic ?: null,
                 'date' => $c->created_at->format('d M Y'),
                 'readTime' => '',
                 'likes' => $c->likes_count ?? 0,

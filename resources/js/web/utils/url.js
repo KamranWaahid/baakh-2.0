@@ -18,17 +18,8 @@ export const getImageUrl = (path, type = null) => {
         return path;
     }
 
-    // Ensure path starts with a slash
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    // Strip any leading slashes and then add exactly one
+    const cleanPath = '/' + path.replace(/^\/+/, '');
 
-    // Special handling for assets and storage
-    // If it already says it's in assets/ or storage/, just return it
-    if (cleanPath.startsWith('/assets/') || cleanPath.startsWith('/storage/')) {
-        return cleanPath;
-    }
-
-    // Default to assets if it doesn't look like a storage path
-    // But many paths in the DB might just be "images/poets/..."
-    // Based on DB check, they are already like "assets/images/poets/..."
     return cleanPath;
 };
