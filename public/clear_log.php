@@ -1,1 +1,0 @@
-<?php file_put_contents(__DIR__ . "/../storage/logs/laravel.log", ""); echo "Log cleared."; ?>
