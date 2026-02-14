@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $schedule->job(new \App\Jobs\UpdateDashboardStats)->hourly();
         $schedule->command('cache:static-update --type=all')->daily();
+        $schedule->command('sitemap:cache')->dailyAt('03:00');
     }
 
     /**
