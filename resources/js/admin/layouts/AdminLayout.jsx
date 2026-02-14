@@ -25,7 +25,8 @@ import {
     AlignJustify,
     Book,
     Plus,
-    Info
+    Info,
+    Terminal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -161,6 +162,7 @@ const Sidebar = ({ onLinkClick }) => {
                     <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
                     <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
+                    <SidebarLink to="/admin/system/server" icon={Terminal}>Server Management</SidebarLink>
                     <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
                     {isSuperAdmin && (
                         <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>

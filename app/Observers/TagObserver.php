@@ -13,7 +13,7 @@ class TagObserver
 {
     use SQLiteTrait;
 
-    protected function invalidateCache(Tags $tag = null)
+    protected function invalidateCache(?Tags $tag = null)
     {
         $cache = app(StaticCacheService::class);
         $cache->forget('admin_poetry_create_data');

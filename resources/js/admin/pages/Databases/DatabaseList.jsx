@@ -17,7 +17,7 @@ const DatabaseList = () => {
     const queryClient = useQueryClient();
     const [isCreating, setIsCreating] = useState(false);
 
-    const { data: backups, isLoading, isError } = useQuery({
+    const { data: backups, isLoading, isError, refetch } = useQuery({
         queryKey: ['backups'],
         queryFn: async () => {
             const response = await api.get('/api/admin/databases');
@@ -33,11 +33,12 @@ const DatabaseList = () => {
         onSuccess: () => {
             queryClient.invalidateQueries(['backups']);
             setIsCreating(false);
-            alert('Backup created successfully');
+            // No alert for cleaner UX
         },
         onError: (error) => {
             setIsCreating(false);
-            alert(error.response?.data?.message || 'Failed to create backup');
+            const msg = error.response?.data?.message || 'Failed to create backup';
+            alert(msg);
         }
     });
 
@@ -58,24 +59,25 @@ const DatabaseList = () => {
     };
 
     const handleDownload = (fileName) => {
-        // Trigger download directly via window location or hidden iframe to handle stream
-        const url = `/api/admin/databases/download?file_name=${fileName}`;
-        // We need to use our axios instance logic to handle auth, but for download links 
-        // usually we need a token in URL or cookie auth. Since we use Sanctum with cookies,
-        // opening in new tab/window works if cookies are shared (SameSite).
-        // Alternatively, use axios to get blob.
-
-        api.get(url, { responseType: 'blob' })
+        // Use our standard api instance to fetch the blob
+        api.get(`/api/admin/databases/download`, {
+            params: { file_name: fileName },
+            responseType: 'blob'
+        })
             .then((response) => {
-                const href = window.URL.createObjectURL(response.data);
+                const url = window.URL.createObjectURL(new Blob([response.data]));
                 const link = document.createElement('a');
-                link.href = href;
+                link.href = url;
                 link.setAttribute('download', fileName);
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
+                link.remove();
+                window.URL.revokeObjectURL(url);
             })
-            .catch((err) => console.error("Download failed", err));
+            .catch((err) => {
+                console.error("Download failed", err);
+                alert("Download failed. The file may have been moved or deleted.");
+            });
     };
 
     if (isLoading) return <div className="p-8">Loading backups...</div>;

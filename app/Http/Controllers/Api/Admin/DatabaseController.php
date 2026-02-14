@@ -16,25 +16,26 @@ class DatabaseController extends Controller
      */
     public function index()
     {
-        $disk = Storage::disk(config('backup.backup.destination.disks')[0]);
-        $files = $disk->files(config('backup.backup.name'));
+        $backupDisk = config('backup.backup.destination.disks')[0] ?? 'local';
+        $disk = Storage::disk($backupDisk);
+        $backupName = config('backup.backup.name');
+
+        // List files in the backup directory
+        $files = $disk->files($backupName);
 
         $backups = [];
-        foreach ($files as $k => $f) {
-            if (substr($f, -4) == '.zip' && $disk->exists($f)) {
+        foreach ($files as $f) {
+            if (str_ends_with($f, '.zip') && $disk->exists($f)) {
                 $backups[] = [
                     'file_path' => $f,
-                    'file_name' => str_replace(config('backup.backup.name') . '/', '', $f),
+                    'file_name' => basename($f),
                     'file_size' => $this->formatSizeUnits($disk->size($f)),
                     'last_modified' => date('Y-m-d H:i:s', $disk->lastModified($f)),
-                    'download_link' => route('backup.download', ['file_name' => str_replace(config('backup.backup.name') . '/', '', $f)]),
                 ];
             }
         }
 
-        $backups = array_reverse($backups);
-
-        return response()->json($backups);
+        return response()->json(array_reverse($backups));
     }
 
     /**
@@ -43,7 +44,10 @@ class DatabaseController extends Controller
     public function store(Request $request)
     {
         try {
-            // Run the backup command
+            // Run the backup command - this might take time
+            // Set time limit for this request if possible
+            set_time_limit(300);
+
             Artisan::call('backup:run', ['--only-db' => true]);
             $output = Artisan::output();
 
@@ -54,8 +58,9 @@ class DatabaseController extends Controller
                 'output' => $output
             ]);
         } catch (\Exception $e) {
+            \Log::error('Backup failed: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Backup failed',
+                'message' => 'Backup failed. Ensure mysqldump is in your system path.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -67,18 +72,22 @@ class DatabaseController extends Controller
     public function download(Request $request)
     {
         $fileName = $request->file_name;
-        $disk = Storage::disk(config('backup.backup.destination.disks')[0]);
+        $backupDisk = config('backup.backup.destination.disks')[0] ?? 'local';
+        $disk = Storage::disk($backupDisk);
         $path = config('backup.backup.name') . '/' . $fileName;
 
         if ($disk->exists($path)) {
-            // For local disk, we can use response()->download
-            if (config('backup.backup.destination.disks')[0] === 'local') {
-                return response()->download($disk->path($path));
+            // For local disk, we can use response()->download with absolute path
+            // to ensure headers like Content-Type are set correctly for the zip
+            if ($backupDisk === 'local') {
+                return response()->download(storage_path('app/' . $path), $fileName);
             }
-            return $disk->download($path);
+
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+            return $disk->download($path, $fileName);
         }
 
-        return response()->json(['message' => 'File not found'], 404);
+        return response()->json(['message' => 'File not found at: ' . $path], 404);
     }
 
     /**
@@ -86,7 +95,8 @@ class DatabaseController extends Controller
      */
     public function destroy($file_name)
     {
-        $disk = Storage::disk(config('backup.backup.destination.disks')[0]);
+        $backupDisk = config('backup.backup.destination.disks')[0] ?? 'local';
+        $disk = Storage::disk($backupDisk);
         $path = config('backup.backup.name') . '/' . $file_name;
 
         if ($disk->exists($path)) {

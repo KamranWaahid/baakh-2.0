@@ -47,7 +47,7 @@ class TopicCategoryObserver
         $this->invalidateCache($topicCategory);
     }
 
-    protected function invalidateCache(TopicCategory $cat = null)
+    protected function invalidateCache(?TopicCategory $cat = null)
     {
         $cache = app(StaticCacheService::class);
         $cache->forget('admin_poetry_create_data');

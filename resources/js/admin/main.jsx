@@ -67,6 +67,7 @@ import UserForm from './pages/Users/UserForm';
 
 import TopicCategoryList from './pages/Topics/TopicCategoryList';
 import InformationSystem from './pages/System/InformationSystem';
+import ServerManagement from './pages/System/ServerManagement';
 
 import LemmaInbox from './pages/Dictionary/LemmaInbox';
 import SenseEditor from './pages/Dictionary/SenseEditor';
@@ -87,7 +88,7 @@ import UnderDevelopment from './components/UnderDevelopment';
 const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <Routes>
                     <Route path="/admin/login" element={<Login />} />
                     <Route path="/admin" element={
@@ -331,6 +332,14 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <InformationSystem />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/system/server" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ServerManagement />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

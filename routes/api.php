@@ -130,6 +130,13 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
 
     // Existing Dashboard route
     Route::get('/dashboard', [App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
+
+    // Server Management
+    Route::get('server/commands', [\App\Http\Controllers\Api\Admin\ServerController::class, 'index']);
+    Route::post('server/commands/run', [\App\Http\Controllers\Api\Admin\ServerController::class, 'run']);
+    Route::get('server/stats', [\App\Http\Controllers\Api\Admin\ServerController::class, 'stats']);
+    Route::get('server/logs', [\App\Http\Controllers\Api\Admin\ServerController::class, 'logs']);
+    Route::post('server/shell', [\App\Http\Controllers\Api\Admin\ServerController::class, 'shell']);
 });
 
 Route::middleware(['auth:sanctum', 'user_role'])

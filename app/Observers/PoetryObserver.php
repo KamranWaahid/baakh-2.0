@@ -58,7 +58,7 @@ class PoetryObserver
         $this->invalidateCache();
     }
 
-    protected function invalidateCache(Poetry $p = null)
+    protected function invalidateCache(?Poetry $p = null)
     {
         $this->cache->forget('homepage_data_sd');
         $this->cache->forget('homepage_data_en');

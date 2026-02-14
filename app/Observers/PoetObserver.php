@@ -12,7 +12,7 @@ class PoetObserver
 {
     use SQLiteTrait;
 
-    protected function invalidateCache(Poets $poet = null)
+    protected function invalidateCache(?Poets $poet = null)
     {
         $cache = app(StaticCacheService::class);
         $cache->forget('admin_poetry_create_data');
