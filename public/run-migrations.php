@@ -85,7 +85,26 @@ try {
             echo "<span style='color:red;'>Error: " . $e->getMessage() . "</span><br>";
         }
     } elseif ($action === 'diagnose') {
-        echo "<h2>Database Diagnostics</h2>";
+        echo "<h2>Environment Diagnostics</h2>";
+        echo "<ul>";
+        echo "<li><strong>PHP Version:</strong> " . phpversion() . "</li>";
+        echo "<li><strong>Environment:</strong> " . app()->environment() . "</li>";
+        echo "<li><strong>DB Connection:</strong> " . config('database.default') . "</li>";
+        try {
+            $conn = DB::connection();
+            $dbName = "";
+            if ($conn->getDriverName() === 'mysql') {
+                $dbName = $conn->getDatabaseName();
+            } else if ($conn->getDriverName() === 'sqlite') {
+                $dbName = config('database.connections.sqlite.database');
+            }
+            echo "<li><strong>Active Database:</strong> " . $dbName . " (" . $conn->getDriverName() . ")</li>";
+        } catch (Exception $e) {
+            echo "<li style='color:red;'><strong>DB Error:</strong> " . $e->getMessage() . "</li>";
+        }
+        echo "</ul>";
+
+        echo "<h2>Database Table Counts</h2>";
         $tables = ['users', 'poets', 'poetry_main', 'baakh_tags', 'activity_logs', 'reports', 'feedback', 'mokhii_page_meta', 'admin_notifications'];
         echo "<table border='1' cellpadding='10' style='border-collapse:collapse;width:100%;'>";
         echo "<tr style='background:#eee;'><th>Table</th><th>Count</th><th>Status</th></tr>";
