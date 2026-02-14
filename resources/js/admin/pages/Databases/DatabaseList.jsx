@@ -62,15 +62,35 @@ const DatabaseList = () => {
         onMutate: () => setIsMigrating(true),
         onSuccess: (response) => {
             setIsMigrating(false);
-            const output = response.data.output || 'No output returned.';
-            console.log("Migration Output:", output);
-            alert("Migrations executed successfully!\n\nCheck console for detailed output.");
+            alert("Migrations executed successfully!");
         },
         onError: (error) => {
             setIsMigrating(false);
-            const msg = error.response?.data?.message || 'Migration failed';
-            const detail = error.response?.data?.error || '';
-            alert(`${msg}${detail ? ': ' + detail : ''}`);
+            alert(error.response?.data?.message || 'Migration failed');
+        }
+    });
+
+    const repairMutation = useMutation({
+        mutationFn: async () => {
+            return api.post('/api/admin/databases/repair-permissions');
+        },
+        onSuccess: (response) => {
+            alert(response.data.message || "Permissions repaired successfully!");
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Permission repair failed');
+        }
+    });
+
+    const clearCacheMutation = useMutation({
+        mutationFn: async () => {
+            return api.post('/api/admin/databases/clear-cache');
+        },
+        onSuccess: (response) => {
+            alert(response.data.message || "Cache cleared successfully!");
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Cache clearing failed');
         }
     });
 
@@ -79,13 +99,24 @@ const DatabaseList = () => {
     };
 
     const handleMigrate = () => {
-        if (confirm('CRITICAL: Are you sure you want to run database migrations? This will attempt to sync your local schema changes to this server. Ensure you have a backup first.')) {
+        if (confirm('CRITICAL: Are you sure you want to run database migrations?')) {
             migrateMutation.mutate();
         }
     };
 
+    const handleRepair = () => {
+        if (confirm('REPAIR: This will reset the permission cache and re-seed roles. Continue?')) {
+            repairMutation.mutate();
+        }
+    };
+
+    const handleClearCache = () => {
+        if (confirm('CLEAR: This will flush the application optimization cache. Continue?')) {
+            clearCacheMutation.mutate();
+        }
+    };
+
     const handleDownload = (fileName) => {
-        // Use our standard api instance to fetch the blob
         api.get(`/api/admin/databases/download`, {
             params: { file_name: fileName },
             responseType: 'blob'
@@ -109,25 +140,73 @@ const DatabaseList = () => {
     if (isLoading) return <div className="p-8">Loading backups...</div>;
 
     return (
-        <div className="p-8 space-y-6">
+        <div className="p-8 space-y-8">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Database Backups</h1>
-                    <p className="text-gray-500 mt-2">Manage your database backups periodically</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Database & Maintenance</h1>
+                    <p className="text-gray-500 mt-2">Manage your database backups and system health</p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                        onClick={handleMigrate}
-                        disabled={isMigrating || migrateMutation.isPending}
-                        variant="secondary"
-                        className="flex items-center gap-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-800"
-                    >
-                        {isMigrating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                        {isMigrating ? 'Running Migrations...' : 'Run Migrations'}
-                    </Button>
+                <div className="flex gap-3">
                     <Button onClick={handleCreate} disabled={isCreating || createMutation.isPending} className="flex items-center gap-2">
                         {isCreating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                         {isCreating ? 'Creating Backup...' : 'Create New Backup'}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Maintenance Center Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-yellow-100 shadow-sm space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-yellow-50 rounded-lg">
+                            <Zap className="h-5 w-5 text-yellow-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-900">Database Sync</h3>
+                    </div>
+                    <p className="text-sm text-gray-500">Apply new database schema changes to the live server.</p>
+                    <Button
+                        variant="soft"
+                        className="w-full bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-none"
+                        onClick={handleMigrate}
+                        disabled={isMigrating || migrateMutation.isPending}
+                    >
+                        {isMigrating ? 'Migrating...' : 'Run Migrations'}
+                    </Button>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                            <RefreshCw className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-900">Application Cache</h3>
+                    </div>
+                    <p className="text-sm text-gray-500">Flush all cached views, routes, and config files.</p>
+                    <Button
+                        variant="soft"
+                        className="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 border-none"
+                        onClick={handleClearCache}
+                        disabled={clearCacheMutation.isPending}
+                    >
+                        {clearCacheMutation.isPending ? 'Clearing...' : 'Clear Cache'}
+                    </Button>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-red-100 shadow-sm space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-red-50 rounded-lg">
+                            <Trash2 className="h-5 w-5 text-red-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-900">Permission Repair</h3>
+                    </div>
+                    <p className="text-sm text-gray-500">Emergency reset of roles and access permissions.</p>
+                    <Button
+                        variant="soft"
+                        className="w-full bg-red-50 hover:bg-red-100 text-red-800 border-none"
+                        onClick={handleRepair}
+                        disabled={repairMutation.isPending}
+                    >
+                        {repairMutation.isPending ? 'Repairing...' : 'Repair Permissions'}
                     </Button>
                 </div>
             </div>

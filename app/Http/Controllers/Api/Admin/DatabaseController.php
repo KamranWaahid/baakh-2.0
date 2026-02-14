@@ -121,9 +121,7 @@ class DatabaseController extends Controller
     public function migrate(Request $request)
     {
         try {
-            // This is a high-risk operation
             set_time_limit(300);
-
             Artisan::call('migrate', ['--force' => true]);
             $output = Artisan::output();
 
@@ -137,6 +135,68 @@ class DatabaseController extends Controller
             \Log::error('Migration failed: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Migration failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Repair Admin Permissions by resetting cache and re-seeding.
+     */
+    public function repairPermissions(Request $request)
+    {
+        try {
+            set_time_limit(300);
+
+            // 1. Clear Spatie Cache
+            Artisan::call('permission:cache-reset');
+            $output = "Permission cache reset.\n";
+
+            // 2. Re-seed Roles and Permissions
+            Artisan::call('db:seed', ['--class' => 'RolesAndPermissionsSeeder', '--force' => true]);
+            $output .= Artisan::output();
+
+            ActivityLog::log('repaired_permissions', $request->user(), null, "Repaired admin permissions from admin panel");
+
+            return response()->json([
+                'message' => 'Permissions repaired and seeded successfully',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Permission repair failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Permission repair failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear all application caches.
+     */
+    public function clearCache(Request $request)
+    {
+        try {
+            set_time_limit(300);
+
+            // Comprehensive clear
+            Artisan::call('optimize:clear');
+            $output = Artisan::output();
+
+            // Specific clear for dashboard stats if it exists
+            \Illuminate\Support\Facades\Cache::forget('admin_dashboard_stats');
+            $output .= "\nDashboard stats cache cleared.";
+
+            ActivityLog::log('cleared_cache', $request->user(), null, "Cleared application cache from admin panel");
+
+            return response()->json([
+                'message' => 'Application cache cleared successfully',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Cache clear failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Cache clear failed',
                 'error' => $e->getMessage()
             ], 500);
         }
