@@ -9,13 +9,27 @@ use App\Models\Poetry;
 use App\Models\Poets;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use App\Services\StaticCacheService;
 
 class TopicController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     // Formerly 'show' - now specifically for Tags
     public function showTag(Request $request, $slug)
     {
         $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+
+        $cached = $this->cache->get("tag_detail_{$slug}_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
+
         App::setLocale($lang);
 
         // Find the tag by slug
@@ -96,6 +110,12 @@ class TopicController extends Controller
     public function showCategory(Request $request, $slug)
     {
         $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+
+        $cached = $this->cache->get("category_detail_{$slug}_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
+
         App::setLocale($lang);
 
         $category = TopicCategory::where('slug', $slug)->firstOrFail();

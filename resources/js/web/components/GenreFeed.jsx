@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BookOpen, Feather, Music, Scroll, Star, Hash, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { Link } from 'react-router-dom';
 import GenreDetailsModal from './GenreDetailsModal';
 
@@ -16,7 +16,7 @@ const GenreFeed = ({ lang }) => {
     const { data: genres, isLoading } = useQuery({
         queryKey: ['genres', lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/categories?lang=${lang}`);
+            const response = await api.get(`/api/v1/categories?lang=${lang}`);
             return response.data;
         }
     });

@@ -7,12 +7,35 @@ use App\Models\Couplets;
 use App\Models\Tags;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Services\StaticCacheService;
 
 class CoupletController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     public function index(Request $request)
     {
         $lang = $request->get('lang', app()->getLocale());
+
+        // Prefer static cache if no tag filtering and page 1
+        if ((!$request->has('tag') || $request->tag === 'all') && $request->get('page', 1) == 1) {
+            $cached = $this->cache->get("couplets_list_{$lang}");
+            if ($cached) {
+                return response()->json([
+                    'data' => $cached,
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'total' => count($cached)
+                ]);
+            }
+        }
+
+        $tag = $request->get('tag');
         $tag = $request->get('tag');
         $perPage = 10;
 
@@ -36,7 +59,7 @@ class CoupletController extends Controller
 
         $couplets = $query->latest()->paginate($perPage);
 
-        $transformed = $couplets->through(function ($c) use ($lang) {
+        $couplets->getCollection()->transform(function ($c) use ($lang) {
             $poetDetail = $c->poet->all_details->where('lang', $lang)->first() ?? $c->poet->all_details->first();
 
             return [
@@ -55,7 +78,7 @@ class CoupletController extends Controller
             ];
         });
 
-        return response()->json($transformed);
+        return response()->json($couplets);
     }
 
     public function tags(Request $request)

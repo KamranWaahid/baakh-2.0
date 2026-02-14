@@ -12,13 +12,24 @@ class PoetObserver
 {
     use SQLiteTrait;
 
-    protected function invalidateCache()
+    protected function invalidateCache(Poets $poet = null)
     {
+        $cache = app(StaticCacheService::class);
+        $cache->forget('admin_poetry_create_data');
+        $cache->forget('homepage_data_sd');
+        $cache->forget('homepage_data_en');
+        $cache->forget('poets_list_sd');
+        $cache->forget('poets_list_en');
+        $cache->forget('explore_topics_sd');
+        $cache->forget('explore_topics_en');
+
+        if ($poet) {
+            $cache->forget("poet_detail_{$poet->poet_slug}_sd");
+            $cache->forget("poet_detail_{$poet->poet_slug}_en");
+        }
+
         Cache::forget('admin_all_poets_sd');
         Cache::forget('admin_poets_ids');
-        app(StaticCacheService::class)->forget('admin_poetry_create_data');
-        app(StaticCacheService::class)->forget('homepage_data_sd');
-        app(StaticCacheService::class)->forget('homepage_data_en');
     }
 
     /**
@@ -26,7 +37,7 @@ class PoetObserver
      */
     public function created(Poets $poets): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($poets);
     }
 
     /**
@@ -35,7 +46,7 @@ class PoetObserver
     public function updated(Poets $poets): void
     {
         $this->updatePoet($poets->id);
-        $this->invalidateCache();
+        $this->invalidateCache($poets);
     }
 
     /**
@@ -43,7 +54,7 @@ class PoetObserver
      */
     public function deleted(Poets $poets): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($poets);
     }
 
     /**

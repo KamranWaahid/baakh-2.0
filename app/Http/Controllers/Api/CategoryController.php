@@ -5,12 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Categories;
 use Illuminate\Http\Request;
+use App\Services\StaticCacheService;
 
 class CategoryController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     public function index(Request $request)
     {
         $lang = $request->get('lang', app()->getLocale());
+
+        $cached = $this->cache->get("categories_list_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
 
         $categories = Categories::whereHas('poetry', function ($q) {
             $q->where('visibility', 1);

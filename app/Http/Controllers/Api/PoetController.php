@@ -7,11 +7,35 @@ use App\Models\Poets;
 use App\Models\Tags;
 use App\Models\Categories;
 use Illuminate\Http\Request;
+use App\Services\StaticCacheService;
 
 class PoetController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     public function index(Request $request)
     {
+        $lang = $request->header('Accept-Language', 'sd');
+
+        // Prefer static cache if no search/tag filtering
+        if (!$request->has('search') && (!$request->has('tag') || $request->tag === 'all') && $request->get('page', 1) == 1) {
+            $cached = $this->cache->get("poets_list_{$lang}");
+            if ($cached) {
+                // Return in the same pagination-like structure for frontend compatibility
+                return response()->json([
+                    'data' => $cached,
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'total' => count($cached)
+                ]);
+            }
+        }
+
         $query = Poets::query()->with('all_details')
             ->withCount('poetry')
             ->where('visibility', 1); // Only visible poets
@@ -96,6 +120,12 @@ class PoetController extends Controller
 
     public function show($slug)
     {
+        $lang = app()->getLocale();
+        $cached = $this->cache->get("poet_detail_{$slug}_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
+
         $poet = Poets::where('poet_slug', $slug)
             ->where('visibility', 1)
             ->with([

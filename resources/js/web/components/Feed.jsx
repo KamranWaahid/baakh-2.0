@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useAuth } from '../contexts/AuthContext';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 const LoadingState = () => (
@@ -67,15 +68,7 @@ const Feed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { category: urlCategory } = useParams();
     const { user } = useAuth();
-
     const [activeTab, setActiveTab] = React.useState('for-you');
-
-    // Separate states for each tab to preserve scroll and items
-    const [feeds, setFeeds] = React.useState({
-        'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
-        'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
-        'bookmarked': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
-    });
 
     const scrollDirection = useScrollDirection();
     const [isMobile, setIsMobile] = React.useState(false);
@@ -91,89 +84,64 @@ const Feed = ({ lang }) => {
 
     const isNavbarHidden = isMobile && scrollDirection === 'down';
 
-    const currentFeed = feeds[activeTab];
-    const observer = React.useRef();
+    // Unified Infinite Query for all tabs
+    const {
+        data,
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useInfiniteQuery({
+        queryKey: ['feed', activeTab, lang, urlCategory, user?.id],
+        queryFn: async ({ pageParam = 1 }) => {
+            const response = await api.get('/api/v1/feed', {
+                params: {
+                    lang,
+                    page: pageParam,
+                    filter: activeTab === 'featured' ? 'featured' : (activeTab === 'bookmarked' ? 'bookmarked' : undefined),
+                    category: urlCategory || undefined
+                }
+            });
+            return response.data;
+        },
+        getNextPageParam: (lastPage) => {
+            return lastPage.current_page < lastPage.last_page ? lastPage.current_page + 1 : undefined;
+        },
+        enabled: activeTab !== 'bookmarked' || !!user
+    });
 
+    const observer = React.useRef();
     const lastPostElementRef = React.useCallback(node => {
-        if (currentFeed.loading || currentFeed.isFetchingMore) return;
+        if (isLoading || isFetchingNextPage) return;
         if (observer.current) observer.current.disconnect();
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && currentFeed.hasMore) {
-                setFeeds(prev => ({
-                    ...prev,
-                    [activeTab]: { ...prev[activeTab], page: prev[activeTab].page + 1 }
-                }));
+            if (entries[0].isIntersecting && hasNextPage) {
+                fetchNextPage();
             }
         }, {
             rootMargin: '100px',
             threshold: 0.1
         });
         if (node) observer.current.observe(node);
-    }, [activeTab, currentFeed.loading, currentFeed.isFetchingMore, currentFeed.hasMore]);
+    }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-    const fetchFeedData = async (tab, pageNumber, isInitial = false) => {
-        if (isInitial) {
-            setFeeds(prev => ({ ...prev, [tab]: { ...prev[tab], loading: true } }));
-        } else {
-            setFeeds(prev => ({ ...prev, [tab]: { ...prev[tab], isFetchingMore: true } }));
-        }
+    const posts = data?.pages.flatMap(page => page.data) || [];
 
-        try {
-            const response = await api.get('/api/v1/feed', {
-                params: {
-                    lang,
-                    page: pageNumber,
-                    filter: tab === 'featured' ? 'featured' : (tab === 'bookmarked' ? 'bookmarked' : undefined),
-                    category: urlCategory || undefined
-                }
-            });
-
-            const newPosts = response.data.data;
-            setFeeds(prev => ({
-                ...prev,
-                [tab]: {
-                    ...prev[tab],
-                    posts: isInitial ? newPosts : [...prev[tab].posts, ...newPosts],
-                    hasMore: response.data.current_page < response.data.last_page,
-                    loading: false,
-                    isFetchingMore: false
-                }
-            }));
-        } catch (error) {
-            console.error(`Failed to fetch ${tab} feed`, error);
-            setFeeds(prev => ({ ...prev, [tab]: { ...prev[tab], loading: false, isFetchingMore: false, hasMore: false } }));
-        }
+    // Construct feeds object with same shape as before for FeedContent
+    const feeds = {
+        'for-you': activeTab === 'for-you' ? { posts: posts, loading: isLoading, isFetchingMore: isFetchingNextPage, hasMore: hasNextPage } : { posts: [], loading: false },
+        'featured': activeTab === 'featured' ? { posts: posts, loading: isLoading, isFetchingMore: isFetchingNextPage, hasMore: hasNextPage } : { posts: [], loading: false },
+        'bookmarked': activeTab === 'bookmarked' ? { posts: posts, loading: isLoading, isFetchingMore: isFetchingNextPage, hasMore: hasNextPage } : { posts: [], loading: false }
     };
 
-    // Initial load and lang change
-    React.useEffect(() => {
-        setFeeds({
-            'for-you': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
-            'featured': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false },
-            'bookmarked': { posts: [], loading: true, page: 1, hasMore: true, isFetchingMore: false }
-        });
-        fetchFeedData('for-you', 1, true);
-        fetchFeedData('featured', 1, true);
-        if (user) {
-            fetchFeedData('bookmarked', 1, true);
-        }
-    }, [lang, urlCategory, user]);
-
-    // Page change trigger
-    React.useEffect(() => {
-        if (currentFeed.page > 1) {
-            fetchFeedData(activeTab, currentFeed.page);
-        }
-    }, [currentFeed.page, activeTab]);
-
-    // Switch away from bookmarked if empty
+    // Switch away from bookmarked if empty (only after load)
     useEffect(() => {
-        if (activeTab === 'bookmarked' && !feeds['bookmarked'].loading && feeds['bookmarked'].posts.length === 0) {
+        if (activeTab === 'bookmarked' && !isLoading && posts.length === 0) {
             setActiveTab('for-you');
         }
-    }, [activeTab, feeds['bookmarked'].loading, feeds['bookmarked'].posts.length]);
+    }, [activeTab, isLoading, posts.length]);
 
-    const showBookmarked = user && (feeds['bookmarked'].posts.length > 0 || feeds['bookmarked'].loading);
+    const showBookmarked = !!user;
 
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 pt-2 pb-6 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>

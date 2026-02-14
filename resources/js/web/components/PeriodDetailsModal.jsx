@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import PostCard from './PostCard';
 import { Separator } from '@/components/ui/separator';
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
@@ -24,7 +24,7 @@ const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
     const { data: poets, isLoading: isPoetsLoading } = useQuery({
         queryKey: ['period-poets', period?.id, lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/periods/${period.id}/poets?lang=${lang}`);
+            const response = await api.get(`/api/v1/periods/${period.id}/poets?lang=${lang}`);
             return response.data;
         },
         enabled: !!period && isOpen,
@@ -40,7 +40,7 @@ const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
     } = useInfiniteQuery({
         queryKey: ['period-poetry', period?.id, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await axios.get(`/api/v1/feed`, {
+            const response = await api.get(`/api/v1/feed`, {
                 params: {
                     lang,
                     period_id: period.id,

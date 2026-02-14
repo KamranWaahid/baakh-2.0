@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import PostCard from './PostCard';
 import { Separator } from '@/components/ui/separator';
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
@@ -28,7 +28,7 @@ const GenreDetailsModal = ({ isOpen, onClose, genre, lang }) => {
     } = useInfiniteQuery({
         queryKey: ['genre-poetry', genre?.slug, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await axios.get(`/api/v1/feed`, {
+            const response = await api.get(`/api/v1/feed`, {
                 params: {
                     lang,
                     category: genre.slug,

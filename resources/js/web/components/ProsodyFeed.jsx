@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Scale, Ruler, Music, Info, Scissors, Columns2, Wrench, Scroll, Footprints, Infinity, Anchor, Sunrise, Sunset } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import PattiTool from './PattiTool';
 import ProsodyTermModal from './ProsodyTermModal';
 
@@ -33,7 +33,7 @@ const ProsodyFeed = ({ lang }) => {
     const { data: items, isLoading } = useQuery({
         queryKey: ['prosody', lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/prosody?lang=${lang}`);
+            const response = await api.get(`/api/v1/prosody?lang=${lang}`);
             return response.data;
         }
     });

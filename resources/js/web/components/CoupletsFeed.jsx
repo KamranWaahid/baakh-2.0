@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { ScrollText } from 'lucide-react';
 
 const CoupletsFeed = ({ lang }) => {
@@ -16,7 +16,7 @@ const CoupletsFeed = ({ lang }) => {
     const { data: tagsData } = useQuery({
         queryKey: ['couplet-tags', lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/couplet-tags?lang=${lang}`);
+            const response = await api.get(`/api/v1/couplet-tags?lang=${lang}`);
             return response.data;
         }
     });
@@ -36,7 +36,7 @@ const CoupletsFeed = ({ lang }) => {
     } = useInfiniteQuery({
         queryKey: ['couplets-feed', activeTab, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await axios.get(`/api/v1/couplets`, {
+            const response = await api.get(`/api/v1/couplets`, {
                 params: {
                     lang,
                     tag: activeTab,

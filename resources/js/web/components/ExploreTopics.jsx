@@ -5,29 +5,23 @@ import api from '@/admin/api/axios';
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 
+import { useQuery } from '@tanstack/react-query';
+
 const ExploreTopics = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const [categories, setCategories] = useState([]);
-    const [recommended, setRecommended] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
-    useEffect(() => {
-        const fetchTopics = async () => {
-            setLoading(true);
-            try {
-                const response = await api.get('/api/v1/explore-topics');
-                setCategories(response.data.categories);
-                setRecommended(response.data.recommended);
-            } catch (error) {
-                console.error("Failed to fetch explore topics", error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const { data, isLoading } = useQuery({
+        queryKey: ['explore-topics', lang],
+        queryFn: async () => {
+            const response = await api.get('/api/v1/explore-topics');
+            return response.data;
+        }
+    });
 
-        fetchTopics();
-    }, [lang]);
+    const categories = data?.categories || [];
+    const recommended = data?.recommended || [];
+    const loading = isLoading;
 
     const filteredCategories = categories.map(cat => {
         const categoryMatches = cat.name.toLowerCase().includes(search.toLowerCase()) ||

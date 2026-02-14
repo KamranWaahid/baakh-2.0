@@ -15,10 +15,14 @@ class CategoryObserver
 
     protected function invalidateCache()
     {
+        $cache = app(StaticCacheService::class);
+        $cache->forget('admin_poetry_create_data');
+        $cache->forget('homepage_data_sd');
+        $cache->forget('homepage_data_en');
+        $cache->forget('categories_list_sd');
+        $cache->forget('categories_list_en');
+
         Cache::forget('admin_all_categories_sd');
-        app(StaticCacheService::class)->forget('admin_poetry_create_data');
-        app(StaticCacheService::class)->forget('homepage_data_sd');
-        app(StaticCacheService::class)->forget('homepage_data_en');
     }
     /**
      * Handle the Categories "created" event.

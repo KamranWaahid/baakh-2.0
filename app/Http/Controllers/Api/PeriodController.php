@@ -5,11 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Period;
 use Illuminate\Http\Request;
+use App\Services\StaticCacheService;
 
 class PeriodController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     public function index(Request $request)
     {
+        $lang = $request->get('lang', 'sd');
+        $cached = $this->cache->get("periods_list_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
+
         $periods = Period::orderBy('order', 'asc')->get();
         return response()->json($periods);
     }

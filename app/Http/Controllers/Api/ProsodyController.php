@@ -5,12 +5,25 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ProsodyTerm;
 use Illuminate\Http\Request;
+use App\Services\StaticCacheService;
 
 class ProsodyController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     public function index(Request $request)
     {
         $lang = $request->get('lang', 'sd');
+
+        $cached = $this->cache->get("prosody_list_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
 
         $terms = ProsodyTerm::orderBy('order', 'asc')->get()->map(function ($term) use ($lang) {
             return [

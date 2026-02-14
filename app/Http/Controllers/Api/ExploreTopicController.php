@@ -8,9 +8,17 @@ use App\Models\Tags;
 use App\Models\Poetry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use App\Services\StaticCacheService;
 
 class ExploreTopicController extends Controller
 {
+    protected $cache;
+
+    public function __construct(StaticCacheService $cache)
+    {
+        $this->cache = $cache;
+    }
+
     /**
      * Get all topic categories and their associated tags, localized.
      * Only shows tags and categories that are attached to at least one visible poetry.
@@ -18,6 +26,12 @@ class ExploreTopicController extends Controller
     public function index(Request $request)
     {
         $lang = $request->header('Accept-Language', 'sd');
+
+        $cached = $this->cache->get("explore_topics_{$lang}");
+        if ($cached) {
+            return response()->json($cached);
+        }
+
         App::setLocale($lang);
 
         // 1. Get all unique tag IDs used in poetry_main table

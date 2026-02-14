@@ -13,19 +13,28 @@ class TagObserver
 {
     use SQLiteTrait;
 
-    protected function invalidateCache()
+    protected function invalidateCache(Tags $tag = null)
     {
+        $cache = app(StaticCacheService::class);
+        $cache->forget('admin_poetry_create_data');
+        $cache->forget('homepage_data_sd');
+        $cache->forget('homepage_data_en');
+        $cache->forget('explore_topics_sd');
+        $cache->forget('explore_topics_en');
+
+        if ($tag) {
+            $cache->forget("tag_detail_{$tag->slug}_sd");
+            $cache->forget("tag_detail_{$tag->slug}_en");
+        }
+
         Cache::forget('admin_all_tags_sd');
-        app(StaticCacheService::class)->forget('admin_poetry_create_data');
-        app(StaticCacheService::class)->forget('homepage_data_sd');
-        app(StaticCacheService::class)->forget('homepage_data_en');
     }
     /**
      * Handle the Tags "created" event.
      */
     public function created(Tags $tags): void
     {
-        $this->forgetCache();
+        $this->invalidateCache($tags);
     }
 
     /**
@@ -42,7 +51,7 @@ class TagObserver
      */
     public function deleted(Tags $tags): void
     {
-        $this->forgetCache();
+        $this->invalidateCache($tags);
     }
 
     /**
@@ -50,7 +59,7 @@ class TagObserver
      */
     public function restored(Tags $tags): void
     {
-        $this->forgetCache();
+        $this->invalidateCache($tags);
     }
 
     /**
@@ -58,12 +67,7 @@ class TagObserver
      */
     public function forceDeleted(Tags $tags): void
     {
-        try {
-            UnifiedTags::find($tags)->delete();
-        } catch (\Throwable $th) {
-            Log::warning("Error while deleting Tag from SQLite \n $th");
-        }
-        $this->forgetCache();
+        $this->invalidateCache($tags);
     }
 
     protected function forgetCache()

@@ -12,7 +12,7 @@ class TopicCategoryObserver
      */
     public function created(TopicCategory $topicCategory): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($topicCategory);
     }
 
     /**
@@ -20,7 +20,7 @@ class TopicCategoryObserver
      */
     public function updated(TopicCategory $topicCategory): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($topicCategory);
     }
 
     /**
@@ -28,7 +28,7 @@ class TopicCategoryObserver
      */
     public function deleted(TopicCategory $topicCategory): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($topicCategory);
     }
 
     /**
@@ -36,7 +36,7 @@ class TopicCategoryObserver
      */
     public function restored(TopicCategory $topicCategory): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($topicCategory);
     }
 
     /**
@@ -44,11 +44,19 @@ class TopicCategoryObserver
      */
     public function forceDeleted(TopicCategory $topicCategory): void
     {
-        $this->invalidateCache();
+        $this->invalidateCache($topicCategory);
     }
 
-    protected function invalidateCache()
+    protected function invalidateCache(TopicCategory $cat = null)
     {
-        app(StaticCacheService::class)->forget('admin_poetry_create_data');
+        $cache = app(StaticCacheService::class);
+        $cache->forget('admin_poetry_create_data');
+        $cache->forget('explore_topics_sd');
+        $cache->forget('explore_topics_en');
+
+        if ($cat) {
+            $cache->forget("category_detail_{$cat->slug}_sd");
+            $cache->forget("category_detail_{$cat->slug}_en");
+        }
     }
 }

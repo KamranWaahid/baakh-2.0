@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { History, Calendar, ScrollText, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import PeriodDetailsModal from './PeriodDetailsModal';
 
 const PeriodFeed = ({ lang }) => {
@@ -15,7 +15,7 @@ const PeriodFeed = ({ lang }) => {
     const { data: periods, isLoading } = useQuery({
         queryKey: ['periods', lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/periods`);
+            const response = await api.get(`/api/v1/periods`);
             return response.data;
         }
     });

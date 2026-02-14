@@ -8,39 +8,28 @@ import { Button } from '@/components/ui/button';
 import { User, BookOpen, ChevronRight, ChevronLeft } from 'lucide-react';
 import { getImageUrl } from '../utils/url';
 
+import { useQuery } from '@tanstack/react-query';
+
 const TopicDetail = () => {
     const { lang, slug } = useParams();
     const isRtl = lang === 'sd';
     const location = useLocation();
     const isCategory = location.pathname.includes('/topic/');
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchTopic = async () => {
-            setLoading(true);
-            try {
-                const endpoint = isCategory
-                    ? `/api/v1/topic-categories/${slug}`
-                    : `/api/v1/tags/${slug}`;
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['topic-detail', isCategory ? 'category' : 'tag', slug, lang],
+        queryFn: async () => {
+            const endpoint = isCategory
+                ? `/api/v1/topic-categories/${slug}`
+                : `/api/v1/tags/${slug}`;
 
-                const response = await api.get(endpoint);
-                setData(response.data);
-            } catch (err) {
-                console.error("Failed to fetch topic details", err);
-                setError(err);
-            } finally {
-                setLoading(false);
-            }
-        };
+            const response = await api.get(endpoint);
+            return response.data;
+        },
+        enabled: !!slug
+    });
 
-        if (slug) {
-            fetchTopic();
-        }
-    }, [slug, lang]);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex-1 max-w-[1000px] w-full mx-auto px-4 md:px-8 py-12 md:py-20 animate-pulse">
                 <div className="h-8 w-48 bg-gray-200 rounded mb-8"></div>

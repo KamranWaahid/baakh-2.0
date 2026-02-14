@@ -145,7 +145,16 @@ const Explore = () => {
 import { AuthProvider } from './contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: Infinity, // Data remains fresh until page reload
+            gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
+            refetchOnWindowFocus: false, // Don't refetch when switching tabs
+            retry: 1,
+        },
+    },
+});
 
 const App = () => {
     return (

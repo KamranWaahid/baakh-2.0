@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { BookOpen } from 'lucide-react';
 
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -23,7 +23,7 @@ const PoetryFeed = ({ lang }) => {
     const { data: categoriesData } = useQuery({
         queryKey: ['categories', lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/categories?lang=${lang}`);
+            const response = await api.get(`/api/v1/categories?lang=${lang}`);
             return response.data;
         }
     });
@@ -44,7 +44,7 @@ const PoetryFeed = ({ lang }) => {
     } = useInfiniteQuery({
         queryKey: ['poetry-feed', activeTab, tag, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await axios.get(`/api/v1/feed`, {
+            const response = await api.get(`/api/v1/feed`, {
                 params: {
                     lang,
                     category: activeTab !== 'all' ? activeTab : (category !== 'poetry' ? category : undefined),
