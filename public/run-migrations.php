@@ -29,14 +29,48 @@ try {
     );
 
     echo "<h1>Baakh Database Migration</h1>";
+    $mode = $_GET['mode'] ?? 'normal';
+    echo "<p>Mode: " . htmlspecialchars($mode) . "</p>";
     echo "<pre>";
 
-    // Command: migrate --force
-    Artisan::call('migrate', ['--force' => true]);
-    echo Artisan::output();
+    if ($mode === 'targeted') {
+        // Specifically run the migrations added recently to fix the 500 error
+        $newMigrations = [
+            'database/migrations/2026_02_14_114355_create_system_errors_table.php',
+            'database/migrations/2026_02_14_180000_create_mokhii_tables.php',
+            'database/migrations/2026_02_14_195748_add_status_to_reports_table.php',
+            'database/migrations/2026_02_14_230000_add_mokhii_fixes_column.php',
+            'database/migrations/2026_02_14_235700_add_is_default_to_languages.php',
+            'database/migrations/2026_02_15_000100_create_admin_notifications_table.php',
+        ];
 
-    echo "\n\n--- Migration completed successfully ---";
+        foreach ($newMigrations as $path) {
+            echo "Running: $path\n";
+            try {
+                Artisan::call('migrate', [
+                    '--path' => $path,
+                    '--force' => true
+                ]);
+                echo Artisan::output();
+            } catch (Exception $innerE) {
+                echo "Error in $path: " . $innerE->getMessage() . "\n";
+            }
+            echo "---------------------------------\n";
+        }
+    } else {
+        // Command: migrate --force
+        Artisan::call('migrate', ['--force' => true]);
+        echo Artisan::output();
+    }
+
+    echo "\n\n--- Migration process completed ---";
     echo "</pre>";
+
+    echo "<h2>Options</h2>";
+    echo "<ul>";
+    echo "<li><a href='?secret=$secretKey&mode=normal'>Run Normal (All)</a></li>";
+    echo "<li><a href='?secret=$secretKey&mode=targeted'>Run Targeted (New Only)</a></li>";
+    echo "</ul>";
 
     echo "<p style='color: red;'><strong>IMPORTANT: Delete this file (/public/run-migrations.php) immediately after use.</strong></p>";
 
