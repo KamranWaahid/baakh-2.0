@@ -60,7 +60,11 @@ try {
                     Artisan::call('migrate', ['--path' => $path, '--force' => true]);
                     echo Artisan::output();
                 } catch (Exception $innerE) {
-                    echo "Error in $path: " . $innerE->getMessage() . "\n";
+                    if (str_contains($innerE->getMessage(), 'already exists')) {
+                        echo "SKIPPED: Table already exists. This is expected if the migration was partially run.\n";
+                    } else {
+                        echo "Error in $path: " . $innerE->getMessage() . "\n";
+                    }
                 }
                 echo "---------------------------------\n";
             }
