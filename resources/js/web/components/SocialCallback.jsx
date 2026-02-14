@@ -27,11 +27,16 @@ const SocialCallback = () => {
                     const user = await checkAuth();
 
                     if (user) {
+                        const canAccessAdmin = user.permissions?.includes('view_dashboard');
+
                         if (isNewUser) {
                             // New user - redirect to set password page
                             navigate(`/${lang}/auth/set-password`, { replace: true });
+                        } else if (canAccessAdmin) {
+                            // Admin user - redirect to admin panel
+                            window.location.href = '/admin';
                         } else {
-                            // Existing user - redirect to home
+                            // Regular user - redirect to home
                             // Using window.location.replace to prevent back button looping
                             window.location.replace(`/${lang}/`);
                         }

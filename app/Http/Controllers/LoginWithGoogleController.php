@@ -60,7 +60,15 @@ class LoginWithGoogleController extends Controller
                 $user->name = "Anonymous User";
 
                 $user->password = bcrypt(Str::random(16)); // Random password for security
-                $user->role = 'user'; // Assign default role
+                $user->role = 'user'; // Legacy column
+                $user->save();
+
+                // Assign Spatie Role for permissions
+                try {
+                    $user->assignRole('viewer');
+                } catch (\Exception $e) {
+                    \Log::error("Failed to assign 'viewer' role to new user: " . $e->getMessage());
+                }
 
                 // Generate Random Code Username (e.g., User-X92Z)
                 $user->username = 'User-' . strtoupper(Str::random(5));

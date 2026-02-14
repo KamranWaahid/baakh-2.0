@@ -16,8 +16,17 @@ const ProtectedRoute = ({ children }) => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                await api.get('/api/auth/me');
-                setIsAuthenticated(true);
+                const response = await api.get('/api/auth/me');
+                const user = response.data.user;
+
+                // Check for 'view_dashboard' permission via Laravel Sanctum response
+                if (user?.permissions?.includes('view_dashboard')) {
+                    setIsAuthenticated(true);
+                } else {
+                    // Logged in but not authorized for admin
+                    setIsAuthenticated(false);
+                    window.location.href = '/';
+                }
             } catch (error) {
                 setIsAuthenticated(false);
                 if (location.pathname !== '/login') {
