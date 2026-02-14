@@ -1,134 +1,144 @@
 {
-  "_PoemActionBar-6e3622b1.js": {
-    "dynamicImports": [
-      "_textarea-52c06c6d.js"
-    ],
-    "file": "assets/PoemActionBar-6e3622b1.js",
+  "_PoemActionBar-6357a292.js": {
+    "file": "assets/PoemActionBar-6357a292.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js"
     ]
   },
-  "_PostCard-45d10080.js": {
-    "file": "assets/PostCard-45d10080.js",
+  "_PostCard-aa642561.js": {
+    "file": "assets/PostCard-aa642561.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_PoemActionBar-6e3622b1.js"
+      "_textarea-10ee3000.js",
+      "_PoemActionBar-6357a292.js",
+      "resources/js/web/main.jsx"
     ]
   },
-  "_PostCardSkeleton-23af8dde.js": {
-    "file": "assets/PostCardSkeleton-23af8dde.js",
+  "_PostCardSkeleton-5cc321bc.js": {
+    "file": "assets/PostCardSkeleton-5cc321bc.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
   "_axios-ade11851.js": {
     "file": "assets/axios-ade11851.js"
   },
-  "_badge-1a9dec1b.js": {
-    "file": "assets/badge-1a9dec1b.js",
+  "_circle-check-big-997b7c6e.js": {
+    "file": "assets/circle-check-big-997b7c6e.js",
     "imports": [
-      "_textarea-52c06c6d.js"
-    ]
-  },
-  "_circle-check-big-862c6f2b.js": {
-    "file": "assets/circle-check-big-862c6f2b.js",
-    "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
   "_dateUtils-0d545e30.js": {
     "file": "assets/dateUtils-0d545e30.js"
   },
-  "_flag-e9232014.js": {
-    "file": "assets/flag-e9232014.js",
+  "_eye-b862501a.js": {
+    "file": "assets/eye-b862501a.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_index-f130e2f1.js": {
-    "file": "assets/index-f130e2f1.js",
+  "_flag-0e168ab2.js": {
+    "file": "assets/flag-0e168ab2.js",
     "imports": [
-      "_useQuery-7dfa8039.js",
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_info-6af3cdf6.js": {
-    "file": "assets/info-6af3cdf6.js",
+  "_index-6f6fb4c3.js": {
+    "file": "assets/index-6f6fb4c3.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_message-circle-ebdfb908.js": {
-    "file": "assets/message-circle-ebdfb908.js",
+  "_info-257964af.js": {
+    "file": "assets/info-257964af.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_save-39157dca.js": {
-    "file": "assets/save-39157dca.js",
+  "_lock-1071abc0.js": {
+    "file": "assets/lock-1071abc0.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_separator-ed508338.js": {
-    "file": "assets/separator-ed508338.js",
+  "_save-39649983.js": {
+    "file": "assets/save-39649983.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_shield-014f3f50.js": {
-    "file": "assets/shield-014f3f50.js",
+  "_separator-22207a19.js": {
+    "file": "assets/separator-22207a19.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_tabs-3e418805.js": {
-    "file": "assets/tabs-3e418805.js",
+  "_shield-065225e2.js": {
+    "file": "assets/shield-065225e2.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ]
   },
-  "_textarea-52c06c6d.js": {
-    "file": "assets/textarea-52c06c6d.js",
+  "_tabs-3b2bb514.js": {
+    "file": "assets/tabs-3b2bb514.js",
+    "imports": [
+      "_textarea-10ee3000.js"
+    ]
+  },
+  "_textarea-10ee3000.js": {
+    "file": "assets/textarea-10ee3000.js",
     "imports": [
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true
   },
-  "_useQuery-7dfa8039.js": {
-    "file": "assets/useQuery-7dfa8039.js",
+  "_useBaseQuery-4e30212d.js": {
+    "file": "assets/useBaseQuery-4e30212d.js",
     "imports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
+    ]
+  },
+  "_useInfiniteQuery-00ac2c43.js": {
+    "file": "assets/useInfiniteQuery-00ac2c43.js",
+    "imports": [
+      "_useBaseQuery-4e30212d.js",
+      "_textarea-10ee3000.js"
+    ]
+  },
+  "_useQuery-9b50b593.js": {
+    "file": "assets/useQuery-9b50b593.js",
+    "imports": [
+      "_useBaseQuery-4e30212d.js"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-edc62ec6.css",
+    "file": "assets/app-8312f64c.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
   "resources/js/admin/main.css": {
-    "file": "assets/main-17deeab1.css",
+    "file": "assets/main-868a19b7.css",
     "src": "resources/js/admin/main.css"
   },
   "resources/js/admin/main.jsx": {
     "css": [
-      "assets/main-17deeab1.css"
+      "assets/main-868a19b7.css"
     ],
-    "file": "assets/main-0d533a2a.js",
+    "file": "assets/main-626a114b.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_info-6af3cdf6.js",
-      "_useQuery-7dfa8039.js",
-      "_shield-014f3f50.js",
-      "_flag-e9232014.js",
-      "_tabs-3e418805.js",
-      "_badge-1a9dec1b.js",
-      "_save-39157dca.js",
-      "_axios-ade11851.js"
+      "_textarea-10ee3000.js",
+      "_info-257964af.js",
+      "_useQuery-9b50b593.js",
+      "_shield-065225e2.js",
+      "_flag-0e168ab2.js",
+      "_eye-b862501a.js",
+      "_tabs-3b2bb514.js",
+      "_save-39649983.js",
+      "_axios-ade11851.js",
+      "_useBaseQuery-4e30212d.js"
     ],
     "isEntry": true,
     "src": "resources/js/admin/main.jsx"
@@ -143,193 +153,214 @@
   },
   "resources/js/web/components/CoupletsFeed.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/CoupletsFeed-4244c45f.js",
+    "file": "assets/CoupletsFeed-52caf52c.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_PostCard-45d10080.js",
-      "_separator-ed508338.js",
-      "_PostCardSkeleton-23af8dde.js",
-      "_useQuery-7dfa8039.js",
-      "_index-f130e2f1.js",
+      "_textarea-10ee3000.js",
+      "_PostCard-aa642561.js",
+      "_separator-22207a19.js",
+      "_PostCardSkeleton-5cc321bc.js",
+      "_useQuery-9b50b593.js",
+      "_useInfiniteQuery-00ac2c43.js",
+      "_index-6f6fb4c3.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6e3622b1.js",
+      "_PoemActionBar-6357a292.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js",
+      "_useBaseQuery-4e30212d.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/CoupletsFeed.jsx"
   },
+  "resources/js/web/components/ExploreTopics.jsx": {
+    "file": "assets/ExploreTopics-1277aa31.js",
+    "imports": [
+      "_textarea-10ee3000.js",
+      "_useQuery-9b50b593.js",
+      "_axios-ade11851.js",
+      "_useBaseQuery-4e30212d.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/web/components/ExploreTopics.jsx"
+  },
   "resources/js/web/components/Feed.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "dynamicImports": [
-      "_textarea-52c06c6d.js"
-    ],
-    "file": "assets/Feed-7c6d40a1.js",
+    "file": "assets/Feed-bc464b97.js",
     "imports": [
+      "_textarea-10ee3000.js",
+      "_PostCard-aa642561.js",
+      "_separator-22207a19.js",
+      "_tabs-3b2bb514.js",
+      "_PostCardSkeleton-5cc321bc.js",
       "resources/js/web/main.jsx",
-      "_textarea-52c06c6d.js",
-      "_PostCard-45d10080.js",
-      "_separator-ed508338.js",
-      "_tabs-3e418805.js",
-      "_PostCardSkeleton-23af8dde.js",
+      "_useInfiniteQuery-00ac2c43.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6e3622b1.js",
+      "_PoemActionBar-6357a292.js",
       "_dateUtils-0d545e30.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js",
+      "_useBaseQuery-4e30212d.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/Feed.jsx"
   },
   "resources/js/web/components/GenreFeed.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/GenreFeed-57a9f630.js",
+    "file": "assets/GenreFeed-ceedb1e6.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_useQuery-7dfa8039.js",
+      "_textarea-10ee3000.js",
+      "_useQuery-9b50b593.js",
+      "_useInfiniteQuery-00ac2c43.js",
+      "_index-6f6fb4c3.js",
+      "_PostCard-aa642561.js",
+      "_separator-22207a19.js",
+      "_PostCardSkeleton-5cc321bc.js",
       "_axios-ade11851.js",
-      "_index-f130e2f1.js",
-      "_PostCard-45d10080.js",
-      "_separator-ed508338.js",
-      "_PostCardSkeleton-23af8dde.js",
-      "_PoemActionBar-6e3622b1.js",
+      "_useBaseQuery-4e30212d.js",
+      "_PoemActionBar-6357a292.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/GenreFeed.jsx"
   },
   "resources/js/web/components/PeriodFeed.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/PeriodFeed-e63e6a00.js",
+    "file": "assets/PeriodFeed-1070cf79.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_useQuery-7dfa8039.js",
-      "_axios-ade11851.js",
-      "_index-f130e2f1.js",
-      "_PostCard-45d10080.js",
-      "_separator-ed508338.js",
-      "_PostCardSkeleton-23af8dde.js",
+      "_textarea-10ee3000.js",
+      "_useQuery-9b50b593.js",
+      "_useInfiniteQuery-00ac2c43.js",
+      "_index-6f6fb4c3.js",
+      "_PostCard-aa642561.js",
+      "_separator-22207a19.js",
+      "_PostCardSkeleton-5cc321bc.js",
       "resources/js/web/main.jsx",
-      "_PoemActionBar-6e3622b1.js",
+      "_axios-ade11851.js",
+      "_useBaseQuery-4e30212d.js",
+      "_PoemActionBar-6357a292.js",
       "_dateUtils-0d545e30.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PeriodFeed.jsx"
   },
   "resources/js/web/components/PoemDetail.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/PoemDetail-bdffedf2.js",
+    "file": "assets/PoemDetail-20abe0f9.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_useQuery-7dfa8039.js",
+      "_textarea-10ee3000.js",
+      "_useQuery-9b50b593.js",
       "resources/js/web/main.jsx",
-      "_PoemActionBar-6e3622b1.js",
-      "_separator-ed508338.js",
+      "_PoemActionBar-6357a292.js",
+      "_separator-22207a19.js",
       "_dateUtils-0d545e30.js",
       "_axios-ade11851.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_useBaseQuery-4e30212d.js",
+      "_flag-0e168ab2.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoemDetail.jsx"
   },
   "resources/js/web/components/PoetProfile.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/PoetProfile-07325ece.js",
+    "file": "assets/PoetProfile-5e67f9cc.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_separator-ed508338.js",
-      "_PostCard-45d10080.js",
-      "_useQuery-7dfa8039.js",
-      "_index-f130e2f1.js",
-      "_axios-ade11851.js",
-      "_PoemActionBar-6e3622b1.js",
-      "_flag-e9232014.js",
+      "_textarea-10ee3000.js",
+      "_separator-22207a19.js",
+      "_PostCard-aa642561.js",
+      "_useQuery-9b50b593.js",
+      "_useInfiniteQuery-00ac2c43.js",
+      "_index-6f6fb4c3.js",
+      "_PoemActionBar-6357a292.js",
       "resources/js/web/main.jsx",
-      "_dateUtils-0d545e30.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js",
+      "_axios-ade11851.js",
+      "_useBaseQuery-4e30212d.js",
+      "_dateUtils-0d545e30.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetProfile.jsx"
   },
   "resources/js/web/components/PoetryFeed.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/PoetryFeed-b4a6627d.js",
+    "file": "assets/PoetryFeed-1d27c735.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_PostCard-45d10080.js",
-      "_separator-ed508338.js",
-      "_tabs-3e418805.js",
-      "_PostCardSkeleton-23af8dde.js",
-      "_useQuery-7dfa8039.js",
-      "_index-f130e2f1.js",
+      "_textarea-10ee3000.js",
+      "_PostCard-aa642561.js",
+      "_separator-22207a19.js",
+      "_tabs-3b2bb514.js",
+      "_PostCardSkeleton-5cc321bc.js",
+      "_useQuery-9b50b593.js",
+      "_useInfiniteQuery-00ac2c43.js",
+      "_index-6f6fb4c3.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6e3622b1.js",
+      "_PoemActionBar-6357a292.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-e9232014.js",
-      "_message-circle-ebdfb908.js"
+      "_flag-0e168ab2.js",
+      "_useBaseQuery-4e30212d.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetryFeed.jsx"
   },
   "resources/js/web/components/PoetsFeed.jsx": {
-    "file": "assets/PoetsFeed-cbf69486.js",
+    "css": [
+      "assets/app-8312f64c.css"
+    ],
+    "file": "assets/PoetsFeed-cf85a1aa.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_useQuery-7dfa8039.js",
-      "_index-f130e2f1.js",
-      "_axios-ade11851.js"
+      "_textarea-10ee3000.js",
+      "_useQuery-9b50b593.js",
+      "_useInfiniteQuery-00ac2c43.js",
+      "_index-6f6fb4c3.js",
+      "resources/js/web/main.jsx",
+      "_axios-ade11851.js",
+      "_useBaseQuery-4e30212d.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetsFeed.jsx"
   },
   "resources/js/web/components/ProsodyFeed.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/ProsodyFeed-4d16ebb3.js",
+    "file": "assets/ProsodyFeed-4efe2a95.js",
     "imports": [
-      "_textarea-52c06c6d.js",
-      "_useQuery-7dfa8039.js",
-      "_axios-ade11851.js",
-      "_info-6af3cdf6.js",
-      "_tabs-3e418805.js",
-      "_separator-ed508338.js",
+      "_textarea-10ee3000.js",
+      "_useQuery-9b50b593.js",
+      "_info-257964af.js",
+      "_tabs-3b2bb514.js",
+      "_separator-22207a19.js",
       "resources/js/web/main.jsx",
-      "_circle-check-big-862c6f2b.js"
+      "_circle-check-big-997b7c6e.js",
+      "_axios-ade11851.js",
+      "_useBaseQuery-4e30212d.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/ProsodyFeed.jsx"
   },
   "resources/js/web/components/SidebarLeft.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/SidebarLeft-3a31f2ce.js",
+    "file": "assets/SidebarLeft-8b202cc6.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -338,16 +369,15 @@
   },
   "resources/js/web/components/SidebarRight.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
     "dynamicImports": [
-      "_textarea-52c06c6d.js"
+      "_textarea-10ee3000.js"
     ],
-    "file": "assets/SidebarRight-620c39f0.js",
+    "file": "assets/SidebarRight-365e1f0e.js",
     "imports": [
       "resources/js/web/main.jsx",
-      "_textarea-52c06c6d.js",
-      "_badge-1a9dec1b.js",
+      "_textarea-10ee3000.js",
       "_dateUtils-0d545e30.js",
       "_axios-ade11851.js"
     ],
@@ -356,23 +386,43 @@
   },
   "resources/js/web/components/SocialCallback.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/SocialCallback-01a12caa.js",
+    "file": "assets/SocialCallback-eda3ae7b.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/SocialCallback.jsx"
   },
+  "resources/js/web/components/TopicDetail.jsx": {
+    "css": [
+      "assets/app-8312f64c.css"
+    ],
+    "file": "assets/TopicDetail-f6cee767.js",
+    "imports": [
+      "_textarea-10ee3000.js",
+      "_PostCard-aa642561.js",
+      "resources/js/web/main.jsx",
+      "_useQuery-9b50b593.js",
+      "_axios-ade11851.js",
+      "_PoemActionBar-6357a292.js",
+      "_dateUtils-0d545e30.js",
+      "_flag-0e168ab2.js",
+      "_useBaseQuery-4e30212d.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/web/components/TopicDetail.jsx"
+  },
   "resources/js/web/main.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
     "dynamicImports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/components/SidebarLeft.jsx",
       "resources/js/web/components/SidebarRight.jsx",
       "resources/js/web/components/Feed.jsx",
@@ -390,12 +440,15 @@
       "resources/js/web/pages/Help.jsx",
       "resources/js/web/pages/Status.jsx",
       "resources/js/web/components/SocialCallback.jsx",
+      "resources/js/web/pages/SetPassword.jsx",
       "resources/js/web/pages/Profile.jsx",
-      "resources/js/web/pages/Settings.jsx"
+      "resources/js/web/pages/Settings.jsx",
+      "resources/js/web/components/ExploreTopics.jsx",
+      "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-6898e995.js",
+    "file": "assets/main-e0aebd88.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "_axios-ade11851.js"
     ],
     "isEntry": true,
@@ -403,11 +456,11 @@
   },
   "resources/js/web/pages/About.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/About-3290e470.js",
+    "file": "assets/About-6b68def2.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -416,11 +469,11 @@
   },
   "resources/js/web/pages/Help.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/Help-3629e55e.js",
+    "file": "assets/Help-63fb1932.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -429,11 +482,11 @@
   },
   "resources/js/web/pages/Privacy.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/Privacy-4b96bc6a.js",
+    "file": "assets/Privacy-6ad4ab57.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -442,28 +495,45 @@
   },
   "resources/js/web/pages/Profile.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/Profile-05334992.js",
+    "file": "assets/Profile-aa7b60d5.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
-      "_message-circle-ebdfb908.js",
-      "_save-39157dca.js",
+      "_save-39649983.js",
+      "_lock-1071abc0.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Profile.jsx"
   },
+  "resources/js/web/pages/SetPassword.jsx": {
+    "css": [
+      "assets/app-8312f64c.css"
+    ],
+    "file": "assets/SetPassword-04a80f97.js",
+    "imports": [
+      "_textarea-10ee3000.js",
+      "resources/js/web/main.jsx",
+      "_lock-1071abc0.js",
+      "_eye-b862501a.js",
+      "_axios-ade11851.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/web/pages/SetPassword.jsx"
+  },
   "resources/js/web/pages/Settings.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/Settings-a3a30754.js",
+    "file": "assets/Settings-0e87d57f.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
-      "_shield-014f3f50.js",
+      "_shield-065225e2.js",
+      "_lock-1071abc0.js",
+      "_eye-b862501a.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -471,13 +541,13 @@
   },
   "resources/js/web/pages/Status.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/Status-5648eae5.js",
+    "file": "assets/Status-ff5e3755.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
-      "_circle-check-big-862c6f2b.js",
+      "_circle-check-big-997b7c6e.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -485,11 +555,11 @@
   },
   "resources/js/web/pages/Terms.jsx": {
     "css": [
-      "assets/app-edc62ec6.css"
+      "assets/app-8312f64c.css"
     ],
-    "file": "assets/Terms-b25c419b.js",
+    "file": "assets/Terms-b0e2be9c.js",
     "imports": [
-      "_textarea-52c06c6d.js",
+      "_textarea-10ee3000.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],

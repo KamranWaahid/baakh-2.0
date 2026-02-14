@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import PaywallCTA from './PaywallCTA';
 import { formatSindhiDate } from '../utils/dateUtils';
 import { getImageUrl } from '../utils/url';
+import DOMPurify from 'dompurify';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -135,7 +136,7 @@ const PoemDetail = ({ lang }) => {
                             <p key={index} className="mb-6 w-full">{couplet}</p>
                         ))
                     ) : (
-                        <div dangerouslySetInnerHTML={{ __html: poem.content }} />
+                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }} />
                     )}
 
                     {poem.info && (

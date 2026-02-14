@@ -26,7 +26,8 @@ import {
     Book,
     Plus,
     Info,
-    Terminal
+    Terminal,
+    Bug
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -39,6 +40,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Toaster } from 'sonner';
 const SidebarContext = createContext({ onLinkClick: () => { } });
 
 const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
@@ -163,6 +165,7 @@ const Sidebar = ({ onLinkClick }) => {
 
                     <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
                     <SidebarLink to="/admin/system/server" icon={Terminal}>Server Management</SidebarLink>
+                    <SidebarLink to="/admin/system/errors" icon={Bug}>Error Management</SidebarLink>
                     <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
                     {isSuperAdmin && (
                         <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
@@ -246,6 +249,7 @@ const AdminLayout = ({ children }) => {
                     </div>
                 </main>
             </div>
+            <Toaster />
         </div>
     );
 };

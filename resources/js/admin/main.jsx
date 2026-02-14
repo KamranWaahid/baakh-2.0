@@ -68,6 +68,7 @@ import UserForm from './pages/Users/UserForm';
 import TopicCategoryList from './pages/Topics/TopicCategoryList';
 import InformationSystem from './pages/System/InformationSystem';
 import ServerManagement from './pages/System/ServerManagement';
+import ErrorManagement from './pages/System/ErrorManagement';
 
 import LemmaInbox from './pages/Dictionary/LemmaInbox';
 import SenseEditor from './pages/Dictionary/SenseEditor';
@@ -340,6 +341,14 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <ServerManagement />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/system/errors" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ErrorManagement />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

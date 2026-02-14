@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image;
 
 
@@ -25,18 +26,19 @@ trait HasMedia
      * name_resized = date{dmY}_random_100x50 i.e cropped size
      * 
      * @return array ['size', 'full_path', 'file_name , 'mime_type' , 'resized_images ]
-    */
+     */
 
-    public function uploadImage($file, $folderPath, $customName = null, $thumbnail = false) {
+    public function uploadImage($file, $folderPath, $customName = null, $thumbnail = false)
+    {
         // Validate file size and dimensions
         $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
         $minWidth = 10;
         $minHeight = 10;
-    
+
         $fileSize = $file->getSize();
         $mimeType = $file->getMimeType();
-        if ( $file->getSize() && $file->getSize() > $maxSize) {
-             return ['error' => true, 'message' => 'File size exceeds the maximum allowed size (10 MB or '.$maxSize.' bytes). Your image size is '.$file->getSize()];
+        if ($file->getSize() && $file->getSize() > $maxSize) {
+            return ['error' => true, 'message' => 'File size exceeds the maximum allowed size (10 MB or ' . $maxSize . ' bytes). Your image size is ' . $file->getSize()];
         }
 
         $image = Image::read($file);
@@ -49,11 +51,11 @@ trait HasMedia
         }
 
         // check if there is custom name
-        if($customName) {
-            $imageName = $customName . '.' . $file->getClientOriginalExtension();
-        }else{
+        if ($customName) {
+            $imageName = Str::slug($customName) . '.' . $file->extension();
+        } else {
             // Generate random name for the image
-            $imageName = date('dmY') . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $imageName = date('dmY') . '_' . uniqid() . '.' . $file->extension();
         }
 
         // Upload original image
@@ -62,7 +64,7 @@ trait HasMedia
 
         // Debug: Ensure the destination directory exists
         if (!file_exists($destination)) {
-            mkdir($destination, 0777, true);
+            mkdir($destination, 0755, true);
         }
 
         $file->move($destination, $imageName);
@@ -72,16 +74,16 @@ trait HasMedia
          * Make Thumbnail check if it is enabled
          */
         $resizedImages = [];
-        if($thumbnail === true) {
+        if ($thumbnail === true) {
             $cropSize = config('admin_media.sizes');
             foreach ($cropSize as $key => $value) {
-                $resizedName = pathinfo($imageName, PATHINFO_FILENAME) . "_{$key}." . $file->getClientOriginalExtension();
+                $resizedName = pathinfo($imageName, PATHINFO_FILENAME) . "_{$key}." . $file->extension();
                 //$image->setResolution($x_resolution, $y_resolution);
-                $image->scale($value['width'], $value['height'])->save(public_path("assets/images/$folderPath/$resizedName")); 
+                $image->scale($value['width'], $value['height'])->save(public_path("assets/images/$folderPath/$resizedName"));
                 $resizedImages[] = "assets/images/$folderPath/$resizedName";
             }
         }
- 
+
 
         return [
             'error' => false,
@@ -102,28 +104,29 @@ trait HasMedia
      * @param [string] $oldImageUri
      * @return array ['size', 'full_path', 'file_name , 'mime_type' , 'resized_images ]
      */
-    public function updateImage($file, $folderPath, $oldImageUri, $customName = null, $thumbnail = false) {
-        
-        if(file_exists($oldImageUri)) {
-             Log::info('====== image exists and deleting for ' . $customName);
+    public function updateImage($file, $folderPath, $oldImageUri, $customName = null, $thumbnail = false)
+    {
+
+        if (file_exists($oldImageUri)) {
+            Log::info('====== image exists and deleting for ' . $customName);
             // Get the original extension of the image file
             $extension = pathinfo($oldImageUri, PATHINFO_EXTENSION);
             $filenameWithoutExtension = pathinfo($oldImageUri, PATHINFO_FILENAME);
-              
+
             // delink all thumbnails also [150x150, 300x300, 1024x1024]
             $thumbnailArray = config('admin_media.sizes');
-            
+
             foreach ($thumbnailArray as $key => $thumbnailSize) {
 
-                $thumbnailImage = 'assets/images/'.$folderPath.'/'. $filenameWithoutExtension . '_' . $key . '.' . $extension;
-                
-                if(file_exists($thumbnailImage)) {
+                $thumbnailImage = 'assets/images/' . $folderPath . '/' . $filenameWithoutExtension . '_' . $key . '.' . $extension;
+
+                if (file_exists($thumbnailImage)) {
                     unlink($thumbnailImage);
                 }
             }
             unlink($oldImageUri);
             return $this->uploadImage($file, $folderPath, $customName, $thumbnail);
-        }else{
+        } else {
             return $this->uploadImage($file, $folderPath, $customName, $thumbnail);
         }
     }
@@ -142,33 +145,34 @@ trait HasMedia
     /**
      * Delete Image Files
      */
-    public function deleteImageFiles($oldImageUri, $hasThumbnails = false) {
-        if(!file_exists($oldImageUri)) {
-            return ['error' => true, 'message' => 'File does not exists in the folder']; 
+    public function deleteImageFiles($oldImageUri, $hasThumbnails = false)
+    {
+        if (!file_exists($oldImageUri)) {
+            return ['error' => true, 'message' => 'File does not exists in the folder'];
         }
-         
-        if($hasThumbnails === true) {
+
+        if ($hasThumbnails === true) {
             $cropSize = config('admin_media.sizes');
-            
+
             $extension = pathinfo($oldImageUri, PATHINFO_EXTENSION);
             $filenameWithoutExtension = pathinfo($oldImageUri, PATHINFO_FILENAME);
             $folderPath = pathinfo($oldImageUri, PATHINFO_DIRNAME);
 
             foreach ($cropSize as $key => $value) {
-                $thumbnailImage = $folderPath.'/'. $filenameWithoutExtension . '_' . $key . '.' . $extension;
-              
-              if(file_exists($thumbnailImage)) {
-                  unlink($thumbnailImage);
-              }
-          }
- 
+                $thumbnailImage = $folderPath . '/' . $filenameWithoutExtension . '_' . $key . '.' . $extension;
+
+                if (file_exists($thumbnailImage)) {
+                    unlink($thumbnailImage);
+                }
+            }
+
         }
- 
+
         unlink($oldImageUri);
         return ['error' => false, 'message' => 'Files removed from directory'];
     }
 
-    
+
     /**
      * Delete Folders 
      *
@@ -176,7 +180,8 @@ trait HasMedia
      * @param string $folderName
      * @return void
      */
-    public function deleteFolderFromDirectory($path, $folderName) {
+    public function deleteFolderFromDirectory($path, $folderName)
+    {
         if (is_dir($path)) {
             $files = glob($path . '/*');
             foreach ($files as $file) {
@@ -190,7 +195,8 @@ trait HasMedia
         }
     }
 
-    public function deleteFolderRecursive($path) {
+    public function deleteFolderRecursive($path)
+    {
         if (is_dir($path)) {
             $files = glob($path . '/*');
             foreach ($files as $file) {
@@ -199,6 +205,6 @@ trait HasMedia
             rmdir($path);
         }
     }
-    
+
 
 }

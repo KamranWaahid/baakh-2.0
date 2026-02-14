@@ -22,8 +22,8 @@ use App\Http\Controllers\Api\Auth\MeController;
 
 // Auth Routes
 Route::prefix('auth')->group(function () {
-    Route::post('/login', LoginController::class);
-    Route::post('/register', RegisterController::class);
+    Route::middleware('throttle:6,1')->post('/login', LoginController::class);
+    Route::middleware('throttle:6,1')->post('/register', RegisterController::class);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', LogoutController::class);
@@ -89,6 +89,7 @@ use App\Http\Controllers\Api\Admin\DatabaseController;
 use App\Http\Controllers\Api\Admin\CountryController;
 use App\Http\Controllers\Api\Admin\ProvinceController;
 use App\Http\Controllers\Api\Admin\CityController;
+use App\Http\Controllers\Api\Admin\ErrorManagementController;
 
 // ... (Auth routes remain)
 
@@ -97,27 +98,34 @@ use App\Http\Controllers\Api\Admin\CityController;
 Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(function () {
 
     // Users
-    Route::apiResource('users', UserController::class);
+    Route::middleware('can:assign_roles')->apiResource('users', UserController::class);
 
     // Teams
-    Route::apiResource('teams', TeamController::class);
+    Route::middleware('can:assign_roles')->apiResource('teams', TeamController::class);
 
-    // Team Members
-    Route::get('teams/{team}/members', [TeamMemberController::class, 'index']);
-    Route::post('teams/{team}/members', [TeamMemberController::class, 'store']);
-    Route::put('teams/{team}/members/{userId}', [TeamMemberController::class, 'update']);
-    Route::delete('teams/{team}/members/{userId}', [TeamMemberController::class, 'destroy']);
+    // Team Members (Using 'manage_team_members' permission if exists, or 'assign_roles')
+    // Seeder didn't explicitly list 'manage_team_members' for Admin? Let's check. 
+    // Yes, 'manage_team_members' was in permission list but removed for Admin role to enforce isolation?
+    // Let's use 'assign_roles' for consistency with Users.
+    Route::middleware('can:assign_roles')->group(function () {
+        Route::get('teams/{team}/members', [TeamMemberController::class, 'index']);
+        Route::post('teams/{team}/members', [TeamMemberController::class, 'store']);
+        Route::put('teams/{team}/members/{userId}', [TeamMemberController::class, 'update']);
+        Route::delete('teams/{team}/members/{userId}', [TeamMemberController::class, 'destroy']);
+    });
 
     // Roles & Permissions
-    Route::apiResource('roles', RoleController::class);
-    Route::get('permissions', [PermissionController::class, 'index']);
+    Route::middleware('can:assign_roles')->group(function () {
+        Route::apiResource('roles', RoleController::class);
+        Route::get('permissions', [PermissionController::class, 'index']);
+    });
 
     // Locations
     Route::apiResource('countries', CountryController::class);
     Route::apiResource('provinces', ProvinceController::class);
     Route::apiResource('cities', CityController::class);
     // Activity Logs
-    Route::get('activity-logs', [ActivityLogController::class, 'index']);
+    Route::middleware('can:view_activity_logs')->get('activity-logs', [ActivityLogController::class, 'index']);
 
     // Languages
     Route::apiResource('languages', LanguageController::class);
@@ -136,7 +144,21 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::post('server/commands/run', [\App\Http\Controllers\Api\Admin\ServerController::class, 'run']);
     Route::get('server/stats', [\App\Http\Controllers\Api\Admin\ServerController::class, 'stats']);
     Route::get('server/logs', [\App\Http\Controllers\Api\Admin\ServerController::class, 'logs']);
+    Route::post('server/logs/clear', [\App\Http\Controllers\Api\Admin\ServerController::class, 'clearLogs']);
     Route::post('server/shell', [\App\Http\Controllers\Api\Admin\ServerController::class, 'shell']);
+
+    // Advanced Server Features
+    Route::get('server/env', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getEnv']);
+    Route::post('server/env', [\App\Http\Controllers\Api\Admin\ServerController::class, 'updateEnv']);
+    Route::get('server/queues', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getQueues']);
+    Route::post('server/queues/manage', [\App\Http\Controllers\Api\Admin\ServerController::class, 'manageFailedJob']);
+    Route::get('server/search/stats', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getSearchStats']);
+    Route::get('server/health', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getHealth']);
+    Route::get('server/deployment/history', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getDeploymentHistory']);
+
+    // Error Management
+    Route::post('system-errors/clear', [ErrorManagementController::class, 'clear']);
+    Route::apiResource('system-errors', ErrorManagementController::class);
 });
 
 Route::middleware(['auth:sanctum', 'user_role'])

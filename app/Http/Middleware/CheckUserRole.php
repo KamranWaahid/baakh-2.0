@@ -19,19 +19,15 @@ class CheckUserRole
     {
         if (Auth::check()) {
             $user = Auth::user();
-            Log::info("CheckUserRole: User {$user->id} ({$user->email}) has role column: '{$user->role}'");
 
-            // Check if the user has the role 'user'
-            if ($user->role === 'user') {
-                Log::warning("CheckUserRole: Redirecting user {$user->id} to profile due to 'user' role.");
-
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => 'Unauthorized: Admin access required.'], 403);
-                }
-
-                return redirect('/user/profile');
+            // Check if user has permission to view the dashboard (min requirement for admin panel)
+            // This replaces the fragile '$user->role === 'user'' check.
+            if ($user->can('view_dashboard')) {
+                return $next($request);
             }
         }
-        return $next($request);
+
+        // Return JSON 403 if unauthorized or not logged in (double check)
+        return response()->json(['message' => 'Unauthorized: Admin access required.'], 403);
     }
 }

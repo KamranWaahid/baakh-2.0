@@ -178,8 +178,29 @@ class ServerController extends Controller
 
         return response()->json([
             'logs' => implode('', array_reverse($lines)),
-            'path' => $logPath
+            'path' => $logPath,
+            'size' => $this->formatSizeUnits(filesize($logPath))
         ]);
+    }
+
+    /**
+     * Clear the application log file.
+     */
+    public function clearLogs(Request $request)
+    {
+        $logPath = storage_path('logs/laravel.log');
+
+        try {
+            if (file_exists($logPath)) {
+                file_put_contents($logPath, '');
+            }
+
+            ActivityLog::log('system_logs_cleared', $request->user(), null, "Cleared laravel.log file");
+
+            return response()->json(['message' => 'Logs cleared successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to clear logs: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -285,6 +306,174 @@ class ServerController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get environment (.env) content.
+     */
+    public function getEnv()
+    {
+        $path = base_path('.env');
+        if (!file_exists($path)) {
+            return response()->json(['error' => '.env file not found'], 404);
+        }
+
+        return response()->json([
+            'content' => file_get_contents($path)
+        ]);
+    }
+
+    /**
+     * Update environment (.env) content.
+     */
+    public function updateEnv(Request $request)
+    {
+        $request->validate(['content' => 'required|string']);
+
+        $path = base_path('.env');
+        $backupPath = base_path('.env.bak');
+
+        try {
+            // Create backup
+            if (file_exists($path)) {
+                copy($path, $backupPath);
+            }
+
+            file_put_contents($path, $request->input('content'));
+
+            ActivityLog::log('system_env_updated', $request->user(), null, "Updated .env file");
+
+            return response()->json(['message' => 'Environment updated successfully. Backup created as .env.bak']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to update .env: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get queue and failed jobs stats.
+     */
+    public function getQueues()
+    {
+        $failedJobs = \DB::table('failed_jobs')->orderBy('failed_at', 'desc')->limit(50)->get();
+        $queueSize = 0;
+        $connection = config('queue.default');
+
+        // Simple count for database queue
+        if ($connection === 'database') {
+            try {
+                $queueSize = \DB::table('jobs')->count();
+            } catch (\Exception $e) {
+                $queueSize = 0;
+            }
+        }
+
+        // Check Scheduler (simulated check by looking at last activity if logged, or just status)
+        $schedulerLastRun = \Cache::get('illuminate:schedule:last_run');
+
+        return response()->json([
+            'failed_jobs_count' => $failedJobs->count(),
+            'failed_jobs' => $failedJobs,
+            'queue_size' => $queueSize,
+            'connection' => $connection,
+            'scheduler_status' => $schedulerLastRun ? 'Last run: ' . \Carbon\Carbon::parse($schedulerLastRun)->diffForHumans() : 'No recent schedule activity detected.',
+            'queue_worker_running' => true // Placeholder or attempt to detect
+        ]);
+    }
+
+    /**
+     * Manage failed jobs.
+     */
+    public function manageFailedJob(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:retry,delete,retry_all,delete_all',
+            'id' => 'required_if:action,retry,delete'
+        ]);
+
+        $action = $request->input('action');
+        $id = $request->input('id');
+
+        try {
+            if ($action === 'retry') {
+                Artisan::call('queue:retry', ['id' => $id]);
+            } elseif ($action === 'delete') {
+                Artisan::call('queue:forget', ['id' => $id]);
+            } elseif ($action === 'retry_all') {
+                Artisan::call('queue:retry', ['id' => 'all']);
+            } elseif ($action === 'delete_all') {
+                Artisan::call('queue:flush');
+            }
+
+            return response()->json(['message' => 'Action ' . $action . ' executed successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get search engine (Scout/Meilisearch) stats.
+     */
+    public function getSearchStats()
+    {
+        $driver = config('scout.driver');
+        $stats = [
+            'driver' => $driver,
+            'enabled' => !empty($driver),
+            'status' => 'Unknown'
+        ];
+
+        if ($driver === 'meilisearch') {
+            try {
+                // Quick ping if possible, or just report configured state
+                $stats['host'] = config('scout.meilisearch.host');
+                $stats['status'] = 'Configured';
+            } catch (\Exception $e) {
+                $stats['status'] = 'Error: ' . $e->getMessage();
+            }
+        }
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Run a comprehensive system health check.
+     */
+    public function getHealth()
+    {
+        $checks = [
+            'storage_writable' => is_writable(storage_path()),
+            'cache_writable' => is_writable(base_path('bootstrap/cache')),
+            'debug_mode' => config('app.debug'),
+            'env_production' => config('app.env') === 'production',
+            'database_connection' => false,
+            'disk_space_warning' => false,
+        ];
+
+        try {
+            \DB::connection()->getPdo();
+            $checks['database_connection'] = true;
+        } catch (\Exception $e) {
+        }
+
+        $freePercent = (disk_free_space(base_path()) / disk_total_space(base_path())) * 100;
+        if ($freePercent < 10) {
+            $checks['disk_space_warning'] = true;
+        }
+
+        return response()->json($checks);
+    }
+
+    /**
+     * Get deployment history (git log).
+     */
+    public function getDeploymentHistory()
+    {
+        try {
+            $log = shell_exec('git log -n 10 --pretty=format:"%h - %an, %ar : %s" 2>&1');
+            return response()->json(['log' => $log]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unable to fetch git log.'], 500);
         }
     }
 
