@@ -40,6 +40,13 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
 
+        // Register Observers for Static Caching
+        \App\Models\Poetry::observe(\App\Observers\PoetryObserver::class);
+        \App\Models\Poets::observe(\App\Observers\PoetObserver::class);
+        \App\Models\Tags::observe(\App\Observers\TagObserver::class);
+        \App\Models\Categories::observe(\App\Observers\CategoryObserver::class);
+        \App\Models\TopicCategory::observe(\App\Observers\TopicCategoryObserver::class);
+
         // Register the 'localized' macro when the URL service is resolved.
         // This prevents early resolution errors (TypeError regarding $request).
         $this->app->resolving('url', function ($url) {

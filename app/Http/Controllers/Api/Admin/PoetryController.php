@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poetry;
+use App\Services\StaticCacheService;
 use Illuminate\Http\Request;
 
 class PoetryController extends Controller
@@ -97,6 +98,12 @@ class PoetryController extends Controller
     }
     public function create()
     {
+        $cache = app(StaticCacheService::class);
+        $cachedData = $cache->get('admin_poetry_create_data');
+        if ($cachedData) {
+            return response()->json($cachedData);
+        }
+
         $poets = \App\Models\Poets::where('visibility', 1)->with([
             'details' => function ($q) {
                 $q->where('lang', 'sd');
@@ -142,13 +149,18 @@ class PoetryController extends Controller
             ];
         });
 
-        return response()->json([
+        $data = [
             'poets' => $poets,
             'categories' => $categories,
             'topic_categories' => $topicCategories,
             'tags' => $tags,
             'content_styles' => ['justified', 'center', 'start', 'end']
-        ]);
+        ];
+
+        // Cache it for future use
+        $cache->set('admin_poetry_create_data', $data);
+
+        return response()->json($data);
     }
 
     public function store(Request $request)

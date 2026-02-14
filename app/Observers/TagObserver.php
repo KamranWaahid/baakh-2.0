@@ -5,12 +5,21 @@ namespace App\Observers;
 use App\Models\Search\UnifiedTags;
 use App\Models\Tags;
 use App\Traits\SQLiteTrait;
+use App\Services\StaticCacheService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class TagObserver
 {
     use SQLiteTrait;
+
+    protected function invalidateCache()
+    {
+        Cache::forget('admin_all_tags_sd');
+        app(StaticCacheService::class)->forget('admin_poetry_create_data');
+        app(StaticCacheService::class)->forget('homepage_data_sd');
+        app(StaticCacheService::class)->forget('homepage_data_en');
+    }
     /**
      * Handle the Tags "created" event.
      */
@@ -25,7 +34,7 @@ class TagObserver
     public function updated(Tags $tags): void
     {
         $this->updateTag($tags->id);
-        $this->forgetCache();
+        $this->invalidateCache();
     }
 
     /**
@@ -57,8 +66,8 @@ class TagObserver
         $this->forgetCache();
     }
 
-    protected function forgetCache() 
+    protected function forgetCache()
     {
-        Cache::forget('admin_all_tags_sd');
+        $this->invalidateCache();
     }
 }

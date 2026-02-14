@@ -8,6 +8,7 @@ use App\Models\Poets;
 use App\Models\Tags;
 use App\Models\UserComments;
 use App\Traits\BaakhLikedTrait;
+use App\Services\StaticCacheService;
 use Illuminate\Support\Str;
 use App\Traits\BaakhSeoTrait;
 use Illuminate\Http\Request;
@@ -132,6 +133,14 @@ class PoetryController extends UserController
     public function apiShow(Request $request, $slug)
     {
         $locale = $request->get('lang', $request->header('Accept-Language', 'sd'));
+
+        $cache = app(StaticCacheService::class);
+        $cacheKey = "poetry_detail_{$slug}_{$locale}";
+        $cachedData = $cache->get($cacheKey);
+
+        if ($cachedData) {
+            return response()->json($cachedData);
+        }
 
         // Get poetry by URL with language constraint
         $poetry = Poetry::with([
@@ -371,6 +380,9 @@ class PoetryController extends UserController
                     ];
                 })->values(), // Reset keys after unique
         ];
+
+        // Cache it
+        $cache->set($cacheKey, $data);
 
         return response()->json($data);
     }

@@ -5,12 +5,21 @@ namespace App\Observers;
 use App\Models\Categories;
 use App\Models\Search\UnifiedCategories;
 use App\Traits\SQLiteTrait;
+use App\Services\StaticCacheService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class CategoryObserver
 {
     use SQLiteTrait;
+
+    protected function invalidateCache()
+    {
+        Cache::forget('admin_all_categories_sd');
+        app(StaticCacheService::class)->forget('admin_poetry_create_data');
+        app(StaticCacheService::class)->forget('homepage_data_sd');
+        app(StaticCacheService::class)->forget('homepage_data_en');
+    }
     /**
      * Handle the Categories "created" event.
      */
@@ -25,7 +34,7 @@ class CategoryObserver
     public function updated(Categories $categories): void
     {
         $this->updateCategory($categories->id);
-        $this->forgetCache();
+        $this->invalidateCache();
     }
 
     /**
@@ -57,7 +66,8 @@ class CategoryObserver
         $this->forgetCache();
     }
 
-    protected function forgetCache() {
-        Cache::forget('admin_all_categories_sd');
+    protected function forgetCache()
+    {
+        $this->invalidateCache();
     }
 }

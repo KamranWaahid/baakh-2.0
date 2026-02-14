@@ -12,6 +12,7 @@ use App\Models\Sliders;
 use App\Models\Tags;
 use App\Models\TodaysModule;
 use App\Traits\BaakhSeoTrait;
+use App\Services\StaticCacheService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -37,17 +38,35 @@ class HomeController extends UserController
         $locale = app()->getLocale();
         $doodles = Doodle::first();
 
-        //dd($doodles);
-        $sliders = Sliders::where(['lang' => $locale, 'visibility' => 1])->get();
-        $famous_poet = $this->getFamousPoets($locale);
-        $ghazal_of_day = $this->getGhazalOfDay($locale);
-        // $bundles = Bundles::where('is_featured', true)->get();
-        $bundles = null;
-        $quiz_couplet = $this->getQuizCouplet($locale);
-        $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
-        $random_poetry = $this->showRandomPoetry(10, $locale);
-        $poet_tags = Tags::where(['type' => 'poets', 'lang' => $locale])->get();
-        $tags = Tags::where('lang', $locale)->limit(18)->get(); // get all tags
+        $cache = app(StaticCacheService::class);
+        $cachedData = $cache->get("homepage_data_{$locale}");
+
+        if ($cachedData) {
+            $sliders = collect($cachedData['sliders'])->map(fn($s) => new Sliders($s));
+            $famous_poet = collect($cachedData['famous_poets'])->map(fn($p) => new Poets($p));
+            $ghazal_of_day = $cachedData['ghazal_of_day'] ? new Poetry($cachedData['ghazal_of_day']) : null;
+            $ghazal_of_day_poet = $ghazal_of_day?->poet;
+            $tags = collect($cachedData['tags'])->map(fn($t) => new Tags($t));
+            $poet_tags = collect($cachedData['poet_tags'])->map(fn($t) => new Tags($t));
+            $doodles = $cachedData['doodles'] ? new Doodle($cachedData['doodles']) : null;
+
+            // These are still randomized or dynamic per-request for now
+            $quiz_couplet = $this->getQuizCouplet($locale);
+            $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
+            $random_poetry = $this->showRandomPoetry(10, $locale);
+            $bundles = null;
+        } else {
+            $sliders = Sliders::where(['lang' => $locale, 'visibility' => 1])->get();
+            $famous_poet = $this->getFamousPoets($locale);
+            $ghazal_of_day = $this->getGhazalOfDay($locale);
+            $bundles = null;
+            $quiz_couplet = $this->getQuizCouplet($locale);
+            $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
+            $random_poetry = $this->showRandomPoetry(10, $locale);
+            $poet_tags = Tags::where(['type' => 'poets', 'lang' => $locale])->get();
+            $tags = Tags::where('lang', $locale)->limit(18)->get();
+            $ghazal_of_day_poet = $ghazal_of_day?->poet;
+        }
 
         // SEO 
         $title = ($locale == 'sd') ? 'باک - سنڌي شاعريءَ جو خزانو' : 'Baakh - Treasure of Sindhi Poetry';
@@ -342,6 +361,19 @@ class HomeController extends UserController
         $filter = $request->get('filter');
         $perPage = 10;
 
+        if ($page == 1 && !$filter && !$request->has('period_id')) {
+            $cache = app(StaticCacheService::class);
+            $cachedFeed = $cache->get("feed_page_1_{$lang}");
+            if ($cachedFeed) {
+                return response()->json([
+                    'data' => $cachedFeed,
+                    'current_page' => 1,
+                    'last_page' => 2, // Mock for simple load
+                    'total' => 100
+                ]);
+            }
+        }
+
         $query = Poetry::with([
             'info' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
@@ -397,12 +429,11 @@ class HomeController extends UserController
             }
         }
 
-        $poetry = $query->latest()
-            ->paginate($perPage);
+        $poetry = $query->latest()->paginate($perPage);
 
         $userId = auth('sanctum')->id();
 
-        $transformed = $poetry->through(function ($p) use ($lang, $userId) {
+        $poetry->getCollection()->transform(function ($p) use ($lang, $userId) {
             return [
                 'id' => $p->id,
                 'title' => $p->info?->title ?? $p->poetry_title,
@@ -422,6 +453,6 @@ class HomeController extends UserController
             ];
         });
 
-        return response()->json($transformed);
+        return response()->json($poetry);
     }
 }
