@@ -120,16 +120,12 @@ const ProvincesList = () => {
     };
 
     const getDisplayName = (province) => {
-        const sdName = province.details?.find(d => d.lang === 'sd')?.province_name;
-        const enName = province.details?.find(d => d.lang === 'en')?.province_name;
-        return sdName || enName || `Province #${province.id}`;
+        return province.name || `Province #${province.id}`;
     };
 
     const getCountryName = (country) => {
         if (!country) return '-';
-        const sdName = country.details?.find(d => d.lang === 'sd')?.countryName;
-        const enName = country.details?.find(d => d.lang === 'en')?.countryName;
-        return sdName || enName || country.Abbreviation || `Country #${country.id}`;
+        return country.name || country.Abbreviation || `Country #${country.id}`;
     }
 
     if (isLoading) return <div>Loading...</div>;
@@ -149,7 +145,7 @@ const ProvincesList = () => {
                         <SelectContent>
                             <SelectItem value="all">All Countries</SelectItem>
                             {countries?.map(c => (
-                                <SelectItem key={c.id} value={c.id.toString()}>{getCountryName(c)}</SelectItem>
+                                <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -184,7 +180,7 @@ const ProvincesList = () => {
                                     </div>
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    <Badge variant="secondary">{getCountryName(province.country)}</Badge>
+                                    <Badge variant="secondary">{province.country?.name || '-'}</Badge>
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
                                     <div className="flex gap-1">
@@ -236,7 +232,7 @@ const ProvincesList = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {countries?.map(c => (
-                                                <SelectItem key={c.id} value={c.id.toString()}>{getCountryName(c)}</SelectItem>
+                                                <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

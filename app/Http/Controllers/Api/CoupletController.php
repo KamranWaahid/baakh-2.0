@@ -36,7 +36,6 @@ class CoupletController extends Controller
         }
 
         $tag = $request->get('tag');
-        $tag = $request->get('tag');
         $perPage = 10;
 
         $query = Couplets::whereHas('poet', function ($q) {
@@ -86,7 +85,7 @@ class CoupletController extends Controller
         $lang = $request->get('lang', app()->getLocale());
 
         // Fetch unique tags from poetry_couplets table
-        $tagSlugs = Couplets::where('lang', $lang)
+        $tagSlugs = \App\Models\Couplets::where('lang', $lang)
             ->whereNotNull('couplet_tags')
             ->where('couplet_tags', '!=', '[]')
             ->pluck('couplet_tags')
@@ -96,10 +95,21 @@ class CoupletController extends Controller
             ->unique()
             ->values();
 
+        // Get tags with their details for the requested language
         $tags = Tags::whereIn('slug', $tagSlugs)
-            ->where('lang', $lang)
-            ->select('tag as name', 'slug')
-            ->get();
+            ->with([
+                'details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])
+            ->get()
+            ->map(function ($tag) {
+                $detail = $tag->details->first();
+                return [
+                    'name' => $detail ? $detail->name : $tag->slug,
+                    'slug' => $tag->slug,
+                ];
+            });
 
         return response()->json($tags);
     }

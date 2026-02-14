@@ -17,13 +17,33 @@ class CityController extends Controller
 
     public function index(Request $request)
     {
-        $query = Cities::with(['province.details', 'details'])->latest();
+        $query = Cities::with(['province.country.details', 'province.details', 'details'])->latest();
 
         if ($request->has('province_id')) {
             $query->where('province_id', $request->province_id);
         }
 
-        return response()->json($query->get());
+        $cities = $query->get()->map(function ($city) {
+            $sdName = $city->details->where('lang', 'sd')->first()?->city_name;
+            $enName = $city->details->where('lang', 'en')->first()?->city_name;
+            $city->name = $sdName ?? $enName ?? "City #{$city->id}";
+
+            if ($city->province) {
+                $p_sdName = $city->province->details->where('lang', 'sd')->first()?->province_name;
+                $p_enName = $city->province->details->where('lang', 'en')->first()?->province_name;
+                $city->province->name = $p_sdName ?? $p_enName ?? "Province #{$city->province->id}";
+
+                if ($city->province->country) {
+                    $c_sdName = $city->province->country->details->where('lang', 'sd')->first()?->countryName;
+                    $c_enName = $city->province->country->details->where('lang', 'en')->first()?->countryName;
+                    $city->province->country->name = $c_sdName ?? $c_enName ?? $city->province->country->Abbreviation ?? "Country #{$city->province->country->id}";
+                }
+            }
+
+            return $city;
+        });
+
+        return response()->json($cities);
     }
 
     public function store(Request $request)

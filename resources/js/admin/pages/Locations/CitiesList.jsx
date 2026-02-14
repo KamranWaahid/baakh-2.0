@@ -122,16 +122,12 @@ const CitiesList = () => {
     };
 
     const getDisplayName = (city) => {
-        const sdName = city.details?.find(d => d.lang === 'sd')?.city_name;
-        const enName = city.details?.find(d => d.lang === 'en')?.city_name;
-        return sdName || enName || `City #${city.id}`;
+        return city.name || `City #${city.id}`;
     };
 
     const getProvinceName = (province) => {
         if (!province) return '-';
-        const sdName = province.details?.find(d => d.lang === 'sd')?.province_name;
-        const enName = province.details?.find(d => d.lang === 'en')?.province_name;
-        return sdName || enName || `Province #${province.id}`;
+        return province.name || `Province #${province.id}`;
     }
 
     if (isLoading) return <div>Loading...</div>;
@@ -151,7 +147,7 @@ const CitiesList = () => {
                         <SelectContent>
                             <SelectItem value="all">All Provinces</SelectItem>
                             {provinces?.map(p => (
-                                <SelectItem key={p.id} value={p.id.toString()}>{getProvinceName(p)}</SelectItem>
+                                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -187,7 +183,7 @@ const CitiesList = () => {
                                     </div>
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    <Badge variant="secondary">{getProvinceName(city.province)}</Badge>
+                                    <Badge variant="secondary">{city.province?.name || '-'}</Badge>
                                 </TableCell>
                                 <TableCell className="text-[10px] text-gray-400 hidden md:table-cell whitespace-nowrap">
                                     {city.geo_lat && city.geo_long ? `${city.geo_lat}, ${city.geo_long}` : '-'}
@@ -242,7 +238,7 @@ const CitiesList = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {provinces?.map(p => (
-                                                <SelectItem key={p.id} value={p.id.toString()}>{getProvinceName(p)}</SelectItem>
+                                                <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>

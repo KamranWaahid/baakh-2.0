@@ -26,6 +26,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { LocationCombobox } from '@/components/ui/location-combobox';
 
 const poetSchema = z.object({
     poet_slug: z.string().min(3, 'Slug must be at least 3 characters'),
@@ -264,7 +265,7 @@ const CreatePoet = () => {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-semibold">Language Details</h3>
-                            <Button type="button" variant="outline" size="sm" onClick={() => append({ lang: 'sd', poet_name: '', poet_laqab: '', birth_place: null })}>
+                            <Button type="button" variant="outline" size="sm" onClick={() => append({ lang: 'sd', poet_name: '', poet_laqab: '', birth_place: '', death_place: '' })}>
                                 <Plus className="mr-2 h-4 w-4" /> Add Language
                             </Button>
                         </div>
@@ -356,20 +357,14 @@ const CreatePoet = () => {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Birth Place</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select Birth City" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {createData?.cities?.map(city => (
-                                                                <SelectItem key={city.id} value={city.id.toString()}>
-                                                                    {city.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <LocationCombobox
+                                                            options={createData?.cities || []}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Select Birth City"
+                                                        />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -381,20 +376,14 @@ const CreatePoet = () => {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Death Place</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Select Death City" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {createData?.cities?.map(city => (
-                                                                <SelectItem key={city.id} value={city.id.toString()}>
-                                                                    {city.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <FormControl>
+                                                        <LocationCombobox
+                                                            options={createData?.cities || []}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Select Death City"
+                                                        />
+                                                    </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}

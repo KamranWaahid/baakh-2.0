@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import {
     Users,
     BookOpen,
@@ -23,8 +24,28 @@ import {
     Plus,
     AlertCircle,
     Tag,
-    Languages
+    Tags,
+    Layers,
+    AlignCenter,
+    Languages,
+    MessageSquare,
+    Database,
+    RefreshCw,
+    Trash2,
+    Settings
 } from 'lucide-react';
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    Legend
+} from 'recharts';
 
 const Dashboard = () => {
     const [openDialog, setOpenDialog] = useState(null);
@@ -239,14 +260,88 @@ const Dashboard = () => {
                                             {stat.change}
                                         </span>
                                     )}
-                                    <span className="ml-2 text-gray-400">from last month</span>
+                                    <span className="ml-2 text-muted-foreground">from last month</span>
                                 </p>
                             </CardContent>
                         </Card>
                     );
                 })}
             </div>
+            {/* Quick Actions Grid */}
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+                {[
+                    { label: 'Add Poet', target: 'Create Poet', link: '/admin/poets/create', icon: Feather },
+                    { label: 'Add Poetry', target: 'Create Poetry', link: '/admin/poetry/create', icon: BookOpen },
+                    { label: 'Add Tag', target: 'Create Tag', link: '/admin/tags/create', icon: Tags },
+                    { label: 'Add Topic', target: 'New Topic', link: '/admin/topic-categories', icon: Layers },
+                    { label: 'Add Couplet', target: 'New Couplet', link: '/admin/couplet/create', icon: AlignCenter },
+                ].map((action, i) => (
+                    <Card key={i} className="hover:bg-muted/50 cursor-pointer transition-colors group relative overflow-hidden">
+                        <Link to={action.link}>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{action.label}</CardTitle>
+                                <Plus className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-xl font-bold">{action.target}</div>
+                                <div className="flex items-center mt-2">
+                                    <action.icon className="h-4 w-4 text-muted-foreground mr-2" />
+                                    <span className="text-xs text-muted-foreground">Jump to creator</span>
+                                </div>
+                            </CardContent>
+                        </Link>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Charts Grid */}
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Activity Overview</CardTitle>
+                        <CardDescription>System activity over the last 30 days</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={data?.activity_graph || []}>
+                                <defs>
+                                    <linearGradient id="colorActions" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <Tooltip />
+                                <Area type="monotone" dataKey="actions" stroke="#8884d8" fillOpacity={1} fill="url(#colorActions)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Content Growth</CardTitle>
+                        <CardDescription>New poets and poetry added</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data?.content_growth || []}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                                <Tooltip cursor={{ fill: 'transparent' }} />
+                                <Legend />
+                                <Bar dataKey="poets" fill="#10b981" radius={[4, 4, 0, 0]} name="Poets" />
+                                <Bar dataKey="poetry" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Poetry" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Action Cards Grid */}
+            <h2 className="text-xl font-bold tracking-tight text-gray-900 mt-2">Pending Actions</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {actionCards.map((card) => {
                     const Icon = card.icon;
@@ -279,6 +374,113 @@ const Dashboard = () => {
                         </Card>
                     );
                 })}
+            </div>
+
+            {/* Widgets Grid */}
+            <div className="grid gap-6 md:grid-cols-2">
+                {/* Activity Feed */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="flex items-center gap-2">
+                            <Activity className="h-5 w-5 text-muted-foreground" /> Recent Activity
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link to="/admin/system/activity-logs">View All</Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {data?.recent_activity?.length > 0 ? data.recent_activity.map((log) => (
+                                <div key={log.id} className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0">
+                                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                                        {log.user?.avatar ? (
+                                            <img src={log.user.avatar.startsWith('http') ? log.user.avatar : `/${log.user.avatar}`} alt={log.user.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <span className="text-xs font-bold text-gray-500">{log.user?.name?.[0] || 'S'}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900">
+                                            {log.user?.name || 'System'} <span className="text-gray-500 font-normal">{log.description || log.action}</span>
+                                        </p>
+                                        <p className="text-xs text-gray-400 mt-0.5">{log.time}</p>
+                                    </div>
+                                </div>
+                            )) : (
+                                <p className="text-sm text-gray-500 italic">No recent activity.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Reports Widget */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-destructive" /> Recent Reports
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link to="/admin/moderation/reports">View All</Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {data?.recent_reports?.length > 0 ? data.recent_reports.map((report) => (
+                                <div key={report.id} className="flex items-start justify-between pb-4 border-b last:border-0 last:pb-0">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium leading-none">{report.target}</p>
+                                        <p className="text-xs text-muted-foreground">Reported by <span className="font-semibold">{report.reporter}</span></p>
+                                        <Badge variant="destructive" className="mt-1">{report.reason}</Badge>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                                            <Link to={`/admin/moderation/reports?id=${report.id}`}>View</Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            )) : (
+                                <p className="text-sm text-gray-500 italic">No active reports.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Feedback Widget */}
+                <Card className="md:col-span-2 lg:col-span-1">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="flex items-center gap-2">
+                            <MessageSquare className="h-5 w-5 text-primary" /> Recent Feedback
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link to="/admin/moderation/feedback">View All</Link>
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {data?.recent_feedback?.length > 0 ? data.recent_feedback.map((feedback) => (
+                                <div key={feedback.id} className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0">
+                                    <div className="h-8 w-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 font-bold text-xs uppercase">
+                                        {feedback.user.name[0]}
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-sm font-medium">{feedback.user.name}</p>
+                                            <span className="text-xs text-gray-400">{feedback.time}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 line-clamp-2">"{feedback.message}"</p>
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <span key={i} className={`text-xs ${i < feedback.rating ? 'text-yellow-400' : 'text-gray-200'}`}>★</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )) : (
+                                <p className="text-sm text-gray-500 italic">No recent feedback.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* Dialogs for each action card */}

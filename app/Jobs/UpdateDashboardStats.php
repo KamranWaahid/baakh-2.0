@@ -59,14 +59,16 @@ class UpdateDashboardStats implements ShouldQueue
         // 1. Missing EN Poetry
         $missingEnPoetry = Poetry::whereNotNull('category_id')
             ->whereDoesntHave('translations', function ($q) {
-                $q->where('lang', 'en'); })
+                $q->where('lang', 'en');
+            })
             ->with('info')->orderBy('id', 'desc')->limit(10)->get()
             ->map(fn($p) => ['id' => $p->id, 'title' => $p->info->title ?? 'Untitled', 'type' => 'poetry']);
 
         // 2. Missing EN Couplets
         $missingEnCouplets = Poetry::whereNull('category_id')->whereHas('couplets')
             ->whereDoesntHave('translations', function ($q) {
-                $q->where('lang', 'en'); })
+                $q->where('lang', 'en');
+            })
             ->with(['couplets' => fn($q) => $q->where('lang', 'sd'), 'info'])
             ->orderBy('id', 'desc')->limit(10)->get()
             ->map(function ($p) {
@@ -111,6 +113,80 @@ class UpdateDashboardStats implements ShouldQueue
 
         $orthographyIssues = array_merge($orthographyIssues, $coupletIssues->toArray());
 
+        // 5. Activity Graph (Last 30 Days)
+        $activityGraph = [];
+        $startDate = now()->subDays(29)->startOfDay();
+
+        $activityCounts = \App\Models\ActivityLog::selectRaw('DATE(created_at) as date, count(*) as count')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->pluck('count', 'date');
+
+        for ($i = 29; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $activityGraph[] = [
+                'date' => now()->subDays($i)->format('M d'),
+                'actions' => $activityCounts[$date] ?? 0,
+            ];
+        }
+
+        // 6. Content Growth Graph (Last 30 Days)
+        $contentGrowth = [];
+        $poetryCounts = Poetry::selectRaw('DATE(created_at) as date, count(*) as count')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->pluck('count', 'date');
+
+        $poetCounts = DB::table('poets')->selectRaw('DATE(created_at) as date, count(*) as count')
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->pluck('count', 'date');
+
+        for ($i = 29; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $contentGrowth[] = [
+                'date' => now()->subDays($i)->format('M d'),
+                'poetry' => $poetryCounts[$date] ?? 0,
+                'poets' => $poetCounts[$date] ?? 0,
+            ];
+        }
+
+        // 7. Recent Activity
+        $recentActivity = \App\Models\ActivityLog::with('user')
+            ->latest()
+            ->take(7)
+            ->get()
+            ->map(fn($log) => [
+                'id' => $log->id,
+                'user' => $log->user ? ['name' => $log->user->name, 'avatar' => $log->user->avatar] : null,
+                'action' => $log->action,
+                'description' => $log->description,
+                'time' => $log->created_at->diffForHumans(),
+            ]);
+
+        // 8. Recent Reports
+        $recentReports = \App\Models\Report::with(['user', 'poetry.info', 'poet'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function ($report) {
+                $target = 'Unknown';
+                if ($report->poetry)
+                    $target = $report->poetry->info->title ?? 'Poetry #' . $report->poem_id;
+                elseif ($report->poet)
+                    $target = $report->poet->poet_name ?? 'Poet #' . $report->poet_id;
+                elseif ($report->url)
+                    $target = $report->url;
+
+                return [
+                    'id' => $report->id,
+                    'reporter' => $report->user->name ?? 'Guest',
+                    'target' => $target,
+                    'reason' => $report->reason,
+                    'date' => $report->created_at->format('M d, Y'),
+                ];
+            });
+
         $data = [
             'stats' => [
                 'total_poets' => ['value' => $formatNumber($totalPoets), 'raw_value' => $totalPoets, 'change' => ($poetsGrowth >= 0 ? '+' : '') . $poetsGrowth . '%', 'trend' => $poetsGrowth >= 0 ? 'up' : 'down'],
@@ -118,6 +194,17 @@ class UpdateDashboardStats implements ShouldQueue
                 'total_users' => ['value' => $formatNumber($totalUsers), 'raw_value' => $totalUsers, 'change' => ($usersGrowth >= 0 ? '+' : '') . $usersGrowth . '%', 'trend' => $usersGrowth >= 0 ? 'up' : 'down'],
                 'daily_views' => ['value' => $formatNumber($dailyViews), 'raw_value' => $dailyViews, 'change' => '0%', 'trend' => 'up']
             ],
+            'activity_graph' => $activityGraph,
+            'content_growth' => $contentGrowth,
+            'recent_activity' => $recentActivity,
+            'recent_feedback' => \App\Models\Feedback::with('user')->latest()->take(5)->get()->map(fn($f) => [
+                'id' => $f->id,
+                'user' => $f->user ? ['name' => $f->user->name, 'avatar' => $f->user->avatar] : ['name' => 'Anonymous'],
+                'message' => $f->message,
+                'rating' => $f->rating,
+                'time' => $f->created_at->diffForHumans()
+            ]),
+            'recent_reports' => $recentReports,
             'missing_en_poetry' => $missingEnPoetry,
             'missing_en_couplets' => $missingEnCouplets,
             'missing_tags_couplets' => $missingTagsCouplets,

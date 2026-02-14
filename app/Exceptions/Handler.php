@@ -32,6 +32,9 @@ class Handler extends ExceptionHandler
                 if ($e instanceof \Illuminate\Database\QueryException && str_contains($e->getMessage(), 'system_errors')) {
                     return;
                 }
+                if ($e instanceof \Illuminate\Database\QueryException && str_contains($e->getMessage(), 'admin_notifications')) {
+                    return;
+                }
 
                 SystemError::create([
                     'message' => $e->getMessage() ?: get_class($e),
@@ -47,9 +50,18 @@ class Handler extends ExceptionHandler
                     'environment' => app()->environment(),
                     'severity' => $this->shouldBeHighSeverity($e) ? 'high' : 'medium',
                 ]);
+
+                // Notify super admin
+                \App\Models\AdminNotification::create([
+                    'type' => 'system_error',
+                    'title' => 'System Error Captured',
+                    'message' => \Illuminate\Support\Str::limit($e->getMessage(), 120),
+                    'icon' => 'Bug',
+                    'color' => $this->shouldBeHighSeverity($e) ? 'red' : 'orange',
+                    'link' => '/admin/system/errors',
+                ]);
             } catch (Throwable $reportError) {
                 // Fallback to default reporting if our custom logger fails
-                // We don't want to crash the whole app because the error logger failed
             }
         });
     }

@@ -16,6 +16,8 @@ class Kernel extends ConsoleKernel
         $schedule->job(new \App\Jobs\UpdateDashboardStats)->hourly();
         $schedule->command('cache:static-update --type=all')->daily();
         $schedule->command('sitemap:cache')->dailyAt('03:00');
+        $schedule->command('mokhii:crawl')->dailyAt('02:00');
+        $schedule->command('mokhii:compute')->dailyAt('02:30');
     }
 
     /**

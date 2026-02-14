@@ -17,7 +17,9 @@ import {
     ChevronRight,
     Search as SearchIcon,
     AlertTriangle,
-    Check
+    Check,
+    Loader2,
+    ShieldCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,7 +60,7 @@ const ErrorManagement = () => {
     const [page, setPage] = useState(1);
 
     // Fetch Errors
-    const { data, isLoading, refetch } = useQuery({
+    const { data, isLoading, isFetching, refetch } = useQuery({
         queryKey: ['system-errors', page, search, statusFilter, severityFilter],
         queryFn: async () => {
             const params = new URLSearchParams({
@@ -69,7 +71,8 @@ const ErrorManagement = () => {
             });
             const response = await api.get(`/api/admin/system-errors?${params.toString()}`);
             return response.data;
-        }
+        },
+        refetchInterval: 15000,
     });
 
     // Mutations
@@ -106,6 +109,33 @@ const ErrorManagement = () => {
         onError: () => toast.error('Failed to clear logs')
     });
 
+    const verifyMutation = useMutation({
+        mutationFn: () => api.post('/api/admin/system-errors/verify'),
+        onSuccess: (res) => {
+            const s = res.data;
+            queryClient.invalidateQueries(['system-errors']);
+            if (s.resolved > 0) {
+                toast.success(`Verified: ${s.resolved} errors auto-resolved, ${s.still_failing} still pending`);
+            } else {
+                toast.info(`All ${s.total_checked} pending errors are still active`);
+            }
+        },
+        onError: () => toast.error('Verification failed')
+    });
+
+    const verifyOneMutation = useMutation({
+        mutationFn: (id) => api.post(`/api/admin/system-errors/${id}/verify`),
+        onSuccess: (res) => {
+            queryClient.invalidateQueries(['system-errors']);
+            if (res.data.fixed) {
+                toast.success('Error verified as fixed!');
+            } else {
+                toast.warning('Error is still active');
+            }
+        },
+        onError: () => toast.error('Verification failed')
+    });
+
     const handleViewDetails = (error) => {
         setSelectedError(error);
         setIsDetailsOpen(true);
@@ -140,9 +170,18 @@ const ErrorManagement = () => {
                     <p className="text-gray-500 mt-2">Monitor and track application exceptions in real-time.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
-                        <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    <Button variant="outline" onClick={() => refetch()} disabled={isFetching}>
+                        <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                         Refresh
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                        onClick={() => verifyMutation.mutate()}
+                        disabled={verifyMutation.isPending}
+                    >
+                        {verifyMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                        Verify All
                     </Button>
                     <Select onValueChange={(v) => { if (window.confirm('Are you sure you want to clear these logs?')) clearMutation.mutate(v) }}>
                         <SelectTrigger className="w-[180px] bg-red-50 text-red-700 border-red-200">
@@ -248,6 +287,11 @@ const ErrorManagement = () => {
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={(e) => { e.stopPropagation(); handleViewDetails(error); }}>
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
+                                                    {error.status === 'pending' && (
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500" title="Verify if fixed" onClick={(e) => { e.stopPropagation(); verifyOneMutation.mutate(error.id); }}>
+                                                            <ShieldCheck className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     {error.status !== 'resolved' && (
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={(e) => { e.stopPropagation(); updateMutation.mutate({ id: error.id, status: 'resolved' }); }}>
                                                             <CheckCircle2 className="h-4 w-4" />

@@ -17,7 +17,14 @@ class CountryController extends Controller
 
     public function index()
     {
-        $countries = Countries::with('details')->latest()->get();
+        $countries = Countries::with('details')->latest()->get()->map(function ($country) {
+            $sdName = $country->details->where('lang', 'sd')->first()?->countryName;
+            $enName = $country->details->where('lang', 'en')->first()?->countryName;
+
+            $country->name = $sdName ?? $enName ?? $country->Abbreviation ?? "Country #{$country->id}";
+            return $country;
+        });
+
         return response()->json($countries);
     }
 

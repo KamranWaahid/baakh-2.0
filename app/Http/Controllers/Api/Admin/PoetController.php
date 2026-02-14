@@ -37,7 +37,7 @@ class PoetController extends Controller
         $perPage = $request->get('per_page', 10);
         $poets = $query->paginate($perPage);
 
-        $poets->through(function ($poet) {
+        $poets->getCollection()->transform(function ($poet) {
             $details = $poet->all_details;
             $detail = $details->where('lang', 'sd')->first()
                 ?? $details->where('lang', 'en')->first()
@@ -71,14 +71,13 @@ class PoetController extends Controller
 
     public function create()
     {
-        $cities = \App\Models\Cities::with([
-            'details' => function ($q) {
-                $q->where('lang', 'sd');
-            }
-        ])->get()->map(function ($city) {
+        $cities = \App\Models\Cities::with('details')->get()->map(function ($city) {
+            $sdName = $city->details->where('lang', 'sd')->first()?->city_name;
+            $enName = $city->details->where('lang', 'en')->first()?->city_name;
+
             return [
                 'id' => $city->id,
-                'name' => $city->details->first()?->city_name ?? "City #{$city->id}"
+                'name' => $sdName ?? $enName ?? "City #{$city->id}"
             ];
         });
 

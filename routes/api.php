@@ -132,9 +132,16 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     // Languages
     Route::apiResource('languages', LanguageController::class);
 
-    // Database Backups
+    // Notifications
+    Route::get('notifications', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'index']);
+    Route::post('notifications/{notification}/read', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'markRead']);
+    Route::post('notifications/read-all', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'markAllRead']);
+    Route::delete('notifications/clear', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'clear']);
+
+    // Database Backups & Migrations
     Route::get('databases', [DatabaseController::class, 'index']);
     Route::post('databases', [DatabaseController::class, 'store']);
+    Route::post('databases/migrate', [DatabaseController::class, 'migrate']);
     Route::delete('databases/{file_name}', [DatabaseController::class, 'destroy']);
     Route::get('databases/download', [DatabaseController::class, 'download'])->name('backup.download');
 
@@ -160,7 +167,13 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
 
     // Error Management
     Route::post('system-errors/clear', [ErrorManagementController::class, 'clear']);
+    Route::post('system-errors/verify', [ErrorManagementController::class, 'verify']);
+    Route::post('system-errors/{error}/verify', [ErrorManagementController::class, 'verifyOne']);
     Route::apiResource('system-errors', ErrorManagementController::class);
+
+    // Moderation
+    Route::apiResource('reports', \App\Http\Controllers\Api\Admin\ReportController::class);
+    Route::apiResource('feedback', \App\Http\Controllers\Api\Admin\FeedbackController::class);
 });
 
 Route::middleware(['auth:sanctum', 'user_role'])
@@ -207,4 +220,24 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::put('dictionary/lemmas/{id}/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateMorphology']);
         Route::post('dictionary/lemmas/{id}/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeVariant']);
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
+
+        // ── Mokhii SEO Dashboard ────────────────────
+        Route::get('mokhii/dashboard', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'index']);
+        Route::post('mokhii/crawl', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerCrawl']);
+        Route::post('mokhii/compute', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerCompute']);
+        Route::post('mokhii/autofix', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerAutoFix']);
     });
+
+/*
+|--------------------------------------------------------------------------
+| Mokhii Public API (Structured Data for AI Agents & Search Engines)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('mokhii')->middleware('detect.ai.agent')->group(function () {
+    Route::get('health', [\App\Http\Controllers\Api\MokhiiApiController::class, 'health']);
+    Route::get('context/{slug}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'context']);
+    Route::get('graph/{type}/{id}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'graph']);
+    Route::get('schema/{slug}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'schema']);
+    Route::get('cluster/{topic}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'cluster']);
+    Route::get('audits', [\App\Http\Controllers\Api\MokhiiApiController::class, 'audits']);
+});

@@ -11,11 +11,12 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Database, Plus, RefreshCw } from 'lucide-react';
+import { Download, Trash2, Database, Plus, RefreshCw, Zap } from 'lucide-react';
 
 const DatabaseList = () => {
     const queryClient = useQueryClient();
     const [isCreating, setIsCreating] = useState(false);
+    const [isMigrating, setIsMigrating] = useState(false);
 
     const { data: backups, isLoading, isError, refetch } = useQuery({
         queryKey: ['backups'],
@@ -54,8 +55,33 @@ const DatabaseList = () => {
         }
     });
 
+    const migrateMutation = useMutation({
+        mutationFn: async () => {
+            return api.post('/api/admin/databases/migrate');
+        },
+        onMutate: () => setIsMigrating(true),
+        onSuccess: (response) => {
+            setIsMigrating(false);
+            const output = response.data.output || 'No output returned.';
+            console.log("Migration Output:", output);
+            alert("Migrations executed successfully!\n\nCheck console for detailed output.");
+        },
+        onError: (error) => {
+            setIsMigrating(false);
+            const msg = error.response?.data?.message || 'Migration failed';
+            const detail = error.response?.data?.error || '';
+            alert(`${msg}${detail ? ': ' + detail : ''}`);
+        }
+    });
+
     const handleCreate = () => {
         createMutation.mutate();
+    };
+
+    const handleMigrate = () => {
+        if (confirm('CRITICAL: Are you sure you want to run database migrations? This will attempt to sync your local schema changes to this server. Ensure you have a backup first.')) {
+            migrateMutation.mutate();
+        }
     };
 
     const handleDownload = (fileName) => {
@@ -89,10 +115,21 @@ const DatabaseList = () => {
                     <h1 className="text-3xl font-bold tracking-tight">Database Backups</h1>
                     <p className="text-gray-500 mt-2">Manage your database backups periodically</p>
                 </div>
-                <Button onClick={handleCreate} disabled={isCreating || createMutation.isPending} className="flex items-center gap-2">
-                    {isCreating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                    {isCreating ? 'Creating Backup...' : 'Create New Backup'}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                        onClick={handleMigrate}
+                        disabled={isMigrating || migrateMutation.isPending}
+                        variant="secondary"
+                        className="flex items-center gap-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-800"
+                    >
+                        {isMigrating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                        {isMigrating ? 'Running Migrations...' : 'Run Migrations'}
+                    </Button>
+                    <Button onClick={handleCreate} disabled={isCreating || createMutation.isPending} className="flex items-center gap-2">
+                        {isCreating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                        {isCreating ? 'Creating Backup...' : 'Create New Backup'}
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-white rounded-lg border">

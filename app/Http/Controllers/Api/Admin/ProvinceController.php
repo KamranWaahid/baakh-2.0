@@ -22,7 +22,21 @@ class ProvinceController extends Controller
             $query->where('country_id', $request->country_id);
         }
 
-        return response()->json($query->get());
+        $provinces = $query->get()->map(function ($province) {
+            $sdName = $province->details->where('lang', 'sd')->first()?->province_name;
+            $enName = $province->details->where('lang', 'en')->first()?->province_name;
+            $province->name = $sdName ?? $enName ?? "Province #{$province->id}";
+
+            if ($province->country) {
+                $c_sdName = $province->country->details->where('lang', 'sd')->first()?->countryName;
+                $c_enName = $province->country->details->where('lang', 'en')->first()?->countryName;
+                $province->country->name = $c_sdName ?? $c_enName ?? $province->country->Abbreviation ?? "Country #{$province->country->id}";
+            }
+
+            return $province;
+        });
+
+        return response()->json($provinces);
     }
 
     public function store(Request $request)

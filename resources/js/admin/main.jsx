@@ -76,6 +76,9 @@ import MorphologyLab from './pages/Dictionary/MorphologyLab';
 import Variants from './pages/Dictionary/Variants';
 import DictionaryQA from './pages/Dictionary/DictionaryQA';
 
+import ReportManagement from './pages/Moderation/Reports';
+import FeedbackManagement from './pages/Moderation/Feedback';
+
 import SentenceExplorer from './pages/Corpus/SentenceExplorer';
 import ContextClusters from './pages/Corpus/ContextClusters';
 
@@ -84,6 +87,7 @@ import DialectCoverage from './pages/Analytics/DialectCoverage';
 import UsageTrends from './pages/Analytics/UsageTrends';
 
 import UnderDevelopment from './components/UnderDevelopment';
+import Mokhii from './pages/Mokhii';
 
 
 const App = () => {
@@ -353,6 +357,22 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/admin/moderation/reports" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ReportManagement />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/moderation/feedback" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <FeedbackManagement />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
                     {/* Dictionary Routes */}
                     <Route path="/admin/dictionary/lemma-inbox" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Dictionary Module" /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/lemmas/:id" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Lemma Editor" /></AdminLayout></ProtectedRoute>} />
@@ -371,6 +391,15 @@ const App = () => {
                     <Route path="/admin/analytics/frequency" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Frequency Analytics" /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/analytics/dialect" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Dialect Coverage" /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/analytics/trends" element={<ProtectedRoute><AdminLayout><UnderDevelopment title="Usage Trends" /></AdminLayout></ProtectedRoute>} />
+
+                    {/* Mokhii SEO Engine */}
+                    <Route path="/admin/mokhii" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <Mokhii />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
 
                     {/* Catch-all 404 Route */}
                     <Route path="/admin/*" element={

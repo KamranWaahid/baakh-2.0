@@ -115,6 +115,33 @@ class DatabaseController extends Controller
         return response()->json(['message' => 'Backup not found'], 404);
     }
 
+    /**
+     * Run database migrations.
+     */
+    public function migrate(Request $request)
+    {
+        try {
+            // This is a high-risk operation
+            set_time_limit(300);
+
+            Artisan::call('migrate', ['--force' => true]);
+            $output = Artisan::output();
+
+            ActivityLog::log('ran_migrations', $request->user(), null, "Ran database migrations from admin panel");
+
+            return response()->json([
+                'message' => 'Migrations executed successfully',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Migration failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Migration failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function formatSizeUnits($bytes)
     {
         if ($bytes >= 1073741824) {

@@ -104,9 +104,7 @@ const CountriesList = () => {
     if (isLoading) return <div>Loading...</div>;
 
     const getDisplayName = (country) => {
-        const sdName = country.details?.find(d => d.lang === 'sd')?.countryName;
-        const enName = country.details?.find(d => d.lang === 'en')?.countryName;
-        return sdName || enName || country.Abbreviation || `Country #${country.id}`;
+        return country.name || country.Abbreviation || `Country #${country.id}`;
     };
 
     return (

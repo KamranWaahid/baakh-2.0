@@ -47,7 +47,7 @@ class ActivityLog extends Model
      */
     public static function log(string $action, ?User $user = null, ?Team $team = null, ?string $description = null, array $properties = []): self
     {
-        return self::create([
+        $log = self::create([
             'user_id' => $user?->id,
             'team_id' => $team?->id,
             'action' => $action,
@@ -56,5 +56,14 @@ class ActivityLog extends Model
             'user_agent' => request()->userAgent(),
             'properties' => $properties,
         ]);
+
+        // Auto-dispatch admin notification
+        try {
+            AdminNotification::fromActivity($action, $description ?? '', $user?->name);
+        } catch (\Throwable $e) {
+            // Silently fail — notifications are non-critical
+        }
+
+        return $log;
     }
 }
