@@ -410,6 +410,12 @@ class UpdateStaticCache extends Command
             'media' => function ($query) use ($locale) {
                 $query->where('lang', $locale);
             },
+            'all_couplets' => function ($query) use ($locale) {
+                $query->where('lang', $locale);
+            },
+            'category.details' => function ($query) use ($locale) {
+                $query->where('lang', $locale);
+            }
         ]);
 
         $info = $p->info ?? $p->translations->first();
@@ -418,23 +424,44 @@ class UpdateStaticCache extends Command
 
         $data = [
             'id' => $p->id,
-            'title' => $info->title ?? $p->poetry_title,
+            'title' => $info->title ?? $p->poetry_title, // Fallback
             'slug' => $p->poetry_slug,
-            'content' => $info->poetry_text ?? $p->poetry_content,
-            'content_style' => $p->content_style,
+            'content' => $p->all_couplets->map(function ($c) {
+                return $c->couplet_text;
+            }), // Array of couplets
+            'content_style' => $p->content_style ?? 'center',
+            'info' => $info->info ?? null,
+            'source' => $info->source ?? null,
+            'views' => $p->views ?? 0,
+            'likes' => $p->likes()->count(),
+            'date' => $p->created_at ? $p->created_at->format('M d, Y') : '',
+            'date_diff' => $p->created_at ? $p->created_at->diffForHumans() : '',
+
             'poet' => [
-                'name' => $p->poet_details->poet_laqab ?? $p->poet->poet_slug,
-                'slug' => $p->poet->poet_slug,
-                'avatar' => $p->poet->poet_pic,
+                'id' => $p->poet->id ?? 0,
+                'name' => $p->poet_details->poet_laqab ?? $p->poet->poet_slug ?? 'Unknown',
+                'tagline' => $p->poet_details->tagline ?? '',
+                'bio' => strip_tags($p->poet_details->poet_bio ?? ''),
+                'slug' => $p->poet->poet_slug ?? '',
+                'avatar' => ($p->poet->poet_pic) ? (str_starts_with($p->poet->poet_pic, 'http') ? $p->poet->poet_pic : '/' . $p->poet->poet_pic) : null,
+                'followers' => '2.3K',
             ],
+
             'category' => [
+                'id' => $p->category_id,
                 'name' => $p->category_detail->cat_name ?? $p->category->slug ?? 'General',
-                'slug' => $p->category->slug ?? 'general',
+                'slug' => $p->category->slug ?? 'general'
             ],
-            'media' => $p->media->map(function ($m) {
-                return ['type' => $m->media_type, 'url' => $m->media_url];
-            }),
-            'counts' => ['likes' => $p->likes()->count(), 'views' => $p->views_count ?? 0],
+
+            'tags' => $this->getTagsForPoetry($p, $locale),
+
+            'navigation' => $this->getNavigation($p, $locale),
+
+            'more_from_author' => $this->getMoreFromAuthor($p, $locale),
+
+            'recommended' => $this->getRecommended($p, $locale),
+
+            'suggested_poets' => $this->getSuggestedPoets($p->poet_id, $locale),
         ];
         $this->cache->set("poetry_detail_{$p->poetry_slug}_{$locale}", $data);
     }
@@ -598,6 +625,130 @@ class UpdateStaticCache extends Command
             'poets' => $poets
         ];
         $this->cache->set("category_detail_{$category->slug}_{$locale}", $data);
+    }
+
+    protected function getTagsForPoetry($poetry, $locale)
+    {
+        if (!is_null($poetry->poetry_tags) && $poetry->poetry_tags != 'null') {
+            $decodeTags = json_decode($poetry->poetry_tags);
+            if (is_array($decodeTags)) {
+                return Tags::whereIn('slug', $decodeTags)
+                    ->with([
+                        'details' => function ($q) use ($locale) {
+                            $q->where('lang', $locale);
+                        }
+                    ])
+                    ->get()
+                    ->map(function ($tag) {
+                        return [
+                            'id' => $tag->id,
+                            'tag' => $tag->details->first()?->name ?? $tag->slug,
+                            'slug' => $tag->slug
+                        ];
+                    });
+            }
+        }
+        return [];
+    }
+
+    protected function getNavigation($poetry, $locale)
+    {
+        $next = Poetry::with(['info' => fn($q) => $q->where('lang', $locale)])
+            ->where('poet_id', $poetry->poet_id)->where('id', '>', $poetry->id)
+            ->where('visibility', 1)->orderBy('id', 'asc')->first();
+
+        $prev = Poetry::with(['info' => fn($q) => $q->where('lang', $locale)])
+            ->where('poet_id', $poetry->poet_id)->where('id', '<', $poetry->id)
+            ->where('visibility', 1)->orderBy('id', 'desc')->first();
+
+        return [
+            'next' => $next ? ['title' => $next->info?->title ?? $next->poetry_title, 'slug' => $next->poetry_slug] : null,
+            'prev' => $prev ? ['title' => $prev->info?->title ?? $prev->poetry_title, 'slug' => $prev->poetry_slug] : null,
+        ];
+    }
+
+    protected function getMoreFromAuthor($poetry, $locale)
+    {
+        return Poetry::with([
+            'info' => fn($q) => $q->where('lang', $locale),
+            'category.details' => fn($q) => $q->where('lang', $locale),
+            'poet.all_details'
+        ])
+            ->withCount('likes')
+            ->where('poet_id', $poetry->poet_id)
+            ->where('id', '!=', $poetry->id)
+            ->where('visibility', 1)
+            ->latest()
+            ->take(4)
+            ->get()
+            ->map(function ($p) use ($locale) {
+                return $this->formatPoetryListItem($p, $locale);
+            });
+    }
+
+    protected function getRecommended($poetry, $locale)
+    {
+        return Poetry::with([
+            'info' => fn($q) => $q->where('lang', $locale),
+            'poet.all_details',
+            'category.details' => fn($q) => $q->where('lang', $locale),
+        ])
+            ->withCount('likes')
+            ->where('id', '!=', $poetry->id)
+            ->where('visibility', 1)
+            ->inRandomOrder()
+            ->take(4)
+            ->get()
+            ->map(function ($p) use ($locale) {
+                return $this->formatPoetryListItem($p, $locale);
+            });
+    }
+
+    protected function getSuggestedPoets($excludePoetId, $locale)
+    {
+        return Poets::with([
+            'details' => fn($q) => $q->where('lang', $locale)
+        ])
+            ->where('id', '!=', $excludePoetId)
+            ->where('visibility', 1)
+            ->inRandomOrder()
+            ->take(8)
+            ->get()
+            ->map(function ($poet) {
+                $name = $poet->details?->poet_laqab ?? $poet->poet_slug ?? 'Unknown';
+                $tagline = $poet->details?->tagline ?? 'Poet';
+                $initials = collect(explode(' ', $name))->map(fn($s) => \Illuminate\Support\Str::substr($s, 0, 1))->take(2)->join('');
+
+                $pic = $poet->poet_pic;
+                $img = $pic ? (str_starts_with($pic, 'http') ? $pic : '/' . $pic) : null;
+
+                return [
+                    'name' => $name,
+                    'title' => \Illuminate\Support\Str::limit($tagline, 20),
+                    'slug' => $poet->poet_slug,
+                    'img' => $img,
+                    'fallback' => $initials
+                ];
+            });
+    }
+
+    private function formatPoetryListItem($p, $locale)
+    {
+        $poetDetail = $p->poet->all_details->where('lang', $locale)->first() ?? $p->poet->all_details->first();
+        $catDetail = $p->category?->details->where('lang', $locale)->first() ?? $p->category?->details->first();
+
+        return [
+            'title' => $p->info?->title ?? $p->poetry_title,
+            'slug' => $p->poetry_slug,
+            'poet_slug' => $p->poet->poet_slug ?? '',
+            'cat_slug' => $p->category->slug ?? 'ghazal',
+            'category' => $catDetail->cat_name ?? $p->category?->slug ?? 'General',
+            'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
+            'avatar' => ($p->poet?->poet_pic) ? (str_starts_with($p->poet->poet_pic, 'http') ? $p->poet->poet_pic : '/' . $p->poet->poet_pic) : null,
+            'date' => $p->created_at ? $p->created_at->format('M d') : '',
+            'claps' => $p->likes_count ?? 0,
+            'comments' => 0
+        ];
     }
 
     private function formatPoetryForTopic($p, $lang)
