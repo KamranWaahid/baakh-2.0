@@ -60,6 +60,10 @@ class UserController extends Controller
         ]);
 
         if ($request->role) {
+            // Security Check: Only Super Admin can assign the 'super_admin' role
+            if ($request->role === 'super_admin' && !auth()->user()->hasRole('super_admin')) {
+                return response()->json(['message' => 'You do not have permission to assign the Super Admin role.'], 403);
+            }
             $user->syncRoles([$request->role]);
         }
 

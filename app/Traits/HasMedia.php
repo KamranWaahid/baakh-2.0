@@ -52,10 +52,10 @@ trait HasMedia
 
         // check if there is custom name
         if ($customName) {
-            $imageName = Str::slug($customName) . '.' . $file->extension();
+            $imageName = Str::slug($customName) . '.webp';
         } else {
             // Generate random name for the image
-            $imageName = date('dmY') . '_' . uniqid() . '.' . $file->extension();
+            $imageName = date('dmY') . '_' . uniqid() . '.webp';
         }
 
         // Upload original image
@@ -67,7 +67,8 @@ trait HasMedia
             mkdir($destination, 0755, true);
         }
 
-        $file->move($destination, $imageName);
+        // Save as WebP
+        $image->toWebp(80)->save($destination . '/' . $imageName);
 
 
         /**
@@ -77,9 +78,35 @@ trait HasMedia
         if ($thumbnail === true) {
             $cropSize = config('admin_media.sizes');
             foreach ($cropSize as $key => $value) {
-                $resizedName = pathinfo($imageName, PATHINFO_FILENAME) . "_{$key}." . $file->extension();
-                //$image->setResolution($x_resolution, $y_resolution);
-                $image->scale($value['width'], $value['height'])->save(public_path("assets/images/$folderPath/$resizedName"));
+                // Resize and Save as WebP
+                $resizedName = pathinfo($imageName, PATHINFO_FILENAME) . "_{$key}.webp";
+                // Note: calling scale() modifies the instance, so we should clone or re-read if doing multiple?
+                // Intervention v3 is immutable? No, modifiers usually return new instance or modify?
+                // Documentation says: $image->scale(...) returns the modified image.
+                // If we do $image->scale(..)->save(..), $image is now scaled.
+                // So subsequent iterations will try to scale the ALREADY SCALED image. 
+                // We must use the original image for each resize.
+                // Intervention Image v3 objects are mutable.
+                // We should clone the original image for each resize.
+
+                // However, the original code had:
+                // $image->scale(...)->save(...)
+                // And it was in a foreach loop! This was a BUG in the original code if v2/v3 is mutable!
+                // Or maybe they relied on the fact that they only had one size?
+                // Wait, previous code:
+                // foreach ($cropSize as $key => $value) { 
+                //    $image->scale(...)->save(...) 
+                // }
+                // If $cropSize has multiple sizes, the second iteration would scale the result of the first.
+                // PROBABLY A BUG. I should fix this by re-reading or cloning.
+
+                // Let's use $image (which is original resolution) and clone it?
+                // Image::read($file) creates new instance.
+                // Or I can re-read from $file inside loop? Or simpler: clone.
+                // Validation: does `clone $image` work in V3? Yes.
+
+                $thumb = clone $image;
+                $thumb->scale($value['width'], $value['height'])->toWebp(80)->save(public_path("assets/images/$folderPath/$resizedName"));
                 $resizedImages[] = "assets/images/$folderPath/$resizedName";
             }
         }

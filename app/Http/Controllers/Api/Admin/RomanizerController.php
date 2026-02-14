@@ -11,6 +11,12 @@ use Illuminate\Support\Facades\Auth;
 
 class RomanizerController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:manage_romanizer')->only(['store', 'update', 'destroy']);
+        $this->middleware('role:super_admin')->only(['refresh']);
+    }
+
     public function index(Request $request)
     {
         $query = Romanizer::query();
@@ -36,7 +42,12 @@ class RomanizerController extends Controller
 
         $validated['user_id'] = Auth::id() ?? 1; // Fallback to 1 if not authenticated for some reason
 
-        $word = Romanizer::create($validated);
+        // Manual creation to ensure sanitization matches validated order/keys or just use dedicated array
+        $word = Romanizer::create([
+            'word_sd' => strip_tags($validated['word_sd']),
+            'word_roman' => strip_tags($validated['word_roman']),
+            'user_id' => $validated['user_id']
+        ]);
 
         return response()->json([
             'message' => 'Word added to Romanizer dictionary',
@@ -59,7 +70,10 @@ class RomanizerController extends Controller
             'word_roman' => 'required|string|max:255',
         ]);
 
-        $word->update($validated);
+        $word->update([
+            'word_sd' => strip_tags($validated['word_sd']),
+            'word_roman' => strip_tags($validated['word_roman'])
+        ]);
 
         return response()->json([
             'message' => 'Word updated successfully',

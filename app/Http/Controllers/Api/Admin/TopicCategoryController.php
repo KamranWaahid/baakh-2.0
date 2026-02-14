@@ -8,6 +8,12 @@ use Illuminate\Http\Request;
 
 class TopicCategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:view_tags')->only(['index', 'show']);
+        $this->middleware('can:manage_tags')->only(['store', 'update', 'destroy']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -45,14 +51,14 @@ class TopicCategoryController extends Controller
         ]);
 
         $topicCategory = TopicCategory::create([
-            'slug' => $request->slug
+            'slug' => strip_tags($request->slug)
         ]);
 
         foreach ($request->details as $lang => $data) {
             if (!empty($data['name'])) {
                 $topicCategory->details()->create([
                     'lang' => $lang,
-                    'name' => $data['name']
+                    'name' => strip_tags($data['name'])
                 ]);
             }
         }
@@ -91,14 +97,14 @@ class TopicCategoryController extends Controller
             'details.en.name' => 'nullable|string|max:255',
         ]);
 
-        $topicCategory->update(['slug' => $request->slug]);
+        $topicCategory->update(['slug' => strip_tags($request->slug)]);
 
         // Sync details
         foreach ($request->details as $lang => $data) {
             if (!empty($data['name'])) {
                 $topicCategory->details()->updateOrCreate(
                     ['lang' => $lang],
-                    ['name' => $data['name']]
+                    ['name' => strip_tags($data['name'])]
                 );
             }
         }

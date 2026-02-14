@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB; // Added this use statement
 
 class CityController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:super_admin');
+    }
+
     public function index(Request $request)
     {
         $query = Cities::with(['province.details', 'details'])->latest();
@@ -37,15 +42,15 @@ class CityController extends Controller
         $city = DB::transaction(function () use ($request, $validatedData) {
             $city = Cities::create([
                 'user_id' => $request->user()->id,
-                'geo_lat' => $validatedData['geo_lat'] ?? null,
-                'geo_long' => $validatedData['geo_long'] ?? null,
+                'geo_lat' => strip_tags($validatedData['geo_lat'] ?? null),
+                'geo_long' => strip_tags($validatedData['geo_long'] ?? null),
                 'province_id' => $validatedData['province_id'],
             ]);
 
             foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['city_name'])) {
                     $city->details()->create([
-                        'city_name' => $detail['city_name'],
+                        'city_name' => strip_tags($detail['city_name']),
                         'lang' => $lang
                     ]);
                 }
@@ -84,8 +89,8 @@ class CityController extends Controller
 
         DB::transaction(function () use ($city, $validatedData) {
             $city->update([
-                'geo_lat' => $validatedData['geo_lat'] ?? null,
-                'geo_long' => $validatedData['geo_long'] ?? null,
+                'geo_lat' => strip_tags($validatedData['geo_lat'] ?? null),
+                'geo_long' => strip_tags($validatedData['geo_long'] ?? null),
                 'province_id' => $validatedData['province_id'],
             ]);
 
@@ -94,7 +99,7 @@ class CityController extends Controller
                     $city->details()->updateOrCreate(
                         ['lang' => $lang],
                         [
-                            'city_name' => $detail['city_name']
+                            'city_name' => strip_tags($detail['city_name'])
                         ]
                     );
                 }

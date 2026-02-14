@@ -23,15 +23,25 @@ class PoetController extends Controller
         $lang = $request->header('Accept-Language', 'sd');
 
         // Prefer static cache if no search/tag filtering
-        if (!$request->has('search') && (!$request->has('tag') || $request->tag === 'all') && $request->get('page', 1) == 1) {
+        // Prefer static cache if no search/tag filtering
+        if (!$request->has('search') && (!$request->has('tag') || $request->tag === 'all')) {
             $cached = $this->cache->get("poets_list_{$lang}");
             if ($cached) {
-                // Return in the same pagination-like structure for frontend compatibility
+                // Manual Pagination from Cache
+                $page = (int) $request->get('page', 1);
+                $perPage = (int) $request->get('per_page', 20);
+                $offset = ($page - 1) * $perPage;
+                $total = count($cached);
+                $sliced = array_slice($cached, $offset, $perPage);
+
                 return response()->json([
-                    'data' => $cached,
-                    'current_page' => 1,
-                    'last_page' => 1,
-                    'total' => count($cached)
+                    'data' => $sliced,
+                    'current_page' => $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'total' => $total,
+                    'per_page' => $perPage,
+                    'from' => $offset + 1,
+                    'to' => min($offset + $perPage, $total)
                 ]);
             }
         }

@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Log;
 
 class ServerController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:super_admin');
+    }
+
     /**
      * Get a list of supported artisan commands.
      */

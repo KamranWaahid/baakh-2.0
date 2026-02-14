@@ -11,6 +11,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DatabaseController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:super_admin');
+    }
+
     /**
      * Display a listing of the resource.
      */

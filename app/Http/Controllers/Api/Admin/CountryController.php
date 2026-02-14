@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB;
 
 class CountryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:super_admin');
+    }
+
     public function index()
     {
         $countries = Countries::with('details')->latest()->get();
@@ -32,16 +37,16 @@ class CountryController extends Controller
         $country = DB::transaction(function () use ($request, $validatedData) {
             $country = Countries::create([
                 'user_id' => $request->user()->id,
-                'Abbreviation' => $validatedData['Abbreviation'] ?? null,
-                'Continent' => $validatedData['Continent'] ?? null,
+                'Abbreviation' => strip_tags($validatedData['Abbreviation'] ?? null),
+                'Continent' => strip_tags($validatedData['Continent'] ?? null),
                 'capital_city' => $validatedData['capital_city'] ?? null,
             ]);
 
             foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['countryName'])) {
                     $country->details()->create([
-                        'countryName' => $detail['countryName'],
-                        'countryDesc' => $detail['countryDesc'] ?? null,
+                        'countryName' => strip_tags($detail['countryName']),
+                        'countryDesc' => strip_tags($detail['countryDesc'] ?? null),
                         'lang' => $lang
                     ]);
                 }
@@ -80,8 +85,8 @@ class CountryController extends Controller
 
         DB::transaction(function () use ($country, $validatedData) {
             $country->update([
-                'Abbreviation' => $validatedData['Abbreviation'] ?? null,
-                'Continent' => $validatedData['Continent'] ?? null,
+                'Abbreviation' => strip_tags($validatedData['Abbreviation'] ?? null),
+                'Continent' => strip_tags($validatedData['Continent'] ?? null),
                 'capital_city' => $validatedData['capital_city'] ?? null,
             ]);
 
@@ -90,8 +95,8 @@ class CountryController extends Controller
                     $country->details()->updateOrCreate(
                         ['lang' => $lang],
                         [
-                            'countryName' => $detail['countryName'],
-                            'countryDesc' => $detail['countryDesc'] ?? null
+                            'countryName' => strip_tags($detail['countryName']),
+                            'countryDesc' => strip_tags($detail['countryDesc'] ?? null)
                         ]
                     );
                 }

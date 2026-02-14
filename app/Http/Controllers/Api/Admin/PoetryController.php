@@ -9,6 +9,13 @@ use Illuminate\Http\Request;
 
 class PoetryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:view_poetry')->only(['index', 'show', 'checkSlug']);
+        $this->middleware('can:create_poetry')->only(['create', 'store']);
+        $this->middleware('can:edit_poetry')->only(['update', 'toggleVisibility', 'toggleFeatured']);
+        $this->middleware('can:delete_poetry')->only(['destroy']);
+    }
     public function index(Request $request)
     {
         $query = Poetry::with([
@@ -198,15 +205,15 @@ class PoetryController extends Controller
             ]);
 
             $poetry->translations()->create([
-                'title' => $validated['poetry_title'],
-                'info' => $validated['poetry_info'] ?? null,
-                'source' => $validated['source'] ?? null,
+                'title' => strip_tags($validated['poetry_title']),
+                'info' => strip_tags($validated['poetry_info'] ?? null, '<p><br><b><strong><i><em><ul><ol><li><blockquote>'),
+                'source' => strip_tags($validated['source'] ?? null),
                 'lang' => 'sd', // Default lang for creation
             ]);
 
             foreach ($validated['couplets'] as $index => $couplet) {
                 $poetry->couplets()->create([
-                    'couplet_text' => $couplet['couplet_text'],
+                    'couplet_text' => strip_tags($couplet['couplet_text'], '<p><br><b><strong><i><em><ul><ol><li><blockquote>'),
                     'poet_id' => $validated['poet_id'],
                     'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1),
                     'lang' => 'sd'
@@ -281,16 +288,16 @@ class PoetryController extends Controller
             $poetry->translations()->updateOrCreate(
                 ['lang' => 'sd'],
                 [
-                    'title' => $validated['poetry_title'],
-                    'info' => $validated['poetry_info'] ?? null,
-                    'source' => $validated['source'] ?? null,
+                    'title' => strip_tags($validated['poetry_title']),
+                    'info' => strip_tags($validated['poetry_info'] ?? null, '<p><br><b><strong><i><em><ul><ol><li><blockquote>'),
+                    'source' => strip_tags($validated['source'] ?? null),
                 ]
             );
 
             $poetry->couplets()->delete();
             foreach ($validated['couplets'] as $index => $couplet) {
                 $poetry->couplets()->create([
-                    'couplet_text' => $couplet['couplet_text'],
+                    'couplet_text' => strip_tags($couplet['couplet_text'], '<p><br><b><strong><i><em><ul><ol><li><blockquote>'),
                     'poet_id' => $validated['poet_id'],
                     'couplet_slug' => $validated['poetry_slug'] . '-' . ($index + 1),
                     'lang' => 'sd'

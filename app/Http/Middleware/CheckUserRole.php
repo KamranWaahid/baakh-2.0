@@ -20,6 +20,12 @@ class CheckUserRole
         if (Auth::check()) {
             $user = Auth::user();
 
+            // Check if user is active
+            if (!$user->isActive()) {
+                Auth::logout();
+                return response()->json(['message' => 'Account is disabled.'], 403);
+            }
+
             // Check if user has permission to view the dashboard (min requirement for admin panel)
             // This replaces the fragile '$user->role === 'user'' check.
             if ($user->can('view_dashboard')) {

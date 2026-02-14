@@ -8,6 +8,12 @@ use Illuminate\Http\Request;
 
 class TagController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:view_tags')->only(['index', 'show']);
+        $this->middleware('can:manage_tags')->only(['store', 'update', 'destroy']);
+    }
+
     public function index(Request $request)
     {
         $query = Tags::with(['details', 'topicCategory.details']);
@@ -84,7 +90,7 @@ class TagController extends Controller
         ]);
 
         $tag = Tags::create([
-            'slug' => $request->slug,
+            'slug' => strip_tags($request->slug),
             'type' => $request->type,
             'topic_category_id' => $request->topic_category_id
         ]);
@@ -93,7 +99,7 @@ class TagController extends Controller
             if (!empty($data['name'])) {
                 $tag->details()->create([
                     'lang' => $lang,
-                    'name' => $data['name']
+                    'name' => strip_tags($data['name'])
                 ]);
             }
         }
@@ -118,7 +124,7 @@ class TagController extends Controller
         ]);
 
         $tag->update([
-            'slug' => $request->slug,
+            'slug' => strip_tags($request->slug),
             'type' => $request->type,
             'topic_category_id' => $request->topic_category_id
         ]);
@@ -127,7 +133,7 @@ class TagController extends Controller
             if (!empty($data['name'])) {
                 $tag->details()->updateOrCreate(
                     ['lang' => $lang],
-                    ['name' => $data['name']]
+                    ['name' => strip_tags($data['name'])]
                 );
             }
         }

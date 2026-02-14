@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\File;
 
 class HesudharController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:super_admin');
+    }
+
     public function index(Request $request)
     {
         $query = BaakhHesudhar::query();
@@ -33,7 +38,10 @@ class HesudharController extends Controller
             'correct' => 'required|string|max:255',
         ]);
 
-        $word = BaakhHesudhar::create($validated);
+        $word = BaakhHesudhar::create([
+            'word' => strip_tags($validated['word']),
+            'correct' => strip_tags($validated['correct']),
+        ]);
 
         return response()->json([
             'message' => 'Word added to dictionary',
@@ -56,7 +64,10 @@ class HesudharController extends Controller
             'correct' => 'required|string|max:255',
         ]);
 
-        $word->update($validated);
+        $word->update([
+            'word' => strip_tags($validated['word']),
+            'correct' => strip_tags($validated['correct']),
+        ]);
 
         return response()->json([
             'message' => 'Word updated successfully',

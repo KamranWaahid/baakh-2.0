@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class ProvinceController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:super_admin');
+    }
+
     public function index(Request $request)
     {
         $query = Provinces::with(['country.details', 'details'])->latest();
@@ -40,7 +45,7 @@ class ProvinceController extends Controller
             foreach ($validatedData['details'] as $lang => $detail) {
                 if (!empty($detail['province_name'])) {
                     $province->details()->create([
-                        'province_name' => $detail['province_name'],
+                        'province_name' => strip_tags($detail['province_name']),
                         'lang' => $lang
                     ]);
                 }
@@ -85,7 +90,7 @@ class ProvinceController extends Controller
                     $province->details()->updateOrCreate(
                         ['lang' => $lang],
                         [
-                            'province_name' => $detail['province_name']
+                            'province_name' => strip_tags($detail['province_name'])
                         ]
                     );
                 }

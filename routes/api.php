@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\Auth\MeController;
 Route::prefix('auth')->group(function () {
     Route::middleware('throttle:6,1')->post('/login', LoginController::class);
     Route::middleware('throttle:6,1')->post('/register', RegisterController::class);
+    Route::middleware('throttle:6,1')->post('/forgot-password', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::middleware('throttle:6,1')->post('/reset-password', [\App\Http\Controllers\Api\Auth\ResetPasswordController::class, 'store']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', LogoutController::class);

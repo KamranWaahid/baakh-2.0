@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class PoetController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:view_poets')->only(['index', 'show']);
+        $this->middleware('can:create_poets')->only(['create', 'store']);
+        $this->middleware('can:edit_poets')->only(['update']);
+        $this->middleware('can:delete_poets')->only(['destroy']);
+    }
     public function index(Request $request)
     {
         $query = Poets::query()->with('all_details');

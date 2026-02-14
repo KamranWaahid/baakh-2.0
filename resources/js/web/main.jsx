@@ -31,6 +31,8 @@ const Help = React.lazy(() => import('./pages/Help'));
 const Status = React.lazy(() => import('./pages/Status'));
 const SocialCallback = React.lazy(() => import('./components/SocialCallback'));
 const SetPassword = React.lazy(() => import('./pages/SetPassword'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const Profile = React.lazy(() => import('./pages/Profile'));
 const SettingsPage = React.lazy(() => import('./pages/Settings'));
 const ExploreTopics = React.lazy(() => import('./components/ExploreTopics'));
@@ -257,6 +259,16 @@ const App = () => {
                                 <Route path="/:lang/auth/set-password" element={
                                     <LanguageWrapper withLayout={false}>
                                         <SetPassword />
+                                    </LanguageWrapper>
+                                } />
+                                <Route path="/:lang/auth/forgot-password" element={
+                                    <LanguageWrapper withLayout={false}>
+                                        <ForgotPassword />
+                                    </LanguageWrapper>
+                                } />
+                                <Route path="/:lang/password-reset/:token" element={
+                                    <LanguageWrapper withLayout={false}>
+                                        <ResetPassword />
                                     </LanguageWrapper>
                                 } />
                                 <Route path="/:lang/profile" element={
