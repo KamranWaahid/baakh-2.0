@@ -149,7 +149,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_tags',
             'view_couplets',
             'view_bundles',
-            'view_dashboard',
         ]);
 
         $this->command->info('Roles and permissions created/updated successfully!');

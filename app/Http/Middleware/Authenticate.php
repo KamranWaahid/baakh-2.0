@@ -17,11 +17,6 @@ class Authenticate extends Middleware
             return null;
         }
 
-        // If it's an admin route, don't redirect to frontend home
-        // Especially critical during maintenance mode to avoid 503 loop
-        if ($request->is('admin') || $request->is('admin/*')) {
-            return null;
-        }
 
         return url('/');
     }

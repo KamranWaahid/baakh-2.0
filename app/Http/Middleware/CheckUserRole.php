@@ -33,6 +33,11 @@ class CheckUserRole
             }
         }
 
+        // Unauthorized access
+        if ($request->isMethod('GET')) {
+            return redirect('/');
+        }
+
         // Return JSON 403 if unauthorized or not logged in (double check)
         return response()->json(['message' => 'Unauthorized: Admin access required.'], 403);
     }

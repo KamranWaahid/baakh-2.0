@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
 import AdminLayout from './layouts/AdminLayout';
 import api from './api/axios';
 import { Button } from '@/components/ui/button';
@@ -104,7 +103,6 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <Routes>
-                    <Route path="/admin/login" element={<Login />} />
                     <Route path="/admin" element={
                         <ProtectedRoute>
                             <AdminLayout>
