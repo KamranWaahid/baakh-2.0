@@ -39,6 +39,7 @@ try {
         <a href='?secret=$secretKey&action=diagnose'>🔍 Diagnose Data</a>
         <a href='?secret=$secretKey&action=clear-cache'>🧹 Clear Cache</a>
         <a href='?secret=$secretKey&action=repair-permissions'>🔑 Repair Admin Permissions</a>
+        <a href='?secret=$secretKey&action=create-admin' style='color:red;font-weight:bold;'>🆘 Create Super Admin</a>
     </nav><hr>";
 
     if ($action === 'migrate') {
@@ -131,6 +132,47 @@ try {
         } else {
             echo "<p>No log file found at $logPath</p>";
         }
+    } elseif ($action === 'create-admin') {
+        echo "<h2>Creating Emergency Super Admin</h2>";
+        try {
+            // 1. Ensure Super Admin Role exists (Trigger seeder if needed)
+            Artisan::call('db:seed', ['--class' => 'RolesAndPermissionsSeeder', '--force' => true]);
+
+            $role = \Spatie\Permission\Models\Role::where('name', 'super_admin')->first();
+
+            if (!$role) {
+                throw new Exception("Super Admin role could not be created via Seeder.");
+            }
+
+            // 2. Create/Update User
+            $user = \App\Models\User::updateOrCreate(
+                ['email' => 'admin@baakh.com'],
+                [
+                    'name' => 'Baakh Super Admin',
+                    'username' => 'admin_central',
+                    'password' => \Illuminate\Support\Facades\Hash::make('baakh_admin_2026'),
+                    'role' => 'super_admin', // Legacy column
+                    'status' => 'active',
+                ]
+            );
+
+            // 3. Assign Role via Spatie
+            $user->assignRole($role);
+
+            // 4. Update encrypted field indicators if they exist
+            $user->save();
+
+            echo "<div style='background:#d4edda;padding:20px;border:1px solid #c3e6cb;border-radius:5px;'>";
+            echo "<h3 style='margin-top:0;'>✅ Success! Super Admin account created.</h3>";
+            echo "Login at: <code>https://beta.baakh.com/</code> (Public login then access /admin for now)<br><br>";
+            echo "<strong>Email:</strong> <code>admin@baakh.com</code><br>";
+            echo "<strong>Password:</strong> <code>baakh_admin_2026</code><br><br>";
+            echo "<strong>Safety Note:</strong> Log in and CHANGE YOUR PASSWORD as soon as you gain access.";
+            echo "</div>";
+
+        } catch (Exception $e) {
+            echo "<span style='color:red;'>Error Creating Admin: " . $e->getMessage() . "</span><br>";
+        }
     } elseif ($action === 'clear-cache') {
         echo "<h2>Clearing Caches</h2>";
 
@@ -160,7 +202,8 @@ try {
         echo "<ul>";
         echo "<li><a href='?secret=$secretKey&action=migrate&mode=targeted'>🚀 STEP 1: Fix 500 Error (Targeted Migration)</a></li>";
         echo "<li><a href='?secret=$secretKey&action=repair-permissions'>🔑 STEP 2: Fix Admin Panel Data (Repair Permissions)</a></li>";
-        echo "<li><a href='?secret=$secretKey&action=clear-cache'>🧹 STEP 3: Clear Cache</a></li>";
+        echo "<li><a href='?secret=$secretKey&action=create-admin'>🆘 STEP 3: Create Super Admin Account (Email/Pass)</a></li>";
+        echo "<li><a href='?secret=$secretKey&action=clear-cache'>🧹 STEP 4: Clear Cache</a></li>";
         echo "</ul>";
     }
 
