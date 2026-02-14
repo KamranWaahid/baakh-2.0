@@ -35,10 +35,10 @@ try {
     echo "<h1>Baakh Admin Tools</h1>";
     echo "<nav>
         <a href='?secret=$secretKey&action=menu'>🏠 Menu</a>
-        <a href='?secret=$secretKey&action=migrate&mode=targeted'>🚀 Run Targeted Migrations</a>
-        <a href='?secret=$secretKey&action=migrate&mode=normal'>⚙️ Run All Migrations</a>
+        <a href='?secret=$secretKey&action=migrate&mode=targeted'>🚀 Run Targeted Migrations (Fix 500)</a>
         <a href='?secret=$secretKey&action=diagnose'>🔍 Diagnose Data</a>
-        <a href='?secret=$secretKey&action=clear-cache'>🧹 Clear Cache & Fix 500</a>
+        <a href='?secret=$secretKey&action=clear-cache'>🧹 Clear Cache</a>
+        <a href='?secret=$secretKey&action=repair-permissions'>🔑 Repair Admin Permissions</a>
     </nav><hr>";
 
     if ($action === 'migrate') {
@@ -69,6 +69,21 @@ try {
             echo Artisan::output();
         }
         echo "</pre>";
+    } elseif ($action === 'repair-permissions') {
+        echo "<h2>Repairing Admin Permissions</h2>";
+        try {
+            echo "1. Clearing permission cache...<br>";
+            Artisan::call('permission:cache-reset');
+            echo "<pre>" . Artisan::output() . "</pre>";
+
+            echo "2. Seeding Roles and Permissions...<br>";
+            Artisan::call('db:seed', ['--class' => 'RolesAndPermissionsSeeder', '--force' => true]);
+            echo "<pre>" . Artisan::output() . "</pre>";
+
+            echo "Success: Permissions have been reset and seeded.";
+        } catch (Exception $e) {
+            echo "<span style='color:red;'>Error: " . $e->getMessage() . "</span><br>";
+        }
     } elseif ($action === 'diagnose') {
         echo "<h2>Database Diagnostics</h2>";
         $tables = ['users', 'poets', 'poetry_main', 'baakh_tags', 'activity_logs', 'reports', 'feedback', 'mokhii_page_meta', 'admin_notifications'];
@@ -116,7 +131,14 @@ try {
             echo "<span style='color:red;'>Error regenerating stats: " . $e->getMessage() . "</span><br>";
         }
     } else {
-        echo "<p>Welcome to Baakh Admin Tools. Please select an action from the menu above to troubleshoot your server.</p>";
+        echo "<h2>Menu</h2>";
+        echo "<p>Please select an action from the menu above to troubleshoot your server.</p>";
+        echo "<p><strong>Direct Links:</strong></p>";
+        echo "<ul>";
+        echo "<li><a href='?secret=$secretKey&action=migrate&mode=targeted'>🚀 STEP 1: Fix 500 Error (Targeted Migration)</a></li>";
+        echo "<li><a href='?secret=$secretKey&action=repair-permissions'>🔑 STEP 2: Fix Admin Panel Data (Repair Permissions)</a></li>";
+        echo "<li><a href='?secret=$secretKey&action=clear-cache'>🧹 STEP 3: Clear Cache</a></li>";
+        echo "</ul>";
     }
 
     echo "<hr><p style='color: red;'><strong>🛡️ SECURITY: Delete this file (/public/run-migrations.php) immediately after use.</strong></p>";
