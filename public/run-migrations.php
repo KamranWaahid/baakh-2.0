@@ -21,60 +21,108 @@ if (!isset($_GET['secret']) || $_GET['secret'] !== $secretKey) {
 require __DIR__ . '/../vendor/autoload.php';
 $app = require_once __DIR__ . '/../bootstrap/app.php';
 
-// 4. Execute migrations
+// 4. Handle Actions
 try {
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
     $response = $kernel->handle(
         $request = Illuminate\Http\Request::capture()
     );
 
-    echo "<h1>Baakh Database Migration</h1>";
+    $action = $_GET['action'] ?? 'menu';
     $mode = $_GET['mode'] ?? 'normal';
-    echo "<p>Mode: " . htmlspecialchars($mode) . "</p>";
-    echo "<pre>";
 
-    if ($mode === 'targeted') {
-        // Specifically run the migrations added recently to fix the 500 error
-        $newMigrations = [
-            'database/migrations/2026_02_14_114355_create_system_errors_table.php',
-            'database/migrations/2026_02_14_180000_create_mokhii_tables.php',
-            'database/migrations/2026_02_14_195748_add_status_to_reports_table.php',
-            'database/migrations/2026_02_14_230000_add_mokhii_fixes_column.php',
-            'database/migrations/2026_02_14_235700_add_is_default_to_languages.php',
-            'database/migrations/2026_02_15_000100_create_admin_notifications_table.php',
-        ];
+    echo "<html><head><title>Baakh Admin Tools</title><style>body{font-family:sans-serif;padding:20px;line-height:1.5;} nav{margin-bottom:20px;} a{margin-right:15px;text-decoration:none;color:#007bff;} pre{background:#f8f9fa;padding:15px;border:1px solid #ddd;overflow:auto;max-height:400px;}</style></head><body>";
+    echo "<h1>Baakh Admin Tools</h1>";
+    echo "<nav>
+        <a href='?secret=$secretKey&action=menu'>🏠 Menu</a>
+        <a href='?secret=$secretKey&action=migrate&mode=targeted'>🚀 Run Targeted Migrations</a>
+        <a href='?secret=$secretKey&action=migrate&mode=normal'>⚙️ Run All Migrations</a>
+        <a href='?secret=$secretKey&action=diagnose'>🔍 Diagnose Data</a>
+        <a href='?secret=$secretKey&action=clear-cache'>🧹 Clear Cache & Fix 500</a>
+    </nav><hr>";
 
-        foreach ($newMigrations as $path) {
-            echo "Running: $path\n";
-            try {
-                Artisan::call('migrate', [
-                    '--path' => $path,
-                    '--force' => true
-                ]);
-                echo Artisan::output();
-            } catch (Exception $innerE) {
-                echo "Error in $path: " . $innerE->getMessage() . "\n";
+    if ($action === 'migrate') {
+        echo "<h2>Database Migrations (Mode: $mode)</h2>";
+        echo "<pre>";
+        if ($mode === 'targeted') {
+            $newMigrations = [
+                'database/migrations/2026_02_14_114355_create_system_errors_table.php',
+                'database/migrations/2026_02_14_180000_create_mokhii_tables.php',
+                'database/migrations/2026_02_14_195748_add_status_to_reports_table.php',
+                'database/migrations/2026_02_14_230000_add_mokhii_fixes_column.php',
+                'database/migrations/2026_02_14_235700_add_is_default_to_languages.php',
+                'database/migrations/2026_02_15_000100_create_admin_notifications_table.php',
+            ];
+
+            foreach ($newMigrations as $path) {
+                echo "Running: $path\n";
+                try {
+                    Artisan::call('migrate', ['--path' => $path, '--force' => true]);
+                    echo Artisan::output();
+                } catch (Exception $innerE) {
+                    echo "Error in $path: " . $innerE->getMessage() . "\n";
+                }
+                echo "---------------------------------\n";
             }
-            echo "---------------------------------\n";
+        } else {
+            Artisan::call('migrate', ['--force' => true]);
+            echo Artisan::output();
+        }
+        echo "</pre>";
+    } elseif ($action === 'diagnose') {
+        echo "<h2>Database Diagnostics</h2>";
+        $tables = ['users', 'poets', 'poetry_main', 'baakh_tags', 'activity_logs', 'reports', 'feedback', 'mokhii_page_meta', 'admin_notifications'];
+        echo "<table border='1' cellpadding='10' style='border-collapse:collapse;width:100%;'>";
+        echo "<tr style='background:#eee;'><th>Table</th><th>Count</th><th>Status</th></tr>";
+        foreach ($tables as $table) {
+            try {
+                $count = DB::table($table)->count();
+                echo "<tr><td>$table</td><td>$count</td><td style='color:green;'>OK</td></tr>";
+            } catch (Exception $e) {
+                echo "<tr><td>$table</td><td>-</td><td style='color:red;'>Error: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+            }
+        }
+        echo "</table>";
+
+        echo "<h2>Latest Logs (storage/logs/laravel.log)</h2>";
+        $logPath = storage_path('logs/laravel.log');
+        if (file_exists($logPath)) {
+            $lines = file($logPath);
+            $lastLines = array_slice($lines, -30);
+            echo "<pre>" . htmlspecialchars(implode('', $lastLines)) . "</pre>";
+        } else {
+            echo "<p>No log file found at $logPath</p>";
+        }
+    } elseif ($action === 'clear-cache') {
+        echo "<h2>Clearing Caches</h2>";
+
+        echo "<strong>1. Artisan optimize:clear...</strong><br>";
+        try {
+            Artisan::call('optimize:clear');
+            echo "<pre>" . Artisan::output() . "</pre>";
+        } catch (Exception $e) {
+            echo "Error: " . $e->getMessage() . "<br>";
+        }
+
+        echo "<strong>2. Admin Dashboard Stats cache clearing...</strong><br>";
+        Illuminate\Support\Facades\Cache::forget('admin_dashboard_stats');
+        echo "Done.<br><br>";
+
+        echo "<strong>3. Re-running Dashboard Stats Job (Sync)...</strong><br>";
+        try {
+            \App\Jobs\UpdateDashboardStats::dispatchSync();
+            echo "Success: Dashboard stats regenerated.<br>";
+        } catch (Exception $e) {
+            echo "<span style='color:red;'>Error regenerating stats: " . $e->getMessage() . "</span><br>";
         }
     } else {
-        // Command: migrate --force
-        Artisan::call('migrate', ['--force' => true]);
-        echo Artisan::output();
+        echo "<p>Welcome to Baakh Admin Tools. Please select an action from the menu above to troubleshoot your server.</p>";
     }
 
-    echo "\n\n--- Migration process completed ---";
-    echo "</pre>";
-
-    echo "<h2>Options</h2>";
-    echo "<ul>";
-    echo "<li><a href='?secret=$secretKey&mode=normal'>Run Normal (All)</a></li>";
-    echo "<li><a href='?secret=$secretKey&mode=targeted'>Run Targeted (New Only)</a></li>";
-    echo "</ul>";
-
-    echo "<p style='color: red;'><strong>IMPORTANT: Delete this file (/public/run-migrations.php) immediately after use.</strong></p>";
+    echo "<hr><p style='color: red;'><strong>🛡️ SECURITY: Delete this file (/public/run-migrations.php) immediately after use.</strong></p>";
+    echo "</body></html>";
 
 } catch (Exception $e) {
-    echo "<h1>Migration Failed</h1>";
+    echo "<h1>Critical Error</h1>";
     echo "<pre>" . $e->getMessage() . "</pre>";
 }
