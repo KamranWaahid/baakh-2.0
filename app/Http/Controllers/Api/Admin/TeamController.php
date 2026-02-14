@@ -53,6 +53,13 @@ class TeamController extends Controller
 
             // If admin fields are provided, create a new user
             if ($request->filled('admin_email')) {
+                // Manual check for email uniqueness because of encryption
+                if (\App\Models\User::findByEmail($request->admin_email)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'admin_email' => ['The admin email is already in use.'],
+                    ]);
+                }
+
                 $newUser = \App\Models\User::create([
                     'name' => $request->admin_name,
                     'name_sd' => $request->admin_name_sd,
