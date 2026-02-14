@@ -131,7 +131,7 @@ class PoetryController extends UserController
      */
     public function apiShow(Request $request, $slug)
     {
-        $locale = $request->get('lang', 'sd'); // Default to Sindhi if not specified
+        $locale = $request->get('lang', $request->header('Accept-Language', 'sd'));
 
         // Get poetry by URL with language constraint
         $poetry = Poetry::with([
@@ -141,7 +141,10 @@ class PoetryController extends UserController
             'all_couplets' => function ($query) use ($locale) {
                 $query->where('lang', $locale);
             },
-            'category'
+            'category',
+            'category.details' => function ($query) use ($locale) {
+                $query->where('lang', $locale);
+            }
         ])
             ->where('poetry_slug', $slug)
             ->where('visibility', 1)
@@ -246,7 +249,9 @@ class PoetryController extends UserController
 
             'category' => [
                 'id' => $poetry->category_id,
-                'name' => optional($poetry->category?->detail)->cat_name ?? $poetry->category?->slug ?? 'General',
+                'name' => $poetry->category?->details->first()?->cat_name
+                    ? ($locale === 'en' ? ucfirst($poetry->category->details->first()->cat_name) : $poetry->category->details->first()->cat_name)
+                    : ($poetry->category?->slug ? ucfirst($poetry->category->slug) : 'General'),
                 'slug' => $poetry->category?->slug
             ],
 
@@ -268,25 +273,32 @@ class PoetryController extends UserController
                     $q->where('lang', $locale);
                 },
                 'category',
-                'poet',
-                'couplets'
+                'category.details' => function ($q) use ($locale) {
+                    $q->where('lang', $locale);
+                },
+                'poet.all_details',
             ])
+                ->withCount('likes')
                 ->where('poet_id', $poet_id)
                 ->where('id', '!=', $poetry->id)
                 ->where('visibility', 1)
                 ->latest()
                 ->take(4)
                 ->get()
-                ->map(function ($p) {
+                ->map(function ($p) use ($locale) {
+                    $poetDetail = $p->poet->all_details->where('lang', $locale)->first() ?? $p->poet->all_details->first();
                     return [
                         'title' => $p->info?->title ?? $p->poetry_title,
                         'slug' => $p->poetry_slug,
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
+                        'category' => $p->category?->details->first()?->cat_name
+                            ? ($locale === 'en' ? ucfirst($p->category->details->first()->cat_name) : $p->category->details->first()->cat_name)
+                            : ($p->category?->slug ? ucfirst($p->category->slug) : 'General'),
+                        'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
                         'date' => $p->created_at->format('M d'),
-                        'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
-                        'claps' => '100', // Mock
-                        'comments' => 5 // Mock
+                        'claps' => $p->likes_count ?? 0,
+                        'comments' => 0
                     ];
                 }),
 
@@ -294,27 +306,33 @@ class PoetryController extends UserController
                 'info' => function ($q) use ($locale) {
                     $q->where('lang', $locale);
                 },
-                'poet.details',
+                'poet.all_details',
                 'category',
-                'couplets'
+                'category.details' => function ($q) use ($locale) {
+                    $q->where('lang', $locale);
+                },
             ])
+                ->withCount('likes')
                 ->where('id', '!=', $poetry->id)
-                // simple random recommendation for now
                 ->where('visibility', 1)
                 ->inRandomOrder()
                 ->take(4)
                 ->get()
                 ->map(function ($p) use ($locale) {
+                    $poetDetail = $p->poet->all_details->where('lang', $locale)->first() ?? $p->poet->all_details->first();
                     return [
                         'title' => $p->info?->title ?? $p->poetry_title,
                         'slug' => $p->poetry_slug,
                         'poet_slug' => $p->poet->poet_slug ?? '',
                         'cat_slug' => $p->category->slug ?? 'ghazal',
-                        'author' => $p->poet?->details?->poet_laqab ?? $p->poet?->poet_slug ?? 'Unknown',
-                        'avatar' => ($p->poet?->photo) ? (str_starts_with($p->poet->photo, 'http') ? $p->poet->photo : '/' . $p->poet->photo) : null,
+                        'category' => $p->category?->details->first()?->cat_name
+                            ? ($locale === 'en' ? ucfirst($p->category->details->first()->cat_name) : $p->category->details->first()->cat_name)
+                            : ($p->category?->slug ? ucfirst($p->category->slug) : 'General'),
+                        'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
+                        'avatar' => ($p->poet?->poet_pic) ? (str_starts_with($p->poet->poet_pic, 'http') ? $p->poet->poet_pic : '/' . $p->poet->poet_pic) : null,
                         'date' => $p->created_at ? $p->created_at->format('M d') : '',
-                        'excerpt' => Str::limit($p->couplets->first()?->couplet_text ?? '', 80),
-                        'comments' => 10
+                        'claps' => $p->likes_count ?? 0,
+                        'comments' => 0
                     ];
                 }),
             'suggested_poets' => Poets::with([

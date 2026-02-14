@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import PostCard from './PostCard';
+import api from '@/admin/api/axios';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -118,8 +119,6 @@ const Feed = ({ lang }) => {
         }
 
         try {
-            const module = await import('../../admin/api/axios');
-            const api = module.default;
             const response = await api.get('/api/v1/feed', {
                 params: {
                     lang,

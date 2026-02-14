@@ -13,6 +13,21 @@ api.interceptors.request.use(config => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Global Language Interceptor
+    // Automatically detect language from URL path (/en/ or /sd/) and attach as param
+    const pathname = window.location.pathname;
+    const langMatch = pathname.match(/^\/(en|sd)(\/|$)/);
+    const lang = langMatch ? langMatch[1] : 'sd';
+
+    if (lang) {
+        config.params = {
+            ...config.params,
+            lang: lang
+        };
+        config.headers['Accept-Language'] = lang;
+    }
+
     return config;
 });
 

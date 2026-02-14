@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Loader2, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -16,9 +16,7 @@ const ExploreTopics = ({ lang }) => {
         const fetchTopics = async () => {
             setLoading(true);
             try {
-                const response = await axios.get('/api/v1/explore-topics', {
-                    headers: { 'Accept-Language': lang }
-                });
+                const response = await api.get('/api/v1/explore-topics');
                 setCategories(response.data.categories);
                 setRecommended(response.data.recommended);
             } catch (error) {

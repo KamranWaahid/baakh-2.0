@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -27,6 +26,14 @@
         --input: 20 5.9% 90%;
         --ring: 20 14.3% 4.1%;
         --radius: 0.75rem;
+
+        --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Universal Sindhi Font Support */
+    :root[lang="sd"],
+    html[lang="sd"] {
+        --font-sans: 'SF Arabic', 'Inter', system-ui, -apple-system, sans-serif;
     }
 
     .dark {
@@ -64,12 +71,18 @@
 
     body {
         @apply bg-background text-foreground antialiased selection:bg-black/10 selection:text-black;
+        font-family: var(--font-sans);
         font-feature-settings: "rlig" 1, "calt" 1;
         -webkit-tap-highlight-color: transparent;
         text-rendering: optimizeLegibility;
     }
 
-    h1, h2, h3, h4, h5, h6 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
         @apply tracking-tight;
     }
 }
@@ -82,8 +95,9 @@
     font-display: swap;
 }
 
+/* Utilities */
 .font-arabic {
-    font-family: 'SF Arabic', sans-serif;
+    font-family: 'SF Arabic', 'Inter', sans-serif;
 }
 
 @keyframes fade-in-up {

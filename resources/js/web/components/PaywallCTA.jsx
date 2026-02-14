@@ -20,11 +20,11 @@ const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
 
     return (
         <div className="w-full max-w-4xl mx-auto py-20 px-4 text-center">
-            {/* Headline: Serif, Not Bold, Smaller */}
-            <h3 className={`text-3xl md:text-5xl font-normal mb-8 text-gray-900 leading-tight font-serif ${isRtl ? 'font-arabic' : ''}`}>
+            {/* Headline: Serif for Sindhi, Sans for English */}
+            <h3 className={`text-3xl md:text-5xl font-normal mb-8 text-gray-900 leading-tight ${isRtl ? 'font-arabic' : 'font-sans'}`}>
                 {isRtl
-                    ? <>{authorName} جي هن {categoryName} کان پوءِ، هي ٻيا شاعر بہ پڙهڻ جھڙا آهن:</>
-                    : <>After reading this {categoryName || 'poem'} by {authorName}, here are other poets worth reading:</>
+                    ? <span>{authorName} جي هن {categoryName || 'شاعري'} کان پوءِ، هي ٻيا شاعر بہ پڙهڻ جھڙا آهن:</span>
+                    : <span>After reading this {categoryName || 'poem'} by {authorName}, here are other poets worth reading:</span>
                 }
             </h3>
 

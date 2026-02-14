@@ -194,11 +194,9 @@ const PoemDetail = ({ lang }) => {
                                 <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className={`flex flex-col gap-2 group ${isRtl ? 'text-right' : ''}`}>
                                     <div className="text-xs text-gray-500 mb-1">{p.date}</div>
                                     <h4 className="font-bold text-lg text-gray-900 leading-tight group-hover:underline">{p.title}</h4>
-                                    <p className="text-gray-600 text-[14px] leading-snug line-clamp-3 font-serif">{p.excerpt}</p>
-                                    <div className={`flex items-center gap-4 mt-2 text-xs text-gray-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                                    <div className={`flex items-center gap-4 mt-1 text-xs text-gray-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
                                         <div className="flex items-center gap-1">
-                                            <span role="img" aria-label="claps">👏</span>
-                                            <span>{p.claps}</span>
+                                            <span>{p.claps} {isRtl ? 'پسند' : 'likes'}</span>
                                         </div>
                                     </div>
                                 </Link>
@@ -226,12 +224,10 @@ const PoemDetail = ({ lang }) => {
                                         <span className="text-xs font-bold text-gray-900">{p.author}</span>
                                     </div>
                                     <h4 className="font-bold text-lg text-gray-900 leading-tight group-hover:underline">{p.title}</h4>
-                                    <p className="text-gray-600 text-[14px] leading-snug line-clamp-3 font-serif">{p.excerpt}</p>
-                                    <div className={`flex items-center gap-4 mt-2 text-xs text-gray-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                                    <div className={`flex items-center gap-4 mt-1 text-xs text-gray-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
                                         <span>{p.date}</span>
                                         <div className="flex items-center gap-1">
-                                            <span role="img" aria-label="claps">👏</span>
-                                            <span>{p.claps}</span>
+                                            <span>{p.claps} {isRtl ? 'پسند' : 'likes'}</span>
                                         </div>
                                     </div>
                                 </Link>

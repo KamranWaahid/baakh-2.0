@@ -15,7 +15,7 @@ class TopicController extends Controller
     // Formerly 'show' - now specifically for Tags
     public function showTag(Request $request, $slug)
     {
-        $lang = $request->header('Accept-Language', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         App::setLocale($lang);
 
         // Find the tag by slug
@@ -95,7 +95,7 @@ class TopicController extends Controller
 
     public function showCategory(Request $request, $slug)
     {
-        $lang = $request->header('Accept-Language', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         App::setLocale($lang);
 
         $category = TopicCategory::where('slug', $slug)->firstOrFail();

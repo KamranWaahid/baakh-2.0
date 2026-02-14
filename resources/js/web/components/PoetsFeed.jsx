@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { User, BookOpen } from 'lucide-react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
@@ -19,9 +19,7 @@ const PoetsFeed = ({ lang }) => {
     const { data: tagsData } = useQuery({
         queryKey: ['poet-tags', lang],
         queryFn: async () => {
-            const response = await axios.get('/api/v1/poet-tags', {
-                params: { lang }
-            });
+            const response = await api.get('/api/v1/poet-tags');
             return response.data;
         }
     });
@@ -36,14 +34,14 @@ const PoetsFeed = ({ lang }) => {
         hasNextPage,
         isFetchingNextPage
     } = useInfiniteQuery({
-        queryKey: ['poets', search, selectedTag],
+        queryKey: ['poets', search, selectedTag, lang],
         queryFn: async ({ pageParam = 1 }) => {
             // In real app, might want to debounce search here or in the UI
             const params = { search, page: pageParam };
             if (selectedTag !== 'all') {
                 params.tag = selectedTag;
             }
-            const response = await axios.get('/api/v1/poets', {
+            const response = await api.get('/api/v1/poets', {
                 params
             });
             return response.data;

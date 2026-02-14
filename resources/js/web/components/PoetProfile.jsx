@@ -8,7 +8,7 @@ import { useParams, Link } from 'react-router-dom';
 import PostCard from './PostCard';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { formatDate } from '@/lib/date-utils';
 import ReportModal from './ReportModal';
 import { getImageUrl } from '../utils/url';
@@ -29,9 +29,9 @@ const PoetProfile = ({ lang }) => {
     const { ref, inView } = useInView();
 
     const { data: poet, isLoading: isPoetLoading } = useQuery({
-        queryKey: ['poet', slug],
+        queryKey: ['poet', slug, lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/poets/${slug}`);
+            const response = await api.get(`/api/v1/poets/${slug}`);
             return response.data;
         }
     });
@@ -44,11 +44,11 @@ const PoetProfile = ({ lang }) => {
         isFetchingNextPage: isPoetryFetching,
         isLoading: isPoetryLoading
     } = useInfiniteQuery({
-        queryKey: ['poet-poetry', slug, activeTab],
+        queryKey: ['poet-poetry', slug, activeTab, lang],
         enabled: !!slug && (activeTab === 'poetry' || !['poetry', 'couplets'].includes(activeTab)),
         queryFn: async ({ pageParam = 1 }) => {
             const catParam = activeTab === 'poetry' ? '' : `&category=${activeTab}`;
-            const response = await axios.get(`/api/v1/poets/${slug}/poetry?page=${pageParam}${catParam}`);
+            const response = await api.get(`/api/v1/poets/${slug}/poetry?page=${pageParam}${catParam}`);
             return response.data;
         },
         getNextPageParam: (lastPage) => {
@@ -58,9 +58,9 @@ const PoetProfile = ({ lang }) => {
 
     // Categories Query
     const { data: categories } = useQuery({
-        queryKey: ['poet-categories', slug],
+        queryKey: ['poet-categories', slug, lang],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/poets/${slug}/categories`);
+            const response = await api.get(`/api/v1/poets/${slug}/categories`);
             return response.data;
         },
         enabled: !!slug
@@ -74,9 +74,9 @@ const PoetProfile = ({ lang }) => {
         isFetchingNextPage: isCoupletsFetching,
         isLoading: isCoupletsLoading
     } = useInfiniteQuery({
-        queryKey: ['poet-couplets', slug],
+        queryKey: ['poet-couplets', slug, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            const response = await axios.get(`/api/v1/poets/${slug}/couplets?page=${pageParam}`);
+            const response = await api.get(`/api/v1/poets/${slug}/couplets?page=${pageParam}`);
             return response.data;
         },
         getNextPageParam: (lastPage) => {

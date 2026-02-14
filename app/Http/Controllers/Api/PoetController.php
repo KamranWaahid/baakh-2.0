@@ -75,7 +75,7 @@ class PoetController extends Controller
 
     public function tags(Request $request)
     {
-        $lang = $request->get('lang', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
 
         $tags = Tags::where('type', 'poets')
             ->with([
@@ -195,7 +195,7 @@ class PoetController extends Controller
     }
     public function getPoetry(Request $request, $slug)
     {
-        $lang = $request->get('lang', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         $catSlug = $request->get('category');
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
@@ -265,7 +265,7 @@ class PoetController extends Controller
 
     public function getCouplets(Request $request, $slug)
     {
-        $lang = $request->get('lang', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
         // Couplets are where poetry_id is null? Or a specific category?
@@ -316,7 +316,7 @@ class PoetController extends Controller
 
     public function getCategories(Request $request, $slug)
     {
-        $lang = $request->get('lang', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
         $categories = Categories::whereHas('poetry', function ($q) use ($poet) {

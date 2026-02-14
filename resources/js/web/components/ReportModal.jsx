@@ -7,6 +7,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import api from '@/admin/api/axios';
 import { Textarea } from "@/components/ui/textarea";
 
 const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetId }) => {
@@ -18,17 +19,14 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetI
         e.preventDefault();
         setLoading(true);
         const reason = e.target.reason.value;
-        const url = window.location.href;
+        // const url = window.location.href; // This variable is no longer needed as it's directly used in the post call
 
         try {
-            await import('../../admin/api/axios').then(module => {
-                const api = module.default;
-                return api.post('/api/v1/report', {
-                    reason,
-                    url,
-                    poem_id: poemId,
-                    poet_id: poetId
-                });
+            const response = await api.post('/api/v1/report', {
+                reason,
+                url: window.location.href,
+                poem_id: poemId || null,
+                poet_id: poetId || null
             });
             setSubmitted(true);
         } catch (error) {

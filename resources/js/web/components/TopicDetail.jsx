@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/admin/api/axios';
 import { Skeleton } from '@/components/ui/skeleton';
 import PostCard from './PostCard';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,9 +25,7 @@ const TopicDetail = () => {
                     ? `/api/v1/topic-categories/${slug}`
                     : `/api/v1/tags/${slug}`;
 
-                const response = await axios.get(endpoint, {
-                    headers: { 'Accept-Language': lang }
-                });
+                const response = await api.get(endpoint);
                 setData(response.data);
             } catch (err) {
                 console.error("Failed to fetch topic details", err);
