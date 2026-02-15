@@ -101,6 +101,12 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        \Log::info('SetPassword attempt', [
+            'user_id' => $user->id,
+            'google_id' => $user->google_id,
+            'user_attributes' => $user->toArray(),
+        ]);
+
         // Only allow if user has google_id (social login)
         if (!$user->google_id) {
             return response()->json(['message' => 'Action not authorized.'], 403);
