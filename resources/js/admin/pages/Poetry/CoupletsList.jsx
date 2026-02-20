@@ -134,9 +134,15 @@ const CoupletsList = () => {
                                         <div className="flex flex-col gap-1">
                                             <span className="text-sm font-medium text-gray-700" lang="sd">{c.poet_details?.poet_laqab || 'N/A'}</span>
                                             <div className="flex items-center gap-1.5">
-                                                <Badge variant={c.poetry?.visibility === 1 ? "outline" : "secondary"} className="text-[9px] uppercase h-4 px-1.5">
-                                                    {c.poetry?.visibility === 1 ? 'Visible' : 'Hidden'}
-                                                </Badge>
+                                                {c.poetry ? (
+                                                    <Badge variant={c.poetry.visibility === 1 ? "outline" : "secondary"} className="text-[9px] uppercase h-4 px-1.5">
+                                                        {c.poetry.visibility === 1 ? 'Visible' : 'Hidden'}
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-[9px] uppercase h-4 px-1.5 border-green-200 text-green-700 bg-green-50">
+                                                        Active
+                                                    </Badge>
+                                                )}
                                                 {c.poetry?.is_featured === 1 && (
                                                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                 )}
@@ -262,13 +268,19 @@ const CoupletsList = () => {
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell">
                                                 <div className="flex items-center gap-2">
-                                                    {c.poetry?.visibility === 1 ? (
-                                                        <Badge variant="default" className="text-[10px] uppercase h-5 font-normal">Visible</Badge>
+                                                    {c.poetry ? (
+                                                        <>
+                                                            {c.poetry.visibility === 1 ? (
+                                                                <Badge variant="default" className="text-[10px] uppercase h-5 font-normal">Visible</Badge>
+                                                            ) : (
+                                                                <Badge variant="secondary" className="text-[10px] uppercase h-5 font-normal">Hidden</Badge>
+                                                            )}
+                                                            {c.poetry.is_featured === 1 && (
+                                                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                                            )}
+                                                        </>
                                                     ) : (
-                                                        <Badge variant="secondary" className="text-[10px] uppercase h-5 font-normal">Hidden</Badge>
-                                                    )}
-                                                    {c.poetry?.is_featured === 1 && (
-                                                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                                        <Badge variant="outline" className="text-[10px] uppercase h-5 font-normal border-green-200 text-green-700 bg-green-50">Active</Badge>
                                                     )}
                                                 </div>
                                             </TableCell>

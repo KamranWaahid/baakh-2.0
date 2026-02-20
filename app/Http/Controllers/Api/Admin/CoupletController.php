@@ -42,6 +42,70 @@ class CoupletController extends Controller
         $perPage = $request->get('per_page', 10);
         $couplets = $query->orderBy('id', 'desc')->paginate($perPage);
 
-        return response()->json($couplets);
+    }
+
+    public function show($id)
+    {
+        $couplet = Couplets::with([
+            'poet_details' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->findOrFail($id);
+        return response()->json($couplet);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'poet_id' => 'required|exists:poets,id',
+            'couplet_text' => 'required|string',
+            'couplet_slug' => 'required|unique:poetry_couplets,couplet_slug',
+            'couplet_tags' => 'nullable|array',
+            'lang' => 'required|string|max:10'
+        ]);
+
+        $couplet = Couplets::create([
+            'poetry_id' => 0, // Independent couplet
+            'poet_id' => $validated['poet_id'],
+            'couplet_text' => strip_tags($validated['couplet_text'], '<p><br><b><strong><i><em><ul><ol><li><blockquote>'),
+            'couplet_slug' => $validated['couplet_slug'],
+            'couplet_tags' => json_encode($validated['couplet_tags'] ?? []),
+            'lang' => $validated['lang'],
+        ]);
+
+        return response()->json([
+            'message' => 'Couplet created successfully',
+            'id' => $couplet->id
+        ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $couplet = Couplets::findOrFail($id);
+
+        $validated = $request->validate([
+            'poet_id' => 'required|exists:poets,id',
+            'couplet_text' => 'required|string',
+            'couplet_slug' => 'required|unique:poetry_couplets,couplet_slug,' . $id,
+            'couplet_tags' => 'nullable|array',
+            'lang' => 'required|string|max:10'
+        ]);
+
+        $couplet->update([
+            'poet_id' => $validated['poet_id'],
+            'couplet_text' => strip_tags($validated['couplet_text'], '<p><br><b><strong><i><em><ul><ol><li><blockquote>'),
+            'couplet_slug' => $validated['couplet_slug'],
+            'couplet_tags' => json_encode($validated['couplet_tags'] ?? []),
+            'lang' => $validated['lang'],
+        ]);
+
+        return response()->json(['message' => 'Couplet updated successfully']);
+    }
+
+    public function destroy($id)
+    {
+        $couplet = Couplets::findOrFail($id);
+        $couplet->delete();
+        return response()->json(['message' => 'Couplet moved to trash']);
     }
 }

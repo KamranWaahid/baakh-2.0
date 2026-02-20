@@ -122,7 +122,7 @@ class RomanizerController extends Controller
         // Split by whitespace (space, tab, newline, etc.)
         $get_text = preg_split('/\s+/u', $request->text, -1, PREG_SPLIT_NO_EMPTY);
         $text = array_unique($get_text);
-        $missing_words = array();
+        $missing = array();
         // Punctuation to strip from beginning and end
         $punctuation = ['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
 

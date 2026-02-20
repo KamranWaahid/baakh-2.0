@@ -197,7 +197,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
-        Route::get('couplets', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'index']);
+        Route::apiResource('couplets', \App\Http\Controllers\Api\Admin\CoupletController::class);
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);
         Route::apiResource('categories', \App\Http\Controllers\Api\Admin\CategoryController::class);
         Route::post('hesudhar/refresh', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'refresh']);
