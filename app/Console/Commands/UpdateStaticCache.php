@@ -506,6 +506,16 @@ class UpdateStaticCache extends Command
             'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
             'entries_count' => $poet->poetry_count ?? 0,
             'suggested' => $suggested,
+            'books' => $poet->books()->where('visibility', 1)->with('progress')->get()->map(function ($book) {
+                return [
+                    'id' => $book->id,
+                    'title' => $book->title,
+                    'cover_image' => $book->cover_image,
+                    'total_pages' => $book->total_pages,
+                    'pages_completed' => $book->progress->last_page ?? 0,
+                    'percentage' => $book->completion_percentage
+                ];
+            }),
         ];
         $this->cache->set("poet_detail_{$poet->poet_slug}_{$locale}", $data);
     }

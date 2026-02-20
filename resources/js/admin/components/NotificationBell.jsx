@@ -55,8 +55,6 @@ const COLOR_MAP = {
 const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
 
     // Fetch notifications
     const { data } = useQuery({
@@ -66,22 +64,11 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
             const res = await api.get(endpoint);
             return res.data;
         },
-        refetchInterval: 10000, // Poll every 10s
+        refetchInterval: 10000,
     });
 
     const unreadCount = data?.unread_count || 0;
     const notifications = data?.notifications || [];
-
-    // Close dropdown on outside click
-    useEffect(() => {
-        const handleClick = (e) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClick);
-        return () => document.removeEventListener('mousedown', handleClick);
-    }, []);
 
     const markReadMutation = useMutation({
         mutationFn: (id) => {
@@ -111,7 +98,6 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
         if (!n.read_at) markReadMutation.mutate(n.id);
         if (n.link) {
             navigate(n.link);
-            setIsOpen(false);
         }
     };
 
@@ -131,108 +117,105 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     };
 
     return (
-        <div className="relative" ref={dropdownRef}>
-            {/* Bell Button */}
-            <Button
-                variant="ghost"
-                size="icon"
-                className={`relative rounded-full transition-colors ${variant === 'web' ? 'hover:bg-gray-100 h-9 w-9' : 'h-9 w-9'}`}
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <Bell className={`${variant === 'web' ? 'h-4 w-4' : 'h-5 w-5'} text-gray-600`} />
-                {unreadCount > 0 && (
-                    variant === 'web' ? (
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-                    ) : (
-                        <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-pulse">
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                    )
-                )}
-            </Button>
-
-            {/* Dropdown Panel */}
-            {isOpen && (
-                <div className={`absolute right-0 top-11 w-[380px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200 ${variant === 'web' ? 'mt-2' : ''}`}>
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/80">
-                        <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-sm">Notifications</h3>
-                            {unreadCount > 0 && (
-                                <Badge variant="destructive" className="text-[10px] h-5 px-1.5">{unreadCount} new</Badge>
-                            )}
-                        </div>
-                        <div className="flex gap-1">
-                            {unreadCount > 0 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs h-7 px-2 text-blue-600 hover:text-blue-700"
-                                    onClick={() => markAllReadMutation.mutate()}
-                                    disabled={markAllReadMutation.isPending}
-                                >
-                                    <Check className="h-3 w-3 mr-1" /> Read all
-                                </Button>
-                            )}
-                            {notifications.length > 0 && (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-xs h-7 px-2 text-gray-400 hover:text-red-500"
-                                    onClick={() => clearMutation.mutate()}
-                                    disabled={clearMutation.isPending}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Notification List */}
-                    <ScrollArea className="max-h-[420px]">
-                        {notifications.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                                <BellOff className="h-10 w-10 mb-3 opacity-40" />
-                                <p className="text-sm font-medium">No notifications yet</p>
-                                <p className="text-xs mt-1">Activity will appear here</p>
-                            </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`relative rounded-full transition-colors ${variant === 'web' ? 'hover:bg-gray-100 h-9 w-9' : 'h-9 w-9'}`}
+                >
+                    <Bell className={`${variant === 'web' ? 'h-4 w-4' : 'h-5 w-5'} text-gray-600`} />
+                    {unreadCount > 0 && (
+                        variant === 'web' ? (
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                         ) : (
-                            <div className="divide-y divide-gray-100">
-                                {notifications.map((n) => {
-                                    const IconComp = getIcon(n.icon);
-                                    const colorClasses = COLOR_MAP[n.color] || COLOR_MAP.gray;
-                                    const isUnread = !n.read_at;
+                            <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-pulse">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )
+                    )}
+                </Button>
+            </DropdownMenuTrigger>
 
-                                    return (
-                                        <div
-                                            key={n.id}
-                                            className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-gray-50 ${isUnread ? 'bg-blue-50/40' : ''}`}
-                                            onClick={() => handleNotificationClick(n)}
-                                        >
-                                            <div className={`shrink-0 mt-0.5 h-8 w-8 rounded-full flex items-center justify-center ${colorClasses}`}>
-                                                <IconComp className="h-4 w-4" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <p className={`text-sm truncate ${isUnread ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
-                                                        {n.title}
-                                                    </p>
-                                                    {isUnread && (
-                                                        <span className="shrink-0 h-2 w-2 rounded-full bg-blue-500" />
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-gray-500 truncate mt-0.5">{n.message}</p>
-                                                <p className="text-[10px] text-gray-400 mt-1">{getTimeAgo(n.created_at)}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+            <DropdownMenuContent align="end" className="w-[380px] p-0 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20">
+                    <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-sm">Notifications</h3>
+                        {unreadCount > 0 && (
+                            <Badge variant="destructive" className="text-[10px] h-5 px-1.5 leading-none">{unreadCount} new</Badge>
                         )}
-                    </ScrollArea>
+                    </div>
+                    <div className="flex gap-1">
+                        {unreadCount > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-transparent"
+                                onClick={() => markAllReadMutation.mutate()}
+                                disabled={markAllReadMutation.isPending}
+                            >
+                                <Check className="h-3 w-3 mr-1" /> Read all
+                            </Button>
+                        )}
+                        {notifications.length > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-7 px-2 text-muted-foreground hover:text-destructive hover:bg-transparent"
+                                onClick={() => clearMutation.mutate()}
+                                disabled={clearMutation.isPending}
+                            >
+                                <X className="h-3 w-3" />
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            )}
-        </div>
+
+                {/* Notification List */}
+                <ScrollArea className="h-[420px]">
+                    {notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                            <BellOff className="h-10 w-10 mb-3 opacity-20" />
+                            <p className="text-sm font-medium">No notifications yet</p>
+                            <p className="text-xs mt-1">Activity will appear here</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border/50">
+                            {notifications.map((n) => {
+                                const IconComp = getIcon(n.icon);
+                                const colorClasses = COLOR_MAP[n.color] || COLOR_MAP.gray;
+                                const isUnread = !n.read_at;
+
+                                return (
+                                    <div
+                                        key={n.id}
+                                        className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 ${isUnread ? 'bg-primary/5' : ''}`}
+                                        onClick={() => handleNotificationClick(n)}
+                                    >
+                                        <div className={`shrink-0 mt-0.5 h-8 w-8 rounded-full flex items-center justify-center ${colorClasses}`}>
+                                            <IconComp className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <p className={`text-sm truncate ${isUnread ? 'font-semibold text-foreground' : 'text-foreground/70'}`}>
+                                                    {n.title}
+                                                </p>
+                                                {isUnread && (
+                                                    <span className="shrink-0 h-2 w-2 rounded-full bg-primary" />
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message}</p>
+                                            <p className="text-[10px] text-muted-foreground/60 mt-1">{getTimeAgo(n.created_at)}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </ScrollArea>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 
