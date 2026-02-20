@@ -41,7 +41,7 @@ class CoupletController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $couplets = $query->orderBy('id', 'desc')->paginate($perPage);
-
+        return response()->json($couplets);
     }
 
     public function show($id)
