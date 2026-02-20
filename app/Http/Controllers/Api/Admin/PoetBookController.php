@@ -42,6 +42,7 @@ class PoetBookController extends Controller
         $validated = $request->validate([
             'poet_id' => 'required|exists:poets,id',
             'title' => 'required|string|max:255',
+            'title_sd' => 'nullable|string|max:255',
             'total_pages' => 'required|integer|min:1',
             'edition' => 'nullable|string',
             'publisher' => 'nullable|string',
@@ -101,6 +102,7 @@ class PoetBookController extends Controller
     {
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
+            'title_sd' => 'nullable|string|max:255',
             'total_pages' => 'sometimes|required|integer|min:1',
             'edition' => 'nullable|string',
             'publisher' => 'nullable|string',

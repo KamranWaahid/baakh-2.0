@@ -135,8 +135,13 @@ const BookList = () => {
                                         const progressValue = calculateProgress(book.progress?.last_page, book.total_pages);
                                         return (
                                             <TableRow key={book.id}>
-                                                <TableCell className="font-medium whitespace-nowrap">
-                                                    {book.title}
+                                                <TableCell className="font-medium">
+                                                    <div>{book.title}</div>
+                                                    {book.title_sd && (
+                                                        <div className="text-xs text-muted-foreground font-arabic mt-1" dir="rtl">
+                                                            {book.title_sd}
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="whitespace-nowrap">
                                                     <span lang="sd">{book.poet?.details?.[0]?.poet_laqab || book.poet?.poet_slug}</span>

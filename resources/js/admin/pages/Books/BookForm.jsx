@@ -36,6 +36,7 @@ const BookForm = () => {
     const [formData, setFormData] = useState({
         poet_id: '',
         title: '',
+        title_sd: '',
         total_pages: '',
         edition: '',
         publisher: '',
@@ -74,6 +75,7 @@ const BookForm = () => {
             setFormData({
                 poet_id: bookData.poet_id?.toString() || '',
                 title: bookData.title || '',
+                title_sd: bookData.title_sd || '',
                 total_pages: bookData.total_pages?.toString() || '',
                 edition: bookData.edition || '',
                 publisher: bookData.publisher || '',
@@ -97,6 +99,7 @@ const BookForm = () => {
             // Append all form fields
             fd.append('poet_id', data.poet_id);
             fd.append('title', data.title);
+            if (data.title_sd) fd.append('title_sd', data.title_sd);
             fd.append('total_pages', data.total_pages);
             if (data.edition) fd.append('edition', data.edition);
             if (data.publisher) fd.append('publisher', data.publisher);
@@ -198,16 +201,30 @@ const BookForm = () => {
                                 <CardTitle>Book Details</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Book Title</Label>
-                                    <Input
-                                        id="title"
-                                        name="title"
-                                        value={formData.title}
-                                        onChange={handleChange}
-                                        placeholder="e.g. Shah Jo Risalo"
-                                        required
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title">Book Title (English/Default)</Label>
+                                        <Input
+                                            id="title"
+                                            name="title"
+                                            value={formData.title}
+                                            onChange={handleChange}
+                                            placeholder="e.g. Shah Jo Risalo"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title_sd" className="font-arabic text-right block">ڪتاب جو نالو (سنڌي)</Label>
+                                        <Input
+                                            id="title_sd"
+                                            name="title_sd"
+                                            value={formData.title_sd}
+                                            onChange={handleChange}
+                                            placeholder="مثال: شاهه جو رسالو"
+                                            className="font-arabic text-right"
+                                            dir="rtl"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

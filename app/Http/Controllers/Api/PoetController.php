@@ -243,6 +243,7 @@ class PoetController extends Controller
                 return [
                     'id' => $book->id,
                     'title' => $book->title,
+                    'title_sd' => $book->title_sd,
                     'cover_image' => $book->cover_image,
                     'total_pages' => $book->total_pages,
                     'pages_completed' => $book->progress->last_page ?? 0,

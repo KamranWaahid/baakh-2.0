@@ -17,6 +17,7 @@ class PoetBook extends Model
         'poet_id',
         'slug',
         'title',
+        'title_sd',
         'total_pages',
         'edition',
         'publisher',

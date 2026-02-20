@@ -165,11 +165,12 @@ const PoetProfile = ({ lang }) => {
                                 {poet?.books?.length > 0 && (
                                     <Button
                                         variant="outline"
-                                        className="flex-1 rounded-full border-gray-300 font-medium h-10"
+                                        size="icon"
+                                        className="rounded-full border-gray-300 h-10 w-10 shrink-0"
                                         onClick={() => setBooksOpen(true)}
+                                        title={isRtl ? 'ڪتاب' : 'Books'}
                                     >
-                                        <BookOpen className="w-4 h-4 mr-2" />
-                                        {isRtl ? 'ڪتاب' : 'Books'}
+                                        <BookOpen className="h-4 w-4" />
                                     </Button>
                                 )}
                                 <DropdownMenu>
@@ -357,11 +358,12 @@ const PoetProfile = ({ lang }) => {
                             {poet?.books?.length > 0 && (
                                 <Button
                                     variant="outline"
-                                    className="flex-1 rounded-full border-gray-300 font-medium h-10"
+                                    size="icon"
+                                    className="rounded-full border-gray-300 h-10 w-10 shrink-0"
                                     onClick={() => setBooksOpen(true)}
+                                    title={isRtl ? 'ڪتاب' : 'Books'}
                                 >
-                                    <BookOpen className="w-4 h-4 mr-2" />
-                                    {isRtl ? 'ڪتاب' : 'Books'}
+                                    <BookOpen className="h-4 w-4" />
                                 </Button>
                             )}
                             <DropdownMenu>
@@ -550,7 +552,7 @@ const PoetProfile = ({ lang }) => {
                                         {book.cover_image ? (
                                             <img
                                                 src={getImageUrl(book.cover_image)}
-                                                alt={book.title}
+                                                alt={isRtl && book.title_sd ? book.title_sd : book.title}
                                                 className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                             />
                                         ) : (
@@ -562,7 +564,7 @@ const PoetProfile = ({ lang }) => {
                                     <div className="flex-1 space-y-3 pt-1">
                                         <div>
                                             <h4 className="font-bold text-gray-900 leading-tight">
-                                                {book.title}
+                                                {isRtl && book.title_sd ? book.title_sd : book.title}
                                             </h4>
                                             <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
                                                 {isRtl ? `ڪل صفحا: ${book.total_pages}` : `Total Pages: ${book.total_pages}`}
