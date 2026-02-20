@@ -131,6 +131,12 @@ const Navbar = ({ lang }) => {
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
                                 </DropdownMenuItem>
+                                {user?.roles?.some(role => ['super_admin', 'admin'].includes(role)) && (
+                                    <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
+                                        <Shield className="mr-2 h-4 w-4 text-primary" />
+                                        <span className="font-semibold">{isRtl ? 'ايڊمن پينل' : 'Admin Panel'}</span>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="focus:bg-gray-100" onClick={async () => { await logout(); navigate(`/${lang}`); }}>
                                     <LogOut className="mr-2 h-4 w-4" />

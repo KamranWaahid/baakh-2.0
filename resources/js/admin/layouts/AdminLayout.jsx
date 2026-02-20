@@ -44,6 +44,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Toaster } from 'sonner';
 import NotificationBell from '../components/NotificationBell';
+import Logo from '../../web/components/Logo';
 const SidebarContext = createContext({ onLinkClick: () => { } });
 
 const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
@@ -111,9 +112,10 @@ const Sidebar = ({ onLinkClick }) => {
     return (
         <SidebarContext.Provider value={{ onLinkClick }}>
             <div className="h-full flex flex-col gap-4 py-4 overflow-y-auto">
-                <div className="px-6 flex items-center gap-2">
+                <Link to="/" className="px-6 flex items-center gap-2 group">
+                    <Logo className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
                     <span className="font-bold text-xl">Baakh Admin</span>
-                </div>
+                </Link>
                 <nav className="flex-1 px-4 flex flex-col gap-1">
                     <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>
 
