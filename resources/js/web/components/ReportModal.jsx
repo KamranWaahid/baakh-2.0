@@ -49,7 +49,7 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetI
                     {trigger}
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-md bg-white p-8 md:p-12 shadow-xl border-0 font-sans">
+            <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto bg-white p-6 md:p-12 shadow-xl border-0 font-sans">
                 <DialogHeader className="mb-6">
                     <DialogTitle className={`text-center font-serif text-3xl font-medium tracking-tight ${isRtl ? 'font-arabic' : ''}`}>
                         {submitted ? (isRtl ? 'رپورٽ ملي وئي!' : 'Report Received!') : (isRtl ? 'رپورٽ ڪريو' : 'Report Issue')}

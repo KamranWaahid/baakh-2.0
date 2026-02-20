@@ -54,7 +54,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent hideClose className="sm:max-w-[520px] p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-2xl">
+            <DialogContent hideClose className="w-full h-full sm:h-auto sm:max-w-[520px] p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-none sm:rounded-2xl">
                 {/* Search Input - Clean & Borderless */}
                 <div className="flex items-center gap-3 px-5 py-4" dir={isRtl ? 'rtl' : 'ltr'}>
                     <Search className="h-5 w-5 text-gray-400 shrink-0" />
@@ -77,7 +77,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                 </div>
 
                 {/* Results Area */}
-                <div className="h-[350px] overflow-y-auto scroll-smooth" dir={isRtl ? 'rtl' : 'ltr'}>
+                <div className="flex-1 sm:h-[450px] overflow-y-auto scroll-smooth pb-20 sm:pb-0" dir={isRtl ? 'rtl' : 'ltr'}>
                     {!query && (
                         <div className="py-16 text-center text-sm text-gray-400">
                             {isRtl ? 'شاعر، شاعري، يا دور ڳوليو...' : 'Search for poets, poetry, or periods...'}

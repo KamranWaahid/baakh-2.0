@@ -336,7 +336,7 @@ const PoetProfile = ({ lang }) => {
                                         {isRtl ? 'شاعر بابت' : 'About Poet'}
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+                                <DialogContent className="w-[95vw] sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
                                     <DialogHeader className="p-6 pb-2">
                                         <div className="flex flex-col items-center gap-4 mb-2">
                                             <div className="h-24 w-24 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 shrink-0">

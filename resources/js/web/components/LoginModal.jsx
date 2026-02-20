@@ -299,7 +299,7 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
                     {trigger}
                 </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-md bg-white p-8 sm:p-12 shadow-xl border-0">
+            <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto bg-white p-6 sm:p-12 shadow-xl border-0">
                 <DialogHeader className="mb-8">
                     <DialogTitle className="text-center font-serif text-3xl font-medium tracking-tight">
                         {mode === 'register' ? (isRtl ? 'گوگل سان جاري رکو.' : 'Continue with Google.') : (isRtl ? 'خوش آمديد.' : 'Welcome back.')}

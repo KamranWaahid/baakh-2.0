@@ -23,7 +23,7 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl p-0 bg-[#FFFAEC] border-none shadow-2xl overflow-hidden rounded-2xl">
+            <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[95vh] overflow-y-auto p-0 bg-[#FFFAEC] border-none shadow-2xl rounded-2xl">
                 <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between border-b border-gray-100 bg-white">
                     <div className={isRtl ? 'text-right' : 'text-left'}>
                         <DialogTitle className="text-xl font-bold text-gray-900">
