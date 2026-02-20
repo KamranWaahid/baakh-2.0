@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/axios';
-import { Loader2, RefreshCw, CheckCircle2, Circle, BookOpen, Save } from 'lucide-react';
+import { Loader2, RefreshCw, Check, Circle, BookOpen, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -243,9 +243,13 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                                                     className="transition-transform active:scale-90"
                                                 >
                                                     {page.is_completed ? (
-                                                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                                        <div className="flex items-center justify-center">
+                                                            <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center text-green-600 border border-green-200 shadow-sm">
+                                                                <Check className="h-4 w-4 stroke-[3]" />
+                                                            </div>
+                                                        </div>
                                                     ) : (
-                                                        <Circle className="h-5 w-5 text-gray-300" />
+                                                        <Circle className="h-5 w-5 text-gray-300 mx-auto" />
                                                     )}
                                                 </button>
                                             </TableCell>

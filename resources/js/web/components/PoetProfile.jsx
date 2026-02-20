@@ -580,8 +580,8 @@ const PoetProfile = ({ lang }) => {
                                             <SegmentedProgressBar segments={book.segments} className="h-2" />
                                             <p className="text-[10px] text-gray-400 font-medium">
                                                 {isRtl
-                                                    ? `${book.pages_completed} منجهان ${book.total_pages} صفحا مڪمل`
-                                                    : `${book.pages_completed} of ${book.total_pages} pages completed`}
+                                                    ? `مڪمل صفحا: ${book.pages_completed} / ${book.total_pages}`
+                                                    : `Pages: ${book.pages_completed} / ${book.total_pages}`}
                                             </p>
                                         </div>
                                     </div>

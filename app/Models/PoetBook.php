@@ -62,7 +62,17 @@ class PoetBook extends Model
      *
      * @var array
      */
-    protected $appends = ['completion_percentage', 'page_segments'];
+    protected $appends = ['completion_percentage', 'page_segments', 'completed_pages_count'];
+
+    /**
+     * Get number of completed pages
+     */
+    public function getCompletedPagesCountAttribute(): int
+    {
+        return PoetBookPage::where('book_id', $this->id)
+            ->where('is_completed', true)
+            ->count();
+    }
 
     /**
      * Get completion percentage

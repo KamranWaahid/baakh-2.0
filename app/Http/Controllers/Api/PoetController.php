@@ -246,7 +246,7 @@ class PoetController extends Controller
                     'title_sd' => $book->title_sd,
                     'cover_image' => $book->cover_image,
                     'total_pages' => $book->total_pages,
-                    'pages_completed' => $book->progress->last_page ?? 0,
+                    'pages_completed' => $book->completed_pages_count,
                     'percentage' => $book->completion_percentage,
                     'segments' => $book->page_segments,
                 ];
