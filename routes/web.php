@@ -49,6 +49,12 @@ Route::get('/test-mail', function () {
         $to = request('to', 'admin@baakh.com');
         echo "Attempting to send a test email to: <b>$to</b>...<br>";
 
+        // Debugging .env issues
+        $pwd = config('mail.mailers.smtp.password');
+        if (str_ends_with($pwd, ';')) {
+            echo "<span style='color:orange'>WARNING: Your MAIL_PASSWORD in .env ends with a semicolon (;). Is this intended?</span><br>";
+        }
+
         \Illuminate\Support\Facades\Mail::raw('This is a test email to verify SMTP settings.', function ($message) use ($to) {
             $message->to($to)
                 ->subject('SMTP Verification Test');
@@ -66,6 +72,10 @@ Route::get('/test-mail', function () {
         echo "Encryption: " . config('mail.mailers.smtp.encryption') . "<br>";
         echo "Username: " . config('mail.mailers.smtp.username') . "<br>";
         echo "From: " . config('mail.from.address') . "<br>";
+
+        if (config('mail.default') === 'smtp') {
+            echo "<br><b>Recommendation:</b> Try changing <code>MAIL_MAILER=sendmail</code> in your .env file.";
+        }
     }
 });
 
