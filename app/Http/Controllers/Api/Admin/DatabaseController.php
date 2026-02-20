@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -54,9 +55,6 @@ class DatabaseController extends Controller
         }
     }
 
-    /**
-     * Sync Migrations - Mark migrations as ran if their tables already exist.
-     */
     public function syncMigrations(Request $request)
     {
         try {
@@ -66,6 +64,8 @@ class DatabaseController extends Controller
             }, DB::select('SHOW TABLES'));
 
             $migrationFiles = scandir(database_path('migrations'));
+            sort($migrationFiles);
+
             $syncedCount = 0;
             $logs = [];
 
@@ -75,35 +75,49 @@ class DatabaseController extends Controller
 
                 $migrationName = str_replace('.php', '', $file);
 
-                // Check if already in migrations table
-                $existsInMigrations = DB::table('migrations')->where('migration', $migrationName)->exists();
-                if ($existsInMigrations)
+                if (DB::table('migrations')->where('migration', $migrationName)->exists())
                     continue;
 
-                // Open file to see what table it creates
                 $content = file_get_contents(database_path('migrations/' . $file));
 
+                // Detection for Schema::create
                 if (preg_match("/Schema::create\(['\"](.+?)['\"]/", $content, $matches)) {
                     $tableName = $matches[1];
-
                     if (in_array($tableName, $tables)) {
-                        DB::table('migrations')->insert([
-                            'migration' => $migrationName,
-                            'batch' => 1,
-                        ]);
+                        DB::table('migrations')->insert(['migration' => $migrationName, 'batch' => 1]);
                         $syncedCount++;
-                        $logs[] = "Synced: {$migrationName} (Table '{$tableName}' already existed)";
+                        $logs[] = "Synced Table: {$migrationName} ('{$tableName}' exists)";
+                        continue;
+                    }
+                }
+
+                // Detection for Schema::table (Column Addition)
+                if (preg_match("/Schema::table\(['\"](.+?)['\"]/", $content, $tableMatches)) {
+                    $tableName = $tableMatches[1];
+                    if (in_array($tableName, $tables)) {
+                        // Crude check for column name in $table->type('column')
+                        if (preg_match("/\\\$table->\w+\(['\"](.+?)['\"]/", $content, $colMatches)) {
+                            $columnName = $colMatches[1];
+                            if (Schema::hasColumn($tableName, $columnName)) {
+                                DB::table('migrations')->insert(['migration' => $migrationName, 'batch' => 1]);
+                                $syncedCount++;
+                                $logs[] = "Synced Column: {$migrationName} ('{$tableName}.{$columnName}' exists)";
+                            }
+                        }
                     }
                 }
             }
 
             return response()->json([
-                'message' => "Successfully synced {$syncedCount} migrations.",
+                'message' => "Successfully synced {$syncedCount} migration(s).",
                 'synced_count' => $syncedCount,
                 'logs' => $logs
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'details' => $e->getFile() . ' L' . $e->getLine()
+            ], 500);
         }
     }
 
