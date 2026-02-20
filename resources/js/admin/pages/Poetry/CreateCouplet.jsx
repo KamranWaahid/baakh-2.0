@@ -57,6 +57,8 @@ const CreateCouplet = () => {
     const [openPoet, setOpenPoet] = useState(false);
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [slugError, setSlugError] = useState(null);
+    const [coupletContent, setCoupletContent] = useState('');
+    const queryClient = useQueryClient();
 
     const { data: meta, isLoading: isMetaLoading } = useQuery({
         queryKey: ['poetry-meta'],
