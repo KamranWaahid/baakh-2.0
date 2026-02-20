@@ -56,4 +56,28 @@ class PerformanceController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Trigger the poets:optimize-images Artisan command.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function optimizeImages(Request $request)
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('poets:optimize-images');
+            $output = \Illuminate\Support\Facades\Artisan::output();
+
+            return response()->json([
+                'message' => 'Image optimization completed successfully.',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred during image optimization',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

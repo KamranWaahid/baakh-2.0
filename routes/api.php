@@ -189,6 +189,7 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
 
     // Performance Analysis
     Route::post('performance/analyze-heap', [PerformanceController::class, 'analyzeHeap']);
+    Route::post('performance/optimize-images', [PerformanceController::class, 'optimizeImages']);
 
     // System Activity
     Route::get('activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
