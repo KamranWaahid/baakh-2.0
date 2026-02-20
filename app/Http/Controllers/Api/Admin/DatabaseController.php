@@ -132,10 +132,14 @@ class DatabaseController extends Controller
                 'output' => $output
             ]);
         } catch (\Exception $e) {
-            \Log::error('Migration failed: ' . $e->getMessage());
+            \Log::error('Migration failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'message' => 'Migration failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'details' => $e->getFile() . ' L' . $e->getLine()
             ], 500);
         }
     }
