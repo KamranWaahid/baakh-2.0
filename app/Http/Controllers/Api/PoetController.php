@@ -201,6 +201,13 @@ class PoetController extends Controller
                 ];
             });
 
+        $coupletsCount = \App\Models\Couplets::where('poet_id', $poet->id)
+            ->where('lang', $lang)
+            ->where(function ($q) {
+                $q->whereNull('poetry_id')->orWhere('poetry_id', 0);
+            })
+            ->count();
+
         $data = [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
@@ -225,6 +232,7 @@ class PoetController extends Controller
             'death_location_sd' => $getLocation($detailSd->death_place ?? $detailEn->death_place ?? null, 'sd'),
 
             'entries_count' => $poet->poetry_count ?? 0,
+            'couplets_count' => $coupletsCount ?? 0,
             'suggested' => $suggested,
             // Categories/Menu would usually come from aggregating poetry types, 
             // but for now we'll return a static list or derived from actual poetry if complex query allowed.

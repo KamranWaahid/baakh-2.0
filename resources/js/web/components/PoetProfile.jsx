@@ -198,18 +198,20 @@ const PoetProfile = ({ lang }) => {
                                         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
                                     )}
                                 </button>
-                                <button
-                                    onClick={() => setActiveTab('couplets')}
-                                    className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'couplets'
-                                        ? 'text-black'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                        }`}
-                                >
-                                    {isRtl ? 'بيت' : 'Couplets'}
-                                    {activeTab === 'couplets' && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
-                                    )}
-                                </button>
+                                {poet.couplets_count > 0 && (
+                                    <button
+                                        onClick={() => setActiveTab('couplets')}
+                                        className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'couplets'
+                                            ? 'text-black'
+                                            : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        {isRtl ? 'بيت' : 'Couplets'}
+                                        {activeTab === 'couplets' && (
+                                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
+                                        )}
+                                    </button>
+                                )}
                                 {categories?.filter(cat => cat.slug !== 'bait' && cat.slug !== 'couplets').map((cat) => (
                                     <button
                                         key={cat.id}
