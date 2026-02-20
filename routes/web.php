@@ -47,6 +47,17 @@ Route::get('sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'inde
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api).*$')->name('web.spa');
 
 
+Route::get('/run-migrations', function () {
+    try {
+        echo "Running migrations...<br>";
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        echo \Illuminate\Support\Facades\Artisan::output();
+        echo "<br>Done!";
+    } catch (\Exception $e) {
+        echo "Error: " . $e->getMessage();
+    }
+});
+
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
 })->name('login');
