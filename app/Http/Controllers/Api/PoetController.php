@@ -130,9 +130,9 @@ class PoetController extends Controller
         return response()->json($tags);
     }
 
-    public function show($slug)
+    public function show(Request $request, $slug)
     {
-        $lang = app()->getLocale();
+        $lang = $request->get('lang', app()->getLocale());
         $cached = $this->cache->get("poet_detail_{$slug}_{$lang}");
         if ($cached) {
             return response()->json($cached);
@@ -142,6 +142,9 @@ class PoetController extends Controller
             ->where('visibility', 1)
             ->with([
                 'all_details',
+                'books' => function ($q) {
+                    $q->where('visibility', 1)->with('progress');
+                },
                 'poetry' => function ($q) {
                     // Fetch recent poetry, limited
                     $q->latest()->take(10);
