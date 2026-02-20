@@ -179,7 +179,11 @@ const Navbar = ({ lang }) => {
                         <Menu className="h-5 w-5 md:h-6 md:w-6" />
                     </Button>
 
-                    <Link to={`/${lang}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95 duration-200">
+                    <Link
+                        to={`/${lang}`}
+                        aria-label={lang === 'sd' ? "باک هوم" : "Baakh Home"}
+                        className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95 duration-200"
+                    >
                         <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
                     </Link>
 
