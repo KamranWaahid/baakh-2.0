@@ -44,9 +44,6 @@ Route::prefix('sitemap')->group(function () {
 });
 Route::get('sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap.index');
 
-Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api).*$')->name('web.spa');
-
-
 Route::get('/run-migrations', function () {
     try {
         echo "Running migrations...<br>";
@@ -127,6 +124,8 @@ Route::get('/fix-admin', function () {
         echo "Error: " . $e->getMessage();
     }
 });
+
+Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api).*$')->name('web.spa');
 
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
