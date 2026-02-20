@@ -319,6 +319,9 @@ class PoetController extends Controller
         /** @var \Illuminate\Pagination\LengthAwarePaginator $couplets */
         $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
             ->where('lang', $lang)
+            ->where(function ($q) {
+                $q->whereNull('poetry_id')->orWhere('poetry_id', 0);
+            })
             ->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1")
             ->withCount('likes')
             ->latest()

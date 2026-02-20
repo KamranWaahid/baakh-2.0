@@ -225,18 +225,6 @@ const PoetProfile = ({ lang }) => {
                                         )}
                                     </button>
                                 ))}
-                                <button
-                                    onClick={() => setActiveTab('about')}
-                                    className={`pb-4 px-1 text-sm font-medium whitespace-nowrap transition-all duration-200 relative ${activeTab === 'about'
-                                        ? 'text-black'
-                                        : 'text-gray-400 hover:text-gray-600'
-                                        }`}
-                                >
-                                    {isRtl ? 'شاعر بابت' : 'About'}
-                                    {activeTab === 'about' && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black animate-in fade-in slide-in-from-bottom-1 duration-300" />
-                                    )}
-                                </button>
                             </div>
                             {/* Visual indicator for more content (mobile only) */}
                             <div className={`absolute top-0 bottom-0 pointer-events-none w-12 bg-gradient-to-l from-white/90 to-transparent md:hidden transition-opacity duration-300 ${isRtl ? 'left-0' : 'right-0'}`} />
