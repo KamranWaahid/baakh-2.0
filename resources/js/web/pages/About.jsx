@@ -239,14 +239,6 @@ const About = () => {
                     ]
                 },
                 {
-                    title: 'Our Team',
-                    team: [
-                        { name: 'Kamran Wahid', role: 'Product Designer & Co-Founder', desc: 'Platform design and technical development' },
-                        { name: 'Ubaid Thaheem', role: 'Software Engineer & Co-Founder', desc: 'Backend systems and database management' },
-                        { name: 'Charoo', role: 'Content Curator', desc: 'Poetry collection, verification, and documentation' },
-                    ]
-                },
-                {
                     title: 'Acknowledgments',
                     content: [
                         'This platform exists because of centuries of poetic genius, the dedication of publishers and librarians who preserved these works, and the passion of contemporary readers who keep Sindhi literature alive.',
@@ -506,14 +498,6 @@ const About = () => {
                     ]
                 },
                 {
-                    title: 'اسان جي ٽيم',
-                    team: [
-                        { name: 'ڪامران واحد', role: 'پراڊڪٽ ڊزائينر ۽ گڏيل باني', desc: 'پليٽفارم ڊزائن ۽ ٽيڪنيڪل ترقي' },
-                        { name: 'عبيد ٿهيم', role: 'سافٽ ويئر انجنيئر ۽ گڏيل باني', desc: 'بيڪ اينڊ سسٽم ۽ ڊيٽابيس مينيجمينٽ' },
-                        { name: 'چارو', role: 'مواد جو محافظ', desc: 'شاعري گڏ ڪرڻ، تصديق، ۽ دستاويز سازي' },
-                    ]
-                },
-                {
                     title: 'اعترافات',
                     content: [
                         'هي پليٽفارم صدين جي شاعرانه ذهانت، پبلشرن ۽ لائبريرين جي وقف جي ڪري موجود آهي جن انهن ڪمن کي محفوظ ڪيو، ۽ معاصر پڙهندڙن جي جذبي جي ڪري جيڪي سنڌي ادب کي زنده رکندا آهن.',
@@ -634,17 +618,6 @@ const About = () => {
                                         </div>
                                     )}
 
-                                    {section.team && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 mt-8">
-                                            {section.team.map((member, i) => (
-                                                <div key={i} className="bg-gray-50 p-8 rounded-3xl">
-                                                    <h3 className="text-xl font-bold text-gray-900 text-center mb-2">{member.name}</h3>
-                                                    <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider text-center mb-4">{member.role}</div>
-                                                    <p className="text-center text-gray-600 leading-snug">{member.desc}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
 
                                     {section.footer && (
                                         <p className={`font-medium text-gray-900 mt-6 ${isRtl ? 'border-r-4 pr-4' : 'border-l-4 pl-4'} border-black`}>
