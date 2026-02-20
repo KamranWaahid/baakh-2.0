@@ -143,15 +143,6 @@ const Navbar = ({ lang }) => {
                     <div className="flex items-center gap-2">
                         <LoginModal
                             trigger={
-                                <Button variant="ghost" className="hover:bg-transparent hover:text-black/70">
-                                    {isRtl ? 'لاگ ان' : 'Sign in'}
-                                </Button>
-                            }
-                            isRtl={isRtl}
-                        />
-
-                        <LoginModal
-                            trigger={
                                 <Button className="bg-black text-white hover:bg-gray-800 rounded-full">
                                     {isRtl ? 'شروعات ڪريو' : 'Get started'}
                                 </Button>
