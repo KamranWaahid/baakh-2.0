@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale } from 'lucide-react';
+import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Shield } from 'lucide-react';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
