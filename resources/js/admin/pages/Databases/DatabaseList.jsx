@@ -11,7 +11,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Database, Plus, RefreshCw, Zap, Eye, FileJson } from 'lucide-react';
+import { Download, Trash2, Database, Plus, RefreshCw, Zap, Eye, FileJson, Copy } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -30,6 +30,7 @@ const DatabaseList = () => {
     const [isSchemaLoading, setIsSchemaLoading] = useState(false);
     const [isSchemaOpen, setIsSchemaOpen] = useState(false);
     const [dbTables, setDbTables] = useState([]);
+    const [isCopyingAll, setIsCopyingAll] = useState(false);
 
     const { data: backups, isLoading, isError, refetch } = useQuery({
         queryKey: ['backups'],
@@ -202,6 +203,21 @@ const DatabaseList = () => {
         schemaMutation.mutate(tableName);
     };
 
+    const handleCopyAllSchema = async () => {
+        setIsCopyingAll(true);
+        try {
+            const response = await api.get('/api/admin/databases/schema?all_schema=true');
+            const allSchema = response.data.all_schema;
+            await navigator.clipboard.writeText(allSchema);
+            alert('Full database schema copied to clipboard!');
+        } catch (error) {
+            console.error('Failed to copy schema:', error);
+            alert('Failed to copy schema. Please try again.');
+        } finally {
+            setIsCopyingAll(false);
+        }
+    };
+
     const handleDownload = (fileName) => {
         api.get(`/api/admin/databases/download`, {
             params: { file_name: fileName },
@@ -236,6 +252,10 @@ const DatabaseList = () => {
                     <Button variant="secondary" onClick={handleSync} disabled={syncMutation.isPending} className="flex items-center gap-2">
                         {syncMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
                         {syncMutation.isPending ? 'Syncing...' : 'Sync Database State'}
+                    </Button>
+                    <Button variant="outline" onClick={handleCopyAllSchema} disabled={isCopyingAll} className="flex items-center gap-2 border-blue-200 text-blue-700 hover:bg-blue-50">
+                        {isCopyingAll ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                        {isCopyingAll ? 'Copying...' : 'Copy All Schema'}
                     </Button>
                     <Button variant="outline" onClick={handleCheckStatus} disabled={statusMutation.isPending} className="flex items-center gap-2 border-gray-300">
                         {statusMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

@@ -324,13 +324,28 @@ class DatabaseController extends Controller
     {
         try {
             $table = $request->query('table');
+            $allSchema = $request->query('all_schema');
+
+            // List of tables for validation
+            $tables = array_map(function ($t) {
+                return current((array) $t);
+            }, DB::select('SHOW TABLES'));
+
+            if ($allSchema) {
+                $fullSchema = "";
+                foreach ($tables as $t) {
+                    $createTable = DB::select("SHOW CREATE TABLE `{$t}`");
+                    $createSql = property_exists($createTable[0], 'Create Table')
+                        ? $createTable[0]->{'Create Table'}
+                        : $createTable[0]->{'create table'};
+                    $fullSchema .= $createSql . ";\n\n";
+                }
+                return response()->json([
+                    'all_schema' => $fullSchema
+                ]);
+            }
 
             if ($table) {
-                // Check if table exists to prevent SQL injection or errors
-                $tables = array_map(function ($t) {
-                    return current((array) $t);
-                }, DB::select('SHOW TABLES'));
-
                 if (!in_array($table, $tables)) {
                     return response()->json(['error' => "Table '{$table}' not found."], 404);
                 }
@@ -348,8 +363,6 @@ class DatabaseController extends Controller
                 ]);
             }
 
-            // Otherwise return summary of all tables
-            $tables = DB::select('SHOW TABLES');
             return response()->json([
                 'tables' => $tables
             ]);
