@@ -90,11 +90,13 @@ class PoetController extends Controller
                 'slug' => $poet->poet_slug,
                 'avatar' => $poet->poet_pic ?: null,
                 // English Data
-                'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
-                'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
-                // Sindhi Data
-                'name_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
-                'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
+                'name_en' => $detailEn->poet_name ?: ($detailSd->poet_name ?: 'N/A'),
+                'name_sd' => $detailSd->poet_name ?: ($detailEn->poet_name ?: 'N/A'),
+                'laqab_en' => $detailEn->poet_laqab ?: ($detailEn->poet_name ?: ($detailSd->poet_laqab ?: ($detailSd->poet_name ?: 'N/A'))),
+                'laqab_sd' => $detailSd->poet_laqab ?: ($detailSd->poet_name ?: ($detailEn->poet_laqab ?: ($detailEn->poet_name ?: 'N/A'))),
+
+                'bio_en' => strip_tags($detailEn->poet_bio ?: ($detailSd->poet_bio ?: '')),
+                'bio_sd' => strip_tags($detailSd->poet_bio ?: ($detailEn->poet_bio ?: '')),
 
                 'entries_count' => $poet->poetry_count ?? 0,
 
@@ -216,18 +218,18 @@ class PoetController extends Controller
             'dod' => $poet->date_of_death,
 
             // English Data
-            'name_en' => $detailEn->poet_name ?? $detailSd->poet_name ?? 'N/A',
-            'laqab_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
+            'name_en' => $detailEn->poet_name ?: ($detailSd->poet_name ?: 'N/A'),
+            'laqab_en' => $detailEn->poet_laqab ?: ($detailEn->poet_name ?: ($detailSd->poet_laqab ?: ($detailSd->poet_name ?: 'N/A'))),
             'pen_name_en' => $detailEn->pen_name ?? null,
-            'bio_en' => strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''),
+            'bio_en' => strip_tags($detailEn->poet_bio ?: ($detailSd->poet_bio ?: '')),
             'birth_location_en' => $getLocation($detailEn->birth_place ?? $detailSd->birth_place ?? null, 'en'),
             'death_location_en' => $getLocation($detailEn->death_place ?? $detailSd->death_place ?? null, 'en'),
 
             // Sindhi Data
-            'name_sd' => $detailSd->poet_name ?? $detailEn->poet_name ?? 'N/A',
-            'laqab_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
+            'name_sd' => $detailSd->poet_name ?: ($detailEn->poet_name ?: 'N/A'),
+            'laqab_sd' => $detailSd->poet_laqab ?: ($detailSd->poet_name ?: ($detailEn->poet_laqab ?: ($detailEn->poet_name ?: 'N/A'))),
             'pen_name_sd' => $detailSd->pen_name ?? null,
-            'bio_sd' => strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''),
+            'bio_sd' => strip_tags($detailSd->poet_bio ?: ($detailEn->poet_bio ?: '')),
             'birth_location_sd' => $getLocation($detailSd->birth_place ?? $detailEn->birth_place ?? null, 'sd'),
             'death_location_sd' => $getLocation($detailSd->death_place ?? $detailEn->death_place ?? null, 'sd'),
 

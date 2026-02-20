@@ -25,6 +25,7 @@ const PoetProfile = ({ lang }) => {
     const { slug } = useParams();
     const [activeTab, setActiveTab] = React.useState('poetry');
     const [reportModalOpen, setReportModalOpen] = React.useState(false);
+    const [aboutOpen, setAboutOpen] = React.useState(false);
 
     const { ref, inView } = useInView();
 
@@ -144,16 +145,19 @@ const PoetProfile = ({ lang }) => {
                                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 capitalize leading-tight mb-0.5">
                                         {isRtl ? poet.laqab_sd : poet.laqab_en}
                                     </h1>
-                                    <p className="text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider">
-                                        {isRtl ? poet.name_sd : poet.name_en}
-                                    </p>
+                                    {(isRtl ? poet.name_sd !== poet.laqab_sd : poet.name_en !== poet.laqab_en) && (
+                                        <p className="text-gray-500 text-xs md:text-sm font-bold uppercase tracking-wider">
+                                            {isRtl ? poet.name_sd : poet.name_en}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
-                            <p className="text-gray-700 font-serif text-[17px] leading-[1.6] mb-6 font-arabic antialiased">
-                                {isRtl ? poet.bio_sd : poet.bio_en}
-                            </p>
+                            {/* Bio hidden on mobile header per user request - only show in About modal */}
                             <div className="flex gap-3 w-full">
-                                <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium h-10">
+                                <Button
+                                    className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium h-10"
+                                    onClick={() => setAboutOpen(true)}
+                                >
                                     {isRtl ? 'شاعر بابت' : 'About Poet'}
                                 </Button>
                                 <DropdownMenu>
@@ -179,9 +183,11 @@ const PoetProfile = ({ lang }) => {
                         <h1 className="hidden lg:block text-4xl md:text-5xl font-bold tracking-tight mb-2 text-gray-900 capitalize">
                             {isRtl ? poet.laqab_sd : poet.laqab_en}
                         </h1>
-                        <p className="hidden lg:block text-gray-500 text-xl mb-6 font-medium">
-                            {isRtl ? poet.name_sd : poet.name_en}
-                        </p>
+                        {(isRtl ? poet.name_sd !== poet.laqab_sd : poet.name_en !== poet.laqab_en) && (
+                            <p className="hidden lg:block text-gray-500 text-xl mb-6 font-medium">
+                                {isRtl ? poet.name_sd : poet.name_en}
+                            </p>
+                        )}
 
                         {/* Tabs with scroll hint */}
                         <div className="relative border-b border-gray-100 mb-6 sticky top-[56px] lg:top-[64px] bg-white/70 backdrop-blur-xl z-30 pt-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:p-0 md:m-0 transition-all duration-300">
@@ -330,105 +336,101 @@ const PoetProfile = ({ lang }) => {
                         </p>
 
                         <div className="flex gap-2 w-full mb-6">
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium">
-                                        {isRtl ? 'شاعر بابت' : 'About Poet'}
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="w-[95vw] sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
-                                    <DialogHeader className="p-6 pb-2">
-                                        <div className="flex flex-col items-center gap-4 mb-2">
-                                            <div className="h-24 w-24 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 shrink-0">
-                                                <User className="h-12 w-12" />
-                                            </div>
-                                            <div className="text-center w-full">
-                                                <DialogTitle className="text-2xl font-bold mb-1 text-center">
-                                                    {isRtl ? poet.name_sd : poet.name_en}
-                                                </DialogTitle>
-                                                <DialogDescription className="text-base font-medium text-gray-500 text-center">
-                                                    {isRtl ? poet.laqab_sd : poet.laqab_en}
-                                                </DialogDescription>
-                                            </div>
+                            <Button
+                                className="flex-1 rounded-full bg-black hover:bg-gray-800 text-white font-medium"
+                                onClick={() => setAboutOpen(true)}
+                            >
+                                {isRtl ? 'شاعر بابت' : 'About Poet'}
+                            </Button>
+                            <DialogHeader className="p-6 pb-2">
+                                <div className="flex flex-col items-center gap-4 mb-2">
+                                    <div className="h-24 w-24 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 shrink-0">
+                                        <User className="h-12 w-12" />
+                                    </div>
+                                    <div className="text-center w-full">
+                                        <DialogTitle className="text-2xl font-bold mb-1 text-center">
+                                            {isRtl ? poet.name_sd : poet.name_en}
+                                        </DialogTitle>
+                                        <DialogDescription className="text-base font-medium text-gray-500 text-center">
+                                            {isRtl ? poet.laqab_sd : poet.laqab_en}
+                                        </DialogDescription>
+                                    </div>
+                                </div>
+                            </DialogHeader>
+
+                            <div className="flex-1 overflow-y-auto p-6 pt-0">
+                                <div className="space-y-5 text-sm">
+                                    {(isRtl ? poet.pen_name_sd : poet.pen_name_en) && (
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                {isRtl ? 'تخلص' : 'Pen Name'}
+                                            </span>
+                                            <span className="font-medium text-gray-900">
+                                                {isRtl ? poet.pen_name_sd : poet.pen_name_en}
+                                            </span>
                                         </div>
-                                    </DialogHeader>
+                                    )}
 
-                                    <div className="flex-1 overflow-y-auto p-6 pt-0">
-                                        <div className="space-y-5 text-sm">
-                                            {(isRtl ? poet.pen_name_sd : poet.pen_name_en) && (
-                                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                        {/* Birth Info */}
+                                        <div>
+                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                {isRtl ? 'جنم' : 'Born'}
+                                            </span>
+                                            <span className="font-medium text-gray-900 block mb-3">
+                                                {formatDate(poet.dob, lang)}
+                                            </span>
+
+                                            {(isRtl ? poet.birth_location_sd : poet.birth_location_en) && (
+                                                <>
                                                     <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                        {isRtl ? 'تخلص' : 'Pen Name'}
+                                                        {isRtl ? 'جنم جو هنڌ' : 'Birth Place'}
                                                     </span>
-                                                    <span className="font-medium text-gray-900">
-                                                        {isRtl ? poet.pen_name_sd : poet.pen_name_en}
+                                                    <span className="font-medium text-gray-900 block">
+                                                        {isRtl ? poet.birth_location_sd : poet.birth_location_en}
                                                     </span>
-                                                </div>
+                                                </>
                                             )}
+                                        </div>
 
-                                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                                                {/* Birth Info */}
-                                                <div>
+                                        {/* Death Info */}
+                                        <div>
+                                            {poet.dod && (
+                                                <>
                                                     <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                        {isRtl ? 'جنم' : 'Born'}
+                                                        {isRtl ? 'وفات' : 'Died'}
                                                     </span>
                                                     <span className="font-medium text-gray-900 block mb-3">
-                                                        {formatDate(poet.dob, lang)}
+                                                        {formatDate(poet.dod, lang)}
                                                     </span>
+                                                </>
+                                            )}
 
-                                                    {(isRtl ? poet.birth_location_sd : poet.birth_location_en) && (
-                                                        <>
-                                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                                {isRtl ? 'جنم جو هنڌ' : 'Birth Place'}
-                                                            </span>
-                                                            <span className="font-medium text-gray-900 block">
-                                                                {isRtl ? poet.birth_location_sd : poet.birth_location_en}
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                {/* Death Info */}
-                                                <div>
-                                                    {poet.dod && (
-                                                        <>
-                                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                                {isRtl ? 'وفات' : 'Died'}
-                                                            </span>
-                                                            <span className="font-medium text-gray-900 block mb-3">
-                                                                {formatDate(poet.dod, lang)}
-                                                            </span>
-                                                        </>
-                                                    )}
-
-                                                    {(isRtl ? poet.death_location_sd : poet.death_location_en) && (
-                                                        <>
-                                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
-                                                                {isRtl ? 'وفات جو هنڌ' : 'Death Place'}
-                                                            </span>
-                                                            <span className="font-medium text-gray-900 block">
-                                                                {isRtl ? poet.death_location_sd : poet.death_location_en}
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <Separator />
-
-                                            <div>
-                                                <span className="text-gray-400 block text-xs uppercase tracking-wide mb-2 font-semibold">
-                                                    {isRtl ? 'بايو' : 'Biography'}
-                                                </span>
-                                                <p className="font-serif text-gray-600 leading-relaxed font-arabic whitespace-pre-line text-base">
-                                                    {isRtl ? poet.bio_sd : poet.bio_en}
-                                                </p>
-                                            </div>
+                                            {(isRtl ? poet.death_location_sd : poet.death_location_en) && (
+                                                <>
+                                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                        {isRtl ? 'وفات جو هنڌ' : 'Death Place'}
+                                                    </span>
+                                                    <span className="font-medium text-gray-900 block">
+                                                        {isRtl ? poet.death_location_sd : poet.death_location_en}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                </DialogContent>
-                            </Dialog>
 
+                                    <Separator />
+
+                                    <div>
+                                        <span className="text-gray-400 block text-xs uppercase tracking-wide mb-2 font-semibold">
+                                            {isRtl ? 'بايو' : 'Biography'}
+                                        </span>
+                                        <p className="font-serif text-gray-600 leading-relaxed font-arabic whitespace-pre-line text-base">
+                                            {isRtl ? poet.bio_sd : poet.bio_en}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10 shrink-0" aria-label="More options">
@@ -485,6 +487,101 @@ const PoetProfile = ({ lang }) => {
                 </aside>
 
             </div >
+            {/* About Poet Modal */}
+            <Dialog open={aboutOpen} onOpenChange={setAboutOpen}>
+                <DialogContent className="w-[95vw] sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+                    <DialogHeader className="p-6 pb-2">
+                        <div className="flex flex-col items-center gap-4 mb-2">
+                            <div className="h-24 w-24 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100 shrink-0">
+                                <User className="h-12 w-12" />
+                            </div>
+                            <div className="text-center w-full">
+                                <DialogTitle className="text-2xl font-bold mb-1 text-center">
+                                    {isRtl ? poet.name_sd : poet.name_en}
+                                </DialogTitle>
+                                <DialogDescription className="text-base font-medium text-gray-500 text-center">
+                                    {isRtl ? poet.laqab_sd : poet.laqab_en}
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto p-6 pt-0">
+                        <div className="space-y-5 text-sm">
+                            {(isRtl ? poet.pen_name_sd : poet.pen_name_en) && (
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                        {isRtl ? 'تخلص' : 'Pen Name'}
+                                    </span>
+                                    <span className="font-medium text-gray-900">
+                                        {isRtl ? poet.pen_name_sd : poet.pen_name_en}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                                {/* Birth Info */}
+                                <div>
+                                    <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                        {isRtl ? 'جنم' : 'Born'}
+                                    </span>
+                                    <span className="font-medium text-gray-900 block mb-3">
+                                        {formatDate(poet.dob, lang)}
+                                    </span>
+
+                                    {(isRtl ? poet.birth_location_sd : poet.birth_location_en) && (
+                                        <>
+                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                {isRtl ? 'جنم جو هنڌ' : 'Birth Place'}
+                                            </span>
+                                            <span className="font-medium text-gray-900 block">
+                                                {isRtl ? poet.birth_location_sd : poet.birth_location_en}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Death Info */}
+                                <div>
+                                    {poet.dod && (
+                                        <>
+                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                {isRtl ? 'وفات' : 'Died'}
+                                            </span>
+                                            <span className="font-medium text-gray-900 block mb-3">
+                                                {formatDate(poet.dod, lang)}
+                                            </span>
+                                        </>
+                                    )}
+
+                                    {(isRtl ? poet.death_location_sd : poet.death_location_en) && (
+                                        <>
+                                            <span className="text-gray-400 block text-xs uppercase tracking-wide mb-1 font-semibold">
+                                                {isRtl ? 'وفات جو هنڌ' : 'Death Place'}
+                                            </span>
+                                            <span className="font-medium text-gray-900 block">
+                                                {isRtl ? poet.death_location_sd : poet.death_location_en}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                                <span className="text-gray-400 block text-xs uppercase tracking-wide mb-2 font-semibold">
+                                    {isRtl ? 'بايو' : 'Biography'}
+                                </span>
+                                <p className="font-serif text-gray-600 leading-relaxed font-arabic whitespace-pre-line text-base">
+                                    {isRtl ? poet.bio_sd : poet.bio_en}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Report Poet Modal */}
             < ReportModal
                 open={reportModalOpen}
