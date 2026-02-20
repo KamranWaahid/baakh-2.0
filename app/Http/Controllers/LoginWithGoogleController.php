@@ -31,24 +31,29 @@ class LoginWithGoogleController extends Controller
         $driver = Socialite::driver('google');
         $googleUser = $driver->stateless()->user();
 
+        \Log::info("Google Login Attempt: " . $googleUser->getEmail() . " (ID: " . $googleUser->getId() . ")");
+
         // Check if a user with this Google ID already exists (including soft deleted)
         $user = User::withTrashed()->where('google_id', $googleUser->getId())->first();
 
         if ($user) {
+            \Log::info("Matched by Google ID: User ID {$user->id}, Email: {$user->email}, Role: {$user->role}");
             // If user exists but is deleted, restore them
             if ($user->trashed()) {
                 $user->restore();
             }
         } else {
             // Check if user exists by email using the new Blind Index lookup
+            $emailHash = hash('sha256', strtolower($googleUser->getEmail()));
             $user = User::withTrashed()
-                ->where('email_hash', hash('sha256', strtolower($googleUser->getEmail())))
+                ->where('email_hash', $emailHash)
                 ->first();
 
             if ($user) {
-                // If user exists, update auth token if needed (handled by Sanctum usually) or just login
+                \Log::info("Matched by Email Hash: User ID {$user->id}, Role: {$user->role}");
                 $isNewUser = false;
             } else {
+                \Log::info("No match found. Creating new viewer account.");
                 // If the user doesn't exist at all, create a new user
                 $user = new User();
 
@@ -60,6 +65,7 @@ class LoginWithGoogleController extends Controller
                 $user->name = "Anonymous User";
 
                 $user->password = bcrypt(Str::random(16)); // Random password for security
+                $user->status = 'active';
                 $user->role = 'user'; // Legacy column
                 $user->save();
 
@@ -79,21 +85,7 @@ class LoginWithGoogleController extends Controller
             // Link Google ID
             $user->google_id = $googleUser->getId();
             $user->save();
-
-            // Send Welcome Email for new users
-            if (isset($isNewUser) && $isNewUser) {
-                try {
-                    $lang = app()->getLocale();
-                    Mail::to($user->email)->send(new WelcomeMail($user, $lang));
-                } catch (\Exception $e) {
-                    \Log::error("Failed to send Google welcome email to {$user->email}: " . $e->getMessage());
-                }
-            }
         }
-
-        // Log in the user (session based for hybrid support if needed)
-        // Log in the user (session based for hybrid support if needed)
-        // auth()->login($user);
 
         // Update last login
         $user->updateLastLogin();
@@ -108,6 +100,8 @@ class LoginWithGoogleController extends Controller
         if (isset($isNewUser) && $isNewUser) {
             $redirectUrl .= "&new_user=1";
         }
+
+        \Log::info("Redirecting to: " . $redirectUrl);
 
         return redirect($redirectUrl);
     }
