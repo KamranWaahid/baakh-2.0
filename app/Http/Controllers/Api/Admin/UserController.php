@@ -12,15 +12,23 @@ class UserController extends Controller
     /**
      * Display a listing of the admin users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Get all roles that are considered "admin" roles
-        $adminRoles = ['super_admin', 'admin', 'editor', 'contributor', 'viewer', 'Admins'];
+        // Get role from query param or use default admin list
+        $role = $request->query('role');
 
-        $users = User::role($adminRoles)
+        if ($role) {
+            $rolesToFilter = [$role];
+        } else {
+            // Get all roles that are considered "admin" or management roles
+            // Added Poet and Contributor and made sure names match the DB (Admins, Contributor)
+            $rolesToFilter = ['super_admin', 'admin', 'editor', 'Contributor', 'viewer', 'Admins', 'Poet', 'moderator_audit'];
+        }
+
+        $users = User::role($rolesToFilter)
             ->with(['roles', 'teams'])
             ->latest()
-            ->paginate(10);
+            ->paginate(30); // Increased pagination for better management
 
         return response()->json($users);
     }

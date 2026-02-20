@@ -109,6 +109,7 @@ const UserFormContent = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['admins']);
+            queryClient.invalidateQueries(['viewers']);
             navigate('/admin/teams');
         }
     });

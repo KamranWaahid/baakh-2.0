@@ -64,6 +64,14 @@ const TeamList = () => {
         }
     });
 
+    const { data: viewers, isLoading: isLoadingViewers } = useQuery({
+        queryKey: ['viewers'],
+        queryFn: async () => {
+            const response = await api.get('/api/admin/users?role=viewer');
+            return response.data;
+        }
+    });
+
     const deleteTeamMutation = useMutation({
         mutationFn: async (id) => {
             await api.delete(`/api/admin/teams/${id}`);
@@ -73,19 +81,22 @@ const TeamList = () => {
         }
     });
 
-    const deleteAdminMutation = useMutation({
+    const deleteUserMutation = useMutation({
         mutationFn: async (id) => {
             await api.delete(`/api/admin/users/${id}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['admins']);
+            queryClient.invalidateQueries(['viewers']);
         }
     });
 
-    if (isLoadingTeams || isLoadingAdmins) return <div className="p-8">Loading...</div>;
+
+    if (isLoadingTeams || isLoadingAdmins || isLoadingViewers) return <div className="p-8">Loading...</div>;
 
     const teamList = teams?.data || [];
     const adminList = admins?.data || [];
+    const viewerList = viewers?.data || [];
 
     return (
         <div className="p-4 md:p-8 space-y-6">
@@ -115,9 +126,10 @@ const TeamList = () => {
             </div>
 
             <Tabs defaultValue="teams" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+                <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
                     <TabsTrigger value="teams">Teams ({teamList.length})</TabsTrigger>
                     <TabsTrigger value="admins">Admins ({adminList.length})</TabsTrigger>
+                    <TabsTrigger value="viewers">Viewers ({viewerList.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="teams" className="mt-6">
@@ -282,8 +294,8 @@ const TeamList = () => {
                                                 <DropdownMenuItem
                                                     className="text-red-600 focus:text-red-600 cursor-pointer"
                                                     onClick={() => {
-                                                        if (confirm('Are you sure you want to delete this admin user?')) {
-                                                            deleteAdminMutation.mutate(admin.id);
+                                                        if (confirm('Are you sure you want to delete this user?')) {
+                                                            deleteUserMutation.mutate(admin.id);
                                                         }
                                                     }}
                                                 >
@@ -404,8 +416,153 @@ const TeamList = () => {
                                                         <DropdownMenuItem
                                                             className="text-red-600 focus:text-red-600 cursor-pointer"
                                                             onClick={() => {
-                                                                if (confirm('Are you sure you want to delete this admin user?')) {
-                                                                    deleteAdminMutation.mutate(admin.id);
+                                                                if (confirm('Are you sure you want to delete this user?')) {
+                                                                    deleteUserMutation.mutate(admin.id);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Trash2 className="h-4 w-4 mr-2" /> Delete User
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </TabsContent>
+                <TabsContent value="viewers" className="mt-6">
+                    {/* Reuse the same user list UI for viewers */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {viewerList.map((viewer) => (
+                            <div key={viewer.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">
+                                            {viewer.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 leading-none">{viewer.name}</h3>
+                                            <span className="text-xs text-gray-400 font-arabic" dir="rtl">{viewer.name_sd}</span>
+                                        </div>
+                                    </div>
+                                    {isSuperAdmin && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem asChild>
+                                                    <Link to={`/admin/users/${viewer.id}/edit`} className="flex items-center gap-2 cursor-pointer">
+                                                        <Edit className="h-4 w-4" /> Edit User
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="text-red-600 focus:text-red-600 cursor-pointer"
+                                                    onClick={() => {
+                                                        if (confirm('Are you sure you want to delete this user?')) {
+                                                            deleteUserMutation.mutate(viewer.id);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" /> Delete User
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-xs">
+                                    <div className="space-y-1">
+                                        <span className="text-gray-400 uppercase tracking-wider block">Credentials</span>
+                                        <span className="font-medium text-gray-700 truncate block">{viewer.username}</span>
+                                        <span className="text-gray-500 truncate block">{viewer.email}</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-gray-400 uppercase tracking-wider block">Role & Status</span>
+                                        <div className="flex flex-wrap gap-1 mb-1">
+                                            {viewer.roles?.map(role => (
+                                                <Badge key={role.id} variant="secondary" className="text-[9px] px-1 py-0 border-none uppercase">
+                                                    {role.name.replace('_', ' ')}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                        <Badge variant={viewer.status === 'active' ? 'default' : 'destructive'} className="text-[9px] px-1 py-0 capitalize h-4">
+                                            {viewer.status}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {viewerList.length === 0 && (
+                            <div className="py-12 text-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                <p className="text-sm text-gray-400 font-inter">No viewers found.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="hidden md:block bg-white rounded-xl border shadow-sm overflow-hidden">
+                        <Table>
+                            <TableHeader className="bg-gray-50/50">
+                                <TableRow>
+                                    <TableHead className="min-w-[150px]">Viewer Name</TableHead>
+                                    <TableHead>Username / Email</TableHead>
+                                    <TableHead>Role</TableHead>
+                                    <TableHead className="hidden sm:table-cell text-center">Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {viewerList.map((viewer) => (
+                                    <TableRow key={viewer.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <TableCell className="font-medium whitespace-nowrap">
+                                            <div className="flex flex-col">
+                                                <span className="text-gray-900">{viewer.name}</span>
+                                                <span className="text-xs text-gray-400 font-arabic" dir="rtl">{viewer.name_sd}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col text-sm">
+                                                <span className="font-medium text-gray-700">{viewer.username}</span>
+                                                <span className="text-xs text-xs text-gray-500">{viewer.email}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            <div className="flex flex-wrap gap-1">
+                                                {viewer.roles?.map(role => (
+                                                    <Badge key={role.id} variant="secondary" className="text-[10px] uppercase font-normal">
+                                                        {role.name.replace('_', ' ')}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="hidden sm:table-cell text-center">
+                                            <Badge variant={viewer.status === 'active' ? 'default' : 'destructive'} className="capitalize h-5 text-[10px]">
+                                                {viewer.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {isSuperAdmin && (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-8 w-8 p-0 opacity-60 hover:opacity-100">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem asChild>
+                                                            <Link to={`/admin/users/${viewer.id}/edit`} className="flex items-center gap-2 cursor-pointer">
+                                                                <Edit className="h-4 w-4" /> Edit User
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            className="text-red-600 focus:text-red-600 cursor-pointer"
+                                                            onClick={() => {
+                                                                if (confirm('Are you sure you want to delete this user?')) {
+                                                                    deleteUserMutation.mutate(viewer.id);
                                                                 }
                                                             }}
                                                         >
