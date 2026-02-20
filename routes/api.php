@@ -195,6 +195,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
     ->group(function () {
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
+        Route::get('poet-books/poet/{poet_id}', [\App\Http\Controllers\Api\Admin\PoetBookController::class, 'getPoetBooks']);
+        Route::apiResource('poet-books', \App\Http\Controllers\Api\Admin\PoetBookController::class);
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);

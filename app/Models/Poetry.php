@@ -21,13 +21,21 @@ class Poetry extends Model
         'poet_id',
         'category_id',
         'topic_category_id',
+        'book_id',
         'user_id',
         'poetry_slug',
         'poetry_tags',
         'visibility',
         'is_featured',
         'content_style',
+        'page_start',
+        'page_end',
     ];
+
+    public function book()
+    {
+        return $this->belongsTo(PoetBook::class, 'book_id');
+    }
 
     public function getPoetLaqabAttribute()
     {

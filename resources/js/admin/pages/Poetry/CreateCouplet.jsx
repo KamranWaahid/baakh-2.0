@@ -47,6 +47,9 @@ const coupletSchema = z.object({
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
     couplet_tags: z.array(z.string()).optional(),
+    book_id: z.string().optional().nullable(),
+    page_start: z.string().optional().nullable(),
+    page_end: z.string().optional().nullable(),
 });
 
 const CreateCouplet = () => {
@@ -55,6 +58,7 @@ const CreateCouplet = () => {
     const navigate = useNavigate();
     const [openTags, setOpenTags] = useState(false);
     const [openPoet, setOpenPoet] = useState(false);
+    const [openBook, setOpenBook] = useState(false);
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [slugError, setSlugError] = useState(null);
     const [coupletContent, setCoupletContent] = useState('');
@@ -101,6 +105,9 @@ const CreateCouplet = () => {
             visibility: true,
             is_featured: false,
             couplet_tags: [],
+            book_id: '',
+            page_start: '',
+            page_end: '',
         }
     });
 
@@ -143,6 +150,9 @@ const CreateCouplet = () => {
                 visibility: true, // Independent couplets don't have separate visibility yet in the DB, but they are linked to Poetry
                 is_featured: false,
                 couplet_tags: JSON.parse(couplet.couplet_tags || '[]'),
+                book_id: couplet.book_id?.toString() || '',
+                page_start: couplet.page_start?.toString() || '',
+                page_end: couplet.page_end?.toString() || '',
             });
             setCoupletContent(couplet.couplet_text || '');
         }
@@ -155,7 +165,10 @@ const CreateCouplet = () => {
                 couplet_text: coupletContent.trim(),
                 lang: 'sd',
                 couplet_slug: data.couplet_slug,
-                couplet_tags: data.couplet_tags
+                couplet_tags: data.couplet_tags,
+                book_id: data.book_id,
+                page_start: data.page_start,
+                page_end: data.page_end
             };
 
             if (isEdit) {
@@ -356,6 +369,134 @@ const CreateCouplet = () => {
                                             </FormItem>
                                         )}
                                     />
+                                </CardContent>
+                            </Card>
+
+                            <Card className="shadow-sm">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                        <BookOpen className="h-4 w-4" /> Book & Progress
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="book_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-xs uppercase text-muted-foreground/50 font-bold">Select Book</FormLabel>
+                                                <Popover open={openBook} onOpenChange={setOpenBook}>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                aria-expanded={openBook}
+                                                                className={cn(
+                                                                    "w-full justify-between h-8 text-xs font-normal border-muted-foreground/20",
+                                                                    !field.value && "text-muted-foreground/40"
+                                                                )}
+                                                            >
+                                                                {field.value && field.value !== 'none'
+                                                                    ? meta?.books?.find((book) => book.id.toString() === field.value)?.title
+                                                                    : "Select Book (Optional)"}
+                                                                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[300px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search book..." className="h-9 text-xs" />
+                                                            <CommandList>
+                                                                <CommandEmpty className="text-xs py-2 text-center text-muted-foreground">No book found.</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    <CommandItem
+                                                                        value="none"
+                                                                        onSelect={() => {
+                                                                            form.setValue("book_id", null);
+                                                                            setOpenBook(false);
+                                                                        }}
+                                                                        className="text-xs"
+                                                                    >
+                                                                        None
+                                                                        <Check
+                                                                            className={cn(
+                                                                                "ml-auto h-3 w-3",
+                                                                                !field.value || field.value === 'none'
+                                                                                    ? "opacity-100"
+                                                                                    : "opacity-0"
+                                                                            )}
+                                                                        />
+                                                                    </CommandItem>
+                                                                    {meta?.books?.filter(b => !form.watch('poet_id') || b.poet_id.toString() === form.watch('poet_id')).map((book) => (
+                                                                        <CommandItem
+                                                                            value={`${book.title} ${book.id}`}
+                                                                            key={book.id}
+                                                                            onSelect={() => {
+                                                                                form.setValue("book_id", book.id.toString());
+                                                                                setOpenBook(false);
+                                                                            }}
+                                                                            className="text-xs"
+                                                                        >
+                                                                            {book.title}
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "ml-auto h-3 w-3",
+                                                                                    book.id.toString() === field.value
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                {form.watch('book_id') && form.watch('book_id') !== 'none' && (
+                                                    <div className="mt-1 px-2 py-1 bg-primary/5 rounded border border-primary/10 flex justify-between items-center">
+                                                        <span className="text-[10px] font-medium text-primary">Pages completed:</span>
+                                                        <span className="text-[10px] font-bold text-primary">
+                                                            {meta?.books?.find(b => b.id.toString() === form.watch('book_id'))?.last_page || 0} / {meta?.books?.find(b => b.id.toString() === form.watch('book_id'))?.total_pages || '?'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {form.watch('book_id') && form.watch('book_id') !== 'none' && (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <FormField
+                                                control={form.control}
+                                                name="page_start"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[10px] uppercase text-muted-foreground/50 font-bold">Start</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} type="number" className="h-7 text-xs" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="page_end"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[10px] uppercase text-muted-foreground/50 font-bold">End</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} type="number" className="h-7 text-xs" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
 

@@ -61,6 +61,8 @@ import HesudharList from './pages/Hesudhar/HesudharList';
 import HesudharBulkCheck from './pages/Hesudhar/HesudharBulkCheck';
 import RomanizerList from './pages/Romanizer/RomanizerList';
 import RomanizerBulkCheck from './pages/Romanizer/RomanizerBulkCheck';
+import BookList from './pages/Books/BookList';
+import BookForm from './pages/Books/BookForm';
 
 import TeamList from './pages/Teams/TeamList';
 import TeamForm from './pages/Teams/TeamForm';
@@ -130,6 +132,27 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <EditPoet />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/books" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <BookList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/books/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <BookForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/books/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <BookForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

@@ -49,6 +49,11 @@ class Poets extends Model
         return $this->hasMany(Poetry::class, 'poet_id');
     }
 
+    public function books()
+    {
+        return $this->hasMany(PoetBook::class, 'poet_id');
+    }
+
     /**
      * Get the indexable data array for the model.
      *

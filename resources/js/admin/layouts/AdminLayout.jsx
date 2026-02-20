@@ -123,6 +123,7 @@ const Sidebar = ({ onLinkClick }) => {
                     <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Content</div>
 
                     <SidebarLink to="/admin/poets" icon={Feather}>Poets</SidebarLink>
+                    <SidebarLink to="/admin/books" icon={Book}>Poet Books</SidebarLink>
 
                     <SidebarGroup icon={BookOpen} label="Poetry">
                         <SidebarLink to="/admin/poetry" icon={Book}>Main Poetry</SidebarLink>

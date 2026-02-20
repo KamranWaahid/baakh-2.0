@@ -61,7 +61,10 @@ class CoupletController extends Controller
             'couplet_text' => 'required|string',
             'couplet_slug' => 'required|unique:poetry_couplets,couplet_slug',
             'couplet_tags' => 'nullable|array',
-            'lang' => 'required|string|max:10'
+            'lang' => 'required|string|max:10',
+            'book_id' => 'nullable|exists:poet_books,id',
+            'page_start' => 'nullable|integer|min:1',
+            'page_end' => 'nullable|integer|min:1',
         ]);
 
         $couplet = Couplets::create([
@@ -71,7 +74,14 @@ class CoupletController extends Controller
             'couplet_slug' => $validated['couplet_slug'],
             'couplet_tags' => json_encode($validated['couplet_tags'] ?? []),
             'lang' => $validated['lang'],
+            'book_id' => $validated['book_id'] ?? null,
+            'page_start' => $validated['page_start'] ?? null,
+            'page_end' => $validated['page_end'] ?? null,
         ]);
+
+        if ($couplet->book_id) {
+            $this->updateBookProgress($couplet);
+        }
 
         return response()->json([
             'message' => 'Couplet created successfully',
@@ -88,7 +98,10 @@ class CoupletController extends Controller
             'couplet_text' => 'required|string',
             'couplet_slug' => 'required|unique:poetry_couplets,couplet_slug,' . $id,
             'couplet_tags' => 'nullable|array',
-            'lang' => 'required|string|max:10'
+            'lang' => 'required|string|max:10',
+            'book_id' => 'nullable|exists:poet_books,id',
+            'page_start' => 'nullable|integer|min:1',
+            'page_end' => 'nullable|integer|min:1',
         ]);
 
         $couplet->update([
@@ -97,7 +110,14 @@ class CoupletController extends Controller
             'couplet_slug' => $validated['couplet_slug'],
             'couplet_tags' => json_encode($validated['couplet_tags'] ?? []),
             'lang' => $validated['lang'],
+            'book_id' => $validated['book_id'] ?? null,
+            'page_start' => $validated['page_start'] ?? null,
+            'page_end' => $validated['page_end'] ?? null,
         ]);
+
+        if ($couplet->book_id) {
+            $this->updateBookProgress($couplet);
+        }
 
         return response()->json(['message' => 'Couplet updated successfully']);
     }
@@ -107,5 +127,28 @@ class CoupletController extends Controller
         $couplet = Couplets::findOrFail($id);
         $couplet->delete();
         return response()->json(['message' => 'Couplet moved to trash']);
+    }
+
+    private function updateBookProgress(Couplets $couplet)
+    {
+        $book = \App\Models\PoetBook::find($couplet->book_id);
+        if (!$book)
+            return;
+
+        $pageReached = $couplet->page_end ?: $couplet->page_start;
+        if (!$pageReached)
+            return;
+
+        $progress = $book->progress;
+        if (!$progress) {
+            $progress = $book->progress()->create(['last_page' => 0]);
+        }
+
+        if ($pageReached > $progress->last_page) {
+            $progress->update([
+                'last_page' => $pageReached,
+                'last_couplet_id' => $couplet->id
+            ]);
+        }
     }
 }

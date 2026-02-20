@@ -15,11 +15,19 @@ class Couplets extends Model
     protected $fillable = [
         'poetry_id',
         'poet_id',
+        'book_id',
         'couplet_slug',
         'couplet_text',
         'couplet_tags',
-        'lang'
+        'lang',
+        'page_start',
+        'page_end',
     ];
+
+    public function book()
+    {
+        return $this->belongsTo(PoetBook::class, 'book_id');
+    }
 
     public function poetry()
     {

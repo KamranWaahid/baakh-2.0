@@ -156,11 +156,23 @@ class PoetryController extends Controller
             ];
         });
 
+        // Fetch all books with poet info for the form
+        $books = \App\Models\PoetBook::with('progress')->get()->map(function ($book) {
+            return [
+                'id' => $book->id,
+                'poet_id' => $book->poet_id,
+                'title' => $book->title,
+                'total_pages' => $book->total_pages,
+                'last_page' => $book->progress->last_page ?? 0
+            ];
+        });
+
         $data = [
             'poets' => $poets,
             'categories' => $categories,
             'topic_categories' => $topicCategories,
             'tags' => $tags,
+            'books' => $books,
             'content_styles' => ['justified', 'center', 'start', 'end']
         ];
 
@@ -187,7 +199,10 @@ class PoetryController extends Controller
             'poetry_info' => 'nullable|string',
             'source' => 'nullable|string',
             'roman_title' => 'nullable|string|max:255',
-            'roman_content' => 'nullable|array'
+            'roman_content' => 'nullable|array',
+            'book_id' => 'nullable|exists:poet_books,id',
+            'page_start' => 'nullable|integer|min:1',
+            'page_end' => 'nullable|integer|min:1',
         ]);
 
         \DB::beginTransaction();
@@ -202,7 +217,14 @@ class PoetryController extends Controller
                 'visibility' => $validated['visibility'],
                 'is_featured' => $validated['is_featured'],
                 'content_style' => $validated['content_style'],
+                'book_id' => $validated['book_id'] ?? null,
+                'page_start' => $validated['page_start'] ?? null,
+                'page_end' => $validated['page_end'] ?? null,
             ]);
+
+            if ($poetry->book_id) {
+                $this->updateBookProgress($poetry);
+            }
 
             $poetry->translations()->create([
                 'title' => strip_tags($validated['poetry_title']),
@@ -268,7 +290,10 @@ class PoetryController extends Controller
             'poetry_info' => 'nullable|string',
             'source' => 'nullable|string',
             'roman_title' => 'nullable|string|max:255',
-            'roman_content' => 'nullable|array'
+            'roman_content' => 'nullable|array',
+            'book_id' => 'nullable|exists:poet_books,id',
+            'page_start' => 'nullable|integer|min:1',
+            'page_end' => 'nullable|integer|min:1',
         ]);
 
         \DB::beginTransaction();
@@ -282,7 +307,14 @@ class PoetryController extends Controller
                 'visibility' => $validated['visibility'],
                 'is_featured' => $validated['is_featured'],
                 'content_style' => $validated['content_style'],
+                'book_id' => $validated['book_id'] ?? null,
+                'page_start' => $validated['page_start'] ?? null,
+                'page_end' => $validated['page_end'] ?? null,
             ]);
+
+            if ($poetry->book_id) {
+                $this->updateBookProgress($poetry);
+            }
 
             // Update or create translation for 'sd'
             $poetry->translations()->updateOrCreate(
@@ -347,5 +379,70 @@ class PoetryController extends Controller
         $exists = $query->exists();
 
         return response()->json(['exists' => $exists]);
+    }
+
+    private function updateBookProgress(Poetry $poetry)
+    {
+        $book = \App\Models\PoetBook::find($poetry->book_id);
+        if (!$book)
+            return;
+
+        $pageReached = $poetry->page_end ?: $poetry->page_start;
+        if (!$pageReached)
+            return;
+
+        $progress = $book->progress;
+        if (!$progress) {
+            $progress = $book->progress()->create(['last_page' => 0]);
+        }
+
+        // Calculate actual pages completed by counting unique pages from all linked poetry
+        $pagesCompleted = $this->calculatePagesCompleted($book);
+
+        $updateData = [
+            'last_page' => $pagesCompleted,
+            'last_poetry_id' => $poetry->id
+        ];
+
+        $progress->update($updateData);
+    }
+
+    /**
+     * Calculate the actual unique pages completed for a book by
+     * summing (page_end - page_start + 1) for each poetry entry.
+     */
+    private function calculatePagesCompleted(\App\Models\PoetBook $book): int
+    {
+        // Get all page ranges from poetry linked to this book
+        $poetryPages = Poetry::where('book_id', $book->id)
+            ->whereNotNull('page_start')
+            ->select('page_start', 'page_end')
+            ->get();
+
+        // Build a set of unique pages to avoid double-counting overlapping ranges
+        $uniquePages = [];
+        foreach ($poetryPages as $entry) {
+            $start = (int) $entry->page_start;
+            $end = (int) ($entry->page_end ?: $entry->page_start);
+            for ($p = $start; $p <= $end; $p++) {
+                $uniquePages[$p] = true;
+            }
+        }
+
+        // Also count pages from independent couplets linked to this book
+        $coupletPages = \App\Models\Couplets::where('book_id', $book->id)
+            ->whereNotNull('page_start')
+            ->select('page_start', 'page_end')
+            ->get();
+
+        foreach ($coupletPages as $entry) {
+            $start = (int) $entry->page_start;
+            $end = (int) ($entry->page_end ?: $entry->page_start);
+            for ($p = $start; $p <= $end; $p++) {
+                $uniquePages[$p] = true;
+            }
+        }
+
+        return count($uniquePages);
     }
 }

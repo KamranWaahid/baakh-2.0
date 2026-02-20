@@ -70,6 +70,9 @@ const poetrySchema = z.object({
     poetry_info: z.string().optional(),
     source: z.string().optional(),
     poetry_tags: z.array(z.string()).optional(),
+    book_id: z.string().optional().nullable(),
+    page_start: z.string().optional().nullable(),
+    page_end: z.string().optional().nullable(),
 });
 
 const CreatePoetry = () => {
@@ -89,6 +92,7 @@ const CreatePoetry = () => {
     const [openCategory, setOpenCategory] = useState(false);
     const [openTopicCategory, setOpenTopicCategory] = useState(false);
     const [openTags, setOpenTags] = useState(false);
+    const [openBook, setOpenBook] = useState(false);
     const [script, setScript] = useState('perso'); // 'perso' | 'roman'
 
     // Prevent auto-updates on initial load for Edit mode
@@ -184,6 +188,9 @@ const CreatePoetry = () => {
             poetry_info: '',
             source: '',
             poetry_tags: [],
+            book_id: '',
+            page_start: '',
+            page_end: '',
         },
     });
 
@@ -239,6 +246,9 @@ const CreatePoetry = () => {
                 poetry_info: persoTranslation?.info || '',
                 source: persoTranslation?.source || '',
                 poetry_tags: JSON.parse(poetry.poetry_tags || '[]'),
+                book_id: poetry.book_id?.toString() || '',
+                page_start: poetry.page_start?.toString() || '',
+                page_end: poetry.page_end?.toString() || '',
             });
 
             // Set Roman Title
@@ -716,7 +726,6 @@ const CreatePoetry = () => {
                                             </FormItem>
                                         )}
                                     />
-
                                     <FormField
                                         control={form.control}
                                         name="topic_category_id"
@@ -780,6 +789,126 @@ const CreatePoetry = () => {
                                             </FormItem>
                                         )}
                                     />
+
+                                    {/* Book Selection & Progress tracking */}
+                                    <FormField
+                                        control={form.control}
+                                        name="book_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm font-medium flex items-center gap-2">
+                                                    <BookOpen className="h-4 w-4 text-muted-foreground" /> Select Book
+                                                </FormLabel>
+                                                <Popover open={openBook} onOpenChange={setOpenBook}>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                aria-expanded={openBook}
+                                                                className={cn(
+                                                                    "w-full justify-between h-10 font-normal",
+                                                                    !field.value && "text-muted-foreground/50"
+                                                                )}
+                                                            >
+                                                                {field.value && field.value !== 'none'
+                                                                    ? meta?.books?.find((book) => book.id.toString() === field.value)?.title
+                                                                    : "Select Book (Optional)"}
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[400px] p-0" align="start">
+                                                        <Command>
+                                                            <CommandInput placeholder="Search book..." className="h-9" />
+                                                            <CommandList>
+                                                                <CommandEmpty>No book found.</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    <CommandItem
+                                                                        value="none"
+                                                                        onSelect={() => {
+                                                                            form.setValue("book_id", null);
+                                                                            setOpenBook(false);
+                                                                        }}
+                                                                    >
+                                                                        None
+                                                                        <Check
+                                                                            className={cn(
+                                                                                "ml-auto h-4 w-4",
+                                                                                !field.value || field.value === 'none'
+                                                                                    ? "opacity-100"
+                                                                                    : "opacity-0"
+                                                                            )}
+                                                                        />
+                                                                    </CommandItem>
+                                                                    {meta?.books?.filter(b => !form.watch('poet_id') || b.poet_id.toString() === form.watch('poet_id')).map((book) => (
+                                                                        <CommandItem
+                                                                            value={`${book.title} ${book.id}`}
+                                                                            key={book.id}
+                                                                            onSelect={() => {
+                                                                                form.setValue("book_id", book.id.toString());
+                                                                                setOpenBook(false);
+                                                                            }}
+                                                                        >
+                                                                            {book.title}
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "ml-auto h-4 w-4",
+                                                                                    book.id.toString() === field.value
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                {form.watch('book_id') && form.watch('book_id') !== 'none' && (
+                                                    <div className="mt-1 px-2 py-1 bg-primary/5 rounded border border-primary/10 flex justify-between items-center animate-in fade-in slide-in-from-top-1">
+                                                        <span className="text-[10px] font-medium text-primary">Pages completed:</span>
+                                                        <span className="text-[10px] font-bold text-primary">
+                                                            {meta?.books?.find(b => b.id.toString() === form.watch('book_id'))?.last_page || 0} / {meta?.books?.find(b => b.id.toString() === form.watch('book_id'))?.total_pages || '?'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {form.watch('book_id') && form.watch('book_id') !== 'none' && (
+                                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                                            <FormField
+                                                control={form.control}
+                                                name="page_start"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[11px] font-medium">Page Start</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} type="number" className="h-8 text-xs" placeholder="e.g. 12" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="page_end"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-[11px] font-medium">Page End</FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} type="number" className="h-8 text-xs" placeholder="e.g. 15" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
 
                                     <FormField
                                         control={form.control}

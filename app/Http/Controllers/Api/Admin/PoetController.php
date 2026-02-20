@@ -81,8 +81,20 @@ class PoetController extends Controller
             ];
         });
 
+        $poets = Poets::where('visibility', 1)->with([
+            'details' => function ($q) {
+                $q->where('lang', 'sd');
+            }
+        ])->get()->map(function ($poet) {
+            return [
+                'id' => $poet->id,
+                'name' => $poet->details?->poet_laqab ?? $poet->poet_slug
+            ];
+        });
+
         return response()->json([
             'cities' => $cities,
+            'poets' => $poets,
         ]);
     }
 
