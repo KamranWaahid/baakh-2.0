@@ -31,14 +31,20 @@ class DatabaseController extends Controller
                 return $table->$prop ?? json_encode($table);
             }, $tables);
 
+            // Get migration status as an array if possible, or parse output
             Artisan::call('migrate:status');
             $migrateStatus = Artisan::output();
 
+            // Count pending
+            $pendingCount = substr_count($migrateStatus, 'Pending');
+
             return response()->json([
                 'database' => $databaseName,
-                'tables' => $tableList,
-                'migration_status' => $migrateStatus,
+                'tables_count' => count($tableList),
+                'pending_migrations_count' => $pendingCount,
                 'notifications_table_exists' => in_array('notifications', $tableList),
+                'migration_status_summary' => $migrateStatus,
+                'last_ten_tables' => array_slice($tableList, -10),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -168,10 +174,16 @@ class DatabaseController extends Controller
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
+
+            // Capture any output that might have been generated before failure
+            $output = Artisan::output();
+
             return response()->json([
                 'message' => 'Migration failed',
                 'error' => $e->getMessage(),
-                'details' => $e->getFile() . ' L' . $e->getLine()
+                'details' => $e->getFile() . ' L' . $e->getLine(),
+                'output' => $output,
+                'trace' => substr($e->getTraceAsString(), 0, 1000)
             ], 500);
         }
     }

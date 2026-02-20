@@ -66,7 +66,13 @@ const DatabaseList = () => {
         },
         onError: (error) => {
             setIsMigrating(false);
-            alert(error.response?.data?.message || 'Migration failed');
+            const data = error.response?.data;
+            const msg = `MIGRATION FAILED!\n\n` +
+                `Message: ${data?.message || 'Unknown error'}\n` +
+                `Error: ${data?.error || 'N/A'}\n` +
+                `Location: ${data?.details || 'N/A'}\n\n` +
+                `Check logs for full stack trace.`;
+            alert(msg);
         }
     });
 
@@ -101,11 +107,16 @@ const DatabaseList = () => {
         },
         onSuccess: (data) => {
             console.log("DB Status:", data);
-            const msg = `Database: ${data.database}\nTables: ${data.tables.length}\nNotifications Table: ${data.notifications_table_exists ? 'EXISTS' : 'MISSING'}\n\nMigration Status:\n${data.migration_status}`;
+            const msg = `Database: ${data.database}\n` +
+                `Tables Count: ${data.tables_count}\n` +
+                `Pending Migrations: ${data.pending_migrations_count}\n` +
+                `Notifications Table: ${data.notifications_table_exists ? 'EXISTS' : 'MISSING'}\n\n` +
+                `Last 10 Tables: ${data.last_ten_tables.join(', ')}\n\n` +
+                `Migration Status Summary:\n${data.migration_status_summary}`;
             alert(msg);
         },
         onError: (error) => {
-            alert(error.response?.data?.message || 'Status check failed');
+            alert(error.response?.data?.error || 'Status check failed');
         }
     });
 
