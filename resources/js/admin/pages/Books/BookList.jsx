@@ -21,7 +21,7 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, MoreHorizontal, Edit, Book } from 'lucide-react';
+import { Plus, Trash2, MoreHorizontal, Edit, Book, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
     DropdownMenu,
@@ -160,6 +160,11 @@ const BookList = () => {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuItem asChild>
+                                                                <a href={`/sd/poet/${book.poet?.poet_slug}`} target="_blank" rel="noreferrer">
+                                                                    <Eye className="mr-2 h-4 w-4" /> View
+                                                                </a>
+                                                            </DropdownMenuItem>
                                                             <DropdownMenuItem asChild>
                                                                 <Link to={`/admin/books/${book.id}/edit`}>
                                                                     <Edit className="mr-2 h-4 w-4" /> Edit

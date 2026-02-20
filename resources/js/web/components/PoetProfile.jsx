@@ -1,6 +1,7 @@
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { MoreHorizontal, User, BookOpen } from 'lucide-react';
@@ -26,6 +27,7 @@ const PoetProfile = ({ lang }) => {
     const [activeTab, setActiveTab] = React.useState('poetry');
     const [reportModalOpen, setReportModalOpen] = React.useState(false);
     const [aboutOpen, setAboutOpen] = React.useState(false);
+    const [booksOpen, setBooksOpen] = React.useState(false);
 
     const { ref, inView } = useInView();
 
@@ -160,6 +162,16 @@ const PoetProfile = ({ lang }) => {
                                 >
                                     {isRtl ? 'شاعر بابت' : 'About Poet'}
                                 </Button>
+                                {poet?.books?.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 rounded-full border-gray-300 font-medium h-10"
+                                        onClick={() => setBooksOpen(true)}
+                                    >
+                                        <BookOpen className="w-4 h-4 mr-2" />
+                                        {isRtl ? 'ڪتاب' : 'Books'}
+                                    </Button>
+                                )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10" aria-label="More profile options">
@@ -342,6 +354,16 @@ const PoetProfile = ({ lang }) => {
                             >
                                 {isRtl ? 'شاعر بابت' : 'About Poet'}
                             </Button>
+                            {poet?.books?.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 rounded-full border-gray-300 font-medium h-10"
+                                    onClick={() => setBooksOpen(true)}
+                                >
+                                    <BookOpen className="w-4 h-4 mr-2" />
+                                    {isRtl ? 'ڪتاب' : 'Books'}
+                                </Button>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline" size="icon" className="rounded-full border-gray-300 h-10 w-10 shrink-0" aria-label="More options">
@@ -500,6 +522,72 @@ const PoetProfile = ({ lang }) => {
                 isRtl={isRtl}
                 poetId={poet?.id}
             />
+
+            {/* Books Modal */}
+            <Dialog open={booksOpen} onOpenChange={setBooksOpen}>
+                <DialogContent className="w-[95vw] sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
+                    <DialogHeader className="p-6 pb-4 border-b">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                <BookOpen className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl font-bold">
+                                    {isRtl ? 'شاعر جا ڪتاب' : "Poet's Books"}
+                                </DialogTitle>
+                                <DialogDescription className="text-sm">
+                                    {isRtl ? 'هتي شاعر جا شايع ٿيل ڪتاب آهن.' : 'List of books published by this poet.'}
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto p-6 pt-4">
+                        <div className="space-y-6">
+                            {poet?.books?.map((book) => (
+                                <div key={book.id} className="flex gap-4 items-start group">
+                                    <div className="w-20 h-28 bg-gray-100 rounded-md overflow-hidden border shadow-sm shrink-0">
+                                        {book.cover_image ? (
+                                            <img
+                                                src={getImageUrl(book.cover_image)}
+                                                alt={book.title}
+                                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <BookOpen className="w-8 h-8 opacity-20" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 space-y-3 pt-1">
+                                        <div>
+                                            <h4 className="font-bold text-gray-900 leading-tight">
+                                                {book.title}
+                                            </h4>
+                                            <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider font-semibold">
+                                                {isRtl ? `ڪل صفحا: ${book.total_pages}` : `Total Pages: ${book.total_pages}`}
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                                                <span className="text-primary">{isRtl ? 'ڊجيٽائيزيشن' : 'Digitization'}</span>
+                                                <span className="text-gray-900">{book.percentage}%</span>
+                                            </div>
+                                            <Progress value={book.percentage} className="h-1.5" />
+                                            <p className="text-[10px] text-gray-400 font-medium">
+                                                {isRtl
+                                                    ? `${book.pages_completed} منجهان ${book.total_pages} صفحا مڪمل`
+                                                    : `${book.pages_completed} of ${book.total_pages} pages completed`}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 };

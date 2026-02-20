@@ -236,9 +236,16 @@ class PoetController extends Controller
             'entries_count' => $poet->poetry_count ?? 0,
             'couplets_count' => $coupletsCount ?? 0,
             'suggested' => $suggested,
-            // Categories/Menu would usually come from aggregating poetry types, 
-            // but for now we'll return a static list or derived from actual poetry if complex query allowed.
-            // Simplified for this step.
+            'books' => $poet->books()->where('visibility', 1)->with('progress')->get()->map(function ($book) {
+                return [
+                    'id' => $book->id,
+                    'title' => $book->title,
+                    'cover_image' => $book->cover_image,
+                    'total_pages' => $book->total_pages,
+                    'pages_completed' => $book->progress->last_page ?? 0,
+                    'percentage' => $book->completion_percentage
+                ];
+            }),
         ];
 
         return response()->json($data);
