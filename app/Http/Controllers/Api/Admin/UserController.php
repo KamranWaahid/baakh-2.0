@@ -20,13 +20,23 @@ class UserController extends Controller
         if ($role) {
             $rolesToFilter = [$role];
         } else {
-            // Get all roles that are considered "admin" or management roles
-            // Added Poet and Contributor and made sure names match the DB (Admins, Contributor)
+            // Include all management/contributor roles
             $rolesToFilter = ['super_admin', 'admin', 'editor', 'Contributor', 'viewer', 'Admins', 'Poet', 'moderator_audit'];
         }
 
-        $users = User::role($rolesToFilter)
-            ->with(['roles', 'teams'])
+        // Defensive: Check if roles exist in DB to prevent spatie exception if a role is missing on production/beta
+        $existingRoles = Role::whereIn('name', $rolesToFilter)->pluck('name')->toArray();
+
+        // If no management roles exist, default to none to avoid crash
+        $query = User::query();
+        if (!empty($existingRoles)) {
+            $query->role($existingRoles);
+        } else {
+            // Fallback for empty results if no roles found (though admin/super_admin should exist)
+            $query->whereRaw('1 = 0');
+        }
+
+        $users = $query->with(['roles', 'teams'])
             ->latest()
             ->paginate(30); // Increased pagination for better management
 
