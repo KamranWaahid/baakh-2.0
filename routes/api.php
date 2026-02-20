@@ -148,6 +148,7 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::get('databases', [DatabaseController::class, 'index']);
     Route::post('databases', [DatabaseController::class, 'store']);
     Route::get('databases/status', [DatabaseController::class, 'status']);
+    Route::post('databases/sync', [DatabaseController::class, 'syncMigrations']);
     Route::post('databases/migrate', [DatabaseController::class, 'migrate']);
     Route::post('databases/repair-permissions', [DatabaseController::class, 'repairPermissions']);
     Route::post('databases/clear-cache', [DatabaseController::class, 'clearCache']);

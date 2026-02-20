@@ -120,6 +120,19 @@ const DatabaseList = () => {
         }
     });
 
+    const syncMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.post('/api/admin/databases/sync');
+            return response.data;
+        },
+        onSuccess: (data) => {
+            alert(`SYNC SUCCESSFUL!\n\n${data.message}\n\nLogs:\n${data.logs.join('\n')}`);
+        },
+        onError: (error) => {
+            alert(error.response?.data?.error || 'Sync failed');
+        }
+    });
+
     const handleCreate = () => {
         createMutation.mutate();
     };
@@ -144,6 +157,12 @@ const DatabaseList = () => {
 
     const handleCheckStatus = () => {
         statusMutation.mutate();
+    };
+
+    const handleSync = () => {
+        if (confirm('SYNC: This will mark existing tables as migrated. Use this ONLY if you see "Base table already exists" errors. Continue?')) {
+            syncMutation.mutate();
+        }
     };
 
     const handleDownload = (fileName) => {
@@ -177,6 +196,10 @@ const DatabaseList = () => {
                     <p className="text-gray-500 mt-2">Manage your database backups and system health</p>
                 </div>
                 <div className="flex gap-3">
+                    <Button variant="secondary" onClick={handleSync} disabled={syncMutation.isPending} className="flex items-center gap-2">
+                        {syncMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+                        {syncMutation.isPending ? 'Syncing...' : 'Sync Database State'}
+                    </Button>
                     <Button variant="outline" onClick={handleCheckStatus} disabled={statusMutation.isPending} className="flex items-center gap-2 border-gray-300">
                         {statusMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                         {statusMutation.isPending ? 'Checking...' : 'Check Status'}
