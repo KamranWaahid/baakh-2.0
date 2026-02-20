@@ -44,6 +44,31 @@ Route::prefix('sitemap')->group(function () {
 });
 Route::get('sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap.index');
 
+Route::get('/test-mail', function () {
+    try {
+        $to = request('to', 'admin@baakh.com');
+        echo "Attempting to send a test email to: <b>$to</b>...<br>";
+
+        \Illuminate\Support\Facades\Mail::raw('This is a test email to verify SMTP settings.', function ($message) use ($to) {
+            $message->to($to)
+                ->subject('SMTP Verification Test');
+        });
+
+        echo "<span style='color:green'>Success! Email sent.</span><br>";
+        echo "Check your inbox (and spam folder).";
+    } catch (\Exception $e) {
+        echo "<span style='color:red'>Failed to send email.</span><br>";
+        echo "<b>Error:</b> " . $e->getMessage() . "<br><br>";
+        echo "<b>Current Configuration:</b><br>";
+        echo "Mailer: " . config('mail.default') . "<br>";
+        echo "Host: " . config('mail.mailers.smtp.host') . "<br>";
+        echo "Port: " . config('mail.mailers.smtp.port') . "<br>";
+        echo "Encryption: " . config('mail.mailers.smtp.encryption') . "<br>";
+        echo "Username: " . config('mail.mailers.smtp.username') . "<br>";
+        echo "From: " . config('mail.from.address') . "<br>";
+    }
+});
+
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api).*$')->name('web.spa');
 
 Route::get('/login', function () {
