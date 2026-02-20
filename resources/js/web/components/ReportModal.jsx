@@ -4,6 +4,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,9 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetI
                     <DialogTitle className={`text-center font-serif text-3xl font-medium tracking-tight ${isRtl ? 'font-arabic' : ''}`}>
                         {submitted ? (isRtl ? 'رپورٽ ملي وئي!' : 'Report Received!') : (isRtl ? 'رپورٽ ڪريو' : 'Report Issue')}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        {isRtl ? 'هن فارم ذريعي توهان مواد جي رپورٽ ڪري سگهو ٿا.' : 'Report an issue with the current content.'}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {submitted ? (

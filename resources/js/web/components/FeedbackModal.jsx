@@ -4,6 +4,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,9 @@ const FeedbackModal = ({ trigger, isRtl = false }) => {
                     <DialogTitle className={`text-center font-serif text-3xl font-medium tracking-tight ${isRtl ? 'font-arabic' : ''}`}>
                         {submitted ? (isRtl ? 'مهرباني!' : 'Thank you!') : (isRtl ? 'توهان جي راءِ' : 'Your Feedback')}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        {isRtl ? 'اسان کي پنهنجي راءِ کان آگاهه ڪريو.' : 'Share your thoughts and feedback with us.'}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {submitted ? (

@@ -21,6 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Flag } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const PoetProfile = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -529,12 +530,12 @@ const PoetProfile = ({ lang }) => {
             {/* Books Modal */}
             <Dialog open={booksOpen} onOpenChange={setBooksOpen}>
                 <DialogContent className="w-[95vw] sm:max-w-[500px] bg-white h-auto max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
-                    <DialogHeader className="p-6 pb-4 border-b">
+                    <DialogHeader className="p-6 pb-4 border-b text-left">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                                 <BookOpen className="h-5 w-5" />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-0.5">
                                 <DialogTitle className="text-xl font-bold">
                                     {isRtl ? 'شاعر جا ڪتاب' : "Poet's Books"}
                                 </DialogTitle>
@@ -572,13 +573,16 @@ const PoetProfile = ({ lang }) => {
                                             </p>
                                         </div>
 
-                                        <div className="space-y-1.5">
+                                        <div className="space-y-1.5" dir="ltr">
                                             <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
                                                 <span className="text-primary">{isRtl ? 'ڊجيٽائيزيشن' : 'Digitization'}</span>
                                                 <span className="text-gray-900">{book.percentage}%</span>
                                             </div>
                                             <SegmentedProgressBar segments={book.segments} className="h-2" />
-                                            <p className="text-[10px] text-gray-400 font-medium">
+                                            <p className={cn(
+                                                "text-[10px] text-gray-400 font-medium",
+                                                isRtl ? "text-right" : "text-left"
+                                            )} dir={isRtl ? "rtl" : "ltr"}>
                                                 {isRtl
                                                     ? `مڪمل صفحا: ${book.pages_completed} / ${book.total_pages}`
                                                     : `Pages: ${book.pages_completed} / ${book.total_pages}`}

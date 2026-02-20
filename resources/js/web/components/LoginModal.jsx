@@ -4,6 +4,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -304,6 +305,9 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
                     <DialogTitle className="text-center font-serif text-3xl font-medium tracking-tight">
                         {mode === 'register' ? (isRtl ? 'گوگل سان جاري رکو.' : 'Continue with Google.') : (isRtl ? 'خوش آمديد.' : 'Welcome back.')}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        {isRtl ? 'پنهنجي اڪائونٽ ۾ لاگ ان ٿيو يا نئون اڪائونٽ ٺاهيو.' : 'Login to your account or create a new one.'}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {mode === 'initial' && renderInitial()}

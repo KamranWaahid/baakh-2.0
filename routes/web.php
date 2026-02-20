@@ -22,6 +22,15 @@ Route::get('admin/{any?}', function () {
     return view('admin.app');
 })->where('any', '.*')->name('admin.spa');
 
+// Admin SPA with locale prefix (e.g. /sd/admin, /en/admin)
+Route::get('{lang}/admin/{any?}', function ($lang, $any = null) {
+    if (in_array($lang, ['en', 'sd'])) {
+        app()->setLocale($lang);
+        return view('admin.app');
+    }
+    abort(404);
+})->where('lang', 'en|sd')->where('any', '.*')->name('admin.spa.locale');
+
 Route::get('og-image/poetry/{slug}', [\App\Http\Controllers\OgImageController::class, 'generatePoetryImage'])->name('og.poetry');
 
 /*

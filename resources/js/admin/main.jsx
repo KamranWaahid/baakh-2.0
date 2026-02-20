@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import AdminLayout from './layouts/AdminLayout';
 import api from './api/axios';
@@ -80,6 +80,7 @@ import InformationSystem from './pages/System/InformationSystem';
 import ServerManagement from './pages/System/ServerManagement';
 import ErrorManagement from './pages/System/ErrorManagement';
 import ActivityLogs from './pages/System/ActivityLogs';
+import HeapAnalysis from './pages/System/HeapAnalysis';
 
 import LemmaInbox from './pages/Dictionary/LemmaInbox';
 import SenseEditor from './pages/Dictionary/SenseEditor';
@@ -103,14 +104,24 @@ import Settings from './pages/Settings';
 
 
 const App = () => {
+    const pathname = window.location.pathname;
+    const basename = pathname.match(/^\/(en|sd)(\/|$)/) ? pathname.match(/^\/(en|sd)/)[0] : '';
+
     return (
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <Routes>
                     <Route path="/admin" element={
                         <ProtectedRoute>
                             <AdminLayout>
                                 <Dashboard />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/system/performance" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <HeapAnalysis />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
@@ -397,6 +408,8 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
+
+
                     <Route path="/admin/moderation/reports" element={
                         <ProtectedRoute>
                             <AdminLayout>
@@ -454,7 +467,7 @@ const App = () => {
                         <div className="p-8 text-center space-y-4">
                             <h1 className="text-2xl font-bold text-red-600">404 - Admin Page Not Found</h1>
                             <p className="text-gray-500">The page you are looking for does not exist in the admin panel.</p>
-                            <Button onClick={() => window.location.href = '/admin'}>Back to Dashboard</Button>
+                            <Button asChild><Link to="/admin">Back to Dashboard</Link></Button>
                         </div>
                     } />
 

@@ -98,6 +98,7 @@ use App\Http\Controllers\Api\Admin\CountryController;
 use App\Http\Controllers\Api\Admin\ProvinceController;
 use App\Http\Controllers\Api\Admin\CityController;
 use App\Http\Controllers\Api\Admin\ErrorManagementController;
+use App\Http\Controllers\Api\Admin\PerformanceController;
 
 // ... (Auth routes remain)
 
@@ -185,6 +186,9 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     // Moderation
     Route::apiResource('reports', \App\Http\Controllers\Api\Admin\ReportController::class);
     Route::apiResource('feedback', \App\Http\Controllers\Api\Admin\FeedbackController::class);
+
+    // Performance Analysis
+    Route::post('performance/analyze-heap', [PerformanceController::class, 'analyzeHeap']);
 
     // System Activity
     Route::get('activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
