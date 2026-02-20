@@ -26,8 +26,17 @@ class SpaController extends Controller
             array_shift($segments);
         }
 
-        $title = ($locale == 'sd') ? 'باک - سنڌي شاعريءَ جو خزانو' : 'Baakh - Treasure of Sindhi Poetry';
-        $desc = ($locale == 'sd') ? 'باک، شاعريءَ جي ھڪ قديم دور کان جديد ۽ ٽيڪنالاجيءَ واري دور ڏانھن ھڪ سفر آھي.' : 'Baakh: A comprehensive web portal dedicated to preserving and promoting Sindhi poetry.';
+        $isSd = $locale === 'sd';
+        $title = $isSd ? 'باک - سنڌي شاعريءَ جو آرڪائيو' : 'Baakh - Sindhi Poetry Archive';
+        $description = $isSd
+            ? 'باک سنڌي شاعريءَ جو ھڪ ڊجيٽل آرڪائيو آھي، جيڪو ڪلاسيڪي ۽ جديد شاعريءَ کي محفوظ ڪري ٿو.'
+            : 'Baakh is a digital archive of Sindhi poetry, preserving classical and modern literary works for future generations.';
+
+        $ogDescription = $isSd
+            ? 'سنڌي شاعريءَ جو ڊجيٽل آرڪائيو — ڪلاسيڪي کان جديد دور تائين.'
+            : 'A digital archive dedicated to preserving Sindhi poetry from classical to modern eras.';
+
+        $ogImageAlt = $isSd ? 'باک - سنڌي شاعريءَ جو آرڪائيو' : 'Baakh - Sindhi Poetry Archive';
 
         // Detect Route Type for dynamic SEO
         if (count($segments) >= 2) {
@@ -59,7 +68,10 @@ class SpaController extends Controller
         }
 
         // Default SEO for other pages
-        $this->SEO_General($title, $desc);
+        $this->SEO_General($title, $description, null, null, [
+            'og_description' => $ogDescription,
+            'og_image_alt' => $ogImageAlt
+        ]);
 
         return view('app');
     }

@@ -20,26 +20,24 @@ trait BaakhSeoTrait
 
     public function SEO_General($title, $desc, $seo_image = null, $keywords = null, $additionalData = [])
     {
-        // Set default image if SEO image is not provided or doesn't exist
-        $image = ($seo_image && file_exists($seo_image)) ? asset($seo_image) : asset('assets/placeholder.png');
+        // Set default image if SEO image is not provided or it's not a path (might be a URL)
+        $image = $seo_image ? $seo_image : asset('assets/og/baakh-1200x630.png');
 
         $currentLang = app()->getLocale();
-        $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
+        $isSd = $currentLang === 'sd';
 
-        // Check if the 'lang' query parameter exists in the request
-        $langParam = request()->query('lang');
+        // hreflang setup
+        $path = request()->path();
+        $segments = explode('/', $path);
 
-        // Build the base URL (without any query parameters)
-        $baseUrl = url()->current();
-
-        // Determine the alternate URL
-        if ($langParam) {
-            // If the 'lang' query parameter exists, modify it to the alternate language
-            $alternateUrl = url()->current() . '?' . http_build_query(array_merge(request()->query(), ['lang' => $alternateLang]));
-        } else {
-            // If there's no 'lang' query parameter, add it to the URL
-            $alternateUrl = $baseUrl . '?' . http_build_query(array_merge(request()->query(), ['lang' => $alternateLang]));
+        // Remove existing locale prefix if any to build base path
+        if ($segments[0] === 'en' || $segments[0] === 'sd') {
+            array_shift($segments);
         }
+        $innerPath = implode('/', $segments);
+
+        $sdUrl = url('sd/' . $innerPath);
+        $enUrl = url('en/' . $innerPath);
 
         // Handle keywords
         if (!is_null($keywords)) {
@@ -52,15 +50,25 @@ trait BaakhSeoTrait
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($desc);
         SEOMeta::setCanonical(url()->current());
-        SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
 
-
+        // Add alternate languages for SEO
+        SEOMeta::addAlternateLanguage('en', $enUrl);
+        SEOMeta::addAlternateLanguage('sd', $sdUrl);
+        SEOMeta::addAlternateLanguage('x-default', $enUrl); // x-default usually points to the main/default version
 
         // Set OpenGraph data
-        OpenGraph::setDescription($desc);
+        OpenGraph::setDescription($additionalData['og_description'] ?? $desc);
         OpenGraph::setTitle($title);
         OpenGraph::setUrl(url()->current());
         OpenGraph::addImage($image);
+        OpenGraph::addProperty('type', 'website');
+        OpenGraph::setSiteName($isSd ? 'باک' : 'Baakh');
+
+        if (isset($additionalData['og_image_alt'])) {
+            OpenGraph::addProperty('image:alt', $additionalData['og_image_alt']);
+        } else {
+            OpenGraph::addProperty('image:alt', $title);
+        }
 
         // You can allow additional OpenGraph properties from controller via $additionalData['opengraph']
         if (isset($additionalData['opengraph']) && is_array($additionalData['opengraph'])) {
@@ -72,9 +80,10 @@ trait BaakhSeoTrait
         // Set JSON-LD structured data (default for WebPage or FAQPage)
         JsonLd::addValue('@context', 'https://schema.org');
         JsonLd::addValue('@type', $additionalData['json_ld_type'] ?? 'WebPage');
-        JsonLd::addValue('name', env('APP_NAME'));
+        JsonLd::addValue('name', $isSd ? 'باک' : 'Baakh');
+        JsonLd::addValue('inLanguage', $currentLang);
         JsonLd::addValue('description', $desc);
-        JsonLd::addValue('url', env('APP_URL')); // Website URL
+        JsonLd::addValue('url', url()->current());
         JsonLd::addValue('image', $image);
 
         // Allow additional JSON-LD properties from controller
@@ -82,22 +91,6 @@ trait BaakhSeoTrait
             foreach ($additionalData['jsonld'] as $property => $value) {
                 JsonLd::addValue($property, $value);
             }
-        }
-
-        // FAQ Schema: Dynamically handle FAQ data if provided
-        if (isset($additionalData['faq']) && is_array($additionalData['faq'])) {
-            $faqData = [];
-            foreach ($additionalData['faq'] as $faq) {
-                $faqData[] = [
-                    '@type' => 'Question',
-                    'name' => $faq['question'],
-                    'acceptedAnswer' => [
-                        '@type' => 'Answer',
-                        'text' => $faq['answer']
-                    ]
-                ];
-            }
-            JsonLd::addValue('mainEntity', $faqData);
         }
 
         // Set general titles and descriptions for JSON-LD
