@@ -58,6 +58,13 @@ class PoetBook extends Model
     }
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['completion_percentage', 'page_segments'];
+
+    /**
      * Get completion percentage
      */
     public function getCompletionPercentageAttribute(): float
@@ -65,31 +72,78 @@ class PoetBook extends Model
         if ($this->total_pages <= 0)
             return 0;
 
-        // Count unique pages that are either marked as completed in poet_book_pages
-        // OR have poetry/couplets linked to them.
         $completedPagesCount = PoetBookPage::where('book_id', $this->id)
             ->where('is_completed', true)
             ->count();
 
-        // Also get unique pages from poetry/couplets that might not be in the pages table yet
-        // This is a safety fallback for now, though eventually we want all pages to be synced.
-        $poetryPages = Poetry::where('book_id', $this->id)
-            ->get()
-            ->flatMap(fn($p) => range($p->page_start, $p->page_end))
-            ->unique();
-
-        $coupletPages = Couplets::where('book_id', $this->id)
-            ->get()
-            ->flatMap(fn($c) => range($c->page_start, $c->page_end))
-            ->unique();
-
-        $digitizedPages = $poetryPages->concat($coupletPages)->unique();
-
-        // Combine: count pages that are in the PoetBookPage table as completed 
-        // PLUS any pages from digitized content that aren't explicitly in that table.
-        // For simplicity for now, let's just use the PoetBookPage table as the source of truth
-        // and ensure it's synced.
-
         return round(($completedPagesCount / $this->total_pages) * 100, 2);
+    }
+
+    /**
+     * Get page segments for interactive progress bar
+     */
+    public function getPageSegmentsAttribute(): array
+    {
+        if ($this->total_pages <= 0)
+            return [];
+
+        $pages = PoetBookPage::where('book_id', $this->id)
+            ->orderBy('page_number', 'asc')
+            ->get();
+
+        if ($pages->isEmpty()) {
+            return [
+                [
+                    'start' => 1,
+                    'end' => $this->total_pages,
+                    'type' => 'pending',
+                    'is_completed' => false,
+                    'title' => null,
+                    'count' => $this->total_pages,
+                    'width_percent' => 100
+                ]
+            ];
+        }
+
+        $segments = [];
+        $currentSegment = null;
+
+        foreach ($pages as $page) {
+            $pageData = [
+                'type' => $page->type,
+                'is_completed' => (bool) $page->is_completed,
+                'title' => $page->title,
+            ];
+
+            if (!$currentSegment) {
+                $currentSegment = array_merge($pageData, [
+                    'start' => $page->page_number,
+                    'end' => $page->page_number,
+                    'count' => 1
+                ]);
+            } elseif (
+                $currentSegment['type'] === $pageData['type'] &&
+                $currentSegment['is_completed'] === $pageData['is_completed'] &&
+                $currentSegment['title'] === $pageData['title']
+            ) {
+                $currentSegment['end'] = $page->page_number;
+                $currentSegment['count']++;
+            } else {
+                $currentSegment['width_percent'] = round(($currentSegment['count'] / $this->total_pages) * 100, 4);
+                $segments[] = $currentSegment;
+                $currentSegment = array_merge($pageData, [
+                    'start' => $page->page_number,
+                    'end' => $page->page_number,
+                    'count' => 1
+                ]);
+            }
+        }
+
+        if ($currentSegment) {
+            $currentSegment['width_percent'] = round(($currentSegment['count'] / $this->total_pages) * 100, 4);
+            $segments[] = $currentSegment;
+        }
+
+        return $segments;
     }
 }

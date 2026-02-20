@@ -514,7 +514,8 @@ class UpdateStaticCache extends Command
                     'cover_image' => $book->cover_image,
                     'total_pages' => $book->total_pages,
                     'pages_completed' => $book->progress->last_page ?? 0,
-                    'percentage' => $book->completion_percentage
+                    'percentage' => $book->completion_percentage,
+                    'segments' => $book->page_segments,
                 ];
             }),
         ];

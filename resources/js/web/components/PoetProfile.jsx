@@ -2,6 +2,7 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import SegmentedProgressBar from '@/admin/components/Books/SegmentedProgressBar';
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { MoreHorizontal, User, BookOpen } from 'lucide-react';
@@ -576,7 +577,7 @@ const PoetProfile = ({ lang }) => {
                                                 <span className="text-primary">{isRtl ? 'ڊجيٽائيزيشن' : 'Digitization'}</span>
                                                 <span className="text-gray-900">{book.percentage}%</span>
                                             </div>
-                                            <Progress value={book.percentage} className="h-1.5" />
+                                            <SegmentedProgressBar segments={book.segments} className="h-2" />
                                             <p className="text-[10px] text-gray-400 font-medium">
                                                 {isRtl
                                                     ? `${book.pages_completed} منجهان ${book.total_pages} صفحا مڪمل`

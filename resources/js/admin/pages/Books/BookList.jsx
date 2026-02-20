@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress as ProgressBar } from "@/components/ui/progress";
 import BookProgressModal from '../../components/Books/BookProgressModal';
+import SegmentedProgressBar from '../../components/Books/SegmentedProgressBar';
 
 const BookList = () => {
     const queryClient = useQueryClient();
@@ -152,11 +153,11 @@ const BookList = () => {
                                                 <TableCell>{book.total_pages}</TableCell>
                                                 <TableCell className="min-w-[150px]">
                                                     <div className="space-y-1">
-                                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                                        <div className="flex justify-between text-xs text-muted-foreground mr-1">
                                                             <span>Pages: {book.progress?.last_page || 0} / {book.total_pages}</span>
-                                                            <span>{progressValue}%</span>
+                                                            <span className="font-bold text-gray-900">{progressValue}%</span>
                                                         </div>
-                                                        <ProgressBar value={progressValue} className="h-2" />
+                                                        <SegmentedProgressBar segments={book.page_segments} className="h-2.5" />
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
@@ -234,7 +235,7 @@ const BookList = () => {
                 open={isProgressModalOpen}
                 onOpenChange={setIsProgressModalOpen}
             />
-        </div>
+        </div >
     );
 };
 
