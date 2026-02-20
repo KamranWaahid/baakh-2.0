@@ -94,6 +94,21 @@ const DatabaseList = () => {
         }
     });
 
+    const statusMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.get('/api/admin/databases/status');
+            return response.data;
+        },
+        onSuccess: (data) => {
+            console.log("DB Status:", data);
+            const msg = `Database: ${data.database}\nTables: ${data.tables.length}\nNotifications Table: ${data.notifications_table_exists ? 'EXISTS' : 'MISSING'}\n\nMigration Status:\n${data.migration_status}`;
+            alert(msg);
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'Status check failed');
+        }
+    });
+
     const handleCreate = () => {
         createMutation.mutate();
     };
@@ -114,6 +129,10 @@ const DatabaseList = () => {
         if (confirm('CLEAR: This will flush the application optimization cache. Continue?')) {
             clearCacheMutation.mutate();
         }
+    };
+
+    const handleCheckStatus = () => {
+        statusMutation.mutate();
     };
 
     const handleDownload = (fileName) => {
@@ -147,6 +166,10 @@ const DatabaseList = () => {
                     <p className="text-gray-500 mt-2">Manage your database backups and system health</p>
                 </div>
                 <div className="flex gap-3">
+                    <Button variant="outline" onClick={handleCheckStatus} disabled={statusMutation.isPending} className="flex items-center gap-2 border-gray-300">
+                        {statusMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        {statusMutation.isPending ? 'Checking...' : 'Check Status'}
+                    </Button>
                     <Button onClick={handleCreate} disabled={isCreating || createMutation.isPending} className="flex items-center gap-2">
                         {isCreating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                         {isCreating ? 'Creating Backup...' : 'Create New Backup'}

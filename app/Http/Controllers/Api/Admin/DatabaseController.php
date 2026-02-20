@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -14,6 +15,37 @@ class DatabaseController extends Controller
     public function __construct()
     {
         $this->middleware('role:super_admin');
+    }
+
+    /**
+     * Get database and migration status.
+     */
+    public function status()
+    {
+        try {
+            $databaseName = config('database.connections.mysql.database');
+            $tables = DB::select('SHOW TABLES');
+
+            $tableList = array_map(function ($table) use ($databaseName) {
+                $prop = "Tables_in_{$databaseName}";
+                return $table->$prop ?? json_encode($table);
+            }, $tables);
+
+            Artisan::call('migrate:status');
+            $migrateStatus = Artisan::output();
+
+            return response()->json([
+                'database' => $databaseName,
+                'tables' => $tableList,
+                'migration_status' => $migrateStatus,
+                'notifications_table_exists' => in_array('notifications', $tableList),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 
     /**

@@ -144,9 +144,10 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::post('notifications/read-all', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'markAllRead']);
     Route::delete('notifications/clear', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'clear']);
 
-    // Database Backups & Migrations
+    // Database & Maintenance
     Route::get('databases', [DatabaseController::class, 'index']);
     Route::post('databases', [DatabaseController::class, 'store']);
+    Route::get('databases/status', [DatabaseController::class, 'status']);
     Route::post('databases/migrate', [DatabaseController::class, 'migrate']);
     Route::post('databases/repair-permissions', [DatabaseController::class, 'repairPermissions']);
     Route::post('databases/clear-cache', [DatabaseController::class, 'clearCache']);
