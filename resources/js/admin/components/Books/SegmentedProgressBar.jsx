@@ -30,7 +30,7 @@ const SegmentedProgressBar = ({ segments, className }) => {
                             <TooltipTrigger asChild>
                                 <div
                                     className={cn(
-                                        "h-full transition-all hover:brightness-110 cursor-help border-r last:border-r-0 border-white/20",
+                                        "h-full transition-all hover:brightness-110 cursor-pointer border-r last:border-r-0 border-white/20",
                                         bgColor
                                     )}
                                     style={{ width: `${segment.width_percent}%` }}
