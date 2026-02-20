@@ -19,6 +19,7 @@ import { useMobileMenu } from '../contexts/MobileMenuContext';
 import SearchDialog from './SearchDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { getImageUrl } from '../utils/url';
+import NotificationBell from '../../admin/components/NotificationBell';
 
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -100,16 +101,7 @@ const Navbar = ({ lang }) => {
                 ) : user ? (
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2">
-
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full hover:bg-gray-100 h-9 w-9 relative"
-                                aria-label="Notifications"
-                            >
-                                <Bell className="h-4 w-4 text-gray-600" />
-                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-                            </Button>
+                            <NotificationBell variant="web" />
                         </div>
 
                         <DropdownMenu>

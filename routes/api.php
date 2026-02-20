@@ -36,6 +36,12 @@ Route::prefix('auth')->group(function () {
         Route::put('/password', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'changePassword']);
         Route::put('/password/set', [\App\Http\Controllers\Api\Auth\ProfileController::class, 'setPassword']);
         Route::get('/privacy/view-as-team', [\App\Http\Controllers\Api\Auth\PrivacyController::class, 'viewAsTeam']);
+
+        // Per-user Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markRead']);
+        Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead']);
+        Route::delete('/notifications/clear', [\App\Http\Controllers\Api\NotificationController::class, 'clear']);
     });
 });
 
@@ -176,6 +182,9 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     // Moderation
     Route::apiResource('reports', \App\Http\Controllers\Api\Admin\ReportController::class);
     Route::apiResource('feedback', \App\Http\Controllers\Api\Admin\FeedbackController::class);
+
+    // System Activity
+    Route::get('activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum', 'user_role'])

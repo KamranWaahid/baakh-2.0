@@ -176,6 +176,7 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
                     <SidebarLink to="/admin/system/server" icon={Terminal}>Server Management</SidebarLink>
                     <SidebarLink to="/admin/system/errors" icon={Bug}>Error Management</SidebarLink>
+                    <SidebarLink to="/admin/system/activity-logs" icon={AlignJustify}>Activity Logs</SidebarLink>
                     <SidebarLink to="/admin/mokhii" icon={Bot}>Mokhii GEO</SidebarLink>
                     <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
                     {isSuperAdmin && (
@@ -197,7 +198,7 @@ const AdminLayout = ({ children }) => {
         try {
             await api.post('/api/auth/logout');
             localStorage.removeItem('auth_token');
-            window.location.href = '/admin/login'; // Redirect to login
+            window.location.href = '/'; // Redirect to public homepage
         } catch (error) {
             console.error('Logout failed', error);
         }
@@ -229,7 +230,7 @@ const AdminLayout = ({ children }) => {
                     <div className="w-full flex-1">
                         {/* Search or Breadcrumbs could go here */}
                     </div>
-                    <NotificationBell />
+                    <NotificationBell isAdmin={true} />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="secondary" size="icon" className="rounded-full">
@@ -243,8 +244,12 @@ const AdminLayout = ({ children }) => {
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
-                            <DropdownMenuItem>Support</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = '/admin/settings'}>
+                                Settings
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = '/admin/moderation/feedback'}>
+                                Support & Feedback
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={handleLogout}>
                                 <LogOut className="mr-2 h-4 w-4" />

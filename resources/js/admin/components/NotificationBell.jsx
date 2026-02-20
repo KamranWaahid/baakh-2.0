@@ -52,7 +52,7 @@ const COLOR_MAP = {
     pink: 'bg-pink-100 text-pink-700',
 };
 
-const NotificationBell = () => {
+const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
@@ -60,9 +60,10 @@ const NotificationBell = () => {
 
     // Fetch notifications
     const { data } = useQuery({
-        queryKey: ['admin-notifications'],
+        queryKey: ['notifications', variant],
         queryFn: async () => {
-            const res = await api.get('/api/admin/notifications');
+            const endpoint = isAdmin ? '/api/admin/notifications' : '/api/notifications';
+            const res = await api.get(endpoint);
             return res.data;
         },
         refetchInterval: 10000, // Poll every 10s
@@ -83,18 +84,27 @@ const NotificationBell = () => {
     }, []);
 
     const markReadMutation = useMutation({
-        mutationFn: (id) => api.post(`/api/admin/notifications/${id}/read`),
-        onSuccess: () => queryClient.invalidateQueries(['admin-notifications']),
+        mutationFn: (id) => {
+            const endpoint = isAdmin ? `/api/admin/notifications/${id}/read` : `/api/notifications/${id}/read`;
+            return api.post(endpoint);
+        },
+        onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
     });
 
     const markAllReadMutation = useMutation({
-        mutationFn: () => api.post('/api/admin/notifications/read-all'),
-        onSuccess: () => queryClient.invalidateQueries(['admin-notifications']),
+        mutationFn: () => {
+            const endpoint = isAdmin ? '/api/admin/notifications/read-all' : '/api/notifications/read-all';
+            return api.post(endpoint);
+        },
+        onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
     });
 
     const clearMutation = useMutation({
-        mutationFn: () => api.delete('/api/admin/notifications/clear'),
-        onSuccess: () => queryClient.invalidateQueries(['admin-notifications']),
+        mutationFn: () => {
+            const endpoint = isAdmin ? '/api/admin/notifications/clear' : '/api/notifications/clear';
+            return api.delete(endpoint);
+        },
+        onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
     });
 
     const handleNotificationClick = (n) => {
@@ -126,20 +136,24 @@ const NotificationBell = () => {
             <Button
                 variant="ghost"
                 size="icon"
-                className="relative rounded-full h-9 w-9"
+                className={`relative rounded-full transition-colors ${variant === 'web' ? 'hover:bg-gray-100 h-9 w-9' : 'h-9 w-9'}`}
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <Bell className="h-5 w-5 text-gray-600" />
+                <Bell className={`${variant === 'web' ? 'h-4 w-4' : 'h-5 w-5'} text-gray-600`} />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-pulse">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
+                    variant === 'web' ? (
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+                    ) : (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-pulse">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )
                 )}
             </Button>
 
             {/* Dropdown Panel */}
             {isOpen && (
-                <div className="absolute right-0 top-11 w-[380px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className={`absolute right-0 top-11 w-[380px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200 ${variant === 'web' ? 'mt-2' : ''}`}>
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/80">
                         <div className="flex items-center gap-2">

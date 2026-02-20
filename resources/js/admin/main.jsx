@@ -77,6 +77,7 @@ import TopicCategoryList from './pages/Topics/TopicCategoryList';
 import InformationSystem from './pages/System/InformationSystem';
 import ServerManagement from './pages/System/ServerManagement';
 import ErrorManagement from './pages/System/ErrorManagement';
+import ActivityLogs from './pages/System/ActivityLogs';
 
 import LemmaInbox from './pages/Dictionary/LemmaInbox';
 import SenseEditor from './pages/Dictionary/SenseEditor';
@@ -96,6 +97,7 @@ import UsageTrends from './pages/Analytics/UsageTrends';
 
 import UnderDevelopment from './components/UnderDevelopment';
 import Mokhii from './pages/Mokhii';
+import Settings from './pages/Settings';
 
 
 const App = () => {
@@ -364,6 +366,14 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/admin/system/activity-logs" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ActivityLogs />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/admin/moderation/reports" element={
                         <ProtectedRoute>
                             <AdminLayout>
@@ -404,6 +414,14 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <Mokhii />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/settings" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <Settings />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
