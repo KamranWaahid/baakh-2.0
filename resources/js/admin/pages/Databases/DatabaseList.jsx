@@ -11,12 +11,25 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Database, Plus, RefreshCw, Zap } from 'lucide-react';
+import { Download, Trash2, Database, Plus, RefreshCw, Zap, Eye, FileJson } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 
 const DatabaseList = () => {
     const queryClient = useQueryClient();
     const [isCreating, setIsCreating] = useState(false);
     const [isMigrating, setIsMigrating] = useState(false);
+    const [selectedTable, setSelectedTable] = useState(null);
+    const [schemaData, setSchemaData] = useState(null);
+    const [isSchemaLoading, setIsSchemaLoading] = useState(false);
+    const [isSchemaOpen, setIsSchemaOpen] = useState(false);
+    const [dbTables, setDbTables] = useState([]);
 
     const { data: backups, isLoading, isError, refetch } = useQuery({
         queryKey: ['backups'],
@@ -100,6 +113,25 @@ const DatabaseList = () => {
         }
     });
 
+    const schemaMutation = useMutation({
+        mutationFn: async (tableName) => {
+            setIsSchemaLoading(true);
+            setSelectedTable(tableName);
+            setIsSchemaOpen(true);
+            const response = await api.get(`/api/admin/databases/schema?table=${tableName}`);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            setSchemaData(data);
+            setIsSchemaLoading(false);
+        },
+        onError: (error) => {
+            setIsSchemaLoading(false);
+            alert(error.response?.data?.error || 'Failed to fetch schema');
+            setIsSchemaOpen(false);
+        }
+    });
+
     const statusMutation = useMutation({
         mutationFn: async () => {
             const response = await api.get('/api/admin/databases/status');
@@ -107,6 +139,7 @@ const DatabaseList = () => {
         },
         onSuccess: (data) => {
             console.log("DB Status:", data);
+            setDbTables(data.all_tables || []);
             const msg = `Database: ${data.database}\n` +
                 `Tables Count: ${data.tables_count}\n` +
                 `Pending Migrations: ${data.pending_migrations_count}\n` +
@@ -163,6 +196,10 @@ const DatabaseList = () => {
         if (confirm('SYNC: This will mark existing tables as migrated. Use this ONLY if you see "Base table already exists" errors. Continue?')) {
             syncMutation.mutate();
         }
+    };
+
+    const handleViewSchema = (tableName) => {
+        schemaMutation.mutate(tableName);
     };
 
     const handleDownload = (fileName) => {
@@ -327,6 +364,107 @@ const DatabaseList = () => {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Database Tables Section */}
+            {dbTables.length > 0 && (
+                <div className="bg-white rounded-lg border p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                        <Database className="h-5 w-5 text-gray-400" />
+                        <h2 className="text-xl font-bold">Database Tables</h2>
+                        <Badge variant="secondary" className="ml-auto">{dbTables.length} Total</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {dbTables.map((table) => (
+                            <div key={table} className="group flex items-center justify-between p-3 rounded-md border bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <span className="text-sm font-medium text-gray-700 truncate" title={table}>{table}</span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => handleViewSchema(table)}
+                                >
+                                    <Eye className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Schema Modal */}
+            <Dialog open={isSchemaOpen} onOpenChange={setIsSchemaOpen}>
+                <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <FileJson className="h-5 w-5 text-blue-500" />
+                            Table Schema: <span className="text-blue-600">{selectedTable}</span>
+                        </DialogTitle>
+                        <DialogDescription>
+                            Detailed column information and CREATE statement for the selected table.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {isSchemaLoading ? (
+                        <div className="py-20 flex flex-col items-center justify-center gap-3">
+                            <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                            <p className="text-sm text-gray-500 font-medium">Extracting schema...</p>
+                        </div>
+                    ) : schemaData ? (
+                        <div className="space-y-6">
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    Columns
+                                </h4>
+                                <div className="rounded-md border overflow-hidden">
+                                    <Table>
+                                        <TableHeader className="bg-gray-50">
+                                            <TableRow>
+                                                <TableHead className="font-bold">Field</TableHead>
+                                                <TableHead className="font-bold">Type</TableHead>
+                                                <TableHead className="font-bold">Null</TableHead>
+                                                <TableHead className="font-bold">Key</TableHead>
+                                                <TableHead className="font-bold">Default</TableHead>
+                                                <TableHead className="font-bold">Extra</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {schemaData.columns.map((col, idx) => (
+                                                <TableRow key={idx}>
+                                                    <TableCell className="font-medium text-blue-600">{col.Field}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{col.Type}</TableCell>
+                                                    <TableCell className="text-xs">{col.Null}</TableCell>
+                                                    <TableCell>
+                                                        {col.Key && <Badge variant={col.Key === 'PRI' ? 'destructive' : 'outline'} className="text-[10px] px-1 h-4">{col.Key}</Badge>}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs italic">{col.Default ?? 'NULL'}</TableCell>
+                                                    <TableCell className="text-xs text-gray-500">{col.Extra}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                    Create Statement
+                                </h4>
+                                <div className="p-4 bg-gray-950 rounded-lg overflow-x-auto border border-gray-800 shadow-inner">
+                                    <pre className="text-xs text-green-400 font-mono leading-relaxed">
+                                        {schemaData.create_sql}
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="py-20 text-center text-gray-500">
+                            Failed to load schema data.
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -317,6 +317,47 @@ class DatabaseController extends Controller
         }
     }
 
+    /**
+     * Get schema details for a table or all tables.
+     */
+    public function getSchema(Request $request)
+    {
+        try {
+            $table = $request->query('table');
+
+            if ($table) {
+                // Check if table exists to prevent SQL injection or errors
+                $tables = array_map(function ($t) {
+                    return current((array) $t);
+                }, DB::select('SHOW TABLES'));
+
+                if (!in_array($table, $tables)) {
+                    return response()->json(['error' => "Table '{$table}' not found."], 404);
+                }
+
+                $columns = DB::select("DESCRIBE `{$table}`");
+                $createTable = DB::select("SHOW CREATE TABLE `{$table}`");
+                $createSql = property_exists($createTable[0], 'Create Table')
+                    ? $createTable[0]->{'Create Table'}
+                    : $createTable[0]->{'create table'};
+
+                return response()->json([
+                    'table' => $table,
+                    'columns' => $columns,
+                    'create_sql' => $createSql
+                ]);
+            }
+
+            // Otherwise return summary of all tables
+            $tables = DB::select('SHOW TABLES');
+            return response()->json([
+                'tables' => $tables
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     private function formatSizeUnits($bytes)
     {
         if ($bytes >= 1073741824) {
