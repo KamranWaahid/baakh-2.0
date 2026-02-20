@@ -196,6 +196,10 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
         Route::get('poet-books/poet/{poet_id}', [\App\Http\Controllers\Api\Admin\PoetBookController::class, 'getPoetBooks']);
+        Route::get('poet-books/{id}/pages', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'index']);
+        Route::post('poet-books/{id}/pages/sync', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'sync']);
+        Route::put('poet-books/{id}/pages/{pageId}', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'update']);
+        Route::post('poet-books/{id}/pages/batch-update', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'batchUpdate']);
         Route::apiResource('poet-books', \App\Http\Controllers\Api\Admin\PoetBookController::class);
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);

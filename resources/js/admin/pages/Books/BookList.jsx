@@ -32,11 +32,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress as ProgressBar } from "@/components/ui/progress";
+import BookProgressModal from '../../components/Books/BookProgressModal';
 
 const BookList = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [selectedBookId, setSelectedBookId] = useState(null);
+    const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['poet-books', page, search],
@@ -165,9 +168,15 @@ const BookList = () => {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuItem onClick={() => {
+                                                                setSelectedBookId(book.id);
+                                                                setIsProgressModalOpen(true);
+                                                            }}>
+                                                                <Eye className="mr-2 h-4 w-4" /> View Map
+                                                            </DropdownMenuItem>
                                                             <DropdownMenuItem asChild>
                                                                 <a href={`/sd/poet/${book.poet?.poet_slug}`} target="_blank" rel="noreferrer">
-                                                                    <Eye className="mr-2 h-4 w-4" /> View
+                                                                    <Book className="mr-2 h-4 w-4" /> Public View
                                                                 </a>
                                                             </DropdownMenuItem>
                                                             <DropdownMenuItem asChild>
@@ -219,6 +228,12 @@ const BookList = () => {
                     )}
                 </CardContent>
             </Card>
+
+            <BookProgressModal
+                bookId={selectedBookId}
+                open={isProgressModalOpen}
+                onOpenChange={setIsProgressModalOpen}
+            />
         </div>
     );
 };
