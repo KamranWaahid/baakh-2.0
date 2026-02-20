@@ -50,7 +50,11 @@ const SegmentedProgressBar = ({ segments, className }) => {
                                         <span>Pages {segment.start}-{segment.end}</span>
                                         <span className="opacity-70 uppercase tracking-tighter text-[9px]">{type}</span>
                                     </p>
-                                    {segment.title && <p className="opacity-90">{segment.title}</p>}
+                                    {segment.title && (
+                                        <p className="opacity-90 font-arabic text-sm mt-0.5" dir="rtl">
+                                            {segment.title}
+                                        </p>
+                                    )}
                                     <p className={cn("text-[10px]", isCompleted ? "text-green-400" : "text-gray-400")}>
                                         {isCompleted ? "Completed" : "Pending"}
                                     </p>

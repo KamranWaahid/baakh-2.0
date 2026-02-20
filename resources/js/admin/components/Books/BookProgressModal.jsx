@@ -211,7 +211,8 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                                                     <Input
                                                         defaultValue={page.title}
                                                         placeholder="e.g. Introduction"
-                                                        className="h-8 border-transparent hover:border-gray-200 focus:border-primary transition-all bg-transparent focus:bg-white"
+                                                        dir="rtl"
+                                                        className="h-8 border-transparent hover:border-gray-200 focus:border-primary transition-all bg-transparent focus:bg-white font-arabic text-sm"
                                                         onBlur={(e) => {
                                                             if (e.target.value !== page.title) {
                                                                 handlePageUpdate(page, 'title', e.target.value);
