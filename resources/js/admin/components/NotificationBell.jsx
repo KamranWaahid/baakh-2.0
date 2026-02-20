@@ -62,7 +62,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     const { data } = useQuery({
         queryKey: ['notifications', variant],
         queryFn: async () => {
-            const endpoint = isAdmin ? '/api/admin/notifications' : '/api/notifications';
+            const endpoint = isAdmin ? '/api/admin/notifications' : '/api/auth/notifications';
             const res = await api.get(endpoint);
             return res.data;
         },
@@ -85,7 +85,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
 
     const markReadMutation = useMutation({
         mutationFn: (id) => {
-            const endpoint = isAdmin ? `/api/admin/notifications/${id}/read` : `/api/notifications/${id}/read`;
+            const endpoint = isAdmin ? `/api/admin/notifications/${id}/read` : `/api/auth/notifications/${id}/read`;
             return api.post(endpoint);
         },
         onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
@@ -93,7 +93,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
 
     const markAllReadMutation = useMutation({
         mutationFn: () => {
-            const endpoint = isAdmin ? '/api/admin/notifications/read-all' : '/api/notifications/read-all';
+            const endpoint = isAdmin ? '/api/admin/notifications/read-all' : '/api/auth/notifications/read-all';
             return api.post(endpoint);
         },
         onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
@@ -101,7 +101,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
 
     const clearMutation = useMutation({
         mutationFn: () => {
-            const endpoint = isAdmin ? '/api/admin/notifications/clear' : '/api/notifications/clear';
+            const endpoint = isAdmin ? '/api/admin/notifications/clear' : '/api/auth/notifications/clear';
             return api.delete(endpoint);
         },
         onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
