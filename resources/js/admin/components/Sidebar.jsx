@@ -25,6 +25,7 @@ import {
     Info,
     Terminal,
     Bug,
+    Bot,
     MessageSquare,
     Zap,
     Globe
