@@ -25,7 +25,7 @@ const ScrapedDataList = () => {
     const createLemma = useMutation({
         mutationFn: async ({ word, scraped_data }) => {
             // Create lemma
-            const res = await api.post('/api/admin/dictionary/lemmas', { lemma: word, status: 'pending' });
+            const res = await api.post('/api/admin/dictionary/lemmas', { lemma: word, status: 'approved' });
 
             // Add senses
             if (scraped_data && scraped_data.length > 0) {

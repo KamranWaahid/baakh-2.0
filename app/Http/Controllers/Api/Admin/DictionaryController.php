@@ -508,7 +508,7 @@ class DictionaryController extends Controller
         // We order by frequency (desc) to get common words first, or random if preferred.
         // Let's get top 100 most frequent missing words and pick $count randomly from them to avoid always hitting the same un-scrapable words.
         $missingWordsQuery = \App\Models\CorpusStat::whereNotIn('word', function ($query) {
-            $query->select('lemma')->from('lemmas');
+            $query->select('word')->from('sindhila_scrapes');
         })
             ->orderBy('frequency', 'desc')
             ->limit(100)
@@ -623,11 +623,7 @@ class DictionaryController extends Controller
         // Find 1 word from corpus_stats that hasn't been checked yet
         $stat = \App\Models\CorpusStat::whereNull('sindhila_status')
             ->whereNotIn('word', function ($query) {
-                // Ensure we don't scrape words already in lemmas
-                $query->select('lemma')->from('lemmas');
-            })
-            ->whereNotIn('word', function ($query) {
-                // And ensure we don't scrape words already in the isolated scrape queue
+                // Ensure we don't scrape words already in the isolated scrape queue
                 $query->select('word')->from('sindhila_scrapes');
             })
             ->orderBy('frequency', 'desc')
@@ -635,9 +631,6 @@ class DictionaryController extends Controller
 
         // Count how many are left
         $remaining = \App\Models\CorpusStat::whereNull('sindhila_status')
-            ->whereNotIn('word', function ($query) {
-                $query->select('lemma')->from('lemmas');
-            })
             ->whereNotIn('word', function ($query) {
                 $query->select('word')->from('sindhila_scrapes');
             })

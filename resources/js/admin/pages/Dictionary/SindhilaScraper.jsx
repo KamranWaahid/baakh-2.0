@@ -50,7 +50,7 @@ const SindhilaScraper = () => {
     const createLemma = useMutation({
         mutationFn: async (lemmaString) => {
             // First create the lemma
-            const res = await api.post('/api/admin/dictionary/lemmas', { lemma: lemmaString, status: 'pending' });
+            const res = await api.post('/api/admin/dictionary/lemmas', { lemma: lemmaString, status: 'approved' });
 
             // Then add all scraped senses to it automatically
             if (results && results.results.length > 0) {
