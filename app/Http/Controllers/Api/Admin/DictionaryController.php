@@ -577,20 +577,13 @@ class DictionaryController extends Controller
                     }
                 }
 
-                // Only create the lemma if we actually found definitions
+                // Only create the scrape record if we actually found definitions
                 if (!empty($scrapedSenses)) {
-                    $lemma = Lemma::create([
-                        'lemma' => $normalizedWord,
+                    \App\Models\SindhilaScrape::create([
+                        'word' => $normalizedWord,
+                        'scraped_data' => $scrapedSenses,
                         'status' => 'pending'
                     ]);
-
-                    foreach ($scrapedSenses as $senseData) {
-                        \App\Models\Sense::create([
-                            'lemma_id' => $lemma->id,
-                            'definition' => $senseData['text'],
-                            'domain' => $senseData['source'],
-                        ]);
-                    }
 
                     $results[] = [
                         'word' => $normalizedWord,
@@ -605,6 +598,12 @@ class DictionaryController extends Controller
                 }
 
             } catch (\Exception $e) {
+                \App\Models\SindhilaScrape::create([
+                    'word' => $normalizedWord,
+                    'scraped_data' => null,
+                    'status' => 'error_parsing'
+                ]);
+
                 $results[] = [
                     'word' => $normalizedWord,
                     'status' => 'error',
@@ -617,5 +616,128 @@ class DictionaryController extends Controller
             'processed' => count($selectedWords),
             'results' => $results
         ]);
+    }
+
+    public function autoScrapeStep(Request $request)
+    {
+        // Find 1 word from corpus_stats that hasn't been checked yet
+        $stat = \App\Models\CorpusStat::whereNull('sindhila_status')
+            ->whereNotIn('word', function ($query) {
+                // Ensure we don't scrape words already in lemmas
+                $query->select('lemma')->from('lemmas');
+            })
+            ->whereNotIn('word', function ($query) {
+                // And ensure we don't scrape words already in the isolated scrape queue
+                $query->select('word')->from('sindhila_scrapes');
+            })
+            ->orderBy('frequency', 'desc')
+            ->first();
+
+        // Count how many are left
+        $remaining = \App\Models\CorpusStat::whereNull('sindhila_status')
+            ->whereNotIn('word', function ($query) {
+                $query->select('lemma')->from('lemmas');
+            })
+            ->whereNotIn('word', function ($query) {
+                $query->select('word')->from('sindhila_scrapes');
+            })
+            ->count();
+
+        if (!$stat) {
+            return response()->json(['message' => 'No more missing words to check!', 'remaining' => 0], 200);
+        }
+
+        $word = $stat->word;
+        $cleanWord = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $word);
+        $normalizedWord = \App\Helpers\SindhiNormalizer::normalize($cleanWord);
+
+        $url = 'https://dic.sindhila.edu.pk/index.php?txtsrch=' . urlencode($normalizedWord);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)->get($url);
+
+            if (!$response->successful()) {
+                $stat->update(['sindhila_status' => 'error_http']);
+                return response()->json(['word' => $word, 'status' => 'error_http', 'remaining' => $remaining]);
+            }
+
+            $html = $response->body();
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOBLANKS | LIBXML_NOWARNING);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+            $contentDivs = $xpath->query('//div[contains(@class, "panel-body")]');
+            $scrapedSenses = [];
+
+            if ($contentDivs->length > 0) {
+                foreach ($contentDivs as $container) {
+                    $blocks = [];
+                    $currentSource = "General";
+                    $nodes = $xpath->query('.//p | .//h4 | .//h5 | .//li | .//div[contains(@class, "sheading2")] | .//div[contains(@class, "sheadingsd2")] | .//h2[contains(@class, "medium")]', $container);
+
+                    foreach ($nodes as $node) {
+                        $text = trim($node->textContent);
+                        if (empty($text))
+                            continue;
+                        if (str_contains($text, 'مخففن جي سمجھاڻي') || str_contains($text, 'Abbreviations') || str_contains($text, 'وڌيڪ نتيجا ڏسو'))
+                            continue;
+
+                        if (str_ends_with($text, ':') || str_contains($text, 'لغات ۾') || str_contains($text, 'ڊڪشنريءَ مان') || str_contains($text, 'لغت مان')) {
+                            $currentSource = str_replace(':', '', $text);
+                            continue;
+                        }
+                        $blocks[] = ['source' => trim($currentSource), 'text' => $text];
+                    }
+
+                    foreach ($blocks as $block) {
+                        if ($block['text'] === $normalizedWord)
+                            continue;
+                        if (str_contains($block['text'], 'سان لاڳاپيل لفظ') || str_contains($block['text'], 'بابت وڌيڪ اصطلاح') || str_contains($block['text'], 'عام استعمال'))
+                            continue;
+
+                        $scrapedSenses[] = [
+                            'source' => $block['source'],
+                            'text' => trim(preg_replace('/\s+/', ' ', $block['text']))
+                        ];
+                    }
+                }
+            }
+
+            if (empty($scrapedSenses)) {
+                $paragraphs = $xpath->query('//div[@class="col-md-9 column"]//p');
+                foreach ($paragraphs as $p) {
+                    $text = trim($p->textContent);
+                    if (!empty($text) && $text !== $normalizedWord) {
+                        $scrapedSenses[] = ['source' => 'Extracted Text', 'text' => preg_replace('/\s+/', ' ', $text)];
+                    }
+                }
+            }
+
+            if (empty($scrapedSenses)) {
+                $stat->update(['sindhila_status' => 'not_found']);
+                return response()->json(['word' => $word, 'status' => 'not_found', 'remaining' => $remaining]);
+            }
+
+            // Success: Create isolated scraped entity instead of throwing directly into Lemmas
+            $newScrape = \App\Models\SindhilaScrape::create([
+                'word' => $normalizedWord,
+                'scraped_data' => $scrapedSenses,
+                'status' => 'pending'
+            ]);
+
+            $stat->update(['sindhila_status' => 'found']);
+            return response()->json([
+                'word' => $word,
+                'status' => 'success',
+                'senses_added' => count($scrapedSenses),
+                'remaining' => $remaining
+            ]);
+
+        } catch (\Exception $e) {
+            $stat->update(['sindhila_status' => 'error_parsing']);
+            return response()->json(['word' => $word, 'status' => 'error_parsing', 'message' => $e->getMessage(), 'remaining' => $remaining]);
+        }
     }
 }

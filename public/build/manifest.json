@@ -1,144 +1,130 @@
 {
-  "_PoemActionBar-6357a292.js": {
-    "file": "assets/PoemActionBar-6357a292.js",
+  "_PoemActionBar-f2f96afd.js": {
+    "file": "assets/PoemActionBar-f2f96afd.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js"
+      "_image-4c76af4a.js"
     ]
   },
-  "_PostCard-aa642561.js": {
-    "file": "assets/PostCard-aa642561.js",
+  "_PostCard-4da00047.js": {
+    "file": "assets/PostCard-4da00047.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_PoemActionBar-6357a292.js",
+      "_textarea-a92106f8.js",
+      "_PoemActionBar-f2f96afd.js",
       "resources/js/web/main.jsx"
     ]
   },
-  "_PostCardSkeleton-5cc321bc.js": {
-    "file": "assets/PostCardSkeleton-5cc321bc.js",
+  "_PostCardSkeleton-a89f56c2.js": {
+    "file": "assets/PostCardSkeleton-a89f56c2.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
+    ]
+  },
+  "_SegmentedProgressBar-c69aee14.js": {
+    "file": "assets/SegmentedProgressBar-c69aee14.js",
+    "imports": [
+      "_textarea-a92106f8.js"
     ]
   },
   "_axios-ade11851.js": {
     "file": "assets/axios-ade11851.js"
   },
-  "_circle-check-big-997b7c6e.js": {
-    "file": "assets/circle-check-big-997b7c6e.js",
+  "_clock-fb75dea0.js": {
+    "file": "assets/clock-fb75dea0.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
   "_dateUtils-0d545e30.js": {
     "file": "assets/dateUtils-0d545e30.js"
   },
-  "_eye-b862501a.js": {
-    "file": "assets/eye-b862501a.js",
+  "_eye-86099188.js": {
+    "file": "assets/eye-86099188.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_flag-0e168ab2.js": {
-    "file": "assets/flag-0e168ab2.js",
+  "_image-4c76af4a.js": {
+    "file": "assets/image-4c76af4a.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_index-6f6fb4c3.js": {
-    "file": "assets/index-6f6fb4c3.js",
+  "_index-8a77cce1.js": {
+    "file": "assets/index-8a77cce1.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_info-257964af.js": {
-    "file": "assets/info-257964af.js",
+  "_lock-138f9baf.js": {
+    "file": "assets/lock-138f9baf.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_lock-1071abc0.js": {
-    "file": "assets/lock-1071abc0.js",
+  "_save-289641be.js": {
+    "file": "assets/save-289641be.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_save-39649983.js": {
-    "file": "assets/save-39649983.js",
+  "_switch-252f644e.js": {
+    "file": "assets/switch-252f644e.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_separator-22207a19.js": {
-    "file": "assets/separator-22207a19.js",
+  "_tabs-ee8e5a2f.js": {
+    "file": "assets/tabs-ee8e5a2f.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_shield-065225e2.js": {
-    "file": "assets/shield-065225e2.js",
-    "imports": [
-      "_textarea-10ee3000.js"
-    ]
-  },
-  "_tabs-3b2bb514.js": {
-    "file": "assets/tabs-3b2bb514.js",
-    "imports": [
-      "_textarea-10ee3000.js"
-    ]
-  },
-  "_textarea-10ee3000.js": {
-    "file": "assets/textarea-10ee3000.js",
+  "_textarea-a92106f8.js": {
+    "file": "assets/textarea-a92106f8.js",
     "imports": [
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true
   },
-  "_useBaseQuery-4e30212d.js": {
-    "file": "assets/useBaseQuery-4e30212d.js",
+  "_useInfiniteQuery-4171e70f.js": {
+    "file": "assets/useInfiniteQuery-4171e70f.js",
     "imports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ]
   },
-  "_useInfiniteQuery-00ac2c43.js": {
-    "file": "assets/useInfiniteQuery-00ac2c43.js",
+  "_volume-2-95f15687.js": {
+    "file": "assets/volume-2-95f15687.js",
     "imports": [
-      "_useBaseQuery-4e30212d.js",
-      "_textarea-10ee3000.js"
-    ]
-  },
-  "_useQuery-9b50b593.js": {
-    "file": "assets/useQuery-9b50b593.js",
-    "imports": [
-      "_useBaseQuery-4e30212d.js"
+      "_textarea-a92106f8.js"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-8312f64c.css",
+    "file": "assets/app-0b050f36.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
   "resources/js/admin/main.css": {
-    "file": "assets/main-868a19b7.css",
+    "file": "assets/main-fd6226d1.css",
     "src": "resources/js/admin/main.css"
   },
   "resources/js/admin/main.jsx": {
     "css": [
-      "assets/main-868a19b7.css"
+      "assets/main-fd6226d1.css"
     ],
-    "file": "assets/main-626a114b.js",
+    "file": "assets/main-1090fdce.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_info-257964af.js",
-      "_useQuery-9b50b593.js",
-      "_shield-065225e2.js",
-      "_flag-0e168ab2.js",
-      "_eye-b862501a.js",
-      "_tabs-3b2bb514.js",
-      "_save-39649983.js",
-      "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js"
+      "_textarea-a92106f8.js",
+      "_switch-252f644e.js",
+      "_image-4c76af4a.js",
+      "_eye-86099188.js",
+      "_tabs-ee8e5a2f.js",
+      "_save-289641be.js",
+      "_SegmentedProgressBar-c69aee14.js",
+      "_clock-fb75dea0.js",
+      "_axios-ade11851.js"
     ],
     "isEntry": true,
     "src": "resources/js/admin/main.jsx"
@@ -153,142 +139,125 @@
   },
   "resources/js/web/components/CoupletsFeed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/CoupletsFeed-52caf52c.js",
+    "file": "assets/CoupletsFeed-e7605e1f.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_PostCard-aa642561.js",
-      "_separator-22207a19.js",
-      "_PostCardSkeleton-5cc321bc.js",
-      "_useQuery-9b50b593.js",
-      "_useInfiniteQuery-00ac2c43.js",
-      "_index-6f6fb4c3.js",
+      "_textarea-a92106f8.js",
+      "_PostCard-4da00047.js",
+      "_PostCardSkeleton-a89f56c2.js",
+      "_useInfiniteQuery-4171e70f.js",
+      "_index-8a77cce1.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6357a292.js",
+      "_PoemActionBar-f2f96afd.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js",
-      "_useBaseQuery-4e30212d.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/CoupletsFeed.jsx"
   },
   "resources/js/web/components/ExploreTopics.jsx": {
-    "file": "assets/ExploreTopics-1277aa31.js",
+    "file": "assets/ExploreTopics-a2fd0cf7.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_useQuery-9b50b593.js",
-      "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js"
+      "_textarea-a92106f8.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/ExploreTopics.jsx"
   },
   "resources/js/web/components/Feed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/Feed-bc464b97.js",
+    "file": "assets/Feed-3339ba2e.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_PostCard-aa642561.js",
-      "_separator-22207a19.js",
-      "_tabs-3b2bb514.js",
-      "_PostCardSkeleton-5cc321bc.js",
+      "_textarea-a92106f8.js",
+      "_PostCard-4da00047.js",
+      "_tabs-ee8e5a2f.js",
+      "_PostCardSkeleton-a89f56c2.js",
       "resources/js/web/main.jsx",
-      "_useInfiniteQuery-00ac2c43.js",
+      "_useInfiniteQuery-4171e70f.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6357a292.js",
+      "_PoemActionBar-f2f96afd.js",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js",
-      "_useBaseQuery-4e30212d.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/Feed.jsx"
   },
   "resources/js/web/components/GenreFeed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/GenreFeed-ceedb1e6.js",
+    "file": "assets/GenreFeed-f5c57960.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_useQuery-9b50b593.js",
-      "_useInfiniteQuery-00ac2c43.js",
-      "_index-6f6fb4c3.js",
-      "_PostCard-aa642561.js",
-      "_separator-22207a19.js",
-      "_PostCardSkeleton-5cc321bc.js",
+      "_textarea-a92106f8.js",
+      "_useInfiniteQuery-4171e70f.js",
+      "_index-8a77cce1.js",
+      "_PostCard-4da00047.js",
+      "_PostCardSkeleton-a89f56c2.js",
       "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js",
-      "_PoemActionBar-6357a292.js",
+      "_PoemActionBar-f2f96afd.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/GenreFeed.jsx"
   },
   "resources/js/web/components/PeriodFeed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/PeriodFeed-1070cf79.js",
+    "file": "assets/PeriodFeed-466acaf8.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_useQuery-9b50b593.js",
-      "_useInfiniteQuery-00ac2c43.js",
-      "_index-6f6fb4c3.js",
-      "_PostCard-aa642561.js",
-      "_separator-22207a19.js",
-      "_PostCardSkeleton-5cc321bc.js",
+      "_textarea-a92106f8.js",
+      "_useInfiniteQuery-4171e70f.js",
+      "_index-8a77cce1.js",
+      "_PostCard-4da00047.js",
+      "_PostCardSkeleton-a89f56c2.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js",
-      "_PoemActionBar-6357a292.js",
+      "_PoemActionBar-f2f96afd.js",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PeriodFeed.jsx"
   },
   "resources/js/web/components/PoemDetail.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/PoemDetail-20abe0f9.js",
+    "file": "assets/PoemDetail-b5c39ca7.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_useQuery-9b50b593.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
-      "_PoemActionBar-6357a292.js",
-      "_separator-22207a19.js",
+      "_PoemActionBar-f2f96afd.js",
       "_dateUtils-0d545e30.js",
+      "_volume-2-95f15687.js",
       "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js",
-      "_flag-0e168ab2.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoemDetail.jsx"
   },
   "resources/js/web/components/PoetProfile.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/PoetProfile-5e67f9cc.js",
+    "file": "assets/PoetProfile-0866d929.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_separator-22207a19.js",
-      "_PostCard-aa642561.js",
-      "_useQuery-9b50b593.js",
-      "_useInfiniteQuery-00ac2c43.js",
-      "_index-6f6fb4c3.js",
-      "_PoemActionBar-6357a292.js",
+      "_textarea-a92106f8.js",
+      "_SegmentedProgressBar-c69aee14.js",
+      "_PostCard-4da00047.js",
+      "_useInfiniteQuery-4171e70f.js",
+      "_index-8a77cce1.js",
+      "_PoemActionBar-f2f96afd.js",
       "resources/js/web/main.jsx",
-      "_flag-0e168ab2.js",
+      "_image-4c76af4a.js",
       "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js",
       "_dateUtils-0d545e30.js"
     ],
     "isDynamicEntry": true,
@@ -296,71 +265,63 @@
   },
   "resources/js/web/components/PoetryFeed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/PoetryFeed-1d27c735.js",
+    "file": "assets/PoetryFeed-a9dcf553.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_PostCard-aa642561.js",
-      "_separator-22207a19.js",
-      "_tabs-3b2bb514.js",
-      "_PostCardSkeleton-5cc321bc.js",
-      "_useQuery-9b50b593.js",
-      "_useInfiniteQuery-00ac2c43.js",
-      "_index-6f6fb4c3.js",
+      "_textarea-a92106f8.js",
+      "_PostCard-4da00047.js",
+      "_tabs-ee8e5a2f.js",
+      "_PostCardSkeleton-a89f56c2.js",
+      "_useInfiniteQuery-4171e70f.js",
+      "_index-8a77cce1.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6357a292.js",
+      "_PoemActionBar-f2f96afd.js",
       "resources/js/web/main.jsx",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js",
-      "_useBaseQuery-4e30212d.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetryFeed.jsx"
   },
   "resources/js/web/components/PoetsFeed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/PoetsFeed-cf85a1aa.js",
+    "file": "assets/PoetsFeed-8b2f47b9.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_useQuery-9b50b593.js",
-      "_useInfiniteQuery-00ac2c43.js",
-      "_index-6f6fb4c3.js",
+      "_textarea-a92106f8.js",
+      "_useInfiniteQuery-4171e70f.js",
+      "_index-8a77cce1.js",
       "resources/js/web/main.jsx",
-      "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js"
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetsFeed.jsx"
   },
   "resources/js/web/components/ProsodyFeed.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/ProsodyFeed-4efe2a95.js",
+    "file": "assets/ProsodyFeed-b80c76f7.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_useQuery-9b50b593.js",
-      "_info-257964af.js",
-      "_tabs-3b2bb514.js",
-      "_separator-22207a19.js",
+      "_textarea-a92106f8.js",
+      "_switch-252f644e.js",
+      "_tabs-ee8e5a2f.js",
       "resources/js/web/main.jsx",
-      "_circle-check-big-997b7c6e.js",
-      "_axios-ade11851.js",
-      "_useBaseQuery-4e30212d.js"
+      "_volume-2-95f15687.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/ProsodyFeed.jsx"
   },
   "resources/js/web/components/SidebarLeft.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/SidebarLeft-8b202cc6.js",
+    "file": "assets/SidebarLeft-2eb404c0.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -369,15 +330,15 @@
   },
   "resources/js/web/components/SidebarRight.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
     "dynamicImports": [
-      "_textarea-10ee3000.js"
+      "_textarea-a92106f8.js"
     ],
-    "file": "assets/SidebarRight-365e1f0e.js",
+    "file": "assets/SidebarRight-b3fbc97a.js",
     "imports": [
       "resources/js/web/main.jsx",
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "_dateUtils-0d545e30.js",
       "_axios-ade11851.js"
     ],
@@ -386,11 +347,11 @@
   },
   "resources/js/web/components/SocialCallback.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/SocialCallback-eda3ae7b.js",
+    "file": "assets/SocialCallback-7b5bd232.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -399,30 +360,28 @@
   },
   "resources/js/web/components/TopicDetail.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/TopicDetail-f6cee767.js",
+    "file": "assets/TopicDetail-49edf9f8.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "_PostCard-aa642561.js",
+      "_textarea-a92106f8.js",
+      "_PostCard-4da00047.js",
       "resources/js/web/main.jsx",
-      "_useQuery-9b50b593.js",
       "_axios-ade11851.js",
-      "_PoemActionBar-6357a292.js",
+      "_PoemActionBar-f2f96afd.js",
       "_dateUtils-0d545e30.js",
-      "_flag-0e168ab2.js",
-      "_useBaseQuery-4e30212d.js"
+      "_image-4c76af4a.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/TopicDetail.jsx"
   },
   "resources/js/web/main.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
     "dynamicImports": [
-      "_textarea-10ee3000.js",
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/components/SidebarLeft.jsx",
       "resources/js/web/components/SidebarRight.jsx",
       "resources/js/web/components/Feed.jsx",
@@ -441,53 +400,56 @@
       "resources/js/web/pages/Status.jsx",
       "resources/js/web/components/SocialCallback.jsx",
       "resources/js/web/pages/SetPassword.jsx",
+      "resources/js/web/pages/ForgotPassword.jsx",
+      "resources/js/web/pages/ResetPassword.jsx",
       "resources/js/web/pages/Profile.jsx",
       "resources/js/web/pages/Settings.jsx",
       "resources/js/web/components/ExploreTopics.jsx",
       "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-e0aebd88.js",
+    "file": "assets/main-0337fdea.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "_axios-ade11851.js"
     ],
     "isEntry": true,
     "src": "resources/js/web/main.jsx"
   },
   "resources/js/web/pages/About.jsx": {
-    "css": [
-      "assets/app-8312f64c.css"
-    ],
-    "file": "assets/About-6b68def2.js",
+    "file": "assets/About-d1a1283f.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "resources/js/web/main.jsx",
+      "_textarea-a92106f8.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/About.jsx"
   },
-  "resources/js/web/pages/Help.jsx": {
+  "resources/js/web/pages/ForgotPassword.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/Help-63fb1932.js",
+    "file": "assets/ForgotPassword-032f80ff.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
+      "_axios-ade11851.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/web/pages/ForgotPassword.jsx"
+  },
+  "resources/js/web/pages/Help.jsx": {
+    "file": "assets/Help-8eabad50.js",
+    "imports": [
+      "_textarea-a92106f8.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Help.jsx"
   },
   "resources/js/web/pages/Privacy.jsx": {
-    "css": [
-      "assets/app-8312f64c.css"
-    ],
-    "file": "assets/Privacy-6ad4ab57.js",
+    "file": "assets/Privacy-0a277c42.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "resources/js/web/main.jsx",
+      "_textarea-a92106f8.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -495,29 +457,40 @@
   },
   "resources/js/web/pages/Profile.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/Profile-aa7b60d5.js",
+    "file": "assets/Profile-8352d927.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
-      "_save-39649983.js",
-      "_lock-1071abc0.js",
+      "_save-289641be.js",
+      "_lock-138f9baf.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Profile.jsx"
   },
+  "resources/js/web/pages/ResetPassword.jsx": {
+    "file": "assets/ResetPassword-b7eba364.js",
+    "imports": [
+      "_textarea-a92106f8.js",
+      "_lock-138f9baf.js",
+      "_eye-86099188.js",
+      "_axios-ade11851.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/web/pages/ResetPassword.jsx"
+  },
   "resources/js/web/pages/SetPassword.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/SetPassword-04a80f97.js",
+    "file": "assets/SetPassword-2159b6c5.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
-      "_lock-1071abc0.js",
-      "_eye-b862501a.js",
+      "_lock-138f9baf.js",
+      "_eye-86099188.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -525,42 +498,33 @@
   },
   "resources/js/web/pages/Settings.jsx": {
     "css": [
-      "assets/app-8312f64c.css"
+      "assets/app-0b050f36.css"
     ],
-    "file": "assets/Settings-0e87d57f.js",
+    "file": "assets/Settings-6da2c432.js",
     "imports": [
-      "_textarea-10ee3000.js",
+      "_textarea-a92106f8.js",
       "resources/js/web/main.jsx",
-      "_shield-065225e2.js",
-      "_lock-1071abc0.js",
-      "_eye-b862501a.js",
+      "_lock-138f9baf.js",
+      "_eye-86099188.js",
+      "_clock-fb75dea0.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Settings.jsx"
   },
   "resources/js/web/pages/Status.jsx": {
-    "css": [
-      "assets/app-8312f64c.css"
-    ],
-    "file": "assets/Status-ff5e3755.js",
+    "file": "assets/Status-26a33836.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "resources/js/web/main.jsx",
-      "_circle-check-big-997b7c6e.js",
+      "_textarea-a92106f8.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Status.jsx"
   },
   "resources/js/web/pages/Terms.jsx": {
-    "css": [
-      "assets/app-8312f64c.css"
-    ],
-    "file": "assets/Terms-b0e2be9c.js",
+    "file": "assets/Terms-c04652d4.js",
     "imports": [
-      "_textarea-10ee3000.js",
-      "resources/js/web/main.jsx",
+      "_textarea-a92106f8.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,

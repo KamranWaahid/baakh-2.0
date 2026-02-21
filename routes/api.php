@@ -243,6 +243,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         // Dictionary Routes
         Route::post('dictionary/scrape-batch-missing', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeBatchMissing']);
         Route::post('dictionary/scrape-word', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeSindhilaByWord']);
+        Route::post('dictionary/auto-scrape-step', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'autoScrapeStep']);
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);

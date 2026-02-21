@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '@/admin/api/axios';
@@ -10,14 +10,26 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import {
-    Search, Globe, Loader2, Copy, CheckCircle2, Plus, FileJson, ArrowRightLeft
+    Search, Globe, Loader2, Copy, CheckCircle2, Plus, FileJson, ArrowRightLeft, Square, Database
 } from 'lucide-react';
 
 const SindhilaScraper = () => {
     const [word, setWord] = useState('');
     const [results, setResults] = useState(null);
     const [copied, setCopied] = useState(false);
+
+    // Auto Scraper States
+    const [isAutoScraping, setIsAutoScraping] = useState(false);
+    const [autoScrapeLogs, setAutoScrapeLogs] = useState([]);
+    const [remainingStats, setRemainingStats] = useState(null);
+    const autoScrapeRef = useRef(isAutoScraping);
+
     const navigate = useNavigate();
+
+    // Keep ref in sync for the recursive loop
+    useEffect(() => {
+        autoScrapeRef.current = isAutoScraping;
+    }, [isAutoScraping]);
 
     const scrapeWord = useMutation({
         mutationFn: (searchWord) => api.post('/api/admin/dictionary/scrape-word', { word: searchWord }),
@@ -60,9 +72,55 @@ const SindhilaScraper = () => {
         onError: () => toast.error('Failed to create word in dictionary.')
     });
 
+    // Recursive Auto-Scraper core loop
+    const runAutoScrapeStep = async () => {
+        if (!autoScrapeRef.current) return; // Exit if paused
+
+        try {
+            const res = await api.post('/api/admin/dictionary/auto-scrape-step');
+
+            if (res.data.message === 'No more missing words to check!') {
+                setIsAutoScraping(false);
+                toast.success('Auto-scraper finished! All missing words checked.');
+                return;
+            }
+
+            // Put latest log on top
+            setAutoScrapeLogs(prev => [res.data, ...prev].slice(0, 50));
+            if (res.data.remaining !== undefined) {
+                setRemainingStats(res.data.remaining);
+            }
+
+            // If we are still actively scraping, queue the next run after 2000ms pause
+            if (autoScrapeRef.current) {
+                setTimeout(runAutoScrapeStep, 2000);
+            }
+
+        } catch (err) {
+            console.error(err);
+            toast.error("Auto-Scrape step failed. Pausing to prevent server overload.");
+            setIsAutoScraping(false);
+        }
+    };
+
+    const toggleAutoScrape = () => {
+        if (!isAutoScraping) {
+            setIsAutoScraping(true);
+            setResults(null); // Clear manual results
+            toast.info("Started Background Scraper. Please leave this page open.");
+
+            // Kick off the loop
+            setTimeout(runAutoScrapeStep, 500);
+        } else {
+            setIsAutoScraping(false);
+            toast.info("Auto-Scraper paused.");
+        }
+    };
+
     const handleSearch = (e) => {
         e.preventDefault();
         if (word.trim()) {
+            setIsAutoScraping(false);
             scrapeWord.mutate(word.trim());
         }
     };
@@ -81,9 +139,14 @@ const SindhilaScraper = () => {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Sindhila Scraper</h2>
                     <p className="text-muted-foreground mt-1">
-                        Query the external Sindhila Dictionary directly and import results.
+                        Query the external Sindhila Dictionary explicitly or run the continuous background bulk-importer.
                     </p>
                 </div>
+                {remainingStats !== null && (
+                    <Badge variant="outline" className="text-lg py-2 px-4 shadow-sm border-blue-500/20 bg-blue-50/50">
+                        {remainingStats.toLocaleString()} words remaining in Corpus queue
+                    </Badge>
+                )}
             </div>
 
             <Card className="border-primary/20 bg-primary/5">
@@ -108,21 +171,38 @@ const SindhilaScraper = () => {
                                 autoFocus
                             />
                         </div>
-                        <Button
-                            type="submit"
-                            size="lg"
-                            className="h-16 px-8 text-lg"
-                            disabled={!word.trim() || scrapeWord.isPending}
-                        >
-                            {scrapeWord.isPending ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : <Globe className="mr-2 h-5 w-5" />}
-                            Scrape Now
-                        </Button>
+
+                        {word.trim() ? (
+                            <Button
+                                type="submit"
+                                size="lg"
+                                className="h-16 px-8 text-lg min-w-[200px]"
+                                disabled={scrapeWord.isPending}
+                            >
+                                {scrapeWord.isPending ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : <Globe className="mr-2 h-5 w-5" />}
+                                Scrape Now
+                            </Button>
+                        ) : (
+                            <Button
+                                type="button"
+                                size="lg"
+                                onClick={toggleAutoScrape}
+                                variant={isAutoScraping ? "destructive" : "default"}
+                                className={`h-16 px-8 text-lg min-w-[200px] ${!isAutoScraping && 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                                {isAutoScraping ? (
+                                    <><Square className="mr-2 h-5 w-5 fill-current" /> Stop Scraper</>
+                                ) : (
+                                    <><Database className="mr-2 h-5 w-5" /> Auto-Scrape All Words</>
+                                )}
+                            </Button>
+                        )}
                     </form>
                 </CardContent>
             </Card>
 
-            {/* Results Table */}
-            {results && (
+            {/* Manual Scrape Results Table */}
+            {!isAutoScraping && results && (
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between bg-muted/30">
                         <div>
@@ -179,6 +259,58 @@ const SindhilaScraper = () => {
                                 <p className="text-sm mt-2">Try checking the spelling or variations.</p>
                             </div>
                         )}
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Auto Scraper Live Rolling Log */}
+            {autoScrapeLogs.length > 0 && (
+                <Card className="border-primary/20 shadow-md">
+                    <CardHeader className="bg-muted/30 border-b relative overflow-hidden">
+                        {isAutoScraping && (
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-blue-100 overflow-hidden">
+                                <div className="h-full bg-blue-500 animate-pulse w-full rounded" />
+                            </div>
+                        )}
+                        <CardTitle className="flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                                <Database className="h-5 w-5 text-blue-600" />
+                                Live Corpus Auto-Scraper Event Log
+                            </span>
+                            {isAutoScraping && (
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-none animate-pulse">Running - Pausing 2s between requests</Badge>
+                            )}
+                        </CardTitle>
+                        <CardDescription>
+                            Showing the last 50 words checked against the Sindhila database automatically.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[180px]">Word</TableHead>
+                                    <TableHead>Execution Status</TableHead>
+                                    <TableHead className="text-right">Imported Senses</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {autoScrapeLogs.map((log, index) => (
+                                    <TableRow key={index} className={index === 0 ? "bg-muted/30" : ""}>
+                                        <TableCell className="font-arabic text-xl font-bold">{log.word}</TableCell>
+                                        <TableCell>
+                                            {log.status === 'success' && <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-green-200 shadow-sm">Success - Imported</Badge>}
+                                            {log.status === 'not_found' && <Badge variant="outline" className="text-gray-500 border-gray-200">Not Found</Badge>}
+                                            {log.status === 'error_parsing' && <Badge variant="destructive">HTML Parse Error</Badge>}
+                                            {log.status === 'error_http' && <Badge variant="destructive">HTTP Request Failed</Badge>}
+                                        </TableCell>
+                                        <TableCell className="text-right text-lg">
+                                            {log.senses_added !== undefined ? log.senses_added : '-'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             )}

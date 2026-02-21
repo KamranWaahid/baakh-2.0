@@ -126,6 +126,7 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarGroup icon={Book} label="Dictionary">
                         <SidebarLink to="/admin/dictionary" icon={Book}>Dictionary Home</SidebarLink>
                         <SidebarLink to="/admin/dictionary/sindhila-scraper" icon={Globe}>Sindhila Scraper</SidebarLink>
+                        <SidebarLink to="/admin/dictionary/scraped-data" icon={Database}>Scraped Data List</SidebarLink>
                         <SidebarLink to="/admin/dictionary/lemma-inbox" icon={Layers}>Lemma Inbox</SidebarLink>
                         <SidebarLink to="/admin/dictionary/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
                         <SidebarLink to="/admin/dictionary/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
