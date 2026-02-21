@@ -19,7 +19,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Trash2, Plus, Check, Save, Loader2, ArrowLeft,
-    BookOpen, Type, Languages, ArrowRightLeft, Layers, X, Globe
+    BookOpen, Type, Languages, ArrowRightLeft, Layers, X, Globe,
+    Copy, CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,6 +51,7 @@ const SenseEditor = () => {
     const [scrapeResults, setScrapeResults] = useState([]);
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeError, setScrapeError] = useState(null);
+    const [isScrapeCopied, setIsScrapeCopied] = useState(false);
 
     useEffect(() => {
         if (lemma) {
@@ -175,6 +177,14 @@ const SenseEditor = () => {
         } finally {
             setIsScraping(false);
         }
+    };
+
+    const handleCopyScrapeJson = () => {
+        if (!scrapeResults || scrapeResults.length === 0) return;
+        navigator.clipboard.writeText(JSON.stringify({ scrapedSenses: scrapeResults }, null, 2));
+        setIsScrapeCopied(true);
+        toast.success('Scraped data JSON copied to clipboard!');
+        setTimeout(() => setIsScrapeCopied(false), 2000);
     };
 
     if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>;
@@ -463,10 +473,18 @@ const SenseEditor = () => {
             <Dialog open={isScrapeModalOpen} onOpenChange={setIsScrapeModalOpen}>
                 <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>Sindhila Dictionary Results</DialogTitle>
-                        <DialogDescription>
-                            Extracted definitions and translations for <span className="font-arabic text-lg px-2">{lemma.lemma}</span>
-                        </DialogDescription>
+                        <div className="flex items-center justify-between pr-6">
+                            <div>
+                                <DialogTitle>Sindhila Dictionary Results</DialogTitle>
+                                <DialogDescription>
+                                    Extracted definitions and translations for <span className="font-arabic text-lg px-2">{lemma.lemma}</span>
+                                </DialogDescription>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={handleCopyScrapeJson} disabled={scrapeResults.length === 0}>
+                                {isScrapeCopied ? <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> : <Copy className="h-4 w-4 mr-2" />}
+                                {isScrapeCopied ? 'Copied' : 'Copy Scrape JSON'}
+                            </Button>
+                        </div>
                     </DialogHeader>
                     {scrapeError ? (
                         <div className="text-red-500 text-sm p-4 text-center">{scrapeError}</div>
