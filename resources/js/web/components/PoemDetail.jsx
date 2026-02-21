@@ -12,6 +12,7 @@ import PaywallCTA from './PaywallCTA';
 import { formatSindhiDate } from '../utils/dateUtils';
 import { getImageUrl } from '../utils/url';
 import DOMPurify from 'dompurify';
+import { CoupletWithWords } from './WordTooltip';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -133,7 +134,7 @@ const PoemDetail = ({ lang }) => {
                 <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-[1.7] text-[18px] md:text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line antialiased`}>
                     {Array.isArray(poem.content) ? (
                         poem.content.map((couplet, index) => (
-                            <p key={index} className="mb-6 w-full">{couplet}</p>
+                            <p key={index} className="mb-6 w-full"><CoupletWithWords text={couplet} isRtl={isRtl} /></p>
                         ))
                     ) : (
                         <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }} />

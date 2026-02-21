@@ -61,6 +61,9 @@ Route::prefix('v1')->group(function () {
     Route::post('feedback', [App\Http\Controllers\Api\FeedbackController::class, 'store']);
     Route::post('report', [App\Http\Controllers\Api\ReportController::class, 'store']);
 
+    // Word Dictionary Lookup (public)
+    Route::get('word/{word}', [App\Http\Controllers\Api\WordLookupController::class, 'lookup']);
+
     // Sidebar Routes
     Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
@@ -99,6 +102,7 @@ use App\Http\Controllers\Api\Admin\ProvinceController;
 use App\Http\Controllers\Api\Admin\CityController;
 use App\Http\Controllers\Api\Admin\ErrorManagementController;
 use App\Http\Controllers\Api\Admin\PerformanceController;
+use App\Http\Controllers\Api\Admin\AnalyticsController;
 
 // ... (Auth routes remain)
 
@@ -233,11 +237,15 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('corpus/clusters', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'clusters']);
         Route::get('corpus/trends', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'trends']);
 
+        // Analytics Routes
+        Route::get('analytics/frequency', [AnalyticsController::class, 'frequency']);
+
         // Dictionary Routes
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
         Route::put('dictionary/senses/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateSense']);
+        Route::post('dictionary/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
         Route::delete('dictionary/senses/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroySense']);
         Route::post('dictionary/senses/{senseId}/examples', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeExample']);
         Route::put('dictionary/examples/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateExample']);
@@ -245,6 +253,9 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::put('dictionary/lemmas/{id}/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateMorphology']);
         Route::post('dictionary/lemmas/{id}/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeVariant']);
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
+        Route::post('dictionary/lemmas/{id}/relations', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeRelation']);
+        Route::delete('dictionary/relations/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyRelation']);
+        Route::post('dictionary/lemmas/{id}/scrape-sindhila', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeSindhila']);
 
         // ── Mokhii SEO Dashboard ────────────────────
         Route::get('mokhii/dashboard', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'index']);

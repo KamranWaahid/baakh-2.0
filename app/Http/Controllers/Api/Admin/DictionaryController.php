@@ -26,7 +26,12 @@ class DictionaryController extends Controller
         }
 
         if ($request->has('status')) {
-            $query->where('status', $request->status);
+            if ($request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+        } else {
+            // Default to only showing approved words on the main dictionary browse page
+            $query->where('status', 'approved');
         }
 
         return response()->json($query->latest()->paginate($request->get('limit', 20)));

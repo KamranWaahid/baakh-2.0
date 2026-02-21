@@ -26,6 +26,11 @@ class Lemma extends Model
         return $this->hasMany(Variant::class);
     }
 
+    public function lemmaRelations()
+    {
+        return $this->hasMany(LemmaRelation::class, 'lemma_id');
+    }
+
     /**
      * Get the indexable data array for the model.
      *

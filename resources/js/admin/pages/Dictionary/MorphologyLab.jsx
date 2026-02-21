@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Trash2, Check, Link as LinkIcon, Languages, MapPin, SpellCheck, Loader2, ArrowLeft } from 'lucide-react';
+import { Layers, Plus, Trash2, Check, Link as LinkIcon, Languages, MapPin, SpellCheck, Loader2, ArrowLeft } from 'lucide-react';
 
 const MorphologyLab = () => {
     const { id } = useParams();

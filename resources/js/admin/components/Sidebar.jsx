@@ -122,7 +122,8 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
                     <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 
-                    <SidebarGroup icon={Book} label="Dictionary" disabled>
+                    <SidebarGroup icon={Book} label="Dictionary">
+                        <SidebarLink to="/admin/dictionary" icon={Book}>Dictionary Home</SidebarLink>
                         <SidebarLink to="/admin/dictionary/lemma-inbox" icon={Layers}>Lemma Inbox</SidebarLink>
                         <SidebarLink to="/admin/dictionary/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
                         <SidebarLink to="/admin/dictionary/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
@@ -130,12 +131,12 @@ const Sidebar = ({ onLinkClick }) => {
                         <SidebarLink to="/admin/dictionary/qa-search" icon={Shield}>QA & Search</SidebarLink>
                     </SidebarGroup>
 
-                    <SidebarGroup icon={Database} label="Corpus" disabled>
+                    <SidebarGroup icon={Database} label="Corpus">
                         <SidebarLink to="/admin/corpus/sentence-explorer" icon={BookOpen}>Sentence Explorer</SidebarLink>
                         <SidebarLink to="/admin/corpus/context-clusters" icon={AlignCenter}>Context Clusters</SidebarLink>
                     </SidebarGroup>
 
-                    <SidebarGroup icon={LayoutDashboard} label="Analytics" disabled>
+                    <SidebarGroup icon={LayoutDashboard} label="Analytics">
                         <SidebarLink to="/admin/analytics/frequency" icon={Layers}>Frequency Stats</SidebarLink>
                         <SidebarLink to="/admin/analytics/dialect" icon={Map}>Dialect Coverage</SidebarLink>
                         <SidebarLink to="/admin/analytics/trends" icon={Type}>Usage Trends</SidebarLink>

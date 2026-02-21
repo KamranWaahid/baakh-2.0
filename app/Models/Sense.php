@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sense extends Model
 {
-    protected $fillable = ['lemma_id', 'definition', 'domain', 'status'];
+    protected $fillable = ['lemma_id', 'definition', 'definition_en', 'definition_sd', 'domain', 'status'];
 
     public function lemma()
     {

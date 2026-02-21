@@ -25,7 +25,7 @@ const LemmaInbox = () => {
         queryKey: ['lemmas', search, page],
         queryFn: async () => {
             const res = await api.get('/api/admin/dictionary/lemmas', {
-                params: { search, page, limit: 10 }
+                params: { search, page, limit: 10, status: 'pending' }
             });
             return res.data;
         },
