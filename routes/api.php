@@ -241,6 +241,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('analytics/frequency', [AnalyticsController::class, 'frequency']);
 
         // Dictionary Routes
+        Route::post('dictionary/scrape-batch-missing', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeBatchMissing']);
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);

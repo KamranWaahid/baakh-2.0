@@ -30,6 +30,7 @@ const DictionaryHome = () => {
     const [activeTab, setActiveTab] = useState('browse');
     const [viewingLemmaId, setViewingLemmaId] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isBatchScrapeModalOpen, setIsBatchScrapeModalOpen] = useState(false);
 
     // ── Stats ──
     const { data: stats } = useQuery({
@@ -83,9 +84,14 @@ const DictionaryHome = () => {
                         Sindhi WordNet — {stats?.total?.toLocaleString() || '—'} words
                     </p>
                 </div>
-                <Button onClick={() => setIsAddModalOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Add Word
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => setIsBatchScrapeModalOpen(true)}>
+                        <Layers className="mr-2 h-4 w-4" /> Batch Scrape
+                    </Button>
+                    <Button onClick={() => setIsAddModalOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" /> Add Word
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -332,6 +338,9 @@ const DictionaryHome = () => {
 
             {/* Modal for Adding New Word */}
             <AddLemmaModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+
+            {/* Modal for Batch Scraping */}
+            <BatchScrapeModal open={isBatchScrapeModalOpen} onClose={() => setIsBatchScrapeModalOpen(false)} />
         </div>
     );
 };
@@ -453,13 +462,93 @@ const AddLemmaModal = ({ open, onClose }) => {
                 <div className="flex justify-between items-center mt-2">
                     <Button variant="outline" onClick={onClose}>Cancel</Button>
                     <Button
-                        onClick={() => createLemma.mutate(word.trim())}
+                        onClick={() => { if (word.trim()) createLemma.mutate(word.trim()); }}
                         disabled={!word.trim() || createLemma.isPending}
                     >
                         {createLemma.isPending ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
                         Add & Scrape Data
                     </Button>
                 </div>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const BatchScrapeModal = ({ open, onClose }) => {
+    const [count, setCount] = useState(10);
+    const [results, setResults] = useState(null);
+
+    const batchScrape = useMutation({
+        mutationFn: (c) => api.post('/api/admin/dictionary/scrape-batch-missing', { count: c }),
+        onSuccess: (res) => {
+            toast.success(`Processed ${res.data.processed} words! Check Lemma Inbox.`);
+            setResults(res.data.results);
+        },
+        onError: () => toast.error('Failed to run batch scrape.')
+    });
+
+    const handleClose = () => {
+        setResults(null);
+        onClose();
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={handleClose}>
+            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Batch Scrape Missing Words</DialogTitle>
+                    <DialogDescription>
+                        Automatically find the most frequent missing words from our corpus and fetch their definitions from Sindhila. New words will go to the Inbox.
+                    </DialogDescription>
+                </DialogHeader>
+
+                {!results ? (
+                    <div className="py-6">
+                        <Label>Number of words to process at once:</Label>
+                        <div className="flex items-center gap-3 mt-2">
+                            <Input
+                                type="number"
+                                min="1"
+                                max="50"
+                                value={count}
+                                onChange={(e) => setCount(Number(e.target.value))}
+                                className="w-24"
+                            />
+                            <span className="text-sm text-muted-foreground">Words will be drawn from top frequencies.</span>
+                        </div>
+
+                        <div className="mt-8 flex justify-end gap-2">
+                            <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                            <Button onClick={() => batchScrape.mutate(count)} disabled={batchScrape.isPending}>
+                                {batchScrape.isPending ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Layers className="h-4 w-4 mr-2" />}
+                                Start Batch Scrape
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <ScrollArea className="flex-1 mt-4 border rounded-md bg-muted/30 p-4">
+                        <h4 className="font-semibold mb-4 text-sm">Scraping Results:</h4>
+                        <div className="space-y-2">
+                            {results.map((r, i) => (
+                                <div key={i} className="flex items-center justify-between text-sm py-2 px-3 border rounded bg-background">
+                                    <span className="font-arabic font-semibold text-lg">{r.word}</span>
+                                    {r.status === 'success' ? (
+                                        <Badge variant="default" className="bg-green-600">Added ({r.senses_added} senses)</Badge>
+                                    ) : r.status === 'not_found' ? (
+                                        <Badge variant="secondary">Not found on Sindhila</Badge>
+                                    ) : (
+                                        <Badge variant="destructive">Error</Badge>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <Button onClick={handleClose} asChild>
+                                <Link to="/admin/dictionary/lemma-inbox">Go to Inbox</Link>
+                            </Button>
+                        </div>
+                    </ScrollArea>
+                )}
             </DialogContent>
         </Dialog>
     );
