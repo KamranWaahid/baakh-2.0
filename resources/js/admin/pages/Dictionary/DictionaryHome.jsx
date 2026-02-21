@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '@/admin/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
     Dialog,
@@ -19,7 +20,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from 'sonner';
 import {
     Search, Book, Layers, Type, Languages, ArrowRightLeft,
-    ChevronLeft, ChevronRight, Loader2, Edit2, Eye, Copy, CheckCircle2
+    ChevronLeft, ChevronRight, Loader2, Edit2, Eye, Copy, CheckCircle2,
+    Plus
 } from 'lucide-react';
 
 const DictionaryHome = () => {
@@ -27,6 +29,7 @@ const DictionaryHome = () => {
     const [page, setPage] = useState(1);
     const [activeTab, setActiveTab] = useState('browse');
     const [viewingLemmaId, setViewingLemmaId] = useState(null);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // ── Stats ──
     const { data: stats } = useQuery({
@@ -73,11 +76,16 @@ const DictionaryHome = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight">Dictionary</h2>
-                <p className="text-muted-foreground mt-1">
-                    Sindhi WordNet — {stats?.total?.toLocaleString() || '—'} words
-                </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Dictionary</h2>
+                    <p className="text-muted-foreground mt-1">
+                        Sindhi WordNet — {stats?.total?.toLocaleString() || '—'} words
+                    </p>
+                </div>
+                <Button onClick={() => setIsAddModalOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Word
+                </Button>
             </div>
 
             {/* Stats Cards */}
@@ -321,6 +329,9 @@ const DictionaryHome = () => {
 
             {/* Modal for Viewing JSON Data */}
             <LemmaViewModal lemmaId={viewingLemmaId} onClose={() => setViewingLemmaId(null)} />
+
+            {/* Modal for Adding New Word */}
+            <AddLemmaModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
         </div>
     );
 };
@@ -400,6 +411,55 @@ const LemmaViewModal = ({ lemmaId, onClose }) => {
                         </pre>
                     </ScrollArea>
                 )}
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+const AddLemmaModal = ({ open, onClose }) => {
+    const [word, setWord] = useState('');
+    const navigate = useNavigate();
+
+    const createLemma = useMutation({
+        mutationFn: (lemmaString) => api.post('/api/admin/dictionary/lemmas', { lemma: lemmaString, status: 'pending' }),
+        onSuccess: (res) => {
+            toast.success('Word created! Redirecting to editor...');
+            navigate(`/admin/dictionary/lemmas/${res.data.id}`);
+            onClose();
+        },
+        onError: () => toast.error('Failed to create word')
+    });
+
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Word</DialogTitle>
+                    <DialogDescription>
+                        Create a draft word. You can immediately scrape data from Sindhila on the next screen.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label className="text-lg">Word (Sindhi)</Label>
+                    <Input
+                        value={word}
+                        onChange={(e) => setWord(e.target.value)}
+                        className="font-arabic text-2xl mt-3 text-right"
+                        dir="rtl"
+                        autoFocus
+                        placeholder="سنڌي لفظ..."
+                    />
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button
+                        onClick={() => createLemma.mutate(word.trim())}
+                        disabled={!word.trim() || createLemma.isPending}
+                    >
+                        {createLemma.isPending ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                        Add & Scrape Data
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );
