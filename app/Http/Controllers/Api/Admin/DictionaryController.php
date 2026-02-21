@@ -15,7 +15,7 @@ class DictionaryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Lemma::withCount('senses');
+        $query = Lemma::withCount(['senses', 'lemmaRelations'])->with('morphology');
 
         if ($request->has('search')) {
             $query->where('lemma', 'like', '%' . $request->search . '%');
@@ -43,12 +43,33 @@ class DictionaryController extends Controller
 
         $lemma = Lemma::create($validated);
 
+        // Sync with Romanizer
+        if (!empty($validated['transliteration'])) {
+            \App\Models\Romanizer::updateOrCreate(
+                ['word_sd' => $lemma->lemma],
+                [
+                    'word_roman' => $validated['transliteration'],
+                    'user_id' => auth()->id() ?? 1
+                ]
+            );
+        }
+
         return response()->json($lemma, 201);
     }
 
     public function show($id)
     {
-        $lemma = Lemma::with(['senses.examples', 'morphology', 'variants'])->findOrFail($id);
+        $lemma = Lemma::with(['senses.examples', 'morphology', 'variants', 'lemmaRelations'])->findOrFail($id);
+
+        // Auto-fetch transliteration from Romanizer if it's empty
+        if (empty($lemma->transliteration)) {
+            $roman = \App\Models\Romanizer::where('word_sd', $lemma->lemma)->first();
+            if ($roman) {
+                // Attach the transliteration just for the response so the frontend receives it
+                $lemma->transliteration = $roman->word_roman;
+            }
+        }
+
         return response()->json($lemma);
     }
 
@@ -65,6 +86,17 @@ class DictionaryController extends Controller
 
         $lemma->update($validated);
 
+        // Sync with Romanizer
+        if (!empty($validated['transliteration'])) {
+            \App\Models\Romanizer::updateOrCreate(
+                ['word_sd' => $lemma->lemma],
+                [
+                    'word_roman' => $validated['transliteration'],
+                    'user_id' => auth()->id() ?? 1
+                ]
+            );
+        }
+
         // Nested updates for senses, morphology, variants could be added here if needed
         // For a full CRUD, usually we have separate endpoints or a complex sync logic.
         // Given the UI shows separate sections, we'll keep it simple for now and expand as needed.
@@ -80,11 +112,27 @@ class DictionaryController extends Controller
     }
 
     // Sense Methods
+    public function storeSense(Request $request)
+    {
+        $validated = $request->validate([
+            'lemma_id' => 'required|exists:lemmas,id',
+            'definition' => 'nullable|string',
+            'definition_en' => 'nullable|string',
+            'definition_sd' => 'nullable|string',
+            'domain' => 'nullable|string',
+        ]);
+
+        $sense = Sense::create($validated);
+        return response()->json($sense, 201);
+    }
+
     public function updateSense(Request $request, $id)
     {
         $sense = Sense::findOrFail($id);
         $validated = $request->validate([
             'definition' => 'string',
+            'definition_en' => 'nullable|string',
+            'definition_sd' => 'nullable|string',
             'domain' => 'nullable|string',
             'status' => 'nullable|in:pending,approved',
         ]);
@@ -174,5 +222,153 @@ class DictionaryController extends Controller
         $lemma = Lemma::findOrFail($id);
         $lemma->update(['status' => 'approved']);
         return response()->json(['message' => 'Lemma approved successfully']);
+    }
+
+    // Relation Methods
+    public function storeRelation(Request $request, $lemmaId)
+    {
+        $validated = $request->validate([
+            'relation_type' => 'required|in:synonym,antonym,hypernym',
+            'related_word' => 'required|string',
+        ]);
+
+        $relation = \App\Models\LemmaRelation::create([
+            'lemma_id' => $lemmaId,
+            'relation_type' => $validated['relation_type'],
+            'related_word' => $validated['related_word'],
+        ]);
+
+        return response()->json($relation, 201);
+    }
+
+    public function destroyRelation($id)
+    {
+        $relation = \App\Models\LemmaRelation::findOrFail($id);
+        $relation->delete();
+        return response()->json(null, 204);
+    }
+
+    // Scraping Method
+    public function scrapeSindhila(Request $request, $id)
+    {
+        $lemma = Lemma::findOrFail($id);
+
+        // Strip diacritics
+        $word = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $lemma->lemma);
+
+        // Normalize characters (e.g., standardizing different forms of Heh and Ye)
+        // This is crucial because Sindhila uses specific normalized forms for index matching.
+        $word = \App\Helpers\SindhiNormalizer::normalize($word);
+
+        // Fetch from Sindhila dictionary using GET
+        $url = 'https://dic.sindhila.edu.pk/index.php?txtsrch=' . urlencode($word);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(15)->get($url);
+
+            if (!$response->successful()) {
+                return response()->json(['error' => 'Failed to reach Sindhila website.'], 500);
+            }
+
+            $html = $response->body();
+
+            // Suppress DOMDocument warnings for malformed HTML
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            // Using HTML-ENTITIES to handle UTF-8 correctly
+            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOBLANKS | LIBXML_NOWARNING);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            // The results are usually inside a panel-body. We can just target that.
+            $contentDivs = $xpath->query('//div[contains(@class, "panel-body")]');
+
+            $results = [];
+
+            if ($contentDivs->length > 0) {
+                // The first one is usually the main content or abbreviations. 
+                // We'll iterate through all of them to be safe, or just pick the ones with actual definitions.
+                // Usually there is only 1 or 2.
+                foreach ($contentDivs as $container) {
+                    $blocks = [];
+                    $currentSource = "General";
+
+                    // include div headers like sheading2 which separate sections
+                    $nodes = $xpath->query('.//p | .//h4 | .//h5 | .//li | .//div[contains(@class, "sheading2")] | .//div[contains(@class, "sheadingsd2")] | .//h2[contains(@class, "medium")]', $container);
+
+                    foreach ($nodes as $node) {
+                        $text = trim($node->textContent);
+                        if (empty($text))
+                            continue;
+
+                        // Filter out UI noise
+                        if (
+                            str_contains($text, 'مخففن جي سمجھاڻي') ||
+                            str_contains($text, 'Abbreviations') ||
+                            str_contains($text, 'وڌيڪ نتيجا ڏسو') ||
+                            str_contains($text, 'Abbreviations con =')
+                        ) {
+                            continue;
+                        }
+
+                        // Detect source headers
+                        if (str_ends_with($text, ':') || str_contains($text, 'لغات ۾') || str_contains($text, 'ڊڪشنريءَ مان') || str_contains($text, 'لغت مان')) {
+                            $currentSource = str_replace(':', '', $text);
+                            continue;
+                        }
+
+                        $blocks[] = [
+                            'source' => trim($currentSource),
+                            'text' => $text
+                        ];
+                    }
+
+                    // Group by source and further filter
+                    foreach ($blocks as $block) {
+                        if ($block['text'] === $word)
+                            continue;
+
+                        // Exclude navigation related links that get picked up as list items
+                        if (
+                            str_contains($block['text'], 'سان لاڳاپيل لفظ') ||
+                            str_contains($block['text'], 'بابت وڌيڪ اصطلاح') ||
+                            str_contains($block['text'], 'عام استعمال')
+                        ) {
+                            continue;
+                        }
+
+                        $results[] = [
+                            'source' => $block['source'],
+                            'text' => trim(preg_replace('/\s+/', ' ', $block['text']))
+                        ];
+                    }
+                }
+            }
+
+            // If structure parsing failed, fallback to a simpler text extraction of the main body
+            if (empty($results)) {
+                // Just extract all paragraphs in that div
+                $paragraphs = $xpath->query('//div[@class="col-md-9 column"]//p');
+                foreach ($paragraphs as $p) {
+                    $text = trim($p->textContent);
+                    if (!empty($text) && $text !== $word) {
+                        $results[] = [
+                            'source' => 'Extracted Text',
+                            'text' => preg_replace('/\s+/', ' ', $text)
+                        ];
+                    }
+                }
+            }
+
+            return response()->json([
+                'word' => $word,
+                'results' => $results,
+                'raw_html' => null // Can set to $html if needed for debugging
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
