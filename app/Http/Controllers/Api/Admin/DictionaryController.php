@@ -377,6 +377,129 @@ class DictionaryController extends Controller
         }
     }
 
+    public function scrapeSindhilaByWord(Request $request)
+    {
+        $request->validate([
+            'word' => 'required|string',
+        ]);
+
+        $word = $request->input('word');
+
+        // Strip diacritics
+        $cleanWord = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $word);
+
+        // Normalize characters
+        $normalizedWord = \App\Helpers\SindhiNormalizer::normalize($cleanWord);
+
+        // Fetch from Sindhila dictionary using GET
+        $url = 'https://dic.sindhila.edu.pk/index.php?txtsrch=' . urlencode($normalizedWord);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(15)->get($url);
+
+            if (!$response->successful()) {
+                return response()->json(['error' => 'Failed to reach Sindhila website.'], 500);
+            }
+
+            $html = $response->body();
+
+            // Suppress DOMDocument warnings for malformed HTML
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            // Using HTML-ENTITIES to handle UTF-8 correctly
+            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOBLANKS | LIBXML_NOWARNING);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            // The results are usually inside a panel-body.
+            $contentDivs = $xpath->query('//div[contains(@class, "panel-body")]');
+
+            $results = [];
+
+            if ($contentDivs->length > 0) {
+                foreach ($contentDivs as $container) {
+                    $blocks = [];
+                    $currentSource = "General";
+
+                    // include div headers like sheading2 which separate sections
+                    $nodes = $xpath->query('.//p | .//h4 | .//h5 | .//li | .//div[contains(@class, "sheading2")] | .//div[contains(@class, "sheadingsd2")] | .//h2[contains(@class, "medium")]', $container);
+
+                    foreach ($nodes as $node) {
+                        $text = trim($node->textContent);
+                        if (empty($text))
+                            continue;
+
+                        // Filter out UI noise
+                        if (
+                            str_contains($text, 'مخففن جي سمجھاڻي') ||
+                            str_contains($text, 'Abbreviations') ||
+                            str_contains($text, 'وڌيڪ نتيجا ڏسو') ||
+                            str_contains($text, 'Abbreviations con =')
+                        ) {
+                            continue;
+                        }
+
+                        // Detect source headers
+                        if (str_ends_with($text, ':') || str_contains($text, 'لغات ۾') || str_contains($text, 'ڊڪشنريءَ مان') || str_contains($text, 'لغت مان')) {
+                            $currentSource = str_replace(':', '', $text);
+                            continue;
+                        }
+
+                        $blocks[] = [
+                            'source' => trim($currentSource),
+                            'text' => $text
+                        ];
+                    }
+
+                    // Group by source and further filter
+                    foreach ($blocks as $block) {
+                        if ($block['text'] === $normalizedWord)
+                            continue;
+
+                        // Exclude navigation related links that get picked up as list items
+                        if (
+                            str_contains($block['text'], 'سان لاڳاپيل لفظ') ||
+                            str_contains($block['text'], 'بابت وڌيڪ اصطلاح') ||
+                            str_contains($block['text'], 'عام استعمال')
+                        ) {
+                            continue;
+                        }
+
+                        $results[] = [
+                            'source' => $block['source'],
+                            'text' => trim(preg_replace('/\s+/', ' ', $block['text']))
+                        ];
+                    }
+                }
+            }
+
+            // If structure parsing failed, fallback to a simpler text extraction of the main body
+            if (empty($results)) {
+                $paragraphs = $xpath->query('//div[@class="col-md-9 column"]//p');
+                foreach ($paragraphs as $p) {
+                    $text = trim($p->textContent);
+                    if (!empty($text) && $text !== $normalizedWord) {
+                        $results[] = [
+                            'source' => 'Extracted Text',
+                            'text' => preg_replace('/\s+/', ' ', $text)
+                        ];
+                    }
+                }
+            }
+
+            return response()->json([
+                'word' => $normalizedWord,
+                'original_word' => $word,
+                'results' => $results,
+                'raw_html' => null
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function scrapeBatchMissing(Request $request)
     {
         $count = $request->input('count', 10);

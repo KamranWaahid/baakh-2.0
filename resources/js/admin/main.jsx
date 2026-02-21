@@ -88,6 +88,7 @@ import MorphologyLab from './pages/Dictionary/MorphologyLab';
 import Variants from './pages/Dictionary/Variants';
 import DictionaryQA from './pages/Dictionary/DictionaryQA';
 import DictionaryHome from './pages/Dictionary/DictionaryHome';
+import SindhilaScraper from './pages/Dictionary/SindhilaScraper';
 
 import ReportManagement from './pages/Moderation/Reports';
 import FeedbackManagement from './pages/Moderation/Feedback';
@@ -429,6 +430,7 @@ const App = () => {
 
                     {/* Dictionary Routes */}
                     <Route path="/admin/dictionary" element={<ProtectedRoute><AdminLayout><DictionaryHome /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/dictionary/sindhila-scraper" element={<ProtectedRoute><AdminLayout><SindhilaScraper /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/lemma-inbox" element={<ProtectedRoute><AdminLayout><LemmaInbox /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/lemmas/:id" element={<ProtectedRoute><AdminLayout><SenseEditor /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/lemmas/:id/morphology" element={<ProtectedRoute><AdminLayout><MorphologyLab /></AdminLayout></ProtectedRoute>} />
