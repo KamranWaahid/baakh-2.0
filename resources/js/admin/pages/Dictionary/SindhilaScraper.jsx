@@ -54,13 +54,15 @@ const SindhilaScraper = () => {
 
             // Then add all scraped senses to it automatically
             if (results && results.results.length > 0) {
-                const addPromises = results.results.map(sense =>
-                    api.post(`/api/admin/dictionary/senses`, {
-                        lemma_id: res.data.id,
-                        definition: sense.text,
-                        domain: sense.source,
-                    })
-                );
+                const addPromises = results.results
+                    .filter(sense => sense.text && sense.text.trim().length > 0)
+                    .map(sense =>
+                        api.post(`/api/admin/dictionary/senses`, {
+                            lemma_id: res.data.id,
+                            definition: sense.text,
+                            domain: sense.source,
+                        })
+                    );
                 await Promise.allSettled(addPromises);
             }
             return res.data;

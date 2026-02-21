@@ -260,6 +260,9 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::delete('dictionary/relations/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyRelation']);
         Route::post('dictionary/lemmas/{id}/scrape-sindhila', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeSindhila']);
 
+        // Isolated Sindhila Scrapes List
+        Route::get('dictionary/scraped-data', [\App\Http\Controllers\Api\Admin\ScrapeController::class, 'index']);
+
         // ── Mokhii SEO Dashboard ────────────────────
         Route::get('mokhii/dashboard', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'index']);
         Route::post('mokhii/crawl', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerCrawl']);

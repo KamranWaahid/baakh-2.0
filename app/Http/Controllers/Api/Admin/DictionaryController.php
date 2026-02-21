@@ -121,10 +121,11 @@ class DictionaryController extends Controller
     {
         $validated = $request->validate([
             'lemma_id' => 'required|exists:lemmas,id',
-            'definition' => 'nullable|string',
+            'definition' => 'required|string',
             'definition_en' => 'nullable|string',
             'definition_sd' => 'nullable|string',
             'domain' => 'nullable|string',
+            'lang' => 'nullable|string',
         ]);
 
         $sense = Sense::create($validated);

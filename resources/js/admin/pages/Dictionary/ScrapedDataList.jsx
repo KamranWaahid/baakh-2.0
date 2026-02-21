@@ -29,13 +29,15 @@ const ScrapedDataList = () => {
 
             // Add senses
             if (scraped_data && scraped_data.length > 0) {
-                const addPromises = scraped_data.map(sense =>
-                    api.post(`/api/admin/dictionary/senses`, {
-                        lemma_id: res.data.id,
-                        definition: sense.text,
-                        domain: sense.source,
-                    })
-                );
+                const addPromises = scraped_data
+                    .filter(sense => sense.text && sense.text.trim().length > 0)
+                    .map(sense =>
+                        api.post(`/api/admin/dictionary/senses`, {
+                            lemma_id: res.data.id,
+                            definition: sense.text,
+                            domain: sense.source,
+                        })
+                    );
                 await Promise.allSettled(addPromises);
             }
             return res.data;
