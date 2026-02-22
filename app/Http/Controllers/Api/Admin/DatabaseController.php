@@ -380,8 +380,12 @@ class DatabaseController extends Controller
     /**
      * Get counts for dictionary sync planning.
      */
-    public function countDictionary()
+    public function countDictionary(Request $request)
     {
+        if (!$this->validateSyncToken($request)) {
+            return response()->json(['error' => 'Unauthorized sync token'], 401);
+        }
+
         return response()->json([
             'lemmas_count' => Lemma::count(),
             'romanizer_count' => Romanizer::count(),
@@ -393,6 +397,10 @@ class DatabaseController extends Controller
      */
     public function exportDictionary(Request $request)
     {
+        if (!$this->validateSyncToken($request)) {
+            return response()->json(['error' => 'Unauthorized sync token'], 401);
+        }
+
         $limit = $request->query('limit', 500);
         $offset = $request->query('offset', 0);
         $type = $request->query('type', 'lemmas'); // lemmas or romanizer
@@ -520,6 +528,14 @@ class DatabaseController extends Controller
             \Log::error("Dictionary Import Failed: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    private function validateSyncToken(Request $request)
+    {
+        $token = $request->header('X-Sync-Token') ?? $request->query('sync_token');
+        $expected = env('SYNC_TOKEN', 'baakh_sync_default_secret');
+
+        return !empty($token) && hash_equals($expected, $token);
     }
 
     private function formatSizeUnits($bytes)

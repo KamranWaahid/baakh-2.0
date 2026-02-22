@@ -44,6 +44,7 @@ const DatabaseList = () => {
 
     // Sync States
     const [syncLocalUrl, setSyncLocalUrl] = useState('http://127.0.0.1:8000');
+    const [syncToken, setSyncToken] = useState('baakh_sync_default_secret');
     const [syncLog, setSyncLog] = useState([]);
     const [syncProgress, setSyncProgress] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -232,7 +233,8 @@ const DatabaseList = () => {
         try {
             // 1. Get counts from Local
             addSyncLog("Connecting to local server...", "info");
-            const countRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/count`);
+            const headers = { 'X-Sync-Token': syncToken };
+            const countRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/count`, { headers });
             const { lemmas_count, romanizer_count } = countRes.data;
             addSyncLog(`Found ${lemmas_count} lemmas and ${romanizer_count} romanizer records locally.`, "success");
 
@@ -245,10 +247,10 @@ const DatabaseList = () => {
 
                 for (let offset = 0; offset < lemmas_count; offset += batchSize) {
                     addSyncLog(`Fetching lemmas batch ${offset}-${Math.min(offset + batchSize, lemmas_count)}...`);
-                    const batchRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/export?type=lemmas&limit=${batchSize}&offset=${offset}`);
+                    const batchRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/export?type=lemmas&limit=${batchSize}&offset=${offset}`, { headers });
 
                     addSyncLog(`Pushing batch to online server...`);
-                    await api.post(`/api/admin/databases/dictionary/import?type=lemmas`, batchRes.data);
+                    await api.post(`/api/admin/databases/dictionary/import?type=lemmas`, batchRes.data, { headers });
 
                     const completed = Math.min(offset + batchSize, lemmas_count);
                     setSyncStats(prev => ({ ...prev, current: completed }));
@@ -264,10 +266,10 @@ const DatabaseList = () => {
 
                 for (let offset = 0; offset < romanizer_count; offset += batchSize) {
                     addSyncLog(`Fetching romanizer batch ${offset}-${Math.min(offset + batchSize, romanizer_count)}...`);
-                    const batchRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/export?type=romanizer&limit=${batchSize}&offset=${offset}`);
+                    const batchRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/export?type=romanizer&limit=${batchSize}&offset=${offset}`, { headers });
 
                     addSyncLog(`Pushing batch to online server...`);
-                    await api.post(`/api/admin/databases/dictionary/import?type=romanizer`, batchRes.data);
+                    await api.post(`/api/admin/databases/dictionary/import?type=romanizer`, batchRes.data, { headers });
 
                     const completed = Math.min(offset + batchSize, romanizer_count);
                     const totalCompleted = lemmas_count + completed;
@@ -282,7 +284,12 @@ const DatabaseList = () => {
             alert("Dictionary Synchronization Complete!");
         } catch (error) {
             console.error(error);
-            const errMsg = error.response?.data?.error || error.message;
+            let errMsg = error.response?.data?.error || error.message;
+
+            if (error.message === 'Network Error' && window.location.protocol === 'https:' && syncLocalUrl.startsWith('http:')) {
+                errMsg = "Network Error (Mixed Content). Browsers block HTTPS -> HTTP requests. Please ensure your local server is on HTTPS (e.g. via ngrok) or allow 'Insecure content' for this site in Chrome settings (Lock icon -> Site settings -> Insecure content -> Allow).";
+            }
+
             addSyncLog(`Sync failed: ${errMsg}`, "error");
             alert(`Sync Failed: ${errMsg}`);
         } finally {
@@ -391,6 +398,17 @@ const DatabaseList = () => {
                                 className="bg-gray-50 border-indigo-50 focus:border-indigo-200 transition-colors"
                             />
                         </div>
+                        <div className="flex-1 space-y-2">
+                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sync Token</label>
+                            <Input
+                                type="password"
+                                placeholder="Enter sync token"
+                                value={syncToken}
+                                onChange={(e) => setSyncToken(e.target.value)}
+                                disabled={isSyncing}
+                                className="bg-gray-50 border-indigo-50 focus:border-indigo-200 transition-colors"
+                            />
+                        </div>
                         <Button
                             className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[160px]"
                             onClick={handleCloudSync}
@@ -419,7 +437,7 @@ const DatabaseList = () => {
                             <div className="space-y-1.5 font-mono text-[11px]">
                                 {syncLog.map((log, i) => (
                                     <div key={i} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-red-400' :
-                                            log.type === 'success' ? 'text-green-400' : 'text-gray-300'
+                                        log.type === 'success' ? 'text-green-400' : 'text-gray-300'
                                         }`}>
                                         <span className="text-gray-600 shrink-0">[{log.time}]</span>
                                         <span>
