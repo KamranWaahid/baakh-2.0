@@ -160,6 +160,9 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::delete('databases/{file_name}', [DatabaseController::class, 'destroy']);
     Route::get('databases/download', [DatabaseController::class, 'download'])->name('backup.download');
     Route::get('databases/schema', [DatabaseController::class, 'getSchema']);
+    Route::get('databases/dictionary/count', [DatabaseController::class, 'countDictionary']);
+    Route::get('databases/dictionary/export', [DatabaseController::class, 'exportDictionary']);
+    Route::post('databases/dictionary/import', [DatabaseController::class, 'importDictionary']);
 
     // Existing Dashboard route
     Route::get('/dashboard', [App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);

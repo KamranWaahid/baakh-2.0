@@ -4,6 +4,12 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Lemma;
+use App\Models\Sense;
+use App\Models\Morphology;
+use App\Models\Variant;
+use App\Models\LemmaRelation;
+use App\Models\Romanizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -367,6 +373,151 @@ class DatabaseController extends Controller
                 'tables' => $tables
             ]);
         } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get counts for dictionary sync planning.
+     */
+    public function countDictionary()
+    {
+        return response()->json([
+            'lemmas_count' => Lemma::count(),
+            'romanizer_count' => Romanizer::count(),
+        ]);
+    }
+
+    /**
+     * Export dictionary data in chunks.
+     */
+    public function exportDictionary(Request $request)
+    {
+        $limit = $request->query('limit', 500);
+        $offset = $request->query('offset', 0);
+        $type = $request->query('type', 'lemmas'); // lemmas or romanizer
+
+        if ($type === 'romanizer') {
+            $data = Romanizer::offset($offset)->limit($limit)->get();
+        } else {
+            $data = Lemma::with(['senses.examples', 'morphology', 'variants', 'lemmaRelations'])
+                ->offset($offset)
+                ->limit($limit)
+                ->get();
+        }
+
+        return response()->json($data);
+    }
+
+    /**
+     * Import dictionary data with upsert logic.
+     */
+    public function importDictionary(Request $request)
+    {
+        $data = $request->json()->all();
+        $type = $request->query('type', 'lemmas');
+        $importedCount = 0;
+
+        DB::beginTransaction();
+        try {
+            if ($type === 'romanizer') {
+                foreach ($data as $item) {
+                    Romanizer::updateOrCreate(
+                        ['word_sd' => $item['word_sd']],
+                        [
+                            'word_roman' => $item['word_roman'],
+                            'user_id' => auth()->id() ?? 1
+                        ]
+                    );
+                    $importedCount++;
+                }
+            } else {
+                foreach ($data as $item) {
+                    // 1. Upsert Lemma
+                    $lemma = Lemma::updateOrCreate(
+                        ['lemma' => $item['lemma'], 'pos' => $item['pos'] ?? null],
+                        [
+                            'transliteration' => $item['transliteration'] ?? null,
+                            'frequency' => $item['frequency'] ?? 0,
+                            'status' => $item['status'] ?? 'pending'
+                        ]
+                    );
+
+                    // 2. Morphology
+                    if (!empty($item['morphology'])) {
+                        $mItem = $item['morphology'];
+                        $lemma->morphology()->updateOrCreate(
+                            ['lemma_id' => $lemma->id],
+                            [
+                                'root' => $mItem['root'] ?? null,
+                                'pattern' => $mItem['pattern'] ?? null,
+                                'gender' => $mItem['gender'] ?? null,
+                                'number' => $mItem['number'] ?? null,
+                                'case' => $mItem['case'] ?? null,
+                                'aspect' => $mItem['aspect'] ?? null,
+                                'tense' => $mItem['tense'] ?? null,
+                            ]
+                        );
+                    }
+
+                    // 3. Senses & Examples
+                    if (!empty($item['senses'])) {
+                        foreach ($item['senses'] as $sData) {
+                            $sense = $lemma->senses()->updateOrCreate(
+                                ['definition' => $sData['definition']],
+                                [
+                                    'definition_en' => $sData['definition_en'] ?? null,
+                                    'definition_sd' => $sData['definition_sd'] ?? null,
+                                    'domain' => $sData['domain'] ?? null,
+                                    'status' => $sData['status'] ?? 'pending'
+                                ]
+                            );
+
+                            if (!empty($sData['examples'])) {
+                                foreach ($sData['examples'] as $eData) {
+                                    $sense->examples()->updateOrCreate(
+                                        ['sentence' => $eData['sentence']],
+                                        [
+                                            'source' => $eData['source'] ?? null,
+                                            'corpus_sentence_id' => $eData['corpus_sentence_id'] ?? null,
+                                        ]
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                    // 4. Variants
+                    if (!empty($item['variants'])) {
+                        foreach ($item['variants'] as $vData) {
+                            $lemma->variants()->updateOrCreate(
+                                ['variant' => $vData['variant'], 'type' => $vData['type']],
+                                ['dialect' => $vData['dialect'] ?? null]
+                            );
+                        }
+                    }
+
+                    // 5. Relations
+                    if (!empty($item['lemma_relations'])) {
+                        foreach ($item['lemma_relations'] as $rData) {
+                            $lemma->lemmaRelations()->updateOrCreate(
+                                ['relation_type' => $rData['relation_type'], 'related_word' => $rData['related_word']],
+                                []
+                            );
+                        }
+                    }
+
+                    $importedCount++;
+                }
+            }
+            DB::commit();
+
+            ActivityLog::log('imported_dictionary', $request->user(), null, "Imported/Synced {$importedCount} {$type} records");
+
+            return response()->json(['message' => "Successfully imported {$importedCount} records."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Dictionary Import Failed: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

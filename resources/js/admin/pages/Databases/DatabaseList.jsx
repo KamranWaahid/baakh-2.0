@@ -11,7 +11,17 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Trash2, Database, Plus, RefreshCw, Zap, Eye, FileJson, Copy } from 'lucide-react';
+import { Download, Trash2, Database, Plus, RefreshCw, Zap, Eye, FileJson, Copy, Cloud, AlertCircle, CheckCircle2 } from 'lucide-react';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import axios from 'axios';
 import {
     Dialog,
     DialogContent,
@@ -31,6 +41,13 @@ const DatabaseList = () => {
     const [isSchemaOpen, setIsSchemaOpen] = useState(false);
     const [dbTables, setDbTables] = useState([]);
     const [isCopyingAll, setIsCopyingAll] = useState(false);
+
+    // Sync States
+    const [syncLocalUrl, setSyncLocalUrl] = useState('http://127.0.0.1:8000');
+    const [syncLog, setSyncLog] = useState([]);
+    const [syncProgress, setSyncProgress] = useState(0);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncStats, setSyncStats] = useState({ total: 0, current: 0, type: '' });
 
     const { data: backups, isLoading, isError, refetch } = useQuery({
         queryKey: ['backups'],
@@ -199,6 +216,80 @@ const DatabaseList = () => {
         }
     };
 
+    const addSyncLog = (message, type = 'info') => {
+        setSyncLog(prev => [...prev.slice(-4), { message, type, time: new Date().toLocaleTimeString() }]);
+    };
+
+    const handleCloudSync = async () => {
+        if (!syncLocalUrl) return alert("Please enter the local server URL");
+        if (!confirm(`Are you sure you want to sync dictionary data from ${syncLocalUrl}? This will update/insert records on this server.`)) return;
+
+        setIsSyncing(true);
+        setSyncProgress(0);
+        setSyncLog([]);
+        addSyncLog("Starting Cloud Sync sequence...", "info");
+
+        try {
+            // 1. Get counts from Local
+            addSyncLog("Connecting to local server...", "info");
+            const countRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/count`);
+            const { lemmas_count, romanizer_count } = countRes.data;
+            addSyncLog(`Found ${lemmas_count} lemmas and ${romanizer_count} romanizer records locally.`, "success");
+
+            const batchSize = 500;
+
+            // 2. Sync Lemmas
+            if (lemmas_count > 0) {
+                addSyncLog("Syncing Lemmas...", "info");
+                setSyncStats({ total: lemmas_count, current: 0, type: 'lemmas' });
+
+                for (let offset = 0; offset < lemmas_count; offset += batchSize) {
+                    addSyncLog(`Fetching lemmas batch ${offset}-${Math.min(offset + batchSize, lemmas_count)}...`);
+                    const batchRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/export?type=lemmas&limit=${batchSize}&offset=${offset}`);
+
+                    addSyncLog(`Pushing batch to online server...`);
+                    await api.post(`/api/admin/databases/dictionary/import?type=lemmas`, batchRes.data);
+
+                    const completed = Math.min(offset + batchSize, lemmas_count);
+                    setSyncStats(prev => ({ ...prev, current: completed }));
+                    setSyncProgress(Math.floor((completed / (lemmas_count + romanizer_count)) * 100));
+                }
+                addSyncLog("Lemmas sync completed.", "success");
+            }
+
+            // 3. Sync Romanizer
+            if (romanizer_count > 0) {
+                addSyncLog("Syncing Romanizer data...", "info");
+                setSyncStats({ total: romanizer_count, current: 0, type: 'romanizer' });
+
+                for (let offset = 0; offset < romanizer_count; offset += batchSize) {
+                    addSyncLog(`Fetching romanizer batch ${offset}-${Math.min(offset + batchSize, romanizer_count)}...`);
+                    const batchRes = await axios.get(`${syncLocalUrl}/api/admin/databases/dictionary/export?type=romanizer&limit=${batchSize}&offset=${offset}`);
+
+                    addSyncLog(`Pushing batch to online server...`);
+                    await api.post(`/api/admin/databases/dictionary/import?type=romanizer`, batchRes.data);
+
+                    const completed = Math.min(offset + batchSize, romanizer_count);
+                    const totalCompleted = lemmas_count + completed;
+                    setSyncStats(prev => ({ ...prev, current: completed }));
+                    setSyncProgress(Math.floor((totalCompleted / (lemmas_count + romanizer_count)) * 100));
+                }
+                addSyncLog("Romanizer sync completed.", "success");
+            }
+
+            setSyncProgress(100);
+            addSyncLog("All data synchronized successfully!", "success");
+            alert("Dictionary Synchronization Complete!");
+        } catch (error) {
+            console.error(error);
+            const errMsg = error.response?.data?.error || error.message;
+            addSyncLog(`Sync failed: ${errMsg}`, "error");
+            alert(`Sync Failed: ${errMsg}`);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     const handleViewSchema = (tableName) => {
         schemaMutation.mutate(tableName);
     };
@@ -267,6 +358,88 @@ const DatabaseList = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Cloud Sync Section */}
+            <Card className="border-indigo-100 shadow-sm overflow-hidden">
+                <CardHeader className="bg-indigo-50/50 pb-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 rounded-lg text-indigo-700">
+                                <Cloud className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg">Dictionary Cloud Sync</CardTitle>
+                                <CardDescription>Fetch and merge dictionary data from your local instance to the online server.</CardDescription>
+                            </div>
+                        </div>
+                        {isSyncing && (
+                            <Badge variant="outline" className="bg-indigo-100 text-indigo-700 border-indigo-200 animate-pulse">
+                                Sync in Progress...
+                            </Badge>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1 space-y-2">
+                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Local Server API URL</label>
+                            <Input
+                                placeholder="http://127.0.0.1:8000"
+                                value={syncLocalUrl}
+                                onChange={(e) => setSyncLocalUrl(e.target.value)}
+                                disabled={isSyncing}
+                                className="bg-gray-50 border-indigo-50 focus:border-indigo-200 transition-colors"
+                            />
+                        </div>
+                        <Button
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[160px]"
+                            onClick={handleCloudSync}
+                            disabled={isSyncing}
+                        >
+                            {isSyncing ? (
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Zap className="h-4 w-4 mr-2" />
+                            )}
+                            {isSyncing ? 'Syncing...' : 'Start Sync Process'}
+                        </Button>
+                    </div>
+
+                    {isSyncing || syncLog.length > 0 ? (
+                        <div className="mt-6 p-4 rounded-xl bg-gray-900 border border-gray-800 shadow-inner">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="text-xs font-mono text-gray-400">
+                                    {isSyncing ? `Processing ${syncStats.type}: ${syncStats.current} / ${syncStats.total}` : 'Sync Session Log'}
+                                </div>
+                                <div className="text-xs font-mono text-indigo-400">{syncProgress}%</div>
+                            </div>
+
+                            <Progress value={syncProgress} className="h-2 mb-4 bg-gray-800" />
+
+                            <div className="space-y-1.5 font-mono text-[11px]">
+                                {syncLog.map((log, i) => (
+                                    <div key={i} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-red-400' :
+                                            log.type === 'success' ? 'text-green-400' : 'text-gray-300'
+                                        }`}>
+                                        <span className="text-gray-600 shrink-0">[{log.time}]</span>
+                                        <span>
+                                            {log.type === 'error' && <AlertCircle className="h-3 w-3 inline mr-1 -mt-0.5" />}
+                                            {log.type === 'success' && <CheckCircle2 className="h-3 w-3 inline mr-1 -mt-0.5" />}
+                                            {log.message}
+                                        </span>
+                                    </div>
+                                ))}
+                                {isSyncing && (
+                                    <div className="text-indigo-400 animate-pulse flex items-center gap-2">
+                                        <span className="text-gray-600 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+                                        <span>Awaiting server response...</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : null}
+                </CardContent>
+            </Card>
 
             {/* Maintenance Center Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
