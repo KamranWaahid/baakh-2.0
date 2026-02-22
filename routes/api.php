@@ -241,9 +241,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('analytics/frequency', [AnalyticsController::class, 'frequency']);
 
         // Dictionary Routes
-        Route::post('dictionary/scrape-batch-missing', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeBatchMissing']);
-        Route::post('dictionary/scrape-word', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeSindhilaByWord']);
-        Route::post('dictionary/auto-scrape-step', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'autoScrapeStep']);
+    
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
@@ -258,10 +256,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
         Route::post('dictionary/lemmas/{id}/relations', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeRelation']);
         Route::delete('dictionary/relations/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyRelation']);
-        Route::post('dictionary/lemmas/{id}/scrape-sindhila', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'scrapeSindhila']);
 
-        // Isolated Sindhila Scrapes List
-        Route::get('dictionary/scraped-data', [\App\Http\Controllers\Api\Admin\ScrapeController::class, 'index']);
 
         // ── Mokhii SEO Dashboard ────────────────────
         Route::get('mokhii/dashboard', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'index']);

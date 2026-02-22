@@ -34,27 +34,14 @@ class ExploreTopicController extends Controller
 
         App::setLocale($lang);
 
-        // 1. Get all unique tag IDs used in poetry_main table
-        // The poetry_tags column stores IDs as strings in a JSON array (e.g. ["294", "292"])
-        $usedTagIds = Poetry::where('visibility', 1)
-            ->whereNotNull('poetry_tags')
-            ->pluck('poetry_tags')
-            ->flatMap(function ($tagsJson) {
-                $tags = json_decode($tagsJson, true);
-                return is_array($tags) ? $tags : [];
-            })
-            ->unique()
-            ->values()
-            ->all();
-
-        // 2. Fetch Categories with Tags, but filter Tags based on usage
+        // Fetch Categories with Tags
         $categories = TopicCategory::with([
             'details' => function ($q) use ($lang) {
                 $q->where('lang', $lang);
             },
-            'tags' => function ($q) use ($usedTagIds) {
-                // Filter tags relation to only include used tags by ID
-                $q->whereIn('id', $usedTagIds);
+            'tags' => function ($q) {
+                // Return all tags in the category
+                $q->orderBy('slug', 'asc');
             },
             'tags.details' => function ($q) use ($lang) {
                 $q->where('lang', $lang);
@@ -80,19 +67,18 @@ class ExploreTopicController extends Controller
                     })
                 ];
             })
-            // 3. Filter out categories that have no tags after filtering
+            // Filter out categories that have no tags
             ->filter(function ($category) {
                 return $category['tags']->isNotEmpty();
             })
             ->values(); // Reset array keys
 
-        // 4. Recommended Tags - also filtered by usage (IDs)
-        $recommended = Tags::whereIn('id', $usedTagIds)
-            ->with([
-                'details' => function ($q) use ($lang) {
-                    $q->where('lang', $lang);
-                }
-            ])
+        // Recommended Tags - random selection from all tags
+        $recommended = Tags::with([
+            'details' => function ($q) use ($lang) {
+                $q->where('lang', $lang);
+            }
+        ])
             ->whereHas('details')
             ->inRandomOrder()
             ->take(10)
@@ -107,9 +93,14 @@ class ExploreTopicController extends Controller
                 ];
             });
 
-        return response()->json([
+        $responseData = [
             'categories' => $categories,
             'recommended' => $recommended
-        ]);
+        ];
+
+        // Cache the result
+        $this->cache->set("explore_topics_{$lang}", $responseData);
+
+        return response()->json($responseData);
     }
 }
