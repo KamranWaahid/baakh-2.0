@@ -15,6 +15,7 @@ class Couplets extends Model
     protected $fillable = [
         'poetry_id',
         'poet_id',
+        'topic_category_id',
         'book_id',
         'couplet_slug',
         'couplet_text',
@@ -22,6 +23,8 @@ class Couplets extends Model
         'lang',
         'page_start',
         'page_end',
+        'visibility',
+        'is_featured',
     ];
 
     public function book()
@@ -42,6 +45,11 @@ class Couplets extends Model
     public function language()
     {
         return $this->belongsTo(Languages::class, 'lang', 'lang_code');
+    }
+
+    public function topicCategory()
+    {
+        return $this->belongsTo(TopicCategory::class, 'topic_category_id');
     }
 
     public function info()

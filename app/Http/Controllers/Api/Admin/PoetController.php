@@ -17,7 +17,13 @@ class PoetController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Poets::query()->with('all_details');
+        $query = Poets::query();
+
+        if ($request->has('only_trashed') && $request->only_trashed === 'true') {
+            $query->onlyTrashed();
+        }
+
+        $query->with('all_details');
 
         if ($request->has('search')) {
             $search = $request->search;
@@ -35,9 +41,10 @@ class PoetController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $poets */
         $poets = $query->paginate($perPage);
 
-        $poets->getCollection()->transform(function ($poet) {
+        $poets = $poets->through(function ($poet) {
             $details = $poet->all_details;
             $detail = $details->where('lang', 'sd')->first()
                 ?? $details->where('lang', 'en')->first()
@@ -234,20 +241,53 @@ class PoetController extends Controller
 
         \DB::beginTransaction();
         try {
-            // Delete image if exists
-            if ($poet->poet_pic) {
-                $this->deleteImageFiles(public_path($poet->poet_pic), true);
-            }
+            // Note: We don't delete image files here anymore to support Trash/Restore
+            // Image deletion is moved to permanentDelete()
 
             // Delete details
             $poet->all_details()->delete(); // Use soft delete
             $poet->delete();
 
             \DB::commit();
-            return response()->json(['message' => 'Poet deleted successfully']);
+            return response()->json(['message' => 'Poet moved to trash']);
         } catch (\Exception $e) {
             \DB::rollBack();
             return response()->json(['message' => 'Failed to delete poet: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function restore($id)
+    {
+        $poet = Poets::onlyTrashed()->findOrFail($id);
+        \DB::beginTransaction();
+        try {
+            $poet->restore();
+            $poet->all_details()->restore();
+            \DB::commit();
+            return response()->json(['message' => 'Poet restored']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to restore poet: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function permanentDelete($id)
+    {
+        $poet = Poets::onlyTrashed()->findOrFail($id);
+        \DB::beginTransaction();
+        try {
+            // Delete image if exists
+            if ($poet->poet_pic) {
+                $this->deleteImageFiles(public_path($poet->poet_pic), true);
+            }
+
+            $poet->all_details()->forceDelete();
+            $poet->forceDelete();
+            \DB::commit();
+            return response()->json(['message' => 'Poet permanently deleted']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to permanently delete poet: ' . $e->getMessage()], 500);
         }
     }
 

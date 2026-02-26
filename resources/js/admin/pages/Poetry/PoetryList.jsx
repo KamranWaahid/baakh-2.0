@@ -21,7 +21,7 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Eye, EyeOff, Star, Edit, MoreHorizontal } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Star, Edit, MoreHorizontal, RotateCcw, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
     DropdownMenu,
@@ -37,13 +37,14 @@ const PoetryList = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [showTrash, setShowTrash] = useState(false);
     const debouncedSearch = useDebounce(search, 500);
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['poetry', page, debouncedSearch],
+        queryKey: ['poetry', page, debouncedSearch, showTrash],
         queryFn: async () => {
             const response = await api.get('/api/admin/poetry', {
-                params: { page, search: debouncedSearch },
+                params: { page, search: debouncedSearch, only_trashed: showTrash },
             });
             return response.data;
         },
@@ -77,21 +78,68 @@ const PoetryList = () => {
         },
     });
 
+    const restoreMutation = useMutation({
+        mutationFn: async (id) => {
+            return await api.post(`/api/admin/poetry/${id}/restore`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['poetry']);
+        },
+    });
+
+    const permanentDeleteMutation = useMutation({
+        mutationFn: async (id) => {
+            return await api.delete(`/api/admin/poetry/${id}/permanent`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['poetry']);
+        },
+    });
+
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to move this poetry to trash?')) {
-            await deleteMutation.mutateAsync(id);
+        if (showTrash) {
+            if (window.confirm('Are you sure you want to PERMANENTLY delete this poetry? This cannot be undone.')) {
+                await permanentDeleteMutation.mutateAsync(id);
+            }
+        } else {
+            if (window.confirm('Are you sure you want to move this poetry to trash?')) {
+                await deleteMutation.mutateAsync(id);
+            }
+        }
+    };
+
+    const handleRestore = async (id) => {
+        if (window.confirm('Are you sure you want to restore this poetry?')) {
+            await restoreMutation.mutateAsync(id);
         }
     };
 
     return (
         <div className="space-y-4 p-4 md:p-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poetry</h2>
-                <Button asChild className="w-full sm:w-auto">
-                    <Link to="/admin/poetry/create">
-                        <Plus className="mr-2 h-4 w-4" /> Add Poetry
-                    </Link>
-                </Button>
+                <div className="space-y-1">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+                        {showTrash ? "Poetry Trash" : "Poetry"}
+                    </h2>
+                    <p className="text-sm text-muted-foreground hidden sm:block">
+                        {showTrash ? "View and restore deleted poetry works" : "Manage your library of poetry and their metadata"}
+                    </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                        variant={showTrash ? "destructive" : "outline"}
+                        onClick={() => { setShowTrash(!showTrash); setPage(1); }}
+                        className="w-full sm:auto"
+                    >
+                        {showTrash ? <RotateCcw className="mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        {showTrash ? "Back to Active" : "Trash"}
+                    </Button>
+                    <Button asChild className="w-full sm:w-auto">
+                        <Link to="/admin/poetry/create">
+                            <Plus className="mr-2 h-4 w-4" /> Add Poetry
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -188,26 +236,42 @@ const PoetryList = () => {
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem onClick={() => toggleVisibilityMutation.mutate(p.id)}>
-                                                            {p.visibility === 1 ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-                                                            {p.visibility === 1 ? "Hide" : "Show"}
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => toggleFeaturedMutation.mutate(p.id)}>
-                                                            <Star className={`mr-2 h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                                                            {p.is_featured === 1 ? "Unfeature" : "Feature"}
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem asChild>
-                                                            <Link to={`/admin/poetry/${p.poetry_slug}/edit`}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-destructive focus:text-destructive"
-                                                            onClick={() => handleDelete(p.id)}
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                        </DropdownMenuItem>
+                                                        {showTrash ? (
+                                                            <>
+                                                                <DropdownMenuItem onClick={() => handleRestore(p.id)}>
+                                                                    <RotateCcw className="mr-2 h-4 w-4" /> Restore
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="text-destructive focus:text-destructive"
+                                                                    onClick={() => handleDelete(p.id)}
+                                                                >
+                                                                    <ShieldAlert className="mr-2 h-4 w-4" /> Delete Permanently
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <DropdownMenuItem onClick={() => toggleVisibilityMutation.mutate(p.id)}>
+                                                                    {p.visibility === 1 ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+                                                                    {p.visibility === 1 ? "Hide" : "Show"}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => toggleFeaturedMutation.mutate(p.id)}>
+                                                                    <Star className={`mr-2 h-4 w-4 ${p.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                                                    {p.is_featured === 1 ? "Unfeature" : "Feature"}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link to={`/admin/poetry/${p.poetry_slug}/edit`}>
+                                                                        <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="text-destructive focus:text-destructive"
+                                                                    onClick={() => handleDelete(p.id)}
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>

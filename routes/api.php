@@ -207,6 +207,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
     ->group(function () {
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
+        Route::post('poets/{id}/restore', [\App\Http\Controllers\Api\Admin\PoetController::class, 'restore']);
+        Route::delete('poets/{id}/permanent', [\App\Http\Controllers\Api\Admin\PoetController::class, 'permanentDelete']);
         Route::get('poet-books/poet/{poet_id}', [\App\Http\Controllers\Api\Admin\PoetBookController::class, 'getPoetBooks']);
         Route::get('poet-books/{id}/pages', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'index']);
         Route::post('poet-books/{id}/pages/sync', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'sync']);
@@ -216,6 +218,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
+        Route::get('couplets/check-slug', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'checkSlug']);
         Route::apiResource('couplets', \App\Http\Controllers\Api\Admin\CoupletController::class);
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);
         Route::apiResource('categories', \App\Http\Controllers\Api\Admin\CategoryController::class);
@@ -233,6 +236,13 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::apiResource('topic-categories', \App\Http\Controllers\Api\Admin\TopicCategoryController::class);
         Route::patch('poetry/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleVisibility']);
         Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
+        Route::post('poetry/{id}/restore', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'restore']);
+        Route::delete('poetry/{id}/permanent', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'permanentDelete']);
+
+        Route::patch('couplets/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'toggleVisibility']);
+        Route::patch('couplets/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'toggleFeatured']);
+        Route::post('couplets/{id}/restore', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'restore']);
+        Route::delete('couplets/{id}/permanent', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'permanentDelete']);
 
         // Corpus Routes
         Route::get('corpus/sentences', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'index']);

@@ -22,7 +22,7 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, MoreHorizontal, Edit, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, MoreHorizontal, Edit, Eye, EyeOff, RotateCcw, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
     DropdownMenu,
@@ -37,17 +37,15 @@ const PoetsList = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [showTrash, setShowTrash] = useState(false);
 
-    console.log('PoetsList: Rendering');
-
-    // const debouncedSearch = useDebounce(search, 500);
-    const debouncedSearch = search;
+    const debouncedSearch = useDebounce(search, 500);
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['poets', page, debouncedSearch],
+        queryKey: ['poets', page, debouncedSearch, showTrash],
         queryFn: async () => {
             const response = await api.get('/api/admin/poets', {
-                params: { page, search: debouncedSearch },
+                params: { page, search: debouncedSearch, only_trashed: showTrash },
             });
             return response.data;
         },
@@ -63,21 +61,68 @@ const PoetsList = () => {
         },
     });
 
+    const restoreMutation = useMutation({
+        mutationFn: async (id) => {
+            return await api.post(`/api/admin/poets/${id}/restore`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['poets']);
+        },
+    });
+
+    const permanentDeleteMutation = useMutation({
+        mutationFn: async (id) => {
+            return await api.delete(`/api/admin/poets/${id}/permanent`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['poets']);
+        },
+    });
+
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this poet?')) {
-            await deleteMutation.mutateAsync(id);
+        if (showTrash) {
+            if (window.confirm('Are you sure you want to PERMANENTLY delete this poet? This cannot be undone.')) {
+                await permanentDeleteMutation.mutateAsync(id);
+            }
+        } else {
+            if (window.confirm('Are you sure you want to delete this poet?')) {
+                await deleteMutation.mutateAsync(id);
+            }
+        }
+    };
+
+    const handleRestore = async (id) => {
+        if (window.confirm('Are you sure you want to restore this poet?')) {
+            await restoreMutation.mutateAsync(id);
         }
     };
 
     return (
         <div className="space-y-4 p-4 md:p-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Poets</h2>
-                <Button asChild className="w-full sm:w-auto">
-                    <Link to="/admin/poets/create">
-                        <Plus className="mr-2 h-4 w-4" /> Add Poet
-                    </Link>
-                </Button>
+                <div className="space-y-1">
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+                        {showTrash ? "Poet Trash" : "Poets"}
+                    </h2>
+                    <p className="text-sm text-muted-foreground hidden sm:block">
+                        {showTrash ? "View and restore deleted poets" : "Manage your library of poets and their metadata"}
+                    </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                        variant={showTrash ? "destructive" : "outline"}
+                        onClick={() => { setShowTrash(!showTrash); setPage(1); }}
+                        className="w-full sm:w-auto shadow-sm gap-2"
+                    >
+                        {showTrash ? <RotateCcw className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                        <span>{showTrash ? "Back to Active" : "Trash"}</span>
+                    </Button>
+                    <Button asChild className="w-full sm:w-auto">
+                        <Link to="/admin/poets/create">
+                            <Plus className="mr-2 h-4 w-4" /> Add Poet
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -163,23 +208,39 @@ const PoetsList = () => {
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
                                                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem
-                                                                onClick={() => navigator.clipboard.writeText(poet.id)}
-                                                            >
-                                                                Copy ID
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem asChild>
-                                                                <Link to={`/admin/poets/${poet.id}/edit`}>
-                                                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                className="text-destructive focus:text-destructive"
-                                                                onClick={() => handleDelete(poet.id)}
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                            </DropdownMenuItem>
+                                                            {showTrash ? (
+                                                                <>
+                                                                    <DropdownMenuItem onClick={() => handleRestore(poet.id)}>
+                                                                        <RotateCcw className="mr-2 h-4 w-4" /> Restore
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        className="text-destructive focus:text-destructive"
+                                                                        onClick={() => handleDelete(poet.id)}
+                                                                    >
+                                                                        <ShieldAlert className="mr-2 h-4 w-4" /> Delete Permanently
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => navigator.clipboard.writeText(poet.id)}
+                                                                    >
+                                                                        Copy ID
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem asChild>
+                                                                        <Link to={`/admin/poets/${poet.id}/edit`}>
+                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                        </Link>
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        className="text-destructive focus:text-destructive"
+                                                                        onClick={() => handleDelete(poet.id)}
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                    </DropdownMenuItem>
+                                                                </>
+                                                            )}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </TableCell>

@@ -18,7 +18,13 @@ class PoetryController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Poetry::with([
+        $query = Poetry::query();
+
+        if ($request->has('only_trashed') && $request->only_trashed === 'true') {
+            $query->onlyTrashed();
+        }
+
+        $query->with([
             'info' => function ($q) {
                 $q->where('lang', 'sd');
             },
@@ -76,8 +82,18 @@ class PoetryController extends Controller
     public function destroy($id)
     {
         $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
-        $poetry->delete();
-        return response()->json(['message' => 'Poetry moved to trash']);
+        \DB::beginTransaction();
+        try {
+            // Also soft delete linked couplets
+            $poetry->all_couplets()->delete();
+            $poetry->delete();
+
+            \DB::commit();
+            return response()->json(['message' => 'Poetry moved to trash']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to delete poetry: ' . $e->getMessage()], 500);
+        }
     }
 
     public function toggleVisibility($id)
@@ -444,5 +460,49 @@ class PoetryController extends Controller
         }
 
         return count($uniquePages);
+    }
+    public function restore($id)
+    {
+        $poetry = Poetry::onlyTrashed()->where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
+        \DB::beginTransaction();
+        try {
+            $poetry->restore();
+            // Restore linked couplets if they were soft deleted with the poetry
+            $poetry->all_couplets()->onlyTrashed()->restore();
+            \DB::commit();
+            return response()->json(['message' => 'Poetry restored']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to restore poetry: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function permanentDelete($id)
+    {
+        $poetry = Poetry::onlyTrashed()->where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
+        \DB::beginTransaction();
+        try {
+            // Delete media
+            $poetry->media()->each(function ($m) {
+                // Media might have files too
+                if (method_exists($this, 'deleteMediaFiles')) {
+                    // $this->deleteMediaFiles($m); // Assuming there is a helper
+                }
+                $m->delete();
+            });
+
+            // Delete translations (no soft delete here so force delete is just delete)
+            $poetry->translations()->delete();
+
+            // Force delete linked couplets
+            $poetry->all_couplets()->withTrashed()->forceDelete();
+
+            $poetry->forceDelete();
+            \DB::commit();
+            return response()->json(['message' => 'Poetry permanently deleted']);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json(['message' => 'Failed to permanently delete poetry: ' . $e->getMessage()], 500);
+        }
     }
 }

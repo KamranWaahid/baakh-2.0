@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Eye, EyeOff, Star, Edit, Link as LinkIcon, Unlink, Search } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Star, Edit, Link as LinkIcon, Unlink, Search, RotateCcw, ShieldAlert, Trash } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from '../../../components/ui/badge';
@@ -23,15 +23,17 @@ const CoupletsList = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
+    const [showTrash, setShowTrash] = useState(false);
     const debouncedSearch = useDebounce(search, 500);
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['couplets', page, debouncedSearch],
+        queryKey: ['couplets', page, debouncedSearch, showTrash],
         queryFn: async () => {
             const response = await api.get('/api/admin/couplets', {
                 params: {
                     page,
-                    search: debouncedSearch
+                    search: debouncedSearch,
+                    only_trashed: showTrash
                 },
             });
             return response.data;
@@ -39,10 +41,12 @@ const CoupletsList = () => {
         placeholderData: keepPreviousData,
     });
 
-    // Delete acts on the POETRY (work) ID for now
+    // Delete acts on the POETRY (work) ID or Couplet ID
     const deleteMutation = useMutation({
-        mutationFn: async (id) => {
-            return await api.delete(`/api/admin/poetry/${id}`);
+        mutationFn: async (item) => {
+            const id = item.poetry?.id || item.id;
+            const type = item.poetry ? 'poetry' : 'couplets';
+            return await api.delete(`/api/admin/${type}/${id}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['couplets']);
@@ -50,8 +54,10 @@ const CoupletsList = () => {
     });
 
     const toggleVisibilityMutation = useMutation({
-        mutationFn: async (id) => {
-            return await api.patch(`/api/admin/poetry/${id}/toggle-visibility`);
+        mutationFn: async (item) => {
+            const id = item.poetry?.id || item.id;
+            const type = item.poetry ? 'poetry' : 'couplets';
+            return await api.patch(`/api/admin/${type}/${id}/toggle-visibility`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['couplets']);
@@ -59,17 +65,53 @@ const CoupletsList = () => {
     });
 
     const toggleFeaturedMutation = useMutation({
-        mutationFn: async (id) => {
-            return await api.patch(`/api/admin/poetry/${id}/toggle-featured`);
+        mutationFn: async (item) => {
+            const id = item.poetry?.id || item.id;
+            const type = item.poetry ? 'poetry' : 'couplets';
+            return await api.patch(`/api/admin/${type}/${id}/toggle-featured`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['couplets']);
         },
     });
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to move this content to trash?')) {
-            await deleteMutation.mutateAsync(id);
+    const restoreMutation = useMutation({
+        mutationFn: async (item) => {
+            const id = item.poetry?.id || item.id;
+            const type = item.poetry ? 'poetry' : 'couplets';
+            return await api.post(`/api/admin/${type}/${id}/restore`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['couplets']);
+        },
+    });
+
+    const permanentDeleteMutation = useMutation({
+        mutationFn: async (item) => {
+            const id = item.poetry?.id || item.id;
+            const type = item.poetry ? 'poetry' : 'couplets';
+            return await api.delete(`/api/admin/${type}/${id}/permanent`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['couplets']);
+        },
+    });
+
+    const handleDelete = async (item) => {
+        if (showTrash) {
+            if (window.confirm('Are you sure you want to PERMANENTLY delete this content? This cannot be undone.')) {
+                await permanentDeleteMutation.mutateAsync(item);
+            }
+        } else {
+            if (window.confirm('Are you sure you want to move this content to trash?')) {
+                await deleteMutation.mutateAsync(item);
+            }
+        }
+    };
+
+    const handleRestore = async (item) => {
+        if (window.confirm('Are you sure you want to restore this content?')) {
+            await restoreMutation.mutateAsync(item);
         }
     };
 
@@ -77,15 +119,29 @@ const CoupletsList = () => {
         <div className="space-y-4 p-4 md:p-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Couplets</h2>
-                    <p className="text-sm text-gray-500 hidden sm:block">Manage your library of poetic couplets and their metadata</p>
+                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
+                        {showTrash ? "Trash Management" : "Couplets"}
+                    </h2>
+                    <p className="text-sm text-gray-500 hidden sm:block">
+                        {showTrash ? "View and restore deleted couplets" : "Manage your library of poetic couplets and their metadata"}
+                    </p>
                 </div>
-                <Button asChild className="w-full sm:w-auto h-10 shadow-sm">
-                    <Link to="/admin/couplet/create" className="flex items-center justify-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        <span>Add Couplet</span>
-                    </Link>
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                        variant={showTrash ? "destructive" : "outline"}
+                        onClick={() => { setShowTrash(!showTrash); setPage(1); }}
+                        className="w-full sm:w-auto h-10 shadow-sm gap-2"
+                    >
+                        {showTrash ? <RotateCcw className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                        <span>{showTrash ? "Back to Active" : "Trash"}</span>
+                    </Button>
+                    <Button asChild className="w-full sm:w-auto h-10 shadow-sm">
+                        <Link to="/admin/couplet/create" className="flex items-center justify-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            <span>Add Couplet</span>
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -150,29 +206,52 @@ const CoupletsList = () => {
                                         </div>
 
                                         <div className="flex items-center gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-9 w-9"
-                                                onClick={() => c.poetry && toggleVisibilityMutation.mutate(c.poetry.id)}
-                                                disabled={!c.poetry}
-                                            >
-                                                {c.poetry?.visibility === 1 ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                            </Button>
-                                            <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                                                <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry?.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug}/edit`}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Link>
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-9 w-9 text-destructive"
-                                                onClick={() => c.poetry && handleDelete(c.poetry.id)}
-                                                disabled={!c.poetry}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            {showTrash ? (
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-green-600 hover:text-green-700"
+                                                        onClick={() => handleRestore(c)}
+                                                        title="Restore"
+                                                    >
+                                                        <RotateCcw className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-destructive"
+                                                        onClick={() => handleDelete(c)}
+                                                        title="Delete Permanently"
+                                                    >
+                                                        <ShieldAlert className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9"
+                                                        onClick={() => toggleVisibilityMutation.mutate(c)}
+                                                    >
+                                                        {((c.poetry?.visibility ?? c.visibility) === 1 || (c.poetry?.visibility ?? c.visibility) === true) ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                                                        <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug || c.id}/edit`}>
+                                                            <Edit className="h-4 w-4" />
+                                                        </Link>
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9 text-destructive"
+                                                        onClick={() => handleDelete(c)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -262,7 +341,12 @@ const CoupletsList = () => {
                                                             ))}
                                                         </>
                                                     ) : (
-                                                        <Badge variant="outline" className="text-[10px] uppercase h-5 font-normal">SD</Badge>
+                                                        <>
+                                                            <Badge variant="outline" className="text-[10px] uppercase h-5 font-normal">SD</Badge>
+                                                            {c.has_roman > 0 && (
+                                                                <Badge variant="outline" className="text-[10px] uppercase h-5 font-normal">EN</Badge>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             </TableCell>
@@ -280,7 +364,16 @@ const CoupletsList = () => {
                                                             )}
                                                         </>
                                                     ) : (
-                                                        <Badge variant="outline" className="text-[10px] uppercase h-5 font-normal border-green-200 text-green-700 bg-green-50">Active</Badge>
+                                                        <>
+                                                            {((c.visibility ?? 1) === 1 || (c.visibility ?? 1) === true) ? (
+                                                                <Badge variant="outline" className="text-[10px] uppercase h-5 font-normal border-green-200 text-green-700 bg-green-50">Visible</Badge>
+                                                            ) : (
+                                                                <Badge variant="secondary" className="text-[10px] uppercase h-5 font-normal">Hidden</Badge>
+                                                            )}
+                                                            {((c.is_featured ?? 0) === 1 || (c.is_featured ?? 0) === true) && (
+                                                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             </TableCell>
@@ -294,40 +387,62 @@ const CoupletsList = () => {
                                             </TableCell>
                                             <TableCell className="text-right whitespace-nowrap">
                                                 <div className="flex justify-end items-center gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 opacity-60 hover:opacity-100"
-                                                        onClick={() => c.poetry && toggleVisibilityMutation.mutate(c.poetry.id)}
-                                                        title={c.poetry?.visibility === 1 ? "Hide" : "Show"}
-                                                        disabled={!c.poetry}
-                                                    >
-                                                        {c.poetry?.visibility === 1 ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 opacity-60 hover:opacity-100"
-                                                        onClick={() => c.poetry && toggleFeaturedMutation.mutate(c.poetry.id)}
-                                                        title={c.poetry?.is_featured === 1 ? "Unfeature" : "Feature"}
-                                                        disabled={!c.poetry}
-                                                    >
-                                                        <Star className={`h-4 w-4 ${c.poetry?.is_featured === 1 ? 'fill-yellow-400 text-yellow-400' : ''}`} />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" asChild>
-                                                        <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry?.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug}/edit`}>
-                                                            <Edit className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-destructive opacity-60 hover:opacity-100 hover:bg-destructive/10"
-                                                        onClick={() => c.poetry && handleDelete(c.poetry.id)}
-                                                        disabled={!c.poetry}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {showTrash ? (
+                                                        <>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-green-600 hover:text-green-700"
+                                                                onClick={() => handleRestore(c)}
+                                                                title="Restore"
+                                                            >
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                                onClick={() => handleDelete(c)}
+                                                                title="Delete Permanently"
+                                                            >
+                                                                <ShieldAlert className="h-4 w-4" />
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 opacity-60 hover:opacity-100"
+                                                                onClick={() => toggleVisibilityMutation.mutate(c)}
+                                                                title={((c.poetry?.visibility ?? c.visibility) === 1 || (c.poetry?.visibility ?? c.visibility) === true) ? "Hide" : "Show"}
+                                                            >
+                                                                {((c.poetry?.visibility ?? c.visibility) === 1 || (c.poetry?.visibility ?? c.visibility) === true) ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 opacity-60 hover:opacity-100"
+                                                                onClick={() => toggleFeaturedMutation.mutate(c)}
+                                                                title={((c.poetry?.is_featured ?? c.is_featured) === 1 || (c.poetry?.is_featured ?? c.is_featured) === true) ? "Unfeature" : "Feature"}
+                                                            >
+                                                                <Star className={`h-4 w-4 ${((c.poetry?.is_featured ?? c.is_featured) === 1 || (c.poetry?.is_featured ?? c.is_featured) === true) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" asChild>
+                                                                <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug || c.id}/edit`}>
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Link>
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-destructive opacity-60 hover:opacity-100 hover:bg-destructive/10"
+                                                                onClick={() => handleDelete(c)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>

@@ -23,6 +23,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+    DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Trash2, Plus, Eye, EyeOff, Star, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, ChevronsUpDown, Check, Info } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -44,6 +53,7 @@ import { cn } from "@/lib/utils";
 const coupletSchema = z.object({
     couplet_slug: z.string().min(2, 'Slug is required'),
     poet_id: z.string().min(1, 'Poet is required'),
+    topic_category_id: z.string().optional().nullable(),
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
     couplet_tags: z.array(z.string()).optional(),
@@ -60,6 +70,9 @@ const CreateCouplet = () => {
     const [openPoet, setOpenPoet] = useState(false);
     const [openBook, setOpenBook] = useState(false);
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+    const [romanContent, setRomanContent] = useState('');
+    const [isTransliterated, setIsTransliterated] = useState(isEdit);
+    const [script, setScript] = useState('perso'); // 'perso' | 'roman'
     const [slugError, setSlugError] = useState(null);
     const [coupletContent, setCoupletContent] = useState('');
     const queryClient = useQueryClient();
@@ -81,12 +94,58 @@ const CreateCouplet = () => {
         enabled: isEdit,
     });
 
+    // Prevent auto-updates on initial load for Edit mode
+    const allowAutoUpdates = React.useRef(!isEdit);
+
+    // Live Transliterate Content
+    useEffect(() => {
+        if (!allowAutoUpdates.current) return;
+
+        if (!coupletContent) {
+            setRomanContent('');
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const response = await api.post('/api/admin/romanizer/transliterate', {
+                    text: coupletContent
+                });
+                setRomanContent(response.data.transliterated_text);
+                setIsTransliterated(true);
+            } catch (error) {
+                console.error("Content transliteration failed:", error);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [coupletContent]);
+
+    const applyFormat = (prefix, suffix = prefix) => {
+        const el = document.getElementById('couplet-editor');
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const text = el.value;
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        const newText = before + prefix + selection + suffix + after;
+        setCoupletContent(newText);
+
+        setTimeout(() => {
+            el.focus();
+            el.setSelectionRange(start + prefix.length, end + prefix.length);
+        }, 10);
+    };
+
     const checkSlugUnique = async (slug) => {
         if (!slug || isEdit) return;
         setIsCheckingSlug(true);
         setSlugError(null);
         try {
-            const response = await api.get(`/api/admin/poetry/check-slug?slug=${slug}`);
+            const response = await api.get(`/api/admin/couplets/check-slug?slug=${slug}${isEdit ? `&id=${id}` : ''}`);
             if (!response.data.available) {
                 setSlugError('This slug is already taken.');
             }
@@ -102,6 +161,7 @@ const CreateCouplet = () => {
         defaultValues: {
             couplet_slug: '',
             poet_id: '',
+            topic_category_id: '',
             visibility: true,
             is_featured: false,
             couplet_tags: [],
@@ -112,41 +172,63 @@ const CreateCouplet = () => {
     });
 
     // Auto-generate slug from first line using romanizer (only for new)
+    const generateSlug = async (content) => {
+        if (!content) return;
+        const firstLine = content.split('\n')[0].trim();
+        if (!firstLine) return;
+
+        try {
+            const response = await api.post('/api/admin/romanizer/transliterate', {
+                text: firstLine
+            });
+            let roman = response.data.transliterated_text;
+
+            // Generate slug from Roman text
+            let slug = roman
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/[\s_-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            // Check uniqueness and auto-append if needed
+            let isAvailable = false;
+            let counter = 0;
+            let tempSlug = slug;
+
+            while (!isAvailable && counter < 10) {
+                const checkRes = await api.get(`/api/admin/couplets/check-slug?slug=${tempSlug}${isEdit ? `&id=${id}` : ''}`);
+                if (checkRes.data.available) {
+                    isAvailable = true;
+                    slug = tempSlug;
+                } else {
+                    counter++;
+                    tempSlug = `${slug}-${counter}`;
+                }
+            }
+
+            form.setValue('couplet_slug', slug);
+            setSlugError(null);
+        } catch (error) {
+            console.error("Slug generation failed:", error);
+        }
+    };
+
     useEffect(() => {
         if (isEdit || !coupletContent) return;
 
-        const firstLine = coupletContent.split('\n')[0].trim();
-        if (!firstLine) return;
-
-        const timer = setTimeout(async () => {
-            try {
-                const response = await api.post('/api/admin/romanizer/transliterate', {
-                    text: firstLine
-                });
-                const roman = response.data.transliterated_text;
-
-                // Generate slug from Roman text
-                const slug = roman
-                    .toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/[\s_-]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
-
-                form.setValue('couplet_slug', slug);
-                checkSlugUnique(slug);
-            } catch (error) {
-                console.error("Auto-transliteration failed:", error);
-            }
-        }, 500); // Debounce 500ms
+        const timer = setTimeout(() => {
+            generateSlug(coupletContent);
+        }, 800);
 
         return () => clearTimeout(timer);
-    }, [coupletContent, isEdit, form]);
+    }, [coupletContent, isEdit]);
 
     useEffect(() => {
         if (isEdit && couplet) {
             form.reset({
                 couplet_slug: couplet.couplet_slug || '',
                 poet_id: couplet.poet_id?.toString() || '',
+                topic_category_id: couplet.topic_category_id?.toString() || '',
                 visibility: true, // Independent couplets don't have separate visibility yet in the DB, but they are linked to Poetry
                 is_featured: false,
                 couplet_tags: JSON.parse(couplet.couplet_tags || '[]'),
@@ -155,6 +237,12 @@ const CreateCouplet = () => {
                 page_end: couplet.page_end?.toString() || '',
             });
             setCoupletContent(couplet.couplet_text || '');
+            setRomanContent(couplet.roman_text || '');
+
+            // Re-enable auto-updates after initial data load
+            setTimeout(() => {
+                allowAutoUpdates.current = true;
+            }, 1000);
         }
     }, [isEdit, couplet, form]);
 
@@ -162,13 +250,15 @@ const CreateCouplet = () => {
         mutationFn: async (data) => {
             const payload = {
                 poet_id: data.poet_id,
+                topic_category_id: data.topic_category_id,
                 couplet_text: coupletContent.trim(),
                 lang: 'sd',
                 couplet_slug: data.couplet_slug,
                 couplet_tags: data.couplet_tags,
                 book_id: data.book_id,
                 page_start: data.page_start,
-                page_end: data.page_end
+                page_end: data.page_end,
+                roman_content: romanContent.trim()
             };
 
             if (isEdit) {
@@ -229,41 +319,96 @@ const CreateCouplet = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[500px]">
-                            <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
-                                        <BookOpen className="h-3 w-3" /> <span>Independent Couplet Editor</span>
-                                    </div>
+                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
+                            <Tabs value={script} onValueChange={setScript} className="w-full">
+                                <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/5 sticky top-0 z-10 w-full">
+                                    <TabsList className="h-9 bg-muted/50">
+                                        <TabsTrigger value="perso" className="text-xs h-7 px-3 font-arabic">سنڌي (Perso)</TabsTrigger>
+                                        <TabsTrigger value="roman" className="text-xs h-7 px-3 font-medium">Sindhi (roman)</TabsTrigger>
+                                    </TabsList>
+
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
-                                        <span>{lineCount.toString().padStart(2, '0')} / 02 Lines</span>
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground/80 font-medium px-2 py-1 rounded bg-muted/20">
+                                            {isTransliterated ? (
+                                                <span className="flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Auto-Transliterated</span>
+                                            ) : (
+                                                <span className="flex items-center gap-1"><Languages className="h-3 w-3" /> Transliterating...</span>
+                                            )}
+                                        </div>
+                                        {/* formatting toolbar - only show in Perso mode */}
+                                        {(script === 'perso' || script === 'roman') && (
+                                            <>
+                                                <div className="h-4 w-[1px] bg-border mx-1" />
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm" type="button" className="h-8 px-2 flex items-center gap-1">
+                                                            Style <ChevronDown className="h-3 w-3" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="start" className="w-48">
+                                                        <DropdownMenuLabel>Paragraph Style</DropdownMenuLabel>
+                                                        <DropdownMenuItem onClick={() => applyFormat('# ', '')}>Heading 1</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => applyFormat('## ', '')}>Heading 2</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => applyFormat('> ', '')}><Quote className="h-4 w-4 mr-2" /> Blockquote</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => applyFormat('- ', '')}>Bullet List</DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                                <div className="flex items-center">
+                                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('**')} title="Bold">
+                                                        <Bold className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" type="button" className="h-8 w-8" onClick={() => applyFormat('*')} title="Italic">
+                                                        <Italic className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    {/* Title removed for independent couplets as per user request */}
-                                </div>
+                                <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
+                                            <BookOpen className="h-3 w-3" /> <span>Independent Couplet Editor</span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground/50 font-medium whitespace-nowrap">
+                                            <span>{lineCount.toString().padStart(2, '0')} / 02 Lines</span>
+                                        </div>
+                                    </div>
 
-                                <div className="pt-6">
-                                    <textarea
-                                        dir="rtl"
-                                        className={`w-full p-0 text-3xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[300px] bg-transparent leading-relaxed font-arabic text-center`}
-                                        placeholder="پنهنجو شعر هتي لکو... صرف 2 لائينون"
-                                        value={coupletContent}
-                                        onChange={(e) => {
-                                            const lines = e.target.value.split('\n');
-                                            if (lines.length <= 2) {
-                                                setCoupletContent(e.target.value);
-                                            }
-                                        }}
-                                    />
-                                    {lineCount !== 2 && lineCount > 0 && (
-                                        <p className="text-sm text-muted-foreground mt-4 text-center">
-                                            Please write exactly 2 lines for the couplet.
-                                        </p>
-                                    )}
+                                    <div className="pt-6">
+                                        <TabsContent value="perso" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
+                                            <textarea
+                                                id="couplet-editor"
+                                                dir="rtl"
+                                                lang="sd"
+                                                className="w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-arabic text-center"
+                                                placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
+                                                value={coupletContent}
+                                                onChange={(e) => {
+                                                    setCoupletContent(e.target.value);
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                }}
+                                            />
+                                            {lineCount !== 2 && lineCount > 0 && (
+                                                <p className="text-sm text-muted-foreground mt-4 text-center">
+                                                    Please write exactly 2 lines for the couplet.
+                                                </p>
+                                            )}
+                                        </TabsContent>
+                                        <TabsContent value="roman" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
+                                            <textarea
+                                                dir="ltr"
+                                                className="w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-sans text-center"
+                                                placeholder="Transliterated text will appear here..."
+                                                value={romanContent}
+                                                onChange={(e) => setRomanContent(e.target.value)}
+                                            />
+                                        </TabsContent>
+                                    </div>
                                 </div>
-                            </div>
+                            </Tabs>
                         </div>
 
                         <div className="space-y-6">
@@ -365,6 +510,40 @@ const CreateCouplet = () => {
                                                         </Command>
                                                     </PopoverContent>
                                                 </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </CardContent>
+                            </Card>
+
+                            <Card className="shadow-sm">
+                                <CardHeader className="py-3">
+                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                        <Folder className="h-4 w-4" /> Topic Category
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <FormField
+                                        control={form.control}
+                                        name="topic_category_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                    <FormControl>
+                                                        <SelectTrigger className="font-arabic h-9">
+                                                            <SelectValue placeholder="Select Topic Category (Optional)" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="none">None</SelectItem>
+                                                        {meta?.topic_categories?.map((cat) => (
+                                                            <SelectItem key={cat.id} value={cat.id.toString()} className="font-arabic">
+                                                                {cat.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -607,14 +786,26 @@ const CreateCouplet = () => {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        className={`h-8 text-xs font-mono ${slugError ? 'border-destructive' : ''}`}
-                                                        onBlur={(e) => {
-                                                            field.onBlur(e);
-                                                            checkSlugUnique(e.target.value);
-                                                        }}
-                                                    />
+                                                    <div className="relative">
+                                                        <Input
+                                                            {...field}
+                                                            className={`h-8 text-xs font-mono pr-8 ${slugError ? 'border-destructive' : ''}`}
+                                                            onBlur={(e) => {
+                                                                field.onBlur(e);
+                                                                checkSlugUnique(e.target.value);
+                                                            }}
+                                                        />
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="absolute right-0 top-0 h-8 w-8 text-muted-foreground/50 hover:text-primary"
+                                                            onClick={() => generateSlug(coupletContent)}
+                                                            title="Regenerate slug from text"
+                                                        >
+                                                            <Languages className="h-3 w-3" />
+                                                        </Button>
+                                                    </div>
                                                 </FormControl>
                                                 <FormMessage />
                                                 {slugError && <p className="text-[10px] text-destructive mt-1">{slugError}</p>}
@@ -628,7 +819,7 @@ const CreateCouplet = () => {
                     </div>
                 </form>
             </Form>
-        </div>
+        </div >
     );
 };
 
