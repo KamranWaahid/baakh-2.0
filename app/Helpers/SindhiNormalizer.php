@@ -12,8 +12,7 @@ class SindhiNormalizer
         if (empty($text))
             return $text;
 
-        // Stage 1: The "Visual Hack" Cleanup - REMOVED because it was incorrectly collapsing tails
-        // $text = preg_replace('/ھ[ہهە]($|\s|[،؛.”“؟!?,.])/u', 'ھ$1', $text);
+        // Stage 1: Removed visual hack
 
         // Tokenize into words to apply contextual rules accurately
         $tokens = preg_split('/(\s+|[،؛.”“؟!?,.()\[\]{}])+/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -47,39 +46,41 @@ class SindhiNormalizer
         if (empty($word))
             return $word;
 
+        // Kaf Normalization (Expert Rule - Early to prevent Heh rules from breaking digraphs)
+        // Fixes common Urdu-keyboard errors: کھ -> Sindhi ک, standalone ک -> Sindhi ڪ
+        $word = str_replace('کھ', 'TEMP_KH_INTERNAL', $word);
+        $word = str_replace('ک', 'ڪ', $word);
+
         $aspirationConsonants = 'ڻگنملجڙڏور';
-        $nonConnectors = 'اودذرڈڌڏڙء';
 
         // Rule A: The Aspiration Trigger
-        // If Heh variant follows: ڻ گ ن م ل ج ڙ ڏ و ر -> force U+06BE (ھ)
+        // If Heh variant follows an aspirate-ready consonant, force it to Doachashmee ھ (U+06BE)
         $word = preg_replace('/([' . $aspirationConsonants . '])[هہةھە]/u', '$1ھ', $word);
 
         // Rule B: Medial Normalization
-        // Any other Heh variants (start or medial not following aspiration) -> U+0647 (ه)
-        // Uses negative lookbehind for aspiration and negative lookahead for word-end
+        // Any other Heh variants (start or medial not following aspiration) -> Standard ه (U+0647)
         $word = preg_replace('/(?<![' . $aspirationConsonants . '])[ہةھە](?!$)/u', 'ه', $word);
 
-        // Rule C: Word-Final Weak Heh with Tail
-        // If Heh variant is at the end, ensure it has the correct tail
+        // Rule C: Word-Final Weak Heh vs. Aspiration Digraph
         $length = mb_strlen($word);
         if ($length > 0) {
             $lastChar = mb_substr($word, -1);
             if (in_array($lastChar, ['ه', 'ہ', 'ة', 'ھ', 'ە'])) {
                 $prevChar = $length > 1 ? mb_substr($word, -2, 1) : '';
 
-                if ($lastChar === 'ھ') {
-                    // Only add tail if it follows a non-connector (isolated form)
-                    if ($prevChar !== '' && mb_strpos($nonConnectors, $prevChar) !== false) {
-                        $word .= 'ہ';
-                    }
-                } elseif ($lastChar === 'ہ' && ($prevChar === 'ه' || $prevChar === 'ھ')) {
-                    // Already has the tail, do nothing
+                if (mb_strpos($aspirationConsonants, $prevChar) !== false) {
+                    // Preceded by aspiration-ready consonant -> it's an Aspiration Digraph
+                    // Map to ھ (U+06BE) and append ہ (U+06C1) for font support (Legacy Trigraph)
+                    $word = mb_substr($word, 0, -1) . 'ھہ';
                 } else {
-                    // Map to U+0647 (ه) and append U+06C1 (ہ) tail
-                    $word = mb_substr($word, 0, -1) . 'هہ';
+                    // Otherwise it's a Weak Heh (Silent Heh) -> Map to ہ (U+06C1)
+                    $word = mb_substr($word, 0, -1) . 'ہ';
                 }
             }
         }
+
+        // Restore Sindhi Kh
+        $word = str_replace('TEMP_KH_INTERNAL', 'ک', $word);
 
         return $word;
     }
