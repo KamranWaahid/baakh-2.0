@@ -1,0 +1,4 @@
+# Block all access to this folder after use
+# You can temporarily remove this file to run the setup script,
+# then restore it or delete the entire folder.
+Deny from all
