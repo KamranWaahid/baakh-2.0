@@ -157,6 +157,7 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::post('databases/migrate', [DatabaseController::class, 'migrate']);
     Route::post('databases/repair-permissions', [DatabaseController::class, 'repairPermissions']);
     Route::post('databases/clear-cache', [DatabaseController::class, 'clearCache']);
+    Route::post('databases/cleanse-wordnet', [DatabaseController::class, 'cleanseWordnet']);
     Route::delete('databases/{file_name}', [DatabaseController::class, 'destroy']);
     Route::get('databases/download', [DatabaseController::class, 'download'])->name('backup.download');
     Route::get('databases/schema', [DatabaseController::class, 'getSchema']);

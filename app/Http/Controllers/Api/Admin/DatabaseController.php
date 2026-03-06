@@ -324,6 +324,80 @@ class DatabaseController extends Controller
     }
 
     /**
+     * Cleanse the WordNet (baakh_hesudhars) table with Phase 1 phonetic normalization.
+     * Fixes Kaf, Yeh, NFC (Alef+Madda), and collapses legacy trigraph hacks.
+     */
+    public function cleanseWordnet(Request $request)
+    {
+        try {
+            set_time_limit(600);
+            $fixedCount = 0;
+            $offset = 0;
+            $chunkSize = 2000;
+
+            do {
+                $rows = DB::table('baakh_hesudhars')
+                    ->orderBy('id')
+                    ->offset($offset)
+                    ->limit($chunkSize)
+                    ->get(['id', 'word', 'correct']);
+
+                $updates = [];
+                foreach ($rows as $row) {
+                    $newWord = $this->cleansePhonetic($row->word);
+                    $newCorrect = $this->cleansePhonetic($row->correct);
+
+                    if ($row->word !== $newWord || $row->correct !== $newCorrect) {
+                        $updates[] = [
+                            'id' => $row->id,
+                            'word' => $newWord,
+                            'correct' => $newCorrect,
+                        ];
+                        $fixedCount++;
+                    }
+                }
+
+                foreach ($updates as $u) {
+                    DB::table('baakh_hesudhars')
+                        ->where('id', $u['id'])
+                        ->update(['word' => $u['word'], 'correct' => $u['correct']]);
+                }
+
+                $offset += $chunkSize;
+            } while (count($rows) === $chunkSize);
+
+            ActivityLog::log('cleansed_wordnet', $request->user(), null, "Ran WordNet phonetic cleanse. Fixed {$fixedCount} records.");
+
+            return response()->json([
+                'message' => "WordNet cleanse complete! Fixed {$fixedCount} records.",
+                'fixed' => $fixedCount,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('WordNet cleanse failed: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'WordNet cleanse failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function cleansePhonetic($text)
+    {
+        if (empty($text))
+            return $text;
+        // 1. Arabic Kaf -> Swash Kaf
+        $text = str_replace('ك', 'ڪ', $text);
+        // 2. Farsi Yeh -> Arabic Yeh
+        $text = str_replace('ی', 'ي', $text);
+        // 3. Atomic recomposition (Alef + Madda -> آ)
+        $text = str_replace('ا' . 'ٓ', 'آ', $text);
+        // 4. Collapse double terminal Heh variants (tail hacks)
+        $text = preg_replace('/[هہةەھ]{2}$/u', 'ھ', $text);
+        return $text;
+    }
+
+
+    /**
      * Get schema details for a table or all tables.
      */
     public function getSchema(Request $request)

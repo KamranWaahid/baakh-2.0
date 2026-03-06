@@ -41,6 +41,7 @@ const DatabaseList = () => {
     const [isSchemaOpen, setIsSchemaOpen] = useState(false);
     const [dbTables, setDbTables] = useState([]);
     const [isCopyingAll, setIsCopyingAll] = useState(false);
+    const [cleanseResult, setCleanseResult] = useState(null);
 
     // Sync States
     const [syncLocalUrl, setSyncLocalUrl] = useState('http://127.0.0.1:8000');
@@ -132,6 +133,18 @@ const DatabaseList = () => {
         }
     });
 
+    const cleanseMutation = useMutation({
+        mutationFn: async () => {
+            return api.post('/api/admin/databases/cleanse-wordnet');
+        },
+        onSuccess: (response) => {
+            setCleanseResult(response.data);
+        },
+        onError: (error) => {
+            alert(error.response?.data?.message || 'WordNet cleanse failed');
+        }
+    });
+
     const schemaMutation = useMutation({
         mutationFn: async (tableName) => {
             setIsSchemaLoading(true);
@@ -204,6 +217,13 @@ const DatabaseList = () => {
     const handleClearCache = () => {
         if (confirm('CLEAR: This will flush the application optimization cache. Continue?')) {
             clearCacheMutation.mutate();
+        }
+    };
+
+    const handleCleanse = () => {
+        if (confirm('CLEANSE: This will run a phonetic normalization pass over all 120k WordNet entries (Kaf, Yeh, Trigraphs). It may take 30-60 seconds. Continue?')) {
+            setCleanseResult(null);
+            cleanseMutation.mutate();
         }
     };
 
@@ -460,7 +480,7 @@ const DatabaseList = () => {
             </Card>
 
             {/* Maintenance Center Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-xl border border-yellow-100 shadow-sm space-y-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-yellow-50 rounded-lg">
@@ -512,6 +532,29 @@ const DatabaseList = () => {
                         disabled={repairMutation.isPending}
                     >
                         {repairMutation.isPending ? 'Repairing...' : 'Repair Permissions'}
+                    </Button>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl border border-green-100 shadow-sm space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-50 rounded-lg">
+                            <Zap className="h-5 w-5 text-green-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-900">Cleanse WordNet</h3>
+                    </div>
+                    <p className="text-sm text-gray-500">Run Phase 1 phonetic normalization (Kaf, Yeh, Trigraphs) over all ~120k WordNet entries.</p>
+                    {cleanseResult && (
+                        <div className="text-xs font-medium text-green-700 bg-green-50 rounded-md px-3 py-2">
+                            ✓ {cleanseResult.message}
+                        </div>
+                    )}
+                    <Button
+                        variant="soft"
+                        className="w-full bg-green-50 hover:bg-green-100 text-green-800 border-none"
+                        onClick={handleCleanse}
+                        disabled={cleanseMutation.isPending}
+                    >
+                        {cleanseMutation.isPending ? 'Cleansing...' : 'Cleanse WordNet'}
                     </Button>
                 </div>
             </div>
