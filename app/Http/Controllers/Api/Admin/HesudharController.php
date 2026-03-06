@@ -96,8 +96,8 @@ class HesudharController extends Controller
         $text = array_unique($get_text);
 
         $mistakes = array();
-        // Punctuation to strip from beginning and end
-        $punctuation = ['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
+        // Punctuation to strip from beginning and end (Added U+06D4 Arabic Full Stop)
+        $punctuation = ['۔', '،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
 
         // Diacritics to strip globally from words
         $diacritics = [
@@ -116,11 +116,10 @@ class HesudharController extends Controller
         foreach ($text as $word) {
             $cleanWord = $word;
 
-            // 1. Initial Standard standardization for matching
-            // Strip diacritics from the entire word for dictionary lookup
+            // Strip diacritics for dictionary/normalization lookup
             $matchWord = str_replace($diacritics, '', $cleanWord);
 
-            // Strip punctuation from start/end for dictionary lookup
+            // Strip punctuation from start/end
             while (mb_strlen($matchWord) > 0 && in_array(mb_substr($matchWord, 0, 1), $punctuation)) {
                 $matchWord = mb_substr($matchWord, 1);
             }
@@ -128,31 +127,42 @@ class HesudharController extends Controller
                 $matchWord = mb_substr($matchWord, 0, -1);
             }
 
-            // Normalization for DICTIONARY lookup only (to increase hit rate)
-            $normalizedMatchWord = SindhiNormalizer::normalize($matchWord);
-
             if (!empty($matchWord)) {
-                // 1. Check dictionary with the word as-is
-                $mistake = BaakhHesudhar::where('word', $matchWord)->first();
+                $matchWord = trim($matchWord);
 
-                // 2. If not found, try dictionary with phonetically normalized version
-                if (!$mistake && $matchWord !== $normalizedMatchWord) {
-                    $mistake = BaakhHesudhar::where('word', $normalizedMatchWord)->first();
-                }
+                // Phase 2: Establish Functional Phonetic Truth FIRST
+                $phoneticCorrect = SindhiNormalizer::normalize($matchWord);
 
-                if ($mistake) {
-                    $mistakes[] = [
-                        'word' => $matchWord,
-                        'correct' => $mistake->correct,
-                        'type' => 'dictionary'
+                // Phase 3: WordNet Validation & Feedback Loop
+                $dictionaryEntry = BaakhHesudhar::where('word', $matchWord)->first();
+                if (!$dictionaryEntry && preg_match('/[هہةھە]/u', $matchWord)) {
+                    $variants = [
+                        str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ه', $matchWord),
+                        str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ہ', $matchWord),
+                        str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ھ', $matchWord),
                     ];
+                    $dictionaryEntry = BaakhHesudhar::whereIn('word', $variants)->first();
                 }
-                // 3. Fallback: Phonetic Normalization if no dictionary hit
-                else if ($matchWord !== $normalizedMatchWord) {
+
+                $finalCorrection = $phoneticCorrect;
+
+                if ($dictionaryEntry) {
+                    // Auto-Flagging Feedback Loop (Phase 3)
+                    // If the dictionary's explicit correction fundamentally disagrees with the established final
+                    // functional normalization, flag it for manual editorial review to resolve legacy visual hacks.
+                    if ($dictionaryEntry->correct !== $finalCorrection) {
+                        \Illuminate\Support\Facades\DB::table('baakh_hesudhars')
+                            ->where('id', $dictionaryEntry->id)
+                            ->update(['is_flagged' => true]);
+                    }
+                }
+
+                // If the final established correction is different from the raw input, flag it as a mistake for the UI
+                if ($matchWord !== $finalCorrection) {
                     $mistakes[] = [
                         'word' => $matchWord,
-                        'correct' => $normalizedMatchWord,
-                        'type' => 'normalization'
+                        'correct' => $finalCorrection,
+                        'type' => $dictionaryEntry ? 'dictionary' : 'normalization'
                     ];
                 }
             }

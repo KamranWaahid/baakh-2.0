@@ -24,31 +24,24 @@ const HesudharBulkCheck = () => {
         checkMutation.mutate(text);
     };
 
-    const handleStandardizeHeh = async () => {
-        if (!text.trim()) return;
-        try {
-            const response = await api.post('/api/admin/hesudhar/standardize', { text });
-            setText(response.data.standardized_text);
-            // Re-check after bulk standardization to clear fixed mistakes
-            checkMutation.mutate(response.data.standardized_text);
-        } catch (error) {
-            console.error("Bulk standardization failed:", error);
-        }
-    };
 
     const handleFixAll = () => {
         let fixedText = text;
         mistakes.forEach(m => {
-            // Using regex to replace all occurrences while respecting word boundaries if possible
-            // But since these are Sindhi words, we'll do a simple global replace for now
-            fixedText = fixedText.split(m.word).join(m.correct);
+            // Safe replacement using RegExp for word boundary or space/punctuation boundary
+            // This ensures we don't partially replace within another word
+            const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const pattern = new RegExp(`(^|[^\\u0600-\\u06FF])(${escapeRegExp(m.word)})([^\\u0600-\\u06FF]|$)`, 'gu');
+            fixedText = fixedText.replace(pattern, `$1${m.correct}$3`);
         });
         setText(fixedText);
         setMistakes([]);
     };
-
     const handleFixIndividual = (mistake) => {
-        setText(prev => prev.split(mistake.word).join(mistake.correct));
+        const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(`(^|[^\\u0600-\\u06FF])(${escapeRegExp(mistake.word)})([^\\u0600-\\u06FF]|$)`, 'gu');
+
+        setText(prev => prev.replace(pattern, `$1${mistake.correct}$3`));
         setMistakes(prev => prev.filter(m => m.word !== mistake.word));
     };
 
@@ -90,9 +83,6 @@ const HesudharBulkCheck = () => {
                                 Analyze Text
                             </Button>
                             <div className="flex gap-2 flex-1">
-                                <Button variant="outline" className="flex-1" onClick={handleStandardizeHeh} title="Convert all 'ه' and 'ہ' to standard 'ھ'">
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Standardize
-                                </Button>
                                 {mistakes.length > 0 && (
                                     <Button variant="secondary" className="flex-1" onClick={handleFixAll}>
                                         <CheckCircle2 className="mr-2 h-4 w-4" /> Fix All
