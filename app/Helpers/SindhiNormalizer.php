@@ -12,10 +12,8 @@ class SindhiNormalizer
         if (empty($text))
             return $text;
 
-        // Stage 1: The "Visual Hack" Cleanup
-        // Collapse U+06BE (Doachashmee) + U+06C1/U+06D5 (tail) into single U+06BE
-        // Using character literals for better reliability in different PHP environments
-        $text = preg_replace('/ھ[ہهە]($|\s|[،؛.”“؟!?,.])/u', 'ھ$1', $text);
+        // Stage 1: The "Visual Hack" Cleanup - REMOVED because it was incorrectly collapsing tails
+        // $text = preg_replace('/ھ[ہهە]($|\s|[،؛.”“؟!?,.])/u', 'ھ$1', $text);
 
         // Tokenize into words to apply contextual rules accurately
         $tokens = preg_split('/(\s+|[،؛.”“؟!?,.()\[\]{}])+/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -44,39 +42,44 @@ class SindhiNormalizer
         return $text;
     }
 
-    /**
-     * Normalizes a single word using contextual rules.
-     */
     public static function normalizeWord($word)
     {
         if (empty($word))
             return $word;
 
-        // Stage 2: Contextual Inference
         $aspirationConsonants = 'ڻگنملجڙڏور';
+        $nonConnectors = 'اودذرڈڌڏڙء';
 
         // Rule A: The Aspiration Trigger
         // If Heh variant follows: ڻ گ ن م ل ج ڙ ڏ و ر -> force U+06BE (ھ)
         $word = preg_replace('/([' . $aspirationConsonants . '])[هہةھە]/u', '$1ھ', $word);
 
-        // Rule B: The Word-Final Weak Heh
-        // If Heh variant is at the end AND not preceded by aspiration consonants -> map to U+06D5 (ه)
-        $lastChar = mb_substr($word, -1);
-        if (in_array($lastChar, ['ه', 'ہ', 'ة', 'ھ', 'ە'])) {
-            $prevChar = mb_strlen($word) > 1 ? mb_substr($word, -2, 1) : '';
-            if ($prevChar === '' || mb_strpos($aspirationConsonants, $prevChar) === false) {
-                // Map to U+06D5 (Arabic Letter AE / Heh Goal)
-                // Note: U+06D5 looks distinct in Sindhi fonts
-                $word = mb_substr($word, 0, -1) . 'ه';
-                // Let's use the explicit U+06D5 literal
-                $word = mb_substr($word, 0, -1) . 'ه';
+        // Rule B: Medial Normalization
+        // Any other Heh variants (start or medial not following aspiration) -> U+0647 (ه)
+        // Uses negative lookbehind for aspiration and negative lookahead for word-end
+        $word = preg_replace('/(?<![' . $aspirationConsonants . '])[ہةھە](?!$)/u', 'ه', $word);
+
+        // Rule C: Word-Final Weak Heh with Tail
+        // If Heh variant is at the end, ensure it has the correct tail
+        $length = mb_strlen($word);
+        if ($length > 0) {
+            $lastChar = mb_substr($word, -1);
+            if (in_array($lastChar, ['ه', 'ہ', 'ة', 'ھ', 'ە'])) {
+                $prevChar = $length > 1 ? mb_substr($word, -2, 1) : '';
+
+                if ($lastChar === 'ھ') {
+                    // Only add tail if it follows a non-connector (isolated form)
+                    if ($prevChar !== '' && mb_strpos($nonConnectors, $prevChar) !== false) {
+                        $word .= 'ہ';
+                    }
+                } elseif ($lastChar === 'ہ' && ($prevChar === 'ه' || $prevChar === 'ھ')) {
+                    // Already has the tail, do nothing
+                } else {
+                    // Map to U+0647 (ه) and append U+06C1 (ہ) tail
+                    $word = mb_substr($word, 0, -1) . 'هہ';
+                }
             }
         }
-
-        // Rule C: The Default Syllable Onset
-        // Any other Heh variants (start or medial not following aspiration) -> U+0647 (ه)
-        // Using negative lookbehind for aspiration consonants
-        $word = preg_replace('/(?<![' . $aspirationConsonants . '])[ہةھە]/u', 'ه', $word);
 
         return $word;
     }
