@@ -69,8 +69,7 @@ class SindhiNormalizer
         // Sindhi uses U+06BE specifically as an aspiration marker after specific consonants.
         // We strictly exclude N, M, R, W, and Dd from the automatic list because they are too frequently followed
         // by a standard pronounced /h/ (e.g. انهن, مهم, رهيو, جيڪڏهن), preventing false aspiration.
-        // The dictionary handles true aspirations for these ambiguous consonants.
-        $aspirationConsonants = 'ڻگلجڙو';
+        $aspirationConsonants = 'ڻگلجڙ';
 
         if (!$isArabicCitation) {
             // 2. Aspiration Trigger (Safe Consonants)
