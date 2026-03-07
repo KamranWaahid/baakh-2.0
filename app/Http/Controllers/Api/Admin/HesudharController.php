@@ -237,8 +237,9 @@ class HesudharController extends Controller
      *  1. Kaf Standardisation      – Arabic ك  → Sindhi ڪ
      *  2. Yeh Standardisation      – Farsi  ی  → Arabic ي
      *  3. Atomic Recomposition     – Alef + Madda → آ
-     *  4. Double-terminal-heh fix  – any two heh variants at word end → ہ (U+06C1)
+     *  4. Double weak-heh fix      – any two WEAK hehs at word end → ہ (U+06C1)
      *  5. Word-final aspirated-heh – ھ (U+06BE) at word end → ہ (U+06C1)
+     *  6. Final weak heh           – any weak heh at string end → ہ (U+06C1)
      */
     private function cleanseString(?string $text): ?string
     {
@@ -255,13 +256,15 @@ class HesudharController extends Controller
         // 3. Atomic Recomposition (Alef + Madda → آ)
         $text = str_replace('ا' . 'ٓ', 'آ', $text);
 
-        // 4. Collapse Legacy Trigraphs (any double terminal heh → single ہ U+06C1)
-        //    Word-final weak/silent heh = ہ (U+06C1), NOT ھ (U+06BE).
-        $text = preg_replace('/[هہةەھ]{2}$/u', 'ہ', $text);
+        // 4. Collapse double WEAK hehs (ه ہ ة ە) -> single ہ U+06C1
+        //    Crucially: EXCLUDES ھ (U+06BE), so valid sequences like ھہ (Aspiration + Weak Heh) are preserved!
+        $text = preg_replace('/[هہةە]{2}$/u', 'ہ', $text);
 
-        // 5. Word-final aspirated-heh fix: ھ (U+06BE) at word end is a legacy
-        //    "glyph hack". Replace with correct ہ (U+06C1 – Heh Goal).
+        // 5. Word-final aspirated-heh fix: ھ (U+06BE) strictly at word end is a legacy "glyph hack".
         $text = preg_replace('/ھ$/u', 'ہ', $text);
+
+        // 6. Any other single weak heh at the end becomes the standard ہ (Heh Goal)
+        $text = preg_replace('/[هةە]$/u', 'ہ', $text);
 
         return $text;
     }
