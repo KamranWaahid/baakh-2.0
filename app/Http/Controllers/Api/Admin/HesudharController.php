@@ -196,6 +196,76 @@ class HesudharController extends Controller
         }
     }
 
+    public function cleanse()
+    {
+        $fixedCount = 0;
+        $offset = 0;
+        $chunkSize = 5000;
+
+        do {
+            $rows = \Illuminate\Support\Facades\DB::table('baakh_hesudhars')
+                ->orderBy('id')
+                ->offset($offset)
+                ->limit($chunkSize)
+                ->get(['id', 'word', 'correct']);
+
+            foreach ($rows as $row) {
+                $newWord = $this->cleanseString($row->word);
+                $newCorrect = $this->cleanseString($row->correct);
+
+                if ($row->word !== $newWord || $row->correct !== $newCorrect) {
+                    \Illuminate\Support\Facades\DB::table('baakh_hesudhars')
+                        ->where('id', $row->id)
+                        ->update(['word' => $newWord, 'correct' => $newCorrect]);
+                    $fixedCount++;
+                }
+            }
+
+            $offset += $chunkSize;
+        } while (count($rows) === $chunkSize);
+
+        return response()->json([
+            'message' => "Phonetic cleanse complete. Fixed {$fixedCount} records.",
+            'fixed_count' => $fixedCount,
+        ]);
+    }
+
+    /**
+     * Apply standardised Sindhi orthographic cleansing rules to a string.
+     *
+     * Rules (per Mansour 2023 & SIL 2021):
+     *  1. Kaf Standardisation      – Arabic ك  → Sindhi ڪ
+     *  2. Yeh Standardisation      – Farsi  ی  → Arabic ي
+     *  3. Atomic Recomposition     – Alef + Madda → آ
+     *  4. Double-terminal-heh fix  – any two heh variants at word end → ہ (U+06C1)
+     *  5. Word-final aspirated-heh – ھ (U+06BE) at word end → ہ (U+06C1)
+     */
+    private function cleanseString(?string $text): ?string
+    {
+        if (empty($text)) {
+            return $text;
+        }
+
+        // 1. Kaf Standardisation (Arabic ك → Sindhi ڪ)
+        $text = str_replace('ك', 'ڪ', $text);
+
+        // 2. Yeh Standardisation (Farsi ی → Arabic ي)
+        $text = str_replace('ی', 'ي', $text);
+
+        // 3. Atomic Recomposition (Alef + Madda → آ)
+        $text = str_replace('ا' . 'ٓ', 'آ', $text);
+
+        // 4. Collapse Legacy Trigraphs (any double terminal heh → single ہ U+06C1)
+        //    Word-final weak/silent heh = ہ (U+06C1), NOT ھ (U+06BE).
+        $text = preg_replace('/[هہةەھ]{2}$/u', 'ہ', $text);
+
+        // 5. Word-final aspirated-heh fix: ھ (U+06BE) at word end is a legacy
+        //    "glyph hack". Replace with correct ہ (U+06C1 – Heh Goal).
+        $text = preg_replace('/ھ$/u', 'ہ', $text);
+
+        return $text;
+    }
+
     public function standardize(Request $request)
     {
         $request->validate([

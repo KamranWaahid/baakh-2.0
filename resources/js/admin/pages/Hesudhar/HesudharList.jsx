@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { Plus, Trash2, RefreshCw, Loader2, FileSearch } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Loader2, FileSearch, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -56,6 +56,27 @@ const HesudharList = () => {
         }
     });
 
+    const cleanseMutation = useMutation({
+        mutationFn: () => api.post('/api/admin/hesudhar/cleanse'),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['hesudhar']);
+            alert(data.data.message || 'Phonetic cleanse complete!');
+        },
+        onError: (err) => {
+            alert('Cleanse failed: ' + (err.response?.data?.message || err.message));
+        }
+    });
+
+    const handleCleanse = () => {
+        if (window.confirm(
+            'Run Phonetic Cleanse on the entire WordNet database?\n\n' +
+            'This will fix incorrect heh characters (ھ → ہ), Kaf, Yeh, and Alef+Madda encoding on all records.\n\n' +
+            'This cannot be undone. Continue?'
+        )) {
+            cleanseMutation.mutate();
+        }
+    };
+
     const handleDelete = (id) => {
         if (window.confirm('Are you sure you want to delete this entry?')) {
             deleteMutation.mutate(id);
@@ -88,6 +109,18 @@ const HesudharList = () => {
                     <Button variant="outline" className="w-full sm:w-auto" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
                         {refreshMutation.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                         Refresh Dictionary
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        className="w-full sm:w-auto"
+                        onClick={handleCleanse}
+                        disabled={cleanseMutation.isPending}
+                        title="Run phonetic cleansing on all WordNet records (fixes ھ→ہ, Kaf, Yeh, Alef+Madda)"
+                    >
+                        {cleanseMutation.isPending
+                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            : <Wand2 className="mr-2 h-4 w-4" />}
+                        Cleanse WordNet
                     </Button>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>

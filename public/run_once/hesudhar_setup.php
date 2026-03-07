@@ -66,8 +66,17 @@ function cleanseString($text)
     // 3. Atomic Recomposition (Alef + Madda -> آ)
     $text = str_replace('ا' . 'ٓ', 'آ', $text);
 
-    // 4. Collapse Legacy Trigraphs (any double terminal heh -> single ھ)
-    $text = preg_replace('/[هہةەھ]{2}$/u', 'ھ', $text);
+    // 4. Collapse Legacy Trigraphs (any double terminal heh -> single ہ U+06C1)
+    //    Per Mansour (2023) & SIL (2021): word-final weak/silent heh = ہ (U+06C1),
+    //    NOT ھ (U+06BE) which is strictly for aspiration markers before vowels.
+    $text = preg_replace('/[هہةەھ]{2}$/u', 'ہ', $text);
+
+    // 5. Word-final aspirated-heh fix: ھ (U+06BE) at word end is a legacy
+    //    "glyph hack". Replace with correct ہ (U+06C1 - Heh Goal).
+    //    ھ is only valid mid-word before a vowel (e.g. ڀھ, ڊھ aspiration pairs).
+    //    A word-final ھ that is NOT preceded by a consonant + vowel aspiration
+    //    sequence should be ہ. We target the simple case: ھ at string end.
+    $text = preg_replace('/ھ$/u', 'ہ', $text);
 
     return $text;
 }

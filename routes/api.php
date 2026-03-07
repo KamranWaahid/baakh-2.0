@@ -224,6 +224,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);
         Route::apiResource('categories', \App\Http\Controllers\Api\Admin\CategoryController::class);
         Route::post('hesudhar/refresh', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'refresh']);
+        Route::post('hesudhar/cleanse', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'cleanse']);
         Route::post('hesudhar/standardize', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'standardize']);
         Route::post('hesudhar/check-words', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'checkWords']);
         Route::apiResource('hesudhar', \App\Http\Controllers\Api\Admin\HesudharController::class);
