@@ -72,7 +72,7 @@ const PoetsFeed = ({ lang }) => {
                 <Avatar className="h-16 w-16 md:h-20 md:w-20 border border-gray-100">
                     <AvatarImage
                         src={getImageUrl(poet.avatar, 'poet')}
-                        alt={isRtl ? poet.name_sd : poet.name_en}
+                        alt=""
                         className="object-cover"
                         loading="lazy"
                         decoding="async"

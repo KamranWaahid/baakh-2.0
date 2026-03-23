@@ -14,11 +14,6 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             return userData;
         } catch (error) {
-            // Silently handle 401 (Unauthorized) as it simply means the user is a guest
-            if (error.response?.status !== 401) {
-                // Optional: log other unexpected auth errors
-                // console.error('Auth check failed:', error);
-            }
             setUser(null);
             return null;
         } finally {

@@ -34,6 +34,23 @@
 
     RewriteEngine On
 
+    # --- MODSECURITY WORKAROUND FOR GOOGLE OAUTH ---
+    # Google recently started sending an "iss=https://..." parameter in OAuth responses.
+    # ModSecurity blocks this because it looks like an exploit (URL in query string).
+    # Since the host disables SecRuleEngine, we use a 301 redirect to strip the "iss" parameter!
+    RewriteCond %{QUERY_STRING} ^iss=[^&]+&(.*)$
+    RewriteRule ^auth/google-callback$ /auth/google-callback?%1 [R=301,L]
+
+    RewriteCond %{QUERY_STRING} ^(.*)&iss=[^&]+&(.*)$
+    RewriteRule ^auth/google-callback$ /auth/google-callback?%1&%2 [R=301,L]
+
+    RewriteCond %{QUERY_STRING} ^(.*)&iss=[^&]+$
+    RewriteRule ^auth/google-callback$ /auth/google-callback?%1 [R=301,L]
+
+    RewriteCond %{QUERY_STRING} ^iss=[^&]+$
+    RewriteRule ^auth/google-callback$ /auth/google-callback? [R=301,L]
+    # -----------------------------------------------
+
     # Remove specific proxy for now to test native delivery with improved headers
     # RewriteCond %{REQUEST_URI} ^/build/assets/.*\.js$ [OR]
     # RewriteCond %{REQUEST_URI} ^/build/assets/.*\.css$

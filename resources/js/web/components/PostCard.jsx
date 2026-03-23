@@ -45,7 +45,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                             <div className={`h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
                                 <img
                                     src={getImageUrl(author_avatar, 'user')}
-                                    alt={safeAuthor}
+                                    alt=""
                                     className="w-full h-full object-cover"
                                     loading="lazy"
                                     decoding="async"

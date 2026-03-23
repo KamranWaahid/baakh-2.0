@@ -102,6 +102,7 @@ import UsageTrends from './pages/Analytics/UsageTrends';
 import UnderDevelopment from './components/UnderDevelopment';
 import Mokhii from './pages/Mokhii';
 import Settings from './pages/Settings';
+import EmailTemplates from './pages/Emails/EmailTemplates';
 
 
 const App = () => {
@@ -423,6 +424,15 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <FeedbackManagement />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    {/* Communications */}
+                    <Route path="/admin/emails/templates" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <EmailTemplates />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

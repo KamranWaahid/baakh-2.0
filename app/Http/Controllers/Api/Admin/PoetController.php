@@ -286,10 +286,10 @@ class PoetController extends Controller
 
             $poet->all_details()->forceDelete();
             $poet->forceDelete();
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poet permanently deleted']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete poet: ' . $e->getMessage()], 500);
         }
     }

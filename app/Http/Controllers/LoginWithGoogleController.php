@@ -32,13 +32,13 @@ class LoginWithGoogleController extends Controller
         $driver = Socialite::driver('google');
         $googleUser = $driver->stateless()->user();
 
-        \Log::info("Google Login Attempt: " . $googleUser->getEmail() . " (ID: " . $googleUser->getId() . ")");
+        Log::info("Google Login Attempt: " . $googleUser->getEmail() . " (ID: " . $googleUser->getId() . ")");
 
         // Check if a user with this Google ID already exists (including soft deleted)
         $user = User::withTrashed()->where('google_id', $googleUser->getId())->first();
 
         if ($user) {
-            \Log::info("Matched by Google ID: User ID {$user->id}, Email: {$user->email}, Role: {$user->role}");
+            Log::info("Matched by Google ID: User ID {$user->id}, Email: {$user->email}, Role: {$user->role}");
             // If user exists but is deleted, restore them
             if ($user->trashed()) {
                 $user->restore();
@@ -51,10 +51,10 @@ class LoginWithGoogleController extends Controller
                 ->first();
 
             if ($user) {
-                \Log::info("Matched by Email Hash: User ID {$user->id}, Role: {$user->role}");
+                Log::info("Matched by Email Hash: User ID {$user->id}, Role: {$user->role}");
                 $isNewUser = false;
             } else {
-                \Log::info("No match found. Creating new viewer account.");
+                Log::info("No match found. Creating new viewer account.");
                 // If the user doesn't exist at all, create a new user
                 $user = new User();
 
@@ -102,7 +102,7 @@ class LoginWithGoogleController extends Controller
             $redirectUrl .= "&new_user=1";
         }
 
-        \Log::info("Redirecting to: " . $redirectUrl);
+        Log::info("Redirecting to: " . $redirectUrl);
 
         return redirect($redirectUrl);
     }
