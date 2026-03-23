@@ -28,7 +28,8 @@ import {
     Bot,
     MessageSquare,
     Zap,
-    Globe
+    Globe,
+    Mail
 } from 'lucide-react';
 
 export const SidebarContext = React.createContext({ onLinkClick: () => { } });
@@ -156,6 +157,12 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarGroup icon={Shield} label="Moderation">
                         <SidebarLink to="/admin/moderation/reports" icon={Flag}>Reports</SidebarLink>
                         <SidebarLink to="/admin/moderation/feedback" icon={MessageSquare}>User Feedback</SidebarLink>
+                    </SidebarGroup>
+
+                    <div className="my-2 border-t" />
+                    <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Communications</div>
+                    <SidebarGroup icon={Mail} label="Emails">
+                        <SidebarLink to="/admin/emails/templates" icon={Mail}>Email Templates</SidebarLink>
                     </SidebarGroup>
 
                     <div className="my-2 border-t" />

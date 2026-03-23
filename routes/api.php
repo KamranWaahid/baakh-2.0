@@ -168,6 +168,10 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     // Existing Dashboard route
     Route::get('/dashboard', [App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
 
+    // Email Templates Preview API
+    Route::get('emails/templates', [\App\Http\Controllers\Api\Admin\EmailTemplateController::class, 'index']);
+    Route::get('emails/preview/{template}', [\App\Http\Controllers\Api\Admin\EmailTemplateController::class, 'preview']);
+
     // Server Management
     Route::get('server/commands', [\App\Http\Controllers\Api\Admin\ServerController::class, 'index']);
     Route::post('server/commands/run', [\App\Http\Controllers\Api\Admin\ServerController::class, 'run']);
