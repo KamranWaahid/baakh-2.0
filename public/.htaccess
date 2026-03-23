@@ -1,10 +1,12 @@
-<IfModule mod_security2.c>
-    # Disable ModSecurity 2.x for specific endpoints that transfer large payloads or OAuth tokens
-    # Using SecRule directly instead of Apache <If> because SecRuleEngine is forbidden inside <If>.
-    SecRule REQUEST_URI "@beginsWith /auth/google-callback" "id:10001,phase:1,pass,nolog,ctl:ruleEngine=Off"
-    SecRule REQUEST_URI "@beginsWith /auth/google/callback" "id:10002,phase:1,pass,nolog,ctl:ruleEngine=Off"
-    SecRule REQUEST_URI "@beginsWith /api/admin/poetry" "id:10003,phase:1,pass,nolog,ctl:ruleEngine=Off"
-    SecRule REQUEST_URI "@beginsWith /api/admin/romanizer" "id:10004,phase:1,pass,nolog,ctl:ruleEngine=Off"
+<IfModule mod_security.c>
+    # Disable ModSecurity for Google OAuth callback to prevent 406 Not Acceptable errors
+    # caused by long tokens or patterns in the redirect URL.
+    <FilesMatch "index\.php">
+        <If "%{QUERY_STRING} =~ /auth\/google-callback/">
+            SecFilterEngine Off
+            SecFilterScanPOST Off
+        </If>
+    </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>
