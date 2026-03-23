@@ -88,6 +88,14 @@ Route::get('/test-mail', function () {
     }
 });
 
+Route::get('/debug-logs', function () {
+    if (file_exists(storage_path('logs/laravel.log'))) {
+        return response(file_get_contents(storage_path('logs/laravel.log')), 200)
+            ->header('Content-Type', 'text/plain');
+    }
+    return 'Log file not found.';
+});
+
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt).*$')->name('web.spa');
 
 Route::get('/login', function () {
