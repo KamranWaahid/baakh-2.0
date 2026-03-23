@@ -101,12 +101,6 @@ class Phase2HehDisambiguator
 
     private function hasVowelBetween(array $chars, int $i): bool
     {
-        for ($j = $i - 1; $j >= 0; $j--) {
-            if (in_array($chars[$j], SindhiUnicode::VOWEL_DIACRITICS)) {
-                return true;
-            }
-            break;
-        }
-        return false;
+        return $i > 0 && in_array($chars[$i - 1], SindhiUnicode::VOWEL_DIACRITICS);
     }
 }
