@@ -65,15 +65,6 @@
             Header set Cache-Control "public, max-age=31536000, immutable"
             Header set Access-Control-Allow-Origin "*"
         </FilesMatch>
-
-        # Security Headers
-        Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        Header always set Cross-Origin-Opener-Policy "same-origin"
-        Header always set X-Content-Type-Options "nosniff"
-        Header always set X-Frame-Options "SAMEORIGIN"
-        Header always set Referrer-Policy "strict-origin-when-cross-origin"
-        # A basic CSP that upgrades insecure requests and prevents easy XSS, while allowing React scripts
-        Header always set Content-Security-Policy "upgrade-insecure-requests; frame-ancestors 'self';"
     </IfModule>
 
     # Handle Authorization Header

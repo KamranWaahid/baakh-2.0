@@ -9,20 +9,7 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = async () => {
         try {
-            // Check if we have a token or an active session cookie first.
-            // But we don't always know, so we make the request.
-            const response = await api.get('/api/auth/me', {
-                validateStatus: function (status) {
-                    return status >= 200 && status < 300 || status === 401; 
-                }
-            });
-            
-            if (response.status === 401) {
-                setUser(null);
-                setLoading(false);
-                return null;
-            }
-
+            const response = await api.get('/api/auth/me');
             const userData = response.data.user;
             setUser(userData);
             return userData;
