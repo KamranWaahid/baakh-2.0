@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrap();
-        Schema::defaultStringLength(191);
+        \Illuminate\Database\Schema\Builder::defaultStringLength(191);
 
         // Register Observers for Static Caching and Notifications
         \App\Models\Poetry::observe([\App\Observers\PoetryObserver::class, \App\Observers\ContentNotificationObserver::class]);
