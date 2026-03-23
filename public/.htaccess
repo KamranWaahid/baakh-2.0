@@ -1,18 +1,10 @@
 <IfModule mod_security.c>
-    # Disable ModSecurity 1.x for specific endpoints (Google Auth, Poetry Editor, Romanizer)
+    # Disable ModSecurity for Google OAuth callback to prevent 406 Not Acceptable errors
+    # caused by long tokens or patterns in the redirect URL.
     <FilesMatch "index\.php">
-        <If "%{REQUEST_URI} =~ /auth\/google-callback/ || %{REQUEST_URI} =~ /auth\/google\/callback/ || %{REQUEST_URI} =~ /^\/api\/admin\/poetry/ || %{REQUEST_URI} =~ /^\/api\/admin\/romanizer/">
+        <If "%{QUERY_STRING} =~ /auth\/google-callback/">
             SecFilterEngine Off
             SecFilterScanPOST Off
-        </If>
-    </FilesMatch>
-</IfModule>
-
-<IfModule mod_security2.c>
-    # Disable ModSecurity 2.x for endpoints containing large rich text or OAuth tokens
-    <FilesMatch "index\.php">
-        <If "%{REQUEST_URI} =~ /auth\/google-callback/ || %{REQUEST_URI} =~ /auth\/google\/callback/ || %{REQUEST_URI} =~ /^\/api\/admin\/poetry/ || %{REQUEST_URI} =~ /^\/api\/admin\/romanizer/">
-            SecRuleEngine Off
         </If>
     </FilesMatch>
 </IfModule>
