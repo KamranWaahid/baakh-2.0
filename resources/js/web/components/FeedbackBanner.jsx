@@ -32,6 +32,7 @@ const FeedbackBanner = ({ lang }) => {
                 size="icon"
                 className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-black shrink-0"
                 onClick={() => setIsVisible(false)}
+                aria-label={isRtl ? 'بند ڪريو' : 'Dismiss feedback banner'}
             >
                 <X className="h-4 w-4" />
             </Button>

@@ -9,16 +9,24 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = async () => {
         try {
-            const response = await api.get('/api/auth/me');
+            // Check if we have a token or an active session cookie first.
+            // But we don't always know, so we make the request.
+            const response = await api.get('/api/auth/me', {
+                validateStatus: function (status) {
+                    return status >= 200 && status < 300 || status === 401; 
+                }
+            });
+            
+            if (response.status === 401) {
+                setUser(null);
+                setLoading(false);
+                return null;
+            }
+
             const userData = response.data.user;
             setUser(userData);
             return userData;
         } catch (error) {
-            // Silently handle 401 (Unauthorized) as it simply means the user is a guest
-            if (error.response?.status !== 401) {
-                // Optional: log other unexpected auth errors
-                // console.error('Auth check failed:', error);
-            }
             setUser(null);
             return null;
         } finally {
