@@ -188,14 +188,14 @@ const Navbar = ({ lang }) => {
                     </Link>
 
                     <div className="relative w-64 hidden md:block ml-4" role="search">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                        <Search className={`absolute z-10 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ${isRtl ? 'right-3' : 'left-3'}`} />
                         <div
                             onClick={() => setSearchOpen(true)}
-                            className={`flex h-10 w-full items-center rounded-full border border-gray-100 bg-gray-50/50 pl-9 pr-4 text-sm text-muted-foreground hover:bg-gray-100 hover:border-gray-200 cursor-pointer transition-all ${isRtl ? 'text-right pr-9 pl-4' : ''}`}
+                            className={`flex h-10 w-full items-center rounded-full border border-gray-100 bg-gray-50/50 text-sm text-muted-foreground hover:bg-gray-100 hover:border-gray-200 cursor-pointer transition-all ${isRtl ? 'text-right pr-9 pl-12' : 'text-left pl-9 pr-12'}`}
                             dir={isRtl ? 'rtl' : 'ltr'}
                         >
-                            <span>{isRtl ? 'ڳوليو...' : 'Search'}</span>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 text-[10px] uppercase font-medium text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm">
+                            <span className="truncate">{isRtl ? 'ڳوليو...' : 'Search'}</span>
+                            <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 text-[10px] uppercase font-medium text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm ${isRtl ? 'left-3' : 'right-3'}`}>
                                 <span className="text-xs">⌘</span> K
                             </div>
                         </div>
