@@ -13,22 +13,14 @@ trait HasMedia
 
     /**
      * Handle Uploading Images
-     * $file == $request->file('name')
-     * $folderPaht = $request->input('folder_id') {get folder name with ID and store image inside that folder, if it is 0 then upload image on default folder}
-     * max size will be 10 MB
-     * min height and width = 10x10
-     * crop sizes = [150x150, 300x300, 1024x1024]
-     * cropped images should be center crop 
-     * -- image name structure --
-     * defaultPath = storage/images
-     * folderPath = storage/images/$folderName
-     * name = date{dmY}_random
-     * name_resized = date{dmY}_random_100x50 i.e cropped size
      * 
-     * @return array ['size', 'full_path', 'file_name , 'mime_type' , 'resized_images ]
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param string $folderPath
+     * @param string|null $customName
+     * @param bool $thumbnail
+     * @return array{error: bool, message?: string, size?: int, file_name?: string, full_path?: string, mime_type?: string, resized_images?: array}
      */
-
-    public function uploadImage($file, $folderPath, $customName = null, $thumbnail = false)
+    public function uploadImage($file, string $folderPath, ?string $customName = null, bool $thumbnail = false): array
     {
         // Validate file size and dimensions
         $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
@@ -126,12 +118,14 @@ trait HasMedia
      * Update Image function is used to delete old image and upload new image
      * This function deletes all images (including thumbnails)
      *
-     * @param [string] $file
-     * @param [string] $folderPath
-     * @param [string] $oldImageUri
-     * @return array ['size', 'full_path', 'file_name , 'mime_type' , 'resized_images ]
+     * @param \Illuminate\Http\UploadedFile $file
+     * @param string $folderPath
+     * @param string $oldImageUri
+     * @param string|null $customName
+     * @param bool $thumbnail
+     * @return array
      */
-    public function updateImage($file, $folderPath, $oldImageUri, $customName = null, $thumbnail = false)
+    public function updateImage($file, string $folderPath, string $oldImageUri, ?string $customName = null, bool $thumbnail = false): array
     {
 
         if (file_exists($oldImageUri)) {

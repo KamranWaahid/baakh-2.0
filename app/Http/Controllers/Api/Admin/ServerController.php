@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ServerController extends Controller
@@ -360,14 +362,14 @@ class ServerController extends Controller
      */
     public function getQueues()
     {
-        $failedJobs = \DB::table('failed_jobs')->orderBy('failed_at', 'desc')->limit(50)->get();
+        $failedJobs = DB::table('failed_jobs')->orderBy('failed_at', 'desc')->limit(50)->get();
         $queueSize = 0;
         $connection = config('queue.default');
 
         // Simple count for database queue
         if ($connection === 'database') {
             try {
-                $queueSize = \DB::table('jobs')->count();
+                $queueSize = DB::table('jobs')->count();
             } catch (\Exception $e) {
                 $queueSize = 0;
             }
@@ -456,7 +458,7 @@ class ServerController extends Controller
         ];
 
         try {
-            \DB::connection()->getPdo();
+            DB::connection()->getPdo();
             $checks['database_connection'] = true;
         } catch (\Exception $e) {
         }

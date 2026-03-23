@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Provinces;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProvinceController extends Controller
 {
@@ -50,7 +51,7 @@ class ProvinceController extends Controller
             'details.en.province_name' => 'nullable|string|max:255',
         ]);
 
-        $province = \DB::transaction(function () use ($request, $validatedData) {
+        $province = DB::transaction(function () use ($request, $validatedData) {
             $province = Provinces::create([
                 'user_id' => $request->user()->id,
                 'country_id' => $validatedData['country_id'],
@@ -94,7 +95,7 @@ class ProvinceController extends Controller
             'details.en.province_name' => 'nullable|string|max:255',
         ]);
 
-        \DB::transaction(function () use ($province, $validatedData) {
+        DB::transaction(function () use ($province, $validatedData) {
             $province->update([
                 'country_id' => $validatedData['country_id'],
             ]);

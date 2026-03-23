@@ -10,6 +10,7 @@ use App\Mail\WelcomeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 
@@ -68,7 +69,7 @@ class RegisterController extends Controller
             Mail::to($user->email)->send(new WelcomeMail($user, $lang));
         } catch (\Exception $e) {
             // Log error but don't fail registration
-            \Log::error("Failed to send welcome email to {$user->email}: " . $e->getMessage());
+            Log::error("Failed to send welcome email to {$user->email}: " . $e->getMessage());
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

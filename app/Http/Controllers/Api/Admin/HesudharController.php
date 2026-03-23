@@ -91,79 +91,45 @@ class HesudharController extends Controller
             'text' => 'required|string'
         ]);
 
-        // Split by whitespace (space, tab, newline, etc.)
-        $get_text = preg_split('/\s+/u', $request->text, -1, PREG_SPLIT_NO_EMPTY);
-        $text = array_unique($get_text);
+        $fullText = $request->input('text', '');
 
-        $mistakes = array();
-        // Punctuation to strip from beginning and end (Added U+06D4 Arabic Full Stop)
-        $punctuation = ['۔', '،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
+        // Phase 0/3: WordNet Integration & Feedback Loop
+        $pipeline = new \App\Services\Hesudhar\HesudharPipeline(function ($word) {
+            // First, check exact match in the dictionary
+            $entry = BaakhHesudhar::where('word', $word)->first();
 
-        // Diacritics to strip globally from words
-        $diacritics = [
-            "\u{064B}", // Fathatayn
-            "\u{064C}", // Dammatayn
-            "\u{064D}", // Kasratayn
-            "\u{064E}", // Fatha
-            "\u{064F}", // Damma
-            "\u{0650}", // Kasra
-            "\u{0651}", // Shadda
-            "\u{0652}", // Sukun
-            "\u{0653}", // Maddah
-            "\u{0670}", // Superscript Alef
-        ];
-
-        foreach ($text as $word) {
-            $cleanWord = $word;
-
-            // Strip diacritics for dictionary/normalization lookup
-            $matchWord = str_replace($diacritics, '', $cleanWord);
-
-            // Strip punctuation from start/end
-            while (mb_strlen($matchWord) > 0 && in_array(mb_substr($matchWord, 0, 1), $punctuation)) {
-                $matchWord = mb_substr($matchWord, 1);
-            }
-            while (mb_strlen($matchWord) > 0 && in_array(mb_substr($matchWord, -1), $punctuation)) {
-                $matchWord = mb_substr($matchWord, 0, -1);
+            // Fallback for visual encoding variants
+            if (!$entry && preg_match('/[هہةھە]/u', $word)) {
+                $variants = [
+                    str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ه', $word),
+                    str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ہ', $word),
+                    str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ھ', $word),
+                ];
+                $entry = BaakhHesudhar::whereIn('word', $variants)->first();
             }
 
-            if (!empty($matchWord)) {
-                $matchWord = trim($matchWord);
+            return $entry ? $entry->correct : null;
+        });
 
-                // Phase 2: Establish Functional Phonetic Truth FIRST
-                $phoneticCorrect = SindhiNormalizer::normalize($matchWord);
+        $result = $pipeline->process($fullText);
 
-                // Phase 3: WordNet Validation & Feedback Loop
-                $dictionaryEntry = BaakhHesudhar::where('word', $matchWord)->first();
-                if (!$dictionaryEntry && preg_match('/[هہةھە]/u', $matchWord)) {
-                    $variants = [
-                        str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ه', $matchWord),
-                        str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ہ', $matchWord),
-                        str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ھ', $matchWord),
-                    ];
-                    $dictionaryEntry = BaakhHesudhar::whereIn('word', $variants)->first();
-                }
+        $mistakes = [];
+        foreach ($result->changesLog as $change) {
+            $mistakes[] = [
+                'word' => $change['original'],
+                'correct' => $change['corrected'],
+                'type' => ($change['source'] === 'WORDNET') ? 'dictionary' : 'normalization'
+            ];
 
-                $finalCorrection = $phoneticCorrect;
-
-                if ($dictionaryEntry) {
-                    // Auto-Flagging Feedback Loop (Phase 3)
-                    // If the dictionary's explicit correction fundamentally disagrees with the established final
-                    // functional normalization, flag it for manual editorial review to resolve legacy visual hacks.
-                    if ($dictionaryEntry->correct !== $finalCorrection) {
-                        \Illuminate\Support\Facades\DB::table('baakh_hesudhars')
-                            ->where('id', $dictionaryEntry->id)
-                            ->update(['is_flagged' => true]);
-                    }
-                }
-
-                // If the final established correction is different from the raw input, flag it as a mistake for the UI
-                if ($matchWord !== $finalCorrection) {
-                    $mistakes[] = [
-                        'word' => $matchWord,
-                        'correct' => $finalCorrection,
-                        'type' => $dictionaryEntry ? 'dictionary' : 'normalization'
-                    ];
+            // Auto-Flagging Feedback Loop:
+            // If the algorithm corrects a word, check if we already have a record for it
+            // that contradicts the algorithm's phonetic conclusion.
+            if ($change['source'] === 'ALGORITHM') {
+                $dictionaryEntry = BaakhHesudhar::where('word', $change['original'])->first();
+                if ($dictionaryEntry && $dictionaryEntry->correct !== $change['corrected']) {
+                    \Illuminate\Support\Facades\DB::table('baakh_hesudhars')
+                        ->where('id', $dictionaryEntry->id)
+                        ->update(['is_flagged' => true]);
                 }
             }
         }
