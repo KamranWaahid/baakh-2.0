@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CorpusSentence;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CorpusController extends Controller
 {
@@ -30,7 +31,7 @@ class CorpusController extends Controller
         return response()->json([
             'total_sentences' => CorpusSentence::count(),
             'total_tokens' => CorpusSentence::sum('token_count'),
-            'sources' => CorpusSentence::select('source', \DB::raw('count(*) as count'))
+            'sources' => CorpusSentence::select('source', DB::raw('count(*) as count'))
                 ->groupBy('source')
                 ->get(),
         ]);

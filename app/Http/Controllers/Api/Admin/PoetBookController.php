@@ -7,6 +7,7 @@ use App\Models\PoetBook;
 use App\Services\StaticCacheService;
 use App\Traits\HasMedia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PoetBookController extends Controller

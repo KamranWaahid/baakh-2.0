@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poets;
+use App\Traits\HasMedia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PoetController extends Controller
 {
+    use HasMedia;
+
     public function __construct()
     {
         $this->middleware('can:view_poets')->only(['index', 'show']);
@@ -68,8 +73,6 @@ class PoetController extends Controller
         return response()->json($poets);
     }
 
-    use \App\Traits\HasMedia;
-
     public function show($id)
     {
         $poet = Poets::with('all_details')->findOrFail($id);
@@ -122,7 +125,7 @@ class PoetController extends Controller
             'details.*.death_place' => 'nullable|exists:location_cities,id',
         ]);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $imagePath = null;
             if ($request->hasFile('image')) {
@@ -160,10 +163,10 @@ class PoetController extends Controller
                 ]);
             }
 
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poet created successfully', 'data' => $poet], 201);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to create poet: ' . $e->getMessage()], 500);
         }
     }
@@ -187,7 +190,7 @@ class PoetController extends Controller
             'details.*.death_place' => 'nullable|exists:location_cities,id',
         ]);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $imagePath = $poet->poet_pic;
             if ($request->hasFile('image')) {
@@ -227,10 +230,10 @@ class PoetController extends Controller
                 ]);
             }
 
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poet updated successfully']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update poet: ' . $e->getMessage()], 500);
         }
     }
@@ -239,7 +242,7 @@ class PoetController extends Controller
     {
         $poet = Poets::findOrFail($id);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Note: We don't delete image files here anymore to support Trash/Restore
             // Image deletion is moved to permanentDelete()
@@ -248,10 +251,10 @@ class PoetController extends Controller
             $poet->all_details()->delete(); // Use soft delete
             $poet->delete();
 
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poet moved to trash']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete poet: ' . $e->getMessage()], 500);
         }
     }
@@ -259,14 +262,14 @@ class PoetController extends Controller
     public function restore($id)
     {
         $poet = Poets::onlyTrashed()->findOrFail($id);
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $poet->restore();
             $poet->all_details()->restore();
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poet restored']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to restore poet: ' . $e->getMessage()], 500);
         }
     }
@@ -274,7 +277,7 @@ class PoetController extends Controller
     public function permanentDelete($id)
     {
         $poet = Poets::onlyTrashed()->findOrFail($id);
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Delete image if exists
             if ($poet->poet_pic) {

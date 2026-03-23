@@ -7,6 +7,7 @@ use App\Mail\WelcomeMail;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -73,7 +74,7 @@ class LoginWithGoogleController extends Controller
                 try {
                     $user->assignRole('viewer');
                 } catch (\Exception $e) {
-                    \Log::error("Failed to assign 'viewer' role to new user: " . $e->getMessage());
+                    Log::error("Failed to assign 'viewer' role to new user: " . $e->getMessage());
                 }
 
                 // Generate Random Code Username (e.g., User-X92Z)

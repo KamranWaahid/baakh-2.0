@@ -13,6 +13,7 @@ use App\Models\Romanizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -174,7 +175,7 @@ class DatabaseController extends Controller
                 'output' => $output
             ]);
         } catch (\Exception $e) {
-            \Log::error('Backup failed: ' . $e->getMessage());
+            Log::error('Backup failed: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Backup failed. Ensure mysqldump is in your system path.',
                 'error' => $e->getMessage()
@@ -243,7 +244,7 @@ class DatabaseController extends Controller
                 'output' => $output
             ]);
         } catch (\Exception $e) {
-            \Log::error('Migration failed: ' . $e->getMessage(), [
+            Log::error('Migration failed: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
@@ -284,7 +285,7 @@ class DatabaseController extends Controller
                 'output' => $output
             ]);
         } catch (\Exception $e) {
-            \Log::error('Permission repair failed: ' . $e->getMessage());
+            Log::error('Permission repair failed: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Permission repair failed',
                 'error' => $e->getMessage()
@@ -315,7 +316,7 @@ class DatabaseController extends Controller
                 'output' => $output
             ]);
         } catch (\Exception $e) {
-            \Log::error('Cache clear failed: ' . $e->getMessage());
+            Log::error('Cache clear failed: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Cache clear failed',
                 'error' => $e->getMessage()
@@ -373,7 +374,7 @@ class DatabaseController extends Controller
                 'fixed' => $fixedCount,
             ]);
         } catch (\Exception $e) {
-            \Log::error('WordNet cleanse failed: ' . $e->getMessage());
+            Log::error('WordNet cleanse failed: ' . $e->getMessage());
             return response()->json([
                 'message' => 'WordNet cleanse failed',
                 'error' => $e->getMessage()
@@ -599,7 +600,7 @@ class DatabaseController extends Controller
             return response()->json(['message' => "Successfully imported {$importedCount} records."]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Dictionary Import Failed: " . $e->getMessage());
+            Log::error("Dictionary Import Failed: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Couplets;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CoupletController extends Controller
 {
@@ -22,7 +23,7 @@ class CoupletController extends Controller
                 'has_roman' => function ($q) {
                     $q->selectRaw('count(*)')
                         ->from('poetry_couplets as pc')
-                        ->whereColumn('pc.couplet_slug', \DB::raw("CONCAT(poetry_couplets.couplet_slug, '-roman')"))
+                        ->whereColumn('pc.couplet_slug', DB::raw("CONCAT(poetry_couplets.couplet_slug, '-roman')"))
                         ->where('pc.lang', 'en')
                         ->limit(1);
                 }

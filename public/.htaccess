@@ -1,3 +1,14 @@
+<IfModule mod_security.c>
+    # Disable ModSecurity for Google OAuth callback to prevent 406 Not Acceptable errors
+    # caused by long tokens or patterns in the redirect URL.
+    <FilesMatch "index\.php">
+        <If "%{QUERY_STRING} =~ /auth\/google-callback/">
+            SecFilterEngine Off
+            SecFilterScanPOST Off
+        </If>
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

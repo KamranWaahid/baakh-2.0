@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Poetry;
 use App\Services\StaticCacheService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class PoetryController extends Controller
 {
@@ -82,16 +84,16 @@ class PoetryController extends Controller
     public function destroy($id)
     {
         $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Also soft delete linked couplets
             $poetry->all_couplets()->delete();
             $poetry->delete();
 
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poetry moved to trash']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to delete poetry: ' . $e->getMessage()], 500);
         }
     }
@@ -221,13 +223,13 @@ class PoetryController extends Controller
             'page_end' => 'nullable|integer|min:1',
         ]);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $poetry = Poetry::create([
                 'poet_id' => $validated['poet_id'],
                 'category_id' => $validated['category_id'],
                 'topic_category_id' => $validated['topic_category_id'],
-                'user_id' => \Auth::id(),
+                'user_id' => Auth::id(),
                 'poetry_slug' => $validated['poetry_slug'],
                 'poetry_tags' => json_encode($validated['poetry_tags'] ?? []),
                 'visibility' => $validated['visibility'],
@@ -278,10 +280,10 @@ class PoetryController extends Controller
                 ]);
             }
 
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poetry created successfully', 'id' => $poetry->id], 201);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to create poetry: ' . $e->getMessage()], 500);
         }
     }
@@ -312,7 +314,7 @@ class PoetryController extends Controller
             'page_end' => 'nullable|integer|min:1',
         ]);
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $poetry->update([
                 'poet_id' => $validated['poet_id'],
@@ -374,10 +376,10 @@ class PoetryController extends Controller
                 );
             }
 
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poetry updated successfully']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to update poetry: ' . $e->getMessage()], 500);
         }
     }
@@ -464,15 +466,15 @@ class PoetryController extends Controller
     public function restore($id)
     {
         $poetry = Poetry::onlyTrashed()->where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $poetry->restore();
             // Restore linked couplets if they were soft deleted with the poetry
             $poetry->all_couplets()->onlyTrashed()->restore();
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poetry restored']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to restore poetry: ' . $e->getMessage()], 500);
         }
     }
@@ -480,7 +482,7 @@ class PoetryController extends Controller
     public function permanentDelete($id)
     {
         $poetry = Poetry::onlyTrashed()->where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Delete media
             $poetry->media()->each(function ($m) {
@@ -498,10 +500,10 @@ class PoetryController extends Controller
             $poetry->all_couplets()->withTrashed()->forceDelete();
 
             $poetry->forceDelete();
-            \DB::commit();
+            DB::commit();
             return response()->json(['message' => 'Poetry permanently deleted']);
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete poetry: ' . $e->getMessage()], 500);
         }
     }
