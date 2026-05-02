@@ -13,20 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, xml, bcmath, gd, zip
-
-      - name: Create Dummy SQLite Database
-        run: |
-          mkdir -p storage/app
-          touch storage/app/baakh.sqlite
-
-      - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -45,14 +31,20 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
           server-dir: ./
+          state-name: .ftp-deploy-sync-state.json
           exclude: |
             **/.git*
             **/.git*/**
+            **/.github/**
             **/node_modules/**
+            **/vendor/**
             **/tests/**
-            **/storage/*.key
+            **/storage/**
+            !**/storage/.htaccess
             **/*.txt
             **/*.log
+            **/*.sql
             **/phpunit.xml
             **/.env.example
+            **/.env
             **/README.md
