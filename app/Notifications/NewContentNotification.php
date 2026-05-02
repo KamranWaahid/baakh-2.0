@@ -40,12 +40,12 @@ class NewContentNotification extends Notification
      */
     public function toArray($notifiable)
     {
-        return [
+        return array_merge($this->metadata, [
             'title' => $this->metadata['title'] ?? 'New Update',
             'message' => $this->metadata['message'] ?? '',
             'icon' => $this->metadata['icon'] ?? 'Bell',
             'color' => $this->metadata['color'] ?? 'blue',
             'link' => $this->metadata['link'] ?? null,
-        ];
+        ]);
     }
 }
