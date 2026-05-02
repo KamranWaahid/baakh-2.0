@@ -17,6 +17,7 @@ class NotificationController extends Controller
         $user = $request->user();
 
         $notifications = $user->notifications()
+            ->latest()
             ->take(30)
             ->get()
             ->map(function ($n) {

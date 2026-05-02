@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -60,6 +59,8 @@ const COLOR_MAP = {
 const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [open, setOpen] = useState(false);
 
     // Fetch notifications
     const { data } = useQuery({
@@ -99,10 +100,40 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
         onSuccess: () => queryClient.invalidateQueries(['notifications', variant]),
     });
 
+    const getCurrentLang = () => {
+        const firstSegment = location.pathname.split('/').filter(Boolean)[0];
+        return firstSegment === 'en' || firstSegment === 'sd' ? firstSegment : 'sd';
+    };
+
+    const resolveNotificationLink = (link) => {
+        if (!link) return null;
+        if (/^https?:\/\//i.test(link)) return link;
+
+        if (isAdmin) {
+            return link;
+        }
+
+        const currentLang = getCurrentLang();
+        const withLangPlaceholder = link.replace('{lang}', currentLang);
+
+        if (/^\/(en|sd)(\/|$)/.test(withLangPlaceholder)) {
+            return withLangPlaceholder.replace(/^\/(en|sd)(?=\/|$)/, `/${currentLang}`);
+        }
+
+        return withLangPlaceholder.startsWith('/') ? withLangPlaceholder : `/${withLangPlaceholder}`;
+    };
+
     const handleNotificationClick = (n) => {
         if (!n.read_at) markReadMutation.mutate(n.id);
-        if (n.link) {
-            navigate(n.link);
+        const targetLink = resolveNotificationLink(n.link);
+
+        if (targetLink) {
+            setOpen(false);
+            if (/^https?:\/\//i.test(targetLink)) {
+                window.location.href = targetLink;
+                return;
+            }
+            navigate(targetLink);
         }
     };
 
@@ -122,7 +153,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     };
 
     return (
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
@@ -204,13 +235,13 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <p className={`text-sm truncate ${isUnread ? 'font-semibold text-foreground' : 'text-foreground/70'}`}>
-                                                    {n.title}
+                                                    {n.title || 'New Update'}
                                                 </p>
                                                 {isUnread && (
                                                     <span className="shrink-0 h-2 w-2 rounded-full bg-primary" />
                                                 )}
                                             </div>
-                                            <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message}</p>
+                                            <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message || n.data?.entity_name || 'View details'}</p>
                                             <p className="text-[10px] text-muted-foreground/60 mt-1">{getTimeAgo(n.created_at)}</p>
                                         </div>
                                     </div>
