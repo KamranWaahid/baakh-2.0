@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -7,17 +7,23 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import ShareCard from './ShareCard';
-import { Download, Share2, X } from 'lucide-react';
-import { formatSindhiDate } from '../utils/dateUtils';
+import { Download } from 'lucide-react';
 
 const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
     const isRtl = lang === 'sd';
 
     if (!poem) return null;
 
+    const poemSlug = useMemo(
+        () => poem.slug || poem.poetry_slug || poem.poem_slug || null,
+        [poem]
+    );
+
+    const imageUrl = poemSlug ? `/og-image/poetry/${poemSlug}` : null;
+
     const handleDownload = () => {
-        const downloadUrl = `/og-image/poetry/${poem.slug || poem.poetry_slug}?download=1`;
+        if (!poemSlug) return;
+        const downloadUrl = `/og-image/poetry/${poemSlug}?download=1`;
         window.open(downloadUrl, '_blank');
     };
 
@@ -37,14 +43,19 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
 
                 <div className="p-6 md:p-10 flex flex-col items-center">
                     <div className="w-full max-w-3xl transform hover:scale-[1.01] transition-transform duration-300">
-                        <ShareCard
-                            poetryTitle={poem.title}
-                            categoryName={poem.category?.name}
-                            poetName={poem.poet?.name}
-                            poetAvatar={poem.poet?.avatar}
-                            date={isRtl ? formatSindhiDate(poem.date) : poem.date}
-                            lang={lang}
-                        />
+                        {imageUrl ? (
+                            <img
+                                src={imageUrl}
+                                alt={isRtl ? 'شيئر تصوير' : 'Share image'}
+                                className="w-full rounded-xl shadow-lg border border-gray-100"
+                                loading="eager"
+                                decoding="async"
+                            />
+                        ) : (
+                            <div className="w-full aspect-[1.91/1] rounded-xl border border-dashed border-gray-300 bg-gray-50 text-gray-500 flex items-center justify-center px-6 text-center">
+                                {isRtl ? 'تصوير پيدا ڪرڻ لاءِ شاعري جو سلگ موجود ناهي.' : 'Poetry slug is missing, so image cannot be generated.'}
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
@@ -52,6 +63,7 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
                             variant="default"
                             className="bg-black text-white hover:bg-gray-800 h-12 px-8 rounded-full flex items-center gap-2 text-base font-medium transition-all transform active:scale-95 shadow-lg"
                             onClick={handleDownload}
+                            disabled={!poemSlug}
                         >
                             <Download className="w-5 h-5" />
                             <span>{isRtl ? 'ڊائون لوڊ ڪريو' : 'Download Image'}</span>
