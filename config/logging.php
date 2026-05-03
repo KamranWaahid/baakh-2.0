@@ -5,6 +5,10 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
+$defaultLogPath = (is_dir(storage_path('logs')) && is_writable(storage_path('logs')))
+    ? storage_path('logs/laravel.log')
+    : '/tmp/laravel.log';
+
 return [
 
     /*
@@ -60,14 +64,14 @@ return [
 
         'single' => [
             'driver' => 'single',
-            'path' => env('LOG_SINGLE_PATH', storage_path('logs/laravel.log')),
+            'path' => env('LOG_SINGLE_PATH', $defaultLogPath),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
 
         'daily' => [
             'driver' => 'daily',
-            'path' => env('LOG_DAILY_PATH', storage_path('logs/laravel.log')),
+            'path' => env('LOG_DAILY_PATH', $defaultLogPath),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 14,
             'replace_placeholders' => true,
@@ -132,7 +136,7 @@ return [
         ],
 
         'emergency' => [
-            'path' => env('LOG_EMERGENCY_PATH', storage_path('logs/laravel.log')),
+            'path' => env('LOG_EMERGENCY_PATH', $defaultLogPath),
         ],
     ],
 
