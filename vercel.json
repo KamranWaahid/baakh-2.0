@@ -53,6 +53,7 @@
         "VIEW_COMPILED_PATH": "/tmp/views",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie"
+        "SESSION_DRIVER": "cookie",
+        "DB_CONNECTION": "mysql"
     }
 }
