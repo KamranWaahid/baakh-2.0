@@ -7,7 +7,7 @@
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.7.4",
-            "excludeFiles": "{node_modules/**,storage/debugbar/**,database/backup/**,tests/**,sql/**,baakh_backup.sql,.phpunit.result.cache,public/vendor/datatables-plugins/**,public/vendor/summernote/**,public/vendor/fontawesome-free/**,public/vendor/popper/**,public/vendor/bootstrap/**,public/vendor/overlayScrollbars/**,public/vendor/select2/**,public/vendor/jquery-validation/**,public/vendor/datatables/**,public/vendor/jquery/**,public/vendor/sweetalert2/**,public/vendor/bootstrap-switch/**,public/vendor/sweetalert2-theme-bootstrap-4/**,public/vendor/toastr/**,public/vendor/bs-custom-file-input/**,public/vendor/select2-bootstrap4-theme/**}"
+            "excludeFiles": "{node_modules/**,storage/debugbar/**,database/backup/**,tests/**,sql/**,baakh_backup.sql,.phpunit.result.cache}"
         }
     },
     "routes": [
