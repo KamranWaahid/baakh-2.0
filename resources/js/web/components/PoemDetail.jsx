@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import PaywallCTA from './PaywallCTA';
 import { formatSindhiDate } from '../utils/dateUtils';
-import { getImageUrl } from '../utils/url';
+import { getImageUrl, handleImageError } from '../utils/url';
 import DOMPurify from 'dompurify';
 import { CoupletWithWords } from './WordTooltip';
 
@@ -107,7 +107,7 @@ const PoemDetail = ({ lang }) => {
 
                     <div className="flex items-center gap-4 mb-8">
                         <Link to={`/${lang}/poet/${poem.poet?.slug}`} className="shrink-0">
-                            <img src={getImageUrl(poem.poet.avatar, 'poet')} alt={poem.poet.name} className="h-11 w-11 rounded-full object-cover bg-gray-200" />
+                            <img src={getImageUrl(poem.poet.avatar, 'poet')} onError={(e) => handleImageError(e, 'poet')} alt={poem.poet.name} className="h-11 w-11 rounded-full object-cover bg-gray-200" />
                         </Link>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ const PoemDetail = ({ lang }) => {
                 <div className={`flex items-center mb-12 ${isRtl ? 'font-arabic' : 'font-sans'}`}>
                     <div className="flex items-center gap-4">
                         <Link to={`/${lang}/poet/${poem.poet.slug}`} className="shrink-0">
-                            <img src={getImageUrl(poem.poet.avatar, 'poet')} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
+                            <img src={getImageUrl(poem.poet.avatar, 'poet')} onError={(e) => handleImageError(e, 'poet')} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
                         </Link>
                         <div className="flex flex-col">
                             <Link to={`/${lang}/poet/${poem.poet.slug}`}>
@@ -222,7 +222,7 @@ const PoemDetail = ({ lang }) => {
                             {poem.recommended.map((p, i) => (
                                 <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className="flex flex-col gap-2 group">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <img src={getImageUrl(p.avatar, 'poet')} alt={p.author} className="h-5 w-5 rounded-full object-cover bg-gray-200" />
+                                        <img src={getImageUrl(p.avatar, 'poet')} onError={(e) => handleImageError(e, 'poet')} alt={p.author} className="h-5 w-5 rounded-full object-cover bg-gray-200" />
                                         <span className="text-xs font-bold text-gray-900">{p.author}</span>
                                     </div>
                                     <h4 className="font-bold text-lg text-gray-900 leading-tight group-hover:underline">{p.title}</h4>
