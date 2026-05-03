@@ -77,10 +77,6 @@ import UserForm from './pages/Users/UserForm';
 
 import TopicCategoryList from './pages/Topics/TopicCategoryList';
 import InformationSystem from './pages/System/InformationSystem';
-import ServerManagement from './pages/System/ServerManagement';
-import ErrorManagement from './pages/System/ErrorManagement';
-import ActivityLogs from './pages/System/ActivityLogs';
-import HeapAnalysis from './pages/System/HeapAnalysis';
 
 import LemmaInbox from './pages/Dictionary/LemmaInbox';
 import SenseEditor from './pages/Dictionary/SenseEditor';
@@ -100,7 +96,6 @@ import DialectCoverage from './pages/Analytics/DialectCoverage';
 import UsageTrends from './pages/Analytics/UsageTrends';
 
 import UnderDevelopment from './components/UnderDevelopment';
-import Mokhii from './pages/Mokhii';
 import Settings from './pages/Settings';
 import EmailTemplates from './pages/Emails/EmailTemplates';
 
@@ -117,13 +112,6 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <Dashboard />
-                            </AdminLayout>
-                        </ProtectedRoute>
-                    } />
-                    <Route path="/admin/system/performance" element={
-                        <ProtectedRoute>
-                            <AdminLayout>
-                                <HeapAnalysis />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
@@ -386,32 +374,6 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
-                    <Route path="/admin/system/server" element={
-                        <ProtectedRoute>
-                            <AdminLayout>
-                                <ServerManagement />
-                            </AdminLayout>
-                        </ProtectedRoute>
-                    } />
-
-                    <Route path="/admin/system/errors" element={
-                        <ProtectedRoute>
-                            <AdminLayout>
-                                <ErrorManagement />
-                            </AdminLayout>
-                        </ProtectedRoute>
-                    } />
-
-                    <Route path="/admin/system/activity-logs" element={
-                        <ProtectedRoute>
-                            <AdminLayout>
-                                <ActivityLogs />
-                            </AdminLayout>
-                        </ProtectedRoute>
-                    } />
-
-
-
                     <Route path="/admin/moderation/reports" element={
                         <ProtectedRoute>
                             <AdminLayout>
@@ -456,15 +418,6 @@ const App = () => {
                     <Route path="/admin/analytics/frequency" element={<ProtectedRoute><AdminLayout><FrequencyStats /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/analytics/dialect" element={<ProtectedRoute><AdminLayout><DialectCoverage /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/analytics/trends" element={<ProtectedRoute><AdminLayout><UsageTrends /></AdminLayout></ProtectedRoute>} />
-
-                    {/* Mokhii SEO Engine */}
-                    <Route path="/admin/mokhii" element={
-                        <ProtectedRoute>
-                            <AdminLayout>
-                                <Mokhii />
-                            </AdminLayout>
-                        </ProtectedRoute>
-                    } />
 
                     <Route path="/admin/settings" element={
                         <ProtectedRoute>
