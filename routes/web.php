@@ -129,6 +129,32 @@ Route::get('/_health/database', function () {
     }
 });
 
+/*
+|--------------------------------------------------------------------------
+| API fallback routes
+|--------------------------------------------------------------------------
+| Some serverless/proxy combinations can bypass RouteServiceProvider's api group
+| and fall through to the SPA catch-all. Keep critical public JSON endpoints
+| reachable by defining them here under explicit /api/* paths.
+*/
+Route::prefix('api')->group(function () {
+    Route::get('/health', function () {
+        return response()->json([
+            'ok' => true,
+            'service' => 'api-fallback',
+            'laravel' => app()->version(),
+            'environment' => app()->environment(),
+        ]);
+    });
+
+    Route::prefix('v1')->group(function () {
+        Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
+        Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
+        Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
+        Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
+    });
+});
+
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');
 
 Route::get('/login', function () {
