@@ -67,6 +67,13 @@ return [
                 if (filter_var(env('MYSQL_SSL_DONT_VERIFY', false), FILTER_VALIDATE_BOOL)) {
                     $opts[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
                 }
+                $connectTimeout = (int) env('DB_CONNECT_TIMEOUT', 5);
+                if ($connectTimeout > 0) {
+                    $opts[PDO::ATTR_TIMEOUT] = $connectTimeout;
+                    if (defined('PDO::MYSQL_ATTR_READ_TIMEOUT')) {
+                        $opts[PDO::MYSQL_ATTR_READ_TIMEOUT] = $connectTimeout;
+                    }
+                }
 
                 return $opts;
             })() : [],
