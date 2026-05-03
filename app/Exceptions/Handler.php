@@ -8,8 +8,6 @@ use Throwable;
 use App\Models\SystemError;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\QueryException;
-use PDOException;
 
 class Handler extends ExceptionHandler
 {
@@ -31,11 +29,6 @@ class Handler extends ExceptionHandler
     {
         $this->renderable(function (Throwable $e, $request) {
             if (!$request->is('api/*')) {
-                return null;
-            }
-
-            $isDbException = $e instanceof QueryException || $e instanceof PDOException;
-            if (!$isDbException) {
                 return null;
             }
 
