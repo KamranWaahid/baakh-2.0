@@ -26,7 +26,7 @@ const PoetsFeed = ({ lang }) => {
         queryKey: ['poet-tags', lang],
         queryFn: async () => {
             try {
-                const response = await api.get('/api/v1/poet-tags');
+                const response = await api.get('/v1/poet-tags');
                 return response.data;
             } catch (error) {
                 return [];
@@ -55,7 +55,7 @@ const PoetsFeed = ({ lang }) => {
                 if (selectedTag !== 'all') {
                     params.tag = selectedTag;
                 }
-                const response = await api.get('/api/v1/poets', {
+                const response = await api.get('/v1/poets', {
                     params
                 });
                 return response.data;

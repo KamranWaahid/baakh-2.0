@@ -175,6 +175,8 @@ Route::get('/health', function () {
 
 Route::prefix('v1')->group(function () {
     Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
+    Route::get('poets', [App\Http\Controllers\Api\PoetController::class, 'index']);
+    Route::get('poet-tags', [App\Http\Controllers\Api\PoetController::class, 'tags']);
     Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
     Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
