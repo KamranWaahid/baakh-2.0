@@ -10,20 +10,47 @@ use Intervention\Image\Laravel\Facades\Image;
 
 trait HasMedia
 {
-    private function mediaDisk(): string
-    {
-        return (string) config('media.disk', 'local');
-    }
-
     private function mediaBasePath(): string
     {
         return trim((string) config('media.base_path', 'assets/images'), '/');
     }
 
-    private function isCloudDisk(): bool
+    /** Effective disk after optional auto-upgrade (e.g. read-only deploy root → S3). */
+    private function resolveUploadDisk(): string
     {
-        $disk = $this->mediaDisk();
-        return !in_array($disk, ['local', 'public'], true);
+        $configured = trim((string) config('media.disk', 'local'));
+
+        if (!in_array($configured, ['local', 'public'], true)) {
+            return $configured;
+        }
+
+        // Vercel and similar hosts ship a non-writable public/ tree; uploads must use object storage.
+        if (!$this->isPublicWebRootWritable() && $this->s3IsProvisioned()) {
+            return 's3';
+        }
+
+        return $configured;
+    }
+
+    private function isResolvedCloudDisk(?string $disk = null): bool
+    {
+        $d = $disk ?? $this->resolveUploadDisk();
+
+        return !in_array($d, ['local', 'public'], true);
+    }
+
+    private function s3IsProvisioned(): bool
+    {
+        return filled((string) config('filesystems.disks.s3.bucket'))
+            && filled((string) config('filesystems.disks.s3.key'))
+            && filled((string) config('filesystems.disks.s3.secret'));
+    }
+
+    private function isPublicWebRootWritable(): bool
+    {
+        $dir = public_path();
+
+        return is_dir($dir) && is_writable($dir);
     }
 
     private function buildRelativePath(string $folderPath, string $fileName): string
@@ -55,7 +82,17 @@ trait HasMedia
         }
 
         $path = ltrim($value, '/');
-        return str_starts_with($path, $base) ? $path : null;
+        if (str_starts_with($path, $base)) {
+            return $path;
+        }
+
+        // Legacy rows: DB stores bare filename while the site mounts it under poets/.
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if ($path !== '' && !str_contains($path, '/') && in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'], true)) {
+            return $this->buildRelativePath('poets', basename($path));
+        }
+
+        return null;
     }
 
     /**
@@ -80,6 +117,14 @@ trait HasMedia
             return ['error' => true, 'message' => 'File size exceeds the maximum allowed size (10 MB or ' . $maxSize . ' bytes). Your image size is ' . $file->getSize()];
         }
 
+        $disk = $this->resolveUploadDisk();
+        if (!$this->isResolvedCloudDisk($disk) && !$this->isPublicWebRootWritable()) {
+            return [
+                'error' => true,
+                'message' => 'Cannot save images on this server (deploy root is read-only). Add AWS S3 (or compatible) vars: MEDIA_DISK=s3 plus AWS_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION, or MEDIA_DISK-compatible cloud credentials.',
+            ];
+        }
+
         $image = Image::read($file);
         $width = $image->width();
         $height = $image->height();
@@ -100,12 +145,12 @@ trait HasMedia
         $relativePath = $this->buildRelativePath($folderPath, $imageName);
         $encoded = (string) $image->toWebp(80);
 
-        if ($this->isCloudDisk()) {
-            Storage::disk($this->mediaDisk())->put($relativePath, $encoded, [
+        if ($this->isResolvedCloudDisk($disk)) {
+            Storage::disk($disk)->put($relativePath, $encoded, [
                 'visibility' => 'public',
                 'ContentType' => 'image/webp',
             ]);
-            $fullPath = Storage::disk($this->mediaDisk())->url($relativePath);
+            $fullPath = Storage::disk($disk)->url($relativePath);
         } else {
             $destination = public_path(dirname($relativePath));
             if (!file_exists($destination)) {
@@ -154,12 +199,12 @@ trait HasMedia
                 $thumbEncoded = (string) $thumb->scale($value['width'], $value['height'])->toWebp(80);
                 $thumbRelativePath = $this->buildRelativePath($folderPath, $resizedName);
 
-                if ($this->isCloudDisk()) {
-                    Storage::disk($this->mediaDisk())->put($thumbRelativePath, $thumbEncoded, [
+                if ($this->isResolvedCloudDisk($disk)) {
+                    Storage::disk($disk)->put($thumbRelativePath, $thumbEncoded, [
                         'visibility' => 'public',
                         'ContentType' => 'image/webp',
                     ]);
-                    $resizedImages[] = Storage::disk($this->mediaDisk())->url($thumbRelativePath);
+                    $resizedImages[] = Storage::disk($disk)->url($thumbRelativePath);
                 } else {
                     file_put_contents(public_path($thumbRelativePath), $thumbEncoded);
                     $resizedImages[] = $thumbRelativePath;
@@ -231,9 +276,10 @@ trait HasMedia
             }
         }
 
-        if ($this->isCloudDisk()) {
-            Storage::disk($this->mediaDisk())->delete($paths);
-            return ['error' => false, 'message' => 'Files removed from cloud storage'];
+        $disk = $this->resolveUploadDisk();
+
+        if ($this->isResolvedCloudDisk($disk)) {
+            Storage::disk($disk)->delete($paths);
         }
 
         foreach ($paths as $path) {
@@ -243,7 +289,9 @@ trait HasMedia
             }
         }
 
-        return ['error' => false, 'message' => 'Files removed from local storage'];
+        return ['error' => false, 'message' => $this->isResolvedCloudDisk($disk)
+            ? 'Files removed from cloud/local storage'
+            : 'Files removed from local storage'];
     }
 
 

@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LocationCombobox } from '@/components/ui/location-combobox';
+import AvatarImgOrIcon from '@/web/components/AvatarImgOrIcon';
 
 // Simple Error Boundary to catch render crashes
 class EditPoetErrorBoundary extends React.Component {
@@ -332,7 +333,15 @@ const EditPoetContent = () => {
                                             />
                                         </FormControl>
                                         {preview && (
-                                            <img src={preview} alt="Preview" className="w-32 h-32 object-cover rounded-md mt-2" />
+                                            <div className="mt-2 h-32 w-32 overflow-hidden rounded-md">
+                                                <AvatarImgOrIcon
+                                                    src={preview}
+                                                    imageType="poet"
+                                                    alt=""
+                                                    className="h-full w-full rounded-md"
+                                                    imgClassName="h-full w-full rounded-md object-cover"
+                                                />
+                                            </div>
                                         )}
                                         <FormMessage />
                                     </FormItem>

@@ -32,6 +32,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import AvatarImgOrIcon from '@/web/components/AvatarImgOrIcon';
 
 const PoetsList = () => {
     const queryClient = useQueryClient();
@@ -180,21 +181,17 @@ const PoetsList = () => {
                                     </TableRow>
                                 ) : (
                                     data?.data?.map((poet) => {
-                                        const poetPic = poet.poet_pic || '';
-                                        const poetImageSrc = /^https?:\/\//i.test(poetPic)
-                                            ? poetPic
-                                            : poetPic.startsWith('/')
-                                                ? poetPic
-                                                : `/${poetPic}`;
                                         return (
                                             <TableRow key={poet.id}>
                                                 <TableCell>
-                                                    <img
-                                                        src={poetImageSrc}
-                                                        alt={poet.poet_name}
-                                                        className="h-10 w-10 rounded-full object-cover"
-                                                        onError={(e) => e.target.src = 'https://placehold.co/40'}
-                                                    />
+                                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                                                        <AvatarImgOrIcon
+                                                            src={poet.poet_pic}
+                                                            imageType="poet"
+                                                            alt=""
+                                                            imgClassName="h-full w-full object-cover rounded-full"
+                                                        />
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="font-medium whitespace-nowrap">
                                                     <span lang="sd">{poet.poet_name}</span>
