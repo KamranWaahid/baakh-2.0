@@ -53,6 +53,8 @@
         "VIEW_COMPILED_PATH": "/tmp/views",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
+        "LOG_EMERGENCY_PATH": "/tmp/laravel.log",
+        "LOG_SINGLE_PATH": "/tmp/laravel.log",
         "SESSION_DRIVER": "cookie",
         "DB_CONNECTION": "mysql"
     }

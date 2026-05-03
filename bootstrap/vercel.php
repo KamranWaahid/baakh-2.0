@@ -20,4 +20,19 @@ $apply = static function (string $key, string $value): void {
 
 $apply('SESSION_DRIVER', 'cookie');
 $apply('CACHE_DRIVER', 'array');
-$apply('LOG_CHANNEL', 'stderr');
+
+/*
+| Always use stderr + /tmp-backed fallbacks — storage/* is read-only on Vercel Lambda.
+*/
+putenv('LOG_CHANNEL=stderr');
+$_ENV['LOG_CHANNEL'] = 'stderr';
+$_SERVER['LOG_CHANNEL'] = 'stderr';
+putenv('LOG_EMERGENCY_PATH=/tmp/laravel.log');
+$_ENV['LOG_EMERGENCY_PATH'] = '/tmp/laravel.log';
+$_SERVER['LOG_EMERGENCY_PATH'] = '/tmp/laravel.log';
+putenv('LOG_SINGLE_PATH=/tmp/laravel.log');
+$_ENV['LOG_SINGLE_PATH'] = '/tmp/laravel.log';
+$_SERVER['LOG_SINGLE_PATH'] = '/tmp/laravel.log';
+putenv('LOG_DAILY_PATH=/tmp/laravel.log');
+$_ENV['LOG_DAILY_PATH'] = '/tmp/laravel.log';
+$_SERVER['LOG_DAILY_PATH'] = '/tmp/laravel.log';
