@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Models\SystemError;
 use Illuminate\Support\Facades\Request;
@@ -33,6 +34,17 @@ class Handler extends ExceptionHandler
                     return;
                 }
                 if ($e instanceof \Illuminate\Database\QueryException && str_contains($e->getMessage(), 'admin_notifications')) {
+                    return;
+                }
+
+                // Vercel / serverless: DB may be unreachable; logging to stderr avoids cascading DB errors.
+                if (getenv('VERCEL')) {
+                    Log::error($e->getMessage(), [
+                        'exception' => get_class($e),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                    ]);
+
                     return;
                 }
 

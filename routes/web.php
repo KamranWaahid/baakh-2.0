@@ -96,7 +96,40 @@ Route::get('/debug-logs', function () {
     return 'Log file not found.';
 });
 
-Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt).*$')->name('web.spa');
+/*
+|--------------------------------------------------------------------------
+| Deploy diagnostics (do not expose without DEPLOY_HEALTH_SECRET)
+|--------------------------------------------------------------------------
+*/
+Route::get('/_health/ping', function () {
+    return response()->json([
+        'ok' => true,
+        'laravel' => app()->version(),
+        'php' => PHP_VERSION,
+    ]);
+});
+
+Route::get('/_health/database', function () {
+    $secret = trim((string) env('DEPLOY_HEALTH_SECRET'));
+    abort_unless($secret !== '' && hash_equals($secret, (string) request()->query('token', '')), 404);
+
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+
+        return response()->json([
+            'database' => 'connected',
+            'connection' => config('database.default'),
+            'host' => config('database.connections.mysql.host'),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'database' => 'failed',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');
 
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
