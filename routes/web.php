@@ -61,17 +61,21 @@ $forwardStrippedAdminApi = static function (Request $request, ?string $any): ?\S
 };
 
 // Allow SPA to load (Frontend handles auth via API)
-Route::get('admin/{any?}', function (Request $request, $any = null) use ($forwardStrippedAdminApi) {
+Route::any('admin/{any?}', function (Request $request, $any = null) use ($forwardStrippedAdminApi) {
     $forwarded = $forwardStrippedAdminApi($request, $any);
     if ($forwarded !== null) {
         return $forwarded;
+    }
+
+    if (!$request->isMethod('get')) {
+        abort(404);
     }
 
     return view('admin.app');
 })->where('any', '.*')->name('admin.spa');
 
 // Admin SPA with locale prefix (e.g. /sd/admin, /en/admin)
-Route::get('{lang}/admin/{any?}', function (Request $request, string $lang, $any = null) use ($forwardStrippedAdminApi) {
+Route::any('{lang}/admin/{any?}', function (Request $request, string $lang, $any = null) use ($forwardStrippedAdminApi) {
     if (!in_array($lang, ['en', 'sd'], true)) {
         abort(404);
     }
@@ -80,6 +84,10 @@ Route::get('{lang}/admin/{any?}', function (Request $request, string $lang, $any
     $forwarded = $forwardStrippedAdminApi($request, $any);
     if ($forwarded !== null) {
         return $forwarded;
+    }
+
+    if (!$request->isMethod('get')) {
+        abort(404);
     }
 
     return view('admin.app');
