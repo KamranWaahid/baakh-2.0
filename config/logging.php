@@ -58,7 +58,7 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single'],
+            'channels' => explode(',', env('LOG_STACK', getenv('VERCEL') ? 'stderr' : 'single')),
             'ignore_exceptions' => false,
         ],
 
