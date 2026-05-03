@@ -29,6 +29,16 @@ api.interceptors.request.use(config => {
         config.headers['Accept-Language'] = lang;
     }
 
+    // Normalize API paths for serverless deployments where /api can be unstable.
+    // We use stripped runtime routes for all public endpoints consistently.
+    if (typeof config.url === 'string') {
+        if (config.url.startsWith('/api/v1/')) {
+            config.url = config.url.replace('/api/v1/', '/v1/');
+        } else if (config.url.startsWith('/api/auth/')) {
+            config.url = config.url.replace('/api/auth/', '/auth/');
+        }
+    }
+
     return config;
 });
 
