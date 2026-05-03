@@ -19,9 +19,16 @@ const PoetsFeed = ({ lang }) => {
     const { data: tagsData } = useQuery({
         queryKey: ['poet-tags', lang],
         queryFn: async () => {
-            const response = await api.get('/api/v1/poet-tags');
-            return response.data;
-        }
+            try {
+                const response = await api.get('/api/v1/poet-tags');
+                return response.data;
+            } catch (error) {
+                return [];
+            }
+        },
+        retry: false,
+        refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000,
     });
 
     const tags = tagsData || [];
@@ -36,22 +43,37 @@ const PoetsFeed = ({ lang }) => {
     } = useInfiniteQuery({
         queryKey: ['poets', search, selectedTag, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            // In real app, might want to debounce search here or in the UI
-            const params = { search, page: pageParam };
-            if (selectedTag !== 'all') {
-                params.tag = selectedTag;
+            try {
+                // In real app, might want to debounce search here or in the UI
+                const params = { search, page: pageParam };
+                if (selectedTag !== 'all') {
+                    params.tag = selectedTag;
+                }
+                const response = await api.get('/api/v1/poets', {
+                    params
+                });
+                return response.data;
+            } catch (error) {
+                return {
+                    data: [],
+                    current_page: pageParam,
+                    last_page: pageParam,
+                    total: 0,
+                    per_page: 20,
+                    from: null,
+                    to: null,
+                };
             }
-            const response = await api.get('/api/v1/poets', {
-                params
-            });
-            return response.data;
         },
         getNextPageParam: (lastPage) => {
             if (lastPage.current_page < lastPage.last_page) {
                 return lastPage.current_page + 1;
             }
             return undefined;
-        }
+        },
+        retry: false,
+        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000,
     });
 
     const poets = data?.pages.flatMap(page => page.data) || [];
