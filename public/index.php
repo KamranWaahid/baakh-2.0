@@ -5,6 +5,8 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+require dirname(__DIR__) . '/bootstrap/vercel.php';
+
 if (isset($_GET['safe_confirm'])) {
     echo "<h1>Laravel Safe Test</h1>";
     echo "This is a direct bypass of the kernel. If you see this, the index.php is executing.";

@@ -37,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (getenv('VERCEL') || str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
+
         Paginator::useBootstrap();
         \Illuminate\Database\Schema\Builder::defaultStringLength(191);
 
