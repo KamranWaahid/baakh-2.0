@@ -2,42 +2,39 @@ export const formatSindhiDate = (dateStr) => {
     if (!dateStr) return '';
 
     const months = {
-        'January': 'جنوري',
-        'February': 'فيبروري',
-        'March': 'مارچ',
-        'April': 'اپريل',
-        'May': 'مئي',
-        'June': 'جون',
-        'July': 'جولائي',
-        'August': 'آگسٽ',
-        'September': 'سيپٽمبر',
-        'October': 'آڪٽوبر',
-        'November': 'نومبر',
-        'December': 'ڊسمبر',
-        'Jan': 'جنوري',
-        'Feb': 'فيبروري',
-        'Mar': 'مارچ',
-        'Apr': 'اپريل',
-        'Jun': 'جون',
-        'Jul': 'جولائي',
-        'Aug': 'آگسٽ',
-        'Sep': 'سيپٽمبر',
-        'Oct': 'آڪٽوبر',
-        'Nov': 'نومبر',
-        'Dec': 'ڊسمبر'
+        'january': 'جنوري', 'february': 'فيبروري', 'march': 'مارچ',
+        'april': 'اپريل', 'may': 'مئي', 'june': 'جون',
+        'july': 'جولائي', 'august': 'آگسٽ', 'september': 'سيپٽمبر',
+        'october': 'آڪٽوبر', 'november': 'نومبر', 'december': 'ڊسمبر',
+        'jan': 'جنوري', 'feb': 'فيبروري', 'mar': 'مارچ',
+        'apr': 'اپريل', 'jun': 'جون', 'jul': 'جولائي',
+        'aug': 'آگسٽ', 'sep': 'سيپٽمبر', 'oct': 'آڪٽوبر',
+        'nov': 'نومبر', 'dec': 'ڊسمبر'
     };
 
-    let formattedDate = dateStr;
+    // Extract alphanumeric parts
+    const parts = dateStr.match(/([a-zA-Z]+|\d+)/g);
     
-    // Replace all instances of English month names with Sindhi
+    if (parts && parts.length >= 3) {
+        // Find components
+        const year = parts.find(p => p.length === 4 && !isNaN(p));
+        const monthStr = parts.find(p => isNaN(p));
+        const day = parts.find(p => p !== year && !isNaN(p));
+
+        if (day && monthStr && year) {
+            const lowerMonth = monthStr.toLowerCase();
+            const sindhiMonth = months[lowerMonth] || monthStr;
+            
+            // Format: Day Month Year (e.g., 05 جولائي، 2025)
+            return `${day} ${sindhiMonth}، ${year}`;
+        }
+    }
+
+    // Fallback: simple replacement
+    let formattedDate = dateStr;
     for (const [en, sd] of Object.entries(months)) {
-        // Use regex with word boundaries to match exact month strings case-insensitively
         const regex = new RegExp(`\\b${en}\\b`, 'gi');
         formattedDate = formattedDate.replace(regex, sd);
     }
-
-    // Optional: if the date format is exactly "05 جنوري, 2025", we could replace the comma with Sindhi comma '،'
-    formattedDate = formattedDate.replace(',', '،');
-
-    return formattedDate;
+    return formattedDate.replace(',', '،');
 };
