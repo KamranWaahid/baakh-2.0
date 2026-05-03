@@ -149,7 +149,7 @@ const PoemDetail = ({ lang }) => {
 
                 </div>
 
-                <div className={`flex flex-wrap gap-2 mt-8 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                <div className="flex flex-wrap gap-2 mt-8">
                     {poem.tags?.map(tag => (
                         <span key={tag.id} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
                             #{tag.tag}
@@ -161,7 +161,7 @@ const PoemDetail = ({ lang }) => {
 
                 {/* Author Footer */}
                 <div className={`flex items-center mb-12 ${isRtl ? 'font-arabic' : 'font-sans'}`}>
-                    <div className={`flex items-center gap-4 ${isRtl ? 'text-right' : 'text-left'}`}>
+                    <div className="flex items-center gap-4">
                         <Link to={`/${lang}/poet/${poem.poet.slug}`} className="shrink-0">
                             <img src={getImageUrl(poem.poet.avatar, 'poet')} alt={poem.poet.name} className="h-[64px] w-[64px] rounded-full object-cover bg-gray-200" />
                         </Link>
@@ -190,13 +190,13 @@ const PoemDetail = ({ lang }) => {
                 {/* Section 1: More from Author */}
                 {poem.more_from_author && poem.more_from_author.length > 0 && (
                     <div className="mb-12">
-                        <h3 className={`font-bold text-base text-gray-900 mb-6 ${isRtl ? 'text-right' : ''}`}>{isRtl ? `${poem.poet.name} کان وڌيڪ` : `More from ${poem.poet.name}`}</h3>
+                        <h3 className="font-bold text-base text-gray-900 mb-6">{isRtl ? `${poem.poet.name} کان وڌيڪ` : `More from ${poem.poet.name}`}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
                             {poem.more_from_author.map((p, i) => (
-                                <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className={`flex flex-col gap-2 group ${isRtl ? 'text-right' : ''}`}>
-                                    <div className="text-xs text-gray-500 mb-1">{p.date}</div>
+                                <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className="flex flex-col gap-2 group">
+                                    <div className="text-xs text-gray-500 mb-1">{isRtl ? formatSindhiDate(p.date) : p.date}</div>
                                     <h4 className="font-bold text-lg text-gray-900 leading-tight group-hover:underline">{p.title}</h4>
-                                    <div className={`flex items-center gap-4 mt-1 text-xs text-gray-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                         <div className="flex items-center gap-1">
                                             <span>{p.claps} {isRtl ? 'پسند' : 'likes'}</span>
                                         </div>
@@ -217,17 +217,17 @@ const PoemDetail = ({ lang }) => {
                 {/* Section 2: Recommended */}
                 {poem.recommended && poem.recommended.length > 0 && (
                     <div className="mb-12">
-                        <h3 className={`font-bold text-base text-gray-900 mb-6 ${isRtl ? 'text-right' : ''}`}>{isRtl ? 'باک پاران تجويز ڪيل' : 'Recommended from Baakh'}</h3>
+                        <h3 className="font-bold text-base text-gray-900 mb-6">{isRtl ? 'باک پاران تجويز ڪيل' : 'Recommended from Baakh'}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
                             {poem.recommended.map((p, i) => (
-                                <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className={`flex flex-col gap-2 group ${isRtl ? 'text-right' : ''}`}>
-                                    <div className={`flex items-center gap-2 mb-1 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                                <Link to={`/${lang}/poet/${p.poet_slug}/${p.cat_slug}/${p.slug}`} key={i} className="flex flex-col gap-2 group">
+                                    <div className="flex items-center gap-2 mb-1">
                                         <img src={getImageUrl(p.avatar, 'poet')} alt={p.author} className="h-5 w-5 rounded-full object-cover bg-gray-200" />
                                         <span className="text-xs font-bold text-gray-900">{p.author}</span>
                                     </div>
                                     <h4 className="font-bold text-lg text-gray-900 leading-tight group-hover:underline">{p.title}</h4>
-                                    <div className={`flex items-center gap-4 mt-1 text-xs text-gray-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                                        <span>{p.date}</span>
+                                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                                        <span>{isRtl ? formatSindhiDate(p.date) : p.date}</span>
                                         <div className="flex items-center gap-1">
                                             <span>{p.claps} {isRtl ? 'پسند' : 'likes'}</span>
                                         </div>
