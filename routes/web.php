@@ -204,7 +204,16 @@ Route::any('{apiPath}', function (Request $request, string $apiPath) {
 
     $subRequest->headers->replace($request->headers->all());
 
-    return app('router')->dispatch($subRequest);
+    try {
+        return app('router')->dispatch($subRequest);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => 'API forwarder failed',
+            'path' => $apiPath,
+            'error' => $e->getMessage(),
+            'exception' => get_class($e),
+        ], 500);
+    }
 })->where('apiPath', '^(v1|auth|admin)(/.*)?$');
 
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');
