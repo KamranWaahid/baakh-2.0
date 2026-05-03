@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -178,6 +179,33 @@ Route::prefix('v1')->group(function () {
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
     Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Generic stripped-path forwarder
+|--------------------------------------------------------------------------
+| If serverless routing strips the /api prefix, forward known API families
+| back to /api/* so the same controllers/middleware are used application-wide.
+*/
+Route::any('{apiPath}', function (Request $request, string $apiPath) {
+    $forwardPath = '/api/' . ltrim($apiPath, '/');
+    $query = $request->getQueryString();
+    $forwardUrl = $query ? "{$forwardPath}?{$query}" : $forwardPath;
+
+    $subRequest = Request::create(
+        $forwardUrl,
+        $request->getMethod(),
+        $request->request->all(),
+        $request->cookies->all(),
+        $request->files->all(),
+        $request->server->all(),
+        $request->getContent()
+    );
+
+    $subRequest->headers->replace($request->headers->all());
+
+    return app('router')->dispatch($subRequest);
+})->where('apiPath', '^(v1|auth|admin)(/.*)?$');
 
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');
 
