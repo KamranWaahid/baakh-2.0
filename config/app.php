@@ -55,7 +55,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://baakh.com'),
+    'url' => env('APP_URL', 'https://www.baakh.com'),
 
     'asset_url' => env('ASSET_URL'),
 
