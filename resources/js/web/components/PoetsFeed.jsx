@@ -14,6 +14,12 @@ const PoetsFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [search, setSearch] = useState('');
     const [selectedTag, setSelectedTag] = useState('all');
+    const slugToTitle = (slug = '') =>
+        slug
+            .split('-')
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
 
     // Fetch tags
     const { data: tagsData } = useQuery({
@@ -76,7 +82,47 @@ const PoetsFeed = ({ lang }) => {
         staleTime: 60 * 1000,
     });
 
-    const poets = data?.pages.flatMap(page => page.data) || [];
+    // If API is down in production, hydrate with local static poets list.
+    const {
+        data: staticPoets = [],
+        isLoading: isLoadingStaticPoets,
+    } = useQuery({
+        queryKey: ['static-poets-fallback', lang, search],
+        queryFn: async () => {
+            const response = await fetch('/json/poets.json', { cache: 'no-store' });
+            if (!response.ok) return [];
+            const data = await response.json();
+            const normalized = (Array.isArray(data) ? data : []).map((item, idx) => {
+                const route = String(item.route || '');
+                const slug = route.split('/').filter(Boolean).pop() || `poet-${idx}`;
+                const nameSd = String(item.keyword || '').trim() || slugToTitle(slug);
+                return {
+                    id: `static-${idx}`,
+                    slug,
+                    avatar: null,
+                    name_sd: nameSd,
+                    name_en: slugToTitle(slug),
+                    bio_sd: '',
+                    bio_en: '',
+                    entries_count: 0,
+                };
+            });
+            if (!search.trim()) return normalized;
+            const q = search.trim().toLowerCase();
+            return normalized.filter(p =>
+                p.name_en.toLowerCase().includes(q) ||
+                p.slug.toLowerCase().includes(q) ||
+                p.name_sd.includes(search.trim())
+            );
+        },
+        enabled: poets.length === 0 && !isLoading,
+        retry: false,
+        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000,
+    });
+
+    const poets = (data?.pages.flatMap(page => page.data) || []);
+    const displayedPoets = poets.length > 0 ? poets : staticPoets;
 
     // Intersection Observer for infinite scroll
     const { ref, InView } = useInView({
@@ -179,7 +225,7 @@ const PoetsFeed = ({ lang }) => {
             </div>
 
             <div className="space-y-4">
-                {isLoading ? (
+                {(isLoading || isLoadingStaticPoets) ? (
                     Array(5).fill(0).map((_, i) => (
                         <div key={i} className="flex items-center gap-4 p-4 border rounded-lg bg-white shadow-sm border-gray-100">
                             <Skeleton className="h-16 w-16 rounded-full" />
@@ -190,8 +236,8 @@ const PoetsFeed = ({ lang }) => {
                             <Skeleton className="h-9 w-24 rounded-full" />
                         </div>
                     ))
-                ) : poets.length > 0 ? (
-                    poets.map(poet => <PoetCard key={poet.id} poet={poet} />)
+                ) : displayedPoets.length > 0 ? (
+                    displayedPoets.map(poet => <PoetCard key={poet.id} poet={poet} />)
                 ) : (
                     <div className="py-20 text-center text-gray-500">
                         {isRtl ? 'ڪو به شاعر نه مليو' : 'No poets found.'}
