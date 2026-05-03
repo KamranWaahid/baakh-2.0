@@ -25,4 +25,16 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'resources/js'),
         },
     },
+    build: {
+        chunkSizeWarningLimit: 900,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) return;
+                    if (id.includes('recharts')) return 'recharts';
+                    if (id.includes('@radix-ui')) return 'radix-ui';
+                },
+            },
+        },
+    },
 });
