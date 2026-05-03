@@ -36,6 +36,8 @@ api.interceptors.request.use(config => {
             config.url = config.url.replace('/api/v1/', '/v1/');
         } else if (config.url.startsWith('/api/auth/')) {
             config.url = config.url.replace('/api/auth/', '/auth/');
+        } else if (config.url.startsWith('/api/admin/')) {
+            config.url = config.url.replace('/api/admin/', '/admin/');
         }
     }
 
