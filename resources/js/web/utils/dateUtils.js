@@ -2,11 +2,22 @@ export const formatSindhiDate = (dateStr) => {
     if (!dateStr) return '';
 
     const months = {
+        'January': 'جنوري',
+        'February': 'فيبروري',
+        'March': 'مارچ',
+        'April': 'اپريل',
+        'May': 'مئي',
+        'June': 'جون',
+        'July': 'جولائي',
+        'August': 'آگسٽ',
+        'September': 'سيپٽمبر',
+        'October': 'آڪٽوبر',
+        'November': 'نومبر',
+        'December': 'ڊسمبر',
         'Jan': 'جنوري',
         'Feb': 'فيبروري',
         'Mar': 'مارچ',
         'Apr': 'اپريل',
-        'May': 'مئي',
         'Jun': 'جون',
         'Jul': 'جولائي',
         'Aug': 'آگسٽ',
@@ -16,12 +27,17 @@ export const formatSindhiDate = (dateStr) => {
         'Dec': 'ڊسمبر'
     };
 
-    // Expected format: "Jul 05, 2025"
-    const match = dateStr.match(/^([A-Za-z]{3})\s+(\d{1,2}),\s+(\d{4})$/);
-    if (!match) return dateStr;
+    let formattedDate = dateStr;
+    
+    // Replace all instances of English month names with Sindhi
+    for (const [en, sd] of Object.entries(months)) {
+        // Use regex with word boundaries to match exact month strings case-insensitively
+        const regex = new RegExp(`\\b${en}\\b`, 'gi');
+        formattedDate = formattedDate.replace(regex, sd);
+    }
 
-    const [_, monthName, day, year] = match;
-    const sindhiMonth = months[monthName] || monthName;
+    // Optional: if the date format is exactly "05 جنوري, 2025", we could replace the comma with Sindhi comma '،'
+    formattedDate = formattedDate.replace(',', '،');
 
-    return `${day} ${sindhiMonth}، ${year}`;
+    return formattedDate;
 };
