@@ -11,14 +11,18 @@ return new class extends Migration {
     public function up(): void
     {
         // 1. Drop unique index
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique(['email']);
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropUnique(['email']);
+            });
+        }
 
         // 2. Change column type
-        Schema::table('users', function (Blueprint $table) {
-            $table->text('email')->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('users', function (Blueprint $table) {
+                $table->text('email')->change();
+            });
+        }
 
         // 3. Add new hash column
         Schema::table('users', function (Blueprint $table) {
@@ -32,7 +36,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('email')->unique()->change();
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->string('email')->unique()->change();
+            }
             $table->dropColumn('email_hash');
         });
     }

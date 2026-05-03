@@ -10,9 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->enum('gender', ['masculine', 'feminine'])->nullable()->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->enum('gender', ['masculine', 'feminine'])->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -20,8 +22,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->enum('gender', ['masculine', 'feminine'])->nullable(false)->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->enum('gender', ['masculine', 'feminine'])->nullable(false)->change();
+            });
+        }
     }
 };

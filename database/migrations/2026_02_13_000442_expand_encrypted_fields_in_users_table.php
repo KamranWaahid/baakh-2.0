@@ -10,15 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->text('name')->nullable()->change();
-            if (Schema::hasColumn('users', 'phone')) {
-                $table->text('phone')->nullable()->change();
-            }
-            if (Schema::hasColumn('users', 'whatsapp')) {
-                $table->text('whatsapp')->nullable()->change();
-            }
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('users', function (Blueprint $table) {
+                $table->text('name')->nullable()->change();
+                if (Schema::hasColumn('users', 'phone')) {
+                    $table->text('phone')->nullable()->change();
+                }
+                if (Schema::hasColumn('users', 'whatsapp')) {
+                    $table->text('whatsapp')->nullable()->change();
+                }
+            });
+        }
     }
 
     /**
@@ -26,14 +28,16 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('name')->nullable()->change();
-            if (Schema::hasColumn('users', 'phone')) {
-                $table->string('phone')->nullable()->change();
-            }
-            if (Schema::hasColumn('users', 'whatsapp')) {
-                $table->string('whatsapp')->nullable()->change();
-            }
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('name')->nullable()->change();
+                if (Schema::hasColumn('users', 'phone')) {
+                    $table->string('phone')->nullable()->change();
+                }
+                if (Schema::hasColumn('users', 'whatsapp')) {
+                    $table->string('whatsapp')->nullable()->change();
+                }
+            });
+        }
     }
 };

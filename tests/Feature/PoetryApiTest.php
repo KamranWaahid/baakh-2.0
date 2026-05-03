@@ -16,11 +16,12 @@ class PoetryApiTest extends TestCase
     public function test_api_returns_success_for_valid_poetry()
     {
         $user = User::factory()->create();
-        $poet = Poets::create(['poet_slug' => 'test-poet', 'visibility' => 1]);
+        $poet = Poets::create(['poet_slug' => 'test-poet', 'poet_name' => 'Test Poet', 'poet_pic' => 'default.png', 'visibility' => 1]);
 
         $poetry = Poetry::create([
             'poet_id' => $poet->id,
             'poetry_slug' => 'test-poetry',
+            'poetry_title' => 'Test Poetry',
             'visibility' => 1,
             'user_id' => $user->id
         ]);
@@ -42,6 +43,7 @@ class PoetryApiTest extends TestCase
         $poetry = Poetry::create([
             'poet_id' => 99999,
             'poetry_slug' => 'orphaned-poetry',
+            'poetry_title' => 'Orphaned Poetry',
             'visibility' => 1,
             'user_id' => $user->id
         ]);

@@ -23,6 +23,7 @@ class Poetry extends Model
         'topic_category_id',
         'book_id',
         'user_id',
+        'poetry_title',
         'poetry_slug',
         'poetry_tags',
         'visibility',

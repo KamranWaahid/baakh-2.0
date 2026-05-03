@@ -10,9 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('baakh_tags', function (Blueprint $table) {
-            $table->string('type', 255)->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('baakh_tags', function (Blueprint $table) {
+                $table->string('type', 255)->change();
+            });
+        }
     }
 
     /**
@@ -20,8 +22,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('baakh_tags', function (Blueprint $table) {
-            $table->string('type', 191)->change();
-        });
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('baakh_tags', function (Blueprint $table) {
+                $table->string('type', 191)->change();
+            });
+        }
     }
 };
