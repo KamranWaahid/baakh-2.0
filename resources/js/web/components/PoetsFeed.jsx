@@ -82,6 +82,8 @@ const PoetsFeed = ({ lang }) => {
         staleTime: 60 * 1000,
     });
 
+    const poets = (data?.pages.flatMap(page => page.data) || []);
+
     // If API is down in production, hydrate with local static poets list.
     const {
         data: staticPoets = [],
@@ -121,7 +123,6 @@ const PoetsFeed = ({ lang }) => {
         staleTime: 60 * 1000,
     });
 
-    const poets = (data?.pages.flatMap(page => page.data) || []);
     const displayedPoets = poets.length > 0 ? poets : staticPoets;
 
     // Intersection Observer for infinite scroll
