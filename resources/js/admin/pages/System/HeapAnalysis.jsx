@@ -59,9 +59,7 @@ const HeapAnalysis = () => {
         formData.append('snapshot', file);
 
         try {
-            const response = await api.post('/api/admin/performance/analyze-heap', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await api.post('/api/admin/performance/analyze-heap', formData);
             setResults(response.data);
             toast.success("Analysis complete!");
         } catch (error) {

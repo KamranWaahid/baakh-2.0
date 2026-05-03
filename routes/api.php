@@ -207,6 +207,11 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
 Route::middleware(['auth:sanctum', 'user_role'])
     ->prefix('admin')
     ->group(function () {
+        // Backward compatibility for older cached admin bundles
+        // that still submit FormData updates via POST /{resource}/{id}.
+        Route::post('poets/{id}', [\App\Http\Controllers\Api\Admin\PoetController::class, 'update']);
+        Route::post('poet-books/{id}', [\App\Http\Controllers\Api\Admin\PoetBookController::class, 'update']);
+
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
         Route::post('poets/{id}/restore', [\App\Http\Controllers\Api\Admin\PoetController::class, 'restore']);

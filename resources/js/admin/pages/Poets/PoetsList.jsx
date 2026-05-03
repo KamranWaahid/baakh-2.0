@@ -180,11 +180,17 @@ const PoetsList = () => {
                                     </TableRow>
                                 ) : (
                                     data?.data?.map((poet) => {
+                                        const poetPic = poet.poet_pic || '';
+                                        const poetImageSrc = /^https?:\/\//i.test(poetPic)
+                                            ? poetPic
+                                            : poetPic.startsWith('/')
+                                                ? poetPic
+                                                : `/${poetPic}`;
                                         return (
                                             <TableRow key={poet.id}>
                                                 <TableCell>
                                                     <img
-                                                        src={'/' + poet.poet_pic}
+                                                        src={poetImageSrc}
                                                         alt={poet.poet_name}
                                                         className="h-10 w-10 rounded-full object-cover"
                                                         onError={(e) => e.target.src = 'https://placehold.co/40'}

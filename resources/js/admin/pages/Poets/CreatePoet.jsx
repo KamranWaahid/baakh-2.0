@@ -110,9 +110,7 @@ const CreatePoet = () => {
 
         try {
             setSubmitError(null);
-            await api.post('/api/admin/poets', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await api.post('/api/admin/poets', formData);
             navigate('/admin/poets');
         } catch (error) {
             console.error(error);

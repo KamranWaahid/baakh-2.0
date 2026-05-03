@@ -138,14 +138,14 @@ const EditPoetContent = () => {
                 })) : [],
             });
             if (poet.poet_pic) {
-                setPreview('/' + poet.poet_pic);
+                const pic = poet.poet_pic;
+                setPreview(/^https?:\/\//i.test(pic) ? pic : pic.startsWith('/') ? pic : `/${pic}`);
             }
         }
     }, [poet, form]);
 
     const onSubmit = async (data) => {
         const formData = new FormData();
-        formData.append('_method', 'PUT');
         formData.append('poet_slug', data.poet_slug || '');
         formData.append('date_of_birth', data.date_of_birth || '');
         formData.append('date_of_death', data.date_of_death || '');
@@ -168,9 +168,7 @@ const EditPoetContent = () => {
         });
 
         try {
-            await api.post(`/api/admin/poets/${id}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await api.patch(`/api/admin/poets/${id}`, formData);
             navigate('/admin/poets');
         } catch (error) {
             console.error(error);
