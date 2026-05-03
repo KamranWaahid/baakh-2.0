@@ -29,15 +29,15 @@ api.interceptors.request.use(config => {
         config.headers['Accept-Language'] = lang;
     }
 
-    // Normalize API paths for serverless deployments where /api can be unstable.
-    // We use stripped runtime routes for all public endpoints consistently.
+    // Normalize API paths for serverless deployments where /api can be stripped.
+    // Public v1/auth use stripped paths + web.php forwarders. Admin must stay as
+    // /api/admin/* (or be matched as /admin/* with JSON/XHR) — rewriting to /admin/*
+    // collides with the admin SPA HTML route for the same paths.
     if (typeof config.url === 'string') {
         if (config.url.startsWith('/api/v1/')) {
             config.url = config.url.replace('/api/v1/', '/v1/');
         } else if (config.url.startsWith('/api/auth/')) {
             config.url = config.url.replace('/api/auth/', '/auth/');
-        } else if (config.url.startsWith('/api/admin/')) {
-            config.url = config.url.replace('/api/admin/', '/admin/');
         }
     }
 
