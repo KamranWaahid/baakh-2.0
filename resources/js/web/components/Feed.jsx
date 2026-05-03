@@ -125,7 +125,9 @@ const Feed = ({ lang }) => {
         if (node) observer.current.observe(node);
     }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-    const posts = data?.pages.flatMap(page => page.data) || [];
+    const posts = (data?.pages ?? [])
+        .flatMap((page) => Array.isArray(page?.data) ? page.data : [])
+        .filter((post) => post && typeof post === 'object');
 
     // Construct feeds object with same shape as before for FeedContent
     const feeds = {
