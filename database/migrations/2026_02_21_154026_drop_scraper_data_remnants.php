@@ -14,6 +14,12 @@ return new class extends Migration {
 
         Schema::table('corpus_stats', function (Blueprint $table) {
             if (Schema::hasColumn('corpus_stats', 'sindhila_status')) {
+                // Drop index first to avoid SQLite errors
+                try {
+                    $table->dropIndex(['sindhila_status']);
+                } catch (\Exception $e) {
+                    // Ignore if index doesn't exist
+                }
                 $table->dropColumn('sindhila_status');
             }
         });

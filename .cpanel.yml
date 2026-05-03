@@ -1,0 +1,5 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/kamranwahid/public_html
+    - /bin/cp -rf public/* $DEPLOYPATH
+    - /bin/cp -rf app bootstrap config database lang resources routes storage vendor artisan composer.json $DEPLOYPATH/../

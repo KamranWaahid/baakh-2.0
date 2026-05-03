@@ -204,7 +204,7 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::post('performance/optimize-images', [PerformanceController::class, 'optimizeImages']);
 
     // System Activity
-    Route::get('activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
+    Route::get('activity-logs', [ActivityLogController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum', 'user_role'])
