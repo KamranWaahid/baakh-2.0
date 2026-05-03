@@ -39,11 +39,7 @@ class PeriodController extends Controller
         $endYearRaw = trim($range[1]);
         $endYear = ($endYearRaw === 'Present') ? date('Y') : $endYearRaw;
 
-        $poets = \App\Models\Poets::with([
-            'details' => function ($q) use ($lang) {
-                $q->where('lang', $lang);
-            }
-        ])
+        $poets = \App\Models\Poets::with('all_details')
             ->where(function ($query) use ($startYear, $endYear) {
                 // Poet was alive during the period if:
                 // 1. Their birth was before or during the period end
@@ -57,10 +53,13 @@ class PeriodController extends Controller
             ->where('visibility', 1)
             ->get()
             ->map(function ($poet) use ($lang) {
+                $detail = $poet->all_details->firstWhere('lang', $lang)
+                    ?: $poet->all_details->first();
+
                 return [
                     'id' => $poet->id,
-                    'name' => $poet->details->poet_name ?? $poet->poet_slug,
-                    'laqab' => $poet->details->poet_laqab ?? '',
+                    'name' => $detail?->poet_name ?? $poet->poet_slug,
+                    'laqab' => $detail?->poet_laqab ?? '',
                     'image' => $poet->poet_pic,
                     'slug' => $poet->poet_slug
                 ];

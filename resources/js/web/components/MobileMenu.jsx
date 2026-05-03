@@ -7,6 +7,7 @@ import Logo from './Logo';
 import LoginModal from './LoginModal';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
+import { getImageUrl } from '../utils/url';
 
 const MobileMenu = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -158,9 +159,11 @@ const MobileMenu = ({ lang }) => {
                                 {/* User Info */}
                                 <div className={`flex items-center gap-3 px-3 py-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
                                     <Avatar className="h-10 w-10 border-2 border-gray-100">
-                                        <AvatarImage src={user.avatar && (user.avatar.startsWith('http') ? user.avatar : `/${user.avatar}`)} alt={user.name} />
-                                        <AvatarFallback className="bg-black text-white font-semibold text-sm">
-                                            {user.name?.charAt(0)?.toUpperCase()}
+                                        <AvatarImage src={getImageUrl(user.avatar, 'user')} alt={user.name} />
+                                        <AvatarFallback className="bg-muted font-semibold text-sm text-muted-foreground">
+                                            {user.name?.trim()?.charAt(0)?.toUpperCase() || (
+                                                <UserIcon className="h-5 w-5" aria-hidden />
+                                            )}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : ''}`}>

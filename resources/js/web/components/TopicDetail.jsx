@@ -72,8 +72,8 @@ const TopicDetail = () => {
                         alt={isRtl ? poet.name_sd : poet.name_en}
                         className="object-cover"
                     />
-                    <AvatarFallback className="text-lg font-bold text-gray-400 bg-gray-50">
-                        {poet.name_en?.charAt(0) || 'P'}
+                    <AvatarFallback className="bg-muted">
+                        <User className="h-7 w-7 text-muted-foreground" strokeWidth={1.75} />
                     </AvatarFallback>
                 </Avatar>
             </Link>

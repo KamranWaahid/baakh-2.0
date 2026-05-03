@@ -14,6 +14,7 @@ import api from '@/admin/api/axios';
 import { formatDate } from '@/lib/date-utils';
 import ReportModal from './ReportModal';
 import { getImageUrl } from '../utils/url';
+import AvatarImgOrIcon from './AvatarImgOrIcon';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,6 +23,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+function BookCoverThumb({ src, alt, className, emptyClassName }) {
+    const [broken, setBroken] = React.useState(() => !src);
+    React.useEffect(() => {
+        setBroken(!src);
+    }, [src]);
+    if (!src || broken) {
+        return (
+            <div className={emptyClassName}>
+                <BookOpen className="h-8 w-8 opacity-20" />
+            </div>
+        );
+    }
+    return (
+        <img
+            src={getImageUrl(src)}
+            alt={alt || ''}
+            className={className}
+            onError={() => setBroken(true)}
+        />
+    );
+}
 
 const PoetProfile = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -136,13 +159,11 @@ const PoetProfile = ({ lang }) => {
                         {/* Mobile Profile Header */}
                         <div className="lg:hidden mb-8">
                             <div className="flex items-center gap-4 mb-4">
-                                <div className="h-16 w-16 md:h-20 md:w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden shadow-sm">
-                                    <img
-                                        src={getImageUrl(poet.avatar, 'poet')}
+                                <div className="h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-full border border-gray-100 bg-muted shadow-sm">
+                                    <AvatarImgOrIcon
+                                        src={poet.avatar}
+                                        imageType="poet"
                                         alt={isRtl ? poet.name_sd : poet.name_en}
-                                        className="w-full h-full object-cover"
-                                        loading="lazy"
-                                        decoding="async"
                                     />
                                 </div>
                                 <div>
@@ -329,13 +350,11 @@ const PoetProfile = ({ lang }) => {
                 {/* Profile Sidebar (Right) - Desktop */}
                 <aside className="hidden lg:block w-[320px] shrink-0 sticky top-24 h-fit border-l border-gray-100 pl-12 -ml-6">
                     <div className="flex flex-col items-start">
-                        <div className="h-32 w-32 rounded-full bg-gray-50 mb-6 flex items-center justify-center text-gray-400 overflow-hidden border border-gray-100">
-                            <img
-                                src={getImageUrl(poet.avatar, 'poet')}
+                        <div className="h-32 w-32 mb-6 overflow-hidden rounded-full border border-gray-100 bg-muted">
+                            <AvatarImgOrIcon
+                                src={poet.avatar}
+                                imageType="poet"
                                 alt={isRtl ? poet.name_sd : poet.name_en}
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                                decoding="async"
                             />
                         </div>
 
@@ -394,11 +413,11 @@ const PoetProfile = ({ lang }) => {
                                 {poet.suggested?.map((p, i) => (
                                     <div key={i} className="flex items-center justify-between group cursor-pointer">
                                         <Link to={`/${lang}/poet/${p.slug}`} className="flex items-center gap-3 flex-1">
-                                            <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-200 overflow-hidden">
-                                                <img
-                                                    src={getImageUrl(p.avatar, 'poet')}
+                                            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-muted">
+                                                <AvatarImgOrIcon
+                                                    src={p.avatar}
+                                                    imageType="poet"
                                                     alt={isRtl ? p.name_sd : p.name_en}
-                                                    className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             <span className="text-sm font-medium text-gray-700 group-hover:text-black transition-colors">
@@ -551,17 +570,12 @@ const PoetProfile = ({ lang }) => {
                             {poet?.books?.map((book) => (
                                 <div key={book.id} className="flex gap-4 items-start group">
                                     <div className="w-20 h-28 bg-gray-100 rounded-md overflow-hidden border shadow-sm shrink-0">
-                                        {book.cover_image ? (
-                                            <img
-                                                src={getImageUrl(book.cover_image)}
-                                                alt={isRtl && book.title_sd ? book.title_sd : book.title}
-                                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                                <BookOpen className="w-8 h-8 opacity-20" />
-                                            </div>
-                                        )}
+                                        <BookCoverThumb
+                                            src={book.cover_image}
+                                            alt={isRtl && book.title_sd ? book.title_sd : book.title}
+                                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                            emptyClassName="w-full h-full flex items-center justify-center text-gray-300"
+                                        />
                                     </div>
                                     <div className="flex-1 space-y-3 pt-1">
                                         <div>

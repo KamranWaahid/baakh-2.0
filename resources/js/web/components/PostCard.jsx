@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, User } from 'lucide-react';
+import { Sparkles, Image as ImageIcon } from 'lucide-react';
 import PoemActionBar from './PoemActionBar';
 import { formatDate } from '@/lib/date-utils';
-import { getImageUrl, handleImageError } from '../utils/url';
+import { getImageUrl } from '../utils/url';
+import AvatarImgOrIcon from './AvatarImgOrIcon';
 
 const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, is_liked = false, is_bookmarked = false, id, is_couplet = false }) => {
     const isRtl = lang === 'sd';
@@ -13,6 +14,11 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
     const safeAuthor = author || 'Anonymous';
 
     // Construct a pseudo-poem object for PoemActionBar
+    const [coverBroken, setCoverBroken] = React.useState(false);
+    React.useEffect(() => {
+        setCoverBroken(false);
+    }, [cover]);
+
     const postPoem = {
         id,
         likes,
@@ -42,15 +48,8 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                             to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'}
                             className={`flex items-center gap-2 transition-opacity w-fit hover:opacity-80`}
                         >
-                            <div className={`h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
-                                <img
-                                    src={getImageUrl(author_avatar, 'user')}
-                                    onError={(e) => handleImageError(e, 'user')}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
+                            <div className={`h-5 w-5 rounded-full bg-muted flex shrink-0 border border-gray-100 overflow-hidden`}>
+                                <AvatarImgOrIcon src={author_avatar} imageType="poet" alt="" />
                             </div>
                             <span className="font-semibold text-gray-900 hover:underline">{safeAuthor}</span>
                         </Link>
@@ -86,14 +85,20 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                 </div>
                                 {cover && (
                                     <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm transition-transform duration-300 group-hover:shadow-md">
-                                        <img
-                                            src={getImageUrl(cover, 'post')}
-                                            onError={(e) => handleImageError(e, 'post')}
-                                            alt={title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            loading="lazy"
-                                            decoding="async"
-                                        />
+                                        {coverBroken ? (
+                                            <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+                                                <ImageIcon className="h-8 w-8 opacity-70" strokeWidth={1.25} aria-hidden />
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={getImageUrl(cover, 'post')}
+                                                onError={() => setCoverBroken(true)}
+                                                alt={title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                loading="lazy"
+                                                decoding="async"
+                                            />
+                                        )}
                                     </div>
                                 )}
                             </div>

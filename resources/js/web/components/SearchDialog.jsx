@@ -3,7 +3,7 @@ import { Search, X, Loader2, User, BookOpen, Calendar, ArrowRight, Tags, History
 import { useNavigate } from 'react-router-dom';
 import api from '../../admin/api/axios';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { getImageUrl, handleImageError } from '../utils/url';
+import AvatarImgOrIcon from './AvatarImgOrIcon';
 
 const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
     const isRtl = lang === 'sd';
@@ -102,13 +102,8 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                     onClick={() => handleSelect(`/${lang}/poet/${poet.slug}`)}
                                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer group transition-all duration-150 w-full text-start outline-none focus:bg-gray-50 focus:ring-2 focus:ring-primary/20"
                                 >
-                                    <div className="h-9 w-9 rounded-full bg-gray-100 overflow-hidden shrink-0">
-                                        <img
-                                            src={getImageUrl(poet.image, 'poet')}
-                                            onError={(e) => handleImageError(e, 'poet')}
-                                            alt={poet.name}
-                                            className="h-full w-full object-cover"
-                                        />
+                                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-gray-100">
+                                        <AvatarImgOrIcon src={poet.image} imageType="poet" alt={poet.name || ''} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className={`font-medium text-gray-900 ${isRtl ? 'font-arabic' : ''}`}>

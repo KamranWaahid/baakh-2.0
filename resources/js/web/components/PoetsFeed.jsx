@@ -146,9 +146,9 @@ const PoetsFeed = ({ lang }) => {
                         loading="lazy"
                         decoding="async"
                     />
-                    <AvatarFallback className="text-xl md:text-2xl font-bold text-gray-400 bg-gray-100">
-                        {poet.name_en?.charAt(0) || poet.name_sd?.charAt(0) || 'P'}
-                    </AvatarFallback>
+                                    <AvatarFallback className="bg-muted">
+                                        <User className="h-7 w-7 md:h-10 md:w-10 text-muted-foreground" strokeWidth={1.75} />
+                                    </AvatarFallback>
                 </Avatar>
             </Link>
 
