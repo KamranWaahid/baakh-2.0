@@ -7,6 +7,13 @@ import { User } from 'lucide-react';
 import { formatSindhiDate } from '../utils/dateUtils';
 import { getImageUrl } from '../utils/url';
 
+const normalizeArrayPayload = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.items)) return payload.items;
+    return [];
+};
+
 const SidebarRight = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [staffPicks, setStaffPicks] = useState([]);
@@ -54,13 +61,13 @@ const SidebarRight = ({ lang }) => {
                     const picksResponse = await api.get('/api/v1/sidebar/staff-picks', {
                         headers: { 'Accept-Language': lang }
                     });
-                    setStaffPicks(picksResponse.data);
+                    setStaffPicks(normalizeArrayPayload(picksResponse.data).filter(Boolean));
 
                     // Fetch Topics
                     const topicsResponse = await api.get('/api/v1/sidebar/topics', {
                         headers: { 'Accept-Language': lang }
                     });
-                    setTopics(topicsResponse.data);
+                    setTopics(normalizeArrayPayload(topicsResponse.data).filter(Boolean));
                 });
             } catch (error) {
                 console.error("Failed to fetch sidebar data", error);
@@ -130,10 +137,10 @@ const SidebarRight = ({ lang }) => {
                             <Skeleton key={i} className="h-8 w-20 rounded-full" />
                         ))
                     ) : (
-                        topics.map(topic => (
-                            <Link key={topic.slug} to={`/${lang}/topic/${topic.slug}`}>
+                        topics.map((topic, index) => (
+                            <Link key={topic?.slug || `topic-${index}`} to={`/${lang}/topic/${topic?.slug || ''}`}>
                                 <Badge variant="secondary" className="rounded-full px-4 py-2 text-sm font-normal hover:bg-gray-200 cursor-pointer text-gray-700 bg-gray-100 border-none transition-colors">
-                                    {topic.name}
+                                    {topic?.name || ''}
                                 </Badge>
                             </Link>
                         ))
