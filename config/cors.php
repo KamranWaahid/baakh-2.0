@@ -28,7 +28,7 @@ return [
     'allowed_origins_patterns' => array_values(array_filter(array_map('trim', explode(',', env(
         'CORS_ALLOWED_ORIGIN_PATTERNS',
         '#^https://.*\\.vercel\\.app$#'
-    )))),
+    ))))),
 
     'allowed_headers' => ['*'],
 
