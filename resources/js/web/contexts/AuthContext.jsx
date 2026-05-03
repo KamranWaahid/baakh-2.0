@@ -8,6 +8,13 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const checkAuth = async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            setUser(null);
+            setLoading(false);
+            return null;
+        }
+
         try {
             const response = await api.get('/api/auth/me');
             const userData = response.data.user;
