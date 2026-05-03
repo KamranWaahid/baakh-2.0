@@ -82,21 +82,26 @@ class PoetController extends Controller
 
             $detailSd = $getDetail('sd');
             $detailEn = $getDetail('en');
-            // Fallbacks
-            $defaultDetail = $poet->all_details->first() ?? (object) [];
+            $defaultDetail = $poet->all_details->first();
+
+            $nameEn = $detailEn?->poet_name ?: $detailSd?->poet_name ?: $defaultDetail?->poet_name ?: 'N/A';
+            $nameSd = $detailSd?->poet_name ?: $detailEn?->poet_name ?: $defaultDetail?->poet_name ?: 'N/A';
+            $laqabEn = $detailEn?->poet_laqab ?: $detailEn?->poet_name ?: $detailSd?->poet_laqab ?: $detailSd?->poet_name ?: $defaultDetail?->poet_laqab ?: $defaultDetail?->poet_name ?: 'N/A';
+            $laqabSd = $detailSd?->poet_laqab ?: $detailSd?->poet_name ?: $detailEn?->poet_laqab ?: $detailEn?->poet_name ?: $defaultDetail?->poet_laqab ?: $defaultDetail?->poet_name ?: 'N/A';
+            $bioEn = strip_tags($detailEn?->poet_bio ?: $detailSd?->poet_bio ?: $defaultDetail?->poet_bio ?: '');
+            $bioSd = strip_tags($detailSd?->poet_bio ?: $detailEn?->poet_bio ?: $defaultDetail?->poet_bio ?: '');
 
             return [
                 'id' => $poet->id,
                 'slug' => $poet->poet_slug,
                 'avatar' => $poet->poet_pic ?: null,
                 // English Data
-                'name_en' => $detailEn->poet_name ?: ($detailSd->poet_name ?: 'N/A'),
-                'name_sd' => $detailSd->poet_name ?: ($detailEn->poet_name ?: 'N/A'),
-                'laqab_en' => $detailEn->poet_laqab ?: ($detailEn->poet_name ?: ($detailSd->poet_laqab ?: ($detailSd->poet_name ?: 'N/A'))),
-                'laqab_sd' => $detailSd->poet_laqab ?: ($detailSd->poet_name ?: ($detailEn->poet_laqab ?: ($detailEn->poet_name ?: 'N/A'))),
-
-                'bio_en' => strip_tags($detailEn->poet_bio ?: ($detailSd->poet_bio ?: '')),
-                'bio_sd' => strip_tags($detailSd->poet_bio ?: ($detailEn->poet_bio ?: '')),
+                'name_en' => $nameEn,
+                'name_sd' => $nameSd,
+                'laqab_en' => $laqabEn,
+                'laqab_sd' => $laqabSd,
+                'bio_en' => $bioEn,
+                'bio_sd' => $bioSd,
 
                 'entries_count' => $poet->poetry_count ?? 0,
 
@@ -112,22 +117,25 @@ class PoetController extends Controller
     public function tags(Request $request)
     {
         $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        try {
+            $tags = Tags::where('type', 'poets')
+                ->with([
+                    'details' => function ($q) use ($lang) {
+                        $q->where('lang', $lang);
+                    }
+                ])
+                ->get()
+                ->map(function ($tag) {
+                    return [
+                        'tag' => $tag->details->first()?->name ?? $tag->slug,
+                        'slug' => $tag->slug
+                    ];
+                });
 
-        $tags = Tags::where('type', 'poets')
-            ->with([
-                'details' => function ($q) use ($lang) {
-                    $q->where('lang', $lang);
-                }
-            ])
-            ->get()
-            ->map(function ($tag) {
-                return [
-                    'tag' => $tag->details->first()?->name ?? $tag->slug,
-                    'slug' => $tag->slug
-                ];
-            });
-
-        return response()->json($tags);
+            return response()->json($tags);
+        } catch (\Throwable $e) {
+            return response()->json([]);
+        }
     }
 
     public function show(Request $request, $slug)
