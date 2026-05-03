@@ -15,6 +15,7 @@ use App\Traits\BaakhSeoTrait;
 use App\Services\StaticCacheService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -24,7 +25,17 @@ class HomeController extends UserController
     public function __construct()
     {
         parent::__construct();
-        $this->updateGhazalOfTheDay();
+
+        // Avoid expensive daily-update logic on every API request.
+        if (!app()->runningInConsole()) {
+            $path = request()->path();
+            if (!str_starts_with($path, 'api/') && !str_starts_with($path, 'v1/')) {
+                Cache::remember('ghazal_of_day_updated_' . now()->format('Ymd'), 3600, function () {
+                    $this->updateGhazalOfTheDay();
+                    return true;
+                });
+            }
+        }
 
     }
 
@@ -360,6 +371,7 @@ class HomeController extends UserController
         $page = $request->get('page', 1);
         $filter = $request->get('filter');
         $perPage = 10;
+        $userId = auth('sanctum')->id();
 
         if ($page == 1 && !$filter && !$request->has('period_id')) {
             $cache = app(StaticCacheService::class);
@@ -395,12 +407,22 @@ class HomeController extends UserController
                 $q->where('visibility', 1);
             });
 
+        if ($userId) {
+            $query->withExists([
+                'likes as is_liked' => function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                },
+                'bookmarks as is_bookmarked' => function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                },
+            ]);
+        }
+
         if ($filter === 'featured') {
             $query->where('is_featured', 1);
         }
 
         if ($filter === 'bookmarked') {
-            $userId = auth('sanctum')->id();
             if ($userId) {
                 $query->whereHas('bookmarks', function ($q) use ($userId) {
                     $q->where('user_id', $userId);
@@ -431,9 +453,7 @@ class HomeController extends UserController
 
         $poetry = $query->latest()->paginate($perPage);
 
-        $userId = auth('sanctum')->id();
-
-        $poetry->getCollection()->transform(function ($p) use ($lang, $userId) {
+        $poetry->getCollection()->transform(function ($p) use ($userId) {
             return [
                 'id' => $p->id,
                 'title' => $p->info?->title ?? $p->poetry_title,
@@ -448,8 +468,8 @@ class HomeController extends UserController
                 'cat_slug' => $p->category?->slug,
                 'poet_slug' => $p->poet?->poet_slug,
                 'likes' => $p->likes_count ?? 0,
-                'is_liked' => $userId ? $p->likes()->where('user_id', $userId)->exists() : false,
-                'is_bookmarked' => $userId ? $p->bookmarks()->where('user_id', $userId)->exists() : false,
+                'is_liked' => $userId ? (bool) ($p->is_liked ?? false) : false,
+                'is_bookmarked' => $userId ? (bool) ($p->is_bookmarked ?? false) : false,
             ];
         });
 
