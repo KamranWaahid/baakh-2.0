@@ -4,3 +4,7 @@
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/logs/*
+storage/debugbar
+/database/backup
+/sql
+/baakh_backup.sql
