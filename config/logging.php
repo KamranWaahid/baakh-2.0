@@ -5,9 +5,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
-$defaultLogPath = (is_dir(storage_path('logs')) && is_writable(storage_path('logs')))
-    ? storage_path('logs/laravel.log')
-    : '/tmp/laravel.log';
+$defaultLogPath = '/tmp/laravel.log';
 
 return [
 
