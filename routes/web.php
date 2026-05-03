@@ -155,6 +155,30 @@ Route::prefix('api')->group(function () {
     });
 });
 
+/*
+|--------------------------------------------------------------------------
+| Serverless path-normalized API fallback routes
+|--------------------------------------------------------------------------
+| Vercel PHP routing may forward /api/* into Laravel as stripped paths
+| (e.g. /api/v1/feed -> /v1/feed). Mirror critical endpoints without /api
+| so frontend always receives JSON instead of SPA HTML.
+*/
+Route::get('/health', function () {
+    return response()->json([
+        'ok' => true,
+        'service' => 'api-fallback-stripped',
+        'laravel' => app()->version(),
+        'environment' => app()->environment(),
+    ]);
+});
+
+Route::prefix('v1')->group(function () {
+    Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
+    Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
+    Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
+    Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
+});
+
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');
 
 Route::get('/login', function () {
