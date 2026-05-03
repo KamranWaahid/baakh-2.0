@@ -279,17 +279,3 @@ Route::prefix('admin/databases/dictionary')->group(function () {
     Route::get('count', [DatabaseController::class, 'countDictionary']);
     Route::get('export', [DatabaseController::class, 'exportDictionary']);
 });
-
-/*
-|--------------------------------------------------------------------------
-| Mokhii Public API (Structured Data for AI Agents & Search Engines)
-|--------------------------------------------------------------------------
-*/
-Route::prefix('mokhii')->middleware('detect.ai.agent')->group(function () {
-    Route::get('health', [\App\Http\Controllers\Api\MokhiiApiController::class, 'health']);
-    Route::get('context/{slug}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'context']);
-    Route::get('graph/{type}/{id}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'graph']);
-    Route::get('schema/{slug}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'schema']);
-    Route::get('cluster/{topic}', [\App\Http\Controllers\Api\MokhiiApiController::class, 'cluster']);
-    Route::get('audits', [\App\Http\Controllers\Api\MokhiiApiController::class, 'audits']);
-});
