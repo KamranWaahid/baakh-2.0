@@ -125,14 +125,11 @@ use App\Http\Controllers\Api\Admin\TeamController;
 use App\Http\Controllers\Api\Admin\TeamMemberController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\PermissionController;
-use App\Http\Controllers\Api\Admin\ActivityLogController;
 use App\Http\Controllers\Api\Admin\LanguageController;
 use App\Http\Controllers\Api\Admin\DatabaseController;
 use App\Http\Controllers\Api\Admin\CountryController;
 use App\Http\Controllers\Api\Admin\ProvinceController;
 use App\Http\Controllers\Api\Admin\CityController;
-use App\Http\Controllers\Api\Admin\ErrorManagementController;
-use App\Http\Controllers\Api\Admin\PerformanceController;
 use App\Http\Controllers\Api\Admin\AnalyticsController;
 
 // ... (Auth routes remain)
@@ -168,8 +165,6 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::apiResource('countries', CountryController::class);
     Route::apiResource('provinces', ProvinceController::class);
     Route::apiResource('cities', CityController::class);
-    // Activity Logs
-    Route::middleware('can:view_activity_logs')->get('activity-logs', [ActivityLogController::class, 'index']);
 
     // Languages
     Route::apiResource('languages', LanguageController::class);
@@ -203,39 +198,10 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::get('emails/templates', [\App\Http\Controllers\Api\Admin\EmailTemplateController::class, 'index']);
     Route::get('emails/preview/{template}', [\App\Http\Controllers\Api\Admin\EmailTemplateController::class, 'preview']);
 
-    // Server Management
-    Route::get('server/commands', [\App\Http\Controllers\Api\Admin\ServerController::class, 'index']);
-    Route::post('server/commands/run', [\App\Http\Controllers\Api\Admin\ServerController::class, 'run']);
-    Route::get('server/stats', [\App\Http\Controllers\Api\Admin\ServerController::class, 'stats']);
-    Route::get('server/logs', [\App\Http\Controllers\Api\Admin\ServerController::class, 'logs']);
-    Route::post('server/logs/clear', [\App\Http\Controllers\Api\Admin\ServerController::class, 'clearLogs']);
-    Route::post('server/shell', [\App\Http\Controllers\Api\Admin\ServerController::class, 'shell']);
-
-    // Advanced Server Features
-    Route::get('server/env', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getEnv']);
-    Route::post('server/env', [\App\Http\Controllers\Api\Admin\ServerController::class, 'updateEnv']);
-    Route::get('server/queues', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getQueues']);
-    Route::post('server/queues/manage', [\App\Http\Controllers\Api\Admin\ServerController::class, 'manageFailedJob']);
-    Route::get('server/search/stats', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getSearchStats']);
-    Route::get('server/health', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getHealth']);
-    Route::get('server/deployment/history', [\App\Http\Controllers\Api\Admin\ServerController::class, 'getDeploymentHistory']);
-
-    // Error Management
-    Route::post('system-errors/clear', [ErrorManagementController::class, 'clear']);
-    Route::post('system-errors/verify', [ErrorManagementController::class, 'verify']);
-    Route::post('system-errors/{error}/verify', [ErrorManagementController::class, 'verifyOne']);
-    Route::apiResource('system-errors', ErrorManagementController::class);
-
     // Moderation
     Route::apiResource('reports', \App\Http\Controllers\Api\Admin\ReportController::class);
     Route::apiResource('feedback', \App\Http\Controllers\Api\Admin\FeedbackController::class);
 
-    // Performance Analysis
-    Route::post('performance/analyze-heap', [PerformanceController::class, 'analyzeHeap']);
-    Route::post('performance/optimize-images', [PerformanceController::class, 'optimizeImages']);
-
-    // System Activity
-    Route::get('activity-logs', [ActivityLogController::class, 'index']);
 });
 
 Route::middleware(['auth:sanctum', 'user_role'])
@@ -306,13 +272,6 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
         Route::post('dictionary/lemmas/{id}/relations', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeRelation']);
         Route::delete('dictionary/relations/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyRelation']);
-
-
-        // ── Mokhii SEO Dashboard ────────────────────
-        Route::get('mokhii/dashboard', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'index']);
-        Route::post('mokhii/crawl', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerCrawl']);
-        Route::post('mokhii/compute', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerCompute']);
-        Route::get('mokhii/autofix', [\App\Http\Controllers\Api\Admin\MokhiiDashboardController::class, 'triggerAutoFix']);
     });
 
 // Public Sync Endpoints (Read-only, protected by token)

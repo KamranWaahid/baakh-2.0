@@ -380,13 +380,10 @@ const Dashboard = () => {
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Activity Feed */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Activity className="h-5 w-5 text-muted-foreground" /> Recent Activity
                         </CardTitle>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link to="/admin/system/activity-logs">View All</Link>
-                        </Button>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
