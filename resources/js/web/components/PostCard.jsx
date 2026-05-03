@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sparkles, User } from 'lucide-react';
 import PoemActionBar from './PoemActionBar';
 import { formatDate } from '@/lib/date-utils';
-import { getImageUrl } from '../utils/url';
+import { getImageUrl, handleImageError } from '../utils/url';
 
 const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, is_liked = false, is_bookmarked = false, id, is_couplet = false }) => {
     const isRtl = lang === 'sd';
@@ -45,6 +45,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                             <div className={`h-5 w-5 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 border border-gray-100 overflow-hidden`}>
                                 <img
                                     src={getImageUrl(author_avatar, 'user')}
+                                    onError={(e) => handleImageError(e, 'user')}
                                     alt=""
                                     className="w-full h-full object-cover"
                                     loading="lazy"
@@ -87,6 +88,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                     <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm transition-transform duration-300 group-hover:shadow-md">
                                         <img
                                             src={getImageUrl(cover, 'post')}
+                                            onError={(e) => handleImageError(e, 'post')}
                                             alt={title}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             loading="lazy"

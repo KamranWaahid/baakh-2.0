@@ -54,13 +54,16 @@ const MobileMenu = ({ lang }) => {
         <>
             {/* Menu Panel */}
             <div
-                className={`fixed top-0 ${isRtl ? 'right-0' : 'left-0'} h-full w-[280px] bg-white z-[200] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform ${isMenuOpen
+                className={`fixed top-0 ${isRtl ? 'right-0' : 'left-0'} h-full w-[280px] bg-white z-[200] flex flex-col transition-transform duration-300 will-change-transform ${isMenuOpen
                     ? 'translate-x-0'
                     : isRtl
                         ? 'translate-x-full'
                         : '-translate-x-full'
                     }`}
-                style={{ boxShadow: isMenuOpen ? '4px 0 24px rgba(0,0,0,0.08)' : 'none' }}
+                style={{
+                    transitionTimingFunction: 'cubic-bezier(0.25,0.1,0.25,1)',
+                    boxShadow: isMenuOpen ? '4px 0 24px rgba(0,0,0,0.08)' : 'none'
+                }}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 h-[56px] border-b border-gray-100 flex-shrink-0">
