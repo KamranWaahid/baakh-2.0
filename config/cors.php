@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://127.0.0.1:8000,https://baakh.com,https://beta.baakh.com')),
+    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://127.0.0.1:8000,https://baakh.com,https://baakh-2-0-one.vercel.app')),
 
     /*
     | Vercel preview / production (*.vercel.app) when SPA calls API from another origin.
