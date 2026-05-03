@@ -3,11 +3,11 @@
     "framework": null,
     "outputDirectory": "public",
     "installCommand": "npm ci",
-    "buildCommand": "npm run build",
+    "buildCommand": "npm run build && rm -rf node_modules storage/debugbar database/backup sql && rm -f baakh_backup.sql",
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.7.4",
-            "excludeFiles": "{node_modules/**,storage/debugbar/**,database/backup/**,tests/**,sql/**,baakh_backup.sql,.phpunit.result.cache}"
+            "excludeFiles": "{node_modules/**,**/tests/**,**/Tests/**,storage/debugbar/**,database/backup/**,storage/app/sindhi_wordnet/**,sql/**,baakh_backup.sql,.phpunit.result.cache,public/vendor/datatables-plugins/**,public/vendor/summernote/**,public/vendor/fontawesome-free/**}"
         }
     },
     "routes": [
