@@ -194,7 +194,7 @@ class PoetController extends Controller
         try {
             $imagePath = $poet->poet_pic;
             if ($request->hasFile('image')) {
-                $uploadImage = $this->updateImage($request->image, 'poets', public_path($poet->poet_pic), $request->poet_slug, true);
+                $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $request->poet_slug, true);
                 if (isset($uploadImage['error']) && $uploadImage['error'] === true) {
                     return response()->json(['message' => $uploadImage['message']], 422);
                 }
@@ -281,7 +281,7 @@ class PoetController extends Controller
         try {
             // Delete image if exists
             if ($poet->poet_pic) {
-                $this->deleteImageFiles(public_path($poet->poet_pic), true);
+                $this->deleteImageFiles($poet->poet_pic, true);
             }
 
             $poet->all_details()->forceDelete();

@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Laravel\Facades\Image;
 
@@ -10,6 +10,53 @@ use Intervention\Image\Laravel\Facades\Image;
 
 trait HasMedia
 {
+    private function mediaDisk(): string
+    {
+        return (string) config('media.disk', 'local');
+    }
+
+    private function mediaBasePath(): string
+    {
+        return trim((string) config('media.base_path', 'assets/images'), '/');
+    }
+
+    private function isCloudDisk(): bool
+    {
+        $disk = $this->mediaDisk();
+        return !in_array($disk, ['local', 'public'], true);
+    }
+
+    private function buildRelativePath(string $folderPath, string $fileName): string
+    {
+        $base = $this->mediaBasePath();
+        $folder = trim($folderPath, '/');
+        return $folder !== '' ? "{$base}/{$folder}/{$fileName}" : "{$base}/{$fileName}";
+    }
+
+    private function resolveStoragePath(?string $uri): ?string
+    {
+        if (!$uri) {
+            return null;
+        }
+
+        $value = trim($uri);
+        if ($value === '') {
+            return null;
+        }
+
+        $base = $this->mediaBasePath() . '/';
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            $path = ltrim((string) parse_url($value, PHP_URL_PATH), '/');
+            if (str_contains($path, $base)) {
+                return substr($path, strpos($path, $base));
+            }
+            return null;
+        }
+
+        $path = ltrim($value, '/');
+        return str_starts_with($path, $base) ? $path : null;
+    }
 
     /**
      * Handle Uploading Images
@@ -50,17 +97,23 @@ trait HasMedia
             $imageName = date('dmY') . '_' . uniqid() . '.webp';
         }
 
-        // Upload original image
-        $fullPath = $folderPath ? "assets/images/$folderPath/$imageName" : "assets/images/$imageName";
-        $destination = public_path($folderPath ? "assets/images/$folderPath" : "assets/images");
+        $relativePath = $this->buildRelativePath($folderPath, $imageName);
+        $encoded = (string) $image->toWebp(80);
 
-        // Debug: Ensure the destination directory exists
-        if (!file_exists($destination)) {
-            mkdir($destination, 0755, true);
+        if ($this->isCloudDisk()) {
+            Storage::disk($this->mediaDisk())->put($relativePath, $encoded, [
+                'visibility' => 'public',
+                'ContentType' => 'image/webp',
+            ]);
+            $fullPath = Storage::disk($this->mediaDisk())->url($relativePath);
+        } else {
+            $destination = public_path(dirname($relativePath));
+            if (!file_exists($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            file_put_contents(public_path($relativePath), $encoded);
+            $fullPath = $relativePath;
         }
-
-        // Save as WebP
-        $image->toWebp(80)->save($destination . '/' . $imageName);
 
 
         /**
@@ -98,8 +151,19 @@ trait HasMedia
                 // Validation: does `clone $image` work in V3? Yes.
 
                 $thumb = clone $image;
-                $thumb->scale($value['width'], $value['height'])->toWebp(80)->save(public_path("assets/images/$folderPath/$resizedName"));
-                $resizedImages[] = "assets/images/$folderPath/$resizedName";
+                $thumbEncoded = (string) $thumb->scale($value['width'], $value['height'])->toWebp(80);
+                $thumbRelativePath = $this->buildRelativePath($folderPath, $resizedName);
+
+                if ($this->isCloudDisk()) {
+                    Storage::disk($this->mediaDisk())->put($thumbRelativePath, $thumbEncoded, [
+                        'visibility' => 'public',
+                        'ContentType' => 'image/webp',
+                    ]);
+                    $resizedImages[] = Storage::disk($this->mediaDisk())->url($thumbRelativePath);
+                } else {
+                    file_put_contents(public_path($thumbRelativePath), $thumbEncoded);
+                    $resizedImages[] = $thumbRelativePath;
+                }
             }
         }
 
@@ -125,31 +189,13 @@ trait HasMedia
      * @param bool $thumbnail
      * @return array
      */
-    public function updateImage($file, string $folderPath, string $oldImageUri, ?string $customName = null, bool $thumbnail = false): array
+    public function updateImage($file, string $folderPath, ?string $oldImageUri, ?string $customName = null, bool $thumbnail = false): array
     {
-
-        if (file_exists($oldImageUri)) {
-            Log::info('====== image exists and deleting for ' . $customName);
-            // Get the original extension of the image file
-            $extension = pathinfo($oldImageUri, PATHINFO_EXTENSION);
-            $filenameWithoutExtension = pathinfo($oldImageUri, PATHINFO_FILENAME);
-
-            // delink all thumbnails also [150x150, 300x300, 1024x1024]
-            $thumbnailArray = config('admin_media.sizes');
-
-            foreach ($thumbnailArray as $key => $thumbnailSize) {
-
-                $thumbnailImage = 'assets/images/' . $folderPath . '/' . $filenameWithoutExtension . '_' . $key . '.' . $extension;
-
-                if (file_exists($thumbnailImage)) {
-                    unlink($thumbnailImage);
-                }
-            }
-            unlink($oldImageUri);
-            return $this->uploadImage($file, $folderPath, $customName, $thumbnail);
-        } else {
-            return $this->uploadImage($file, $folderPath, $customName, $thumbnail);
+        if ($oldImageUri) {
+            $this->deleteImageFiles($oldImageUri, $thumbnail);
         }
+
+        return $this->uploadImage($file, $folderPath, $customName, $thumbnail);
     }
 
 
@@ -168,29 +214,36 @@ trait HasMedia
      */
     public function deleteImageFiles($oldImageUri, $hasThumbnails = false)
     {
-        if (!file_exists($oldImageUri)) {
-            return ['error' => true, 'message' => 'File does not exists in the folder'];
+        $storagePath = $this->resolveStoragePath((string) $oldImageUri);
+        if (!$storagePath) {
+            return ['error' => true, 'message' => 'Could not resolve media path'];
         }
 
+        $paths = [$storagePath];
         if ($hasThumbnails === true) {
             $cropSize = config('admin_media.sizes');
-
-            $extension = pathinfo($oldImageUri, PATHINFO_EXTENSION);
-            $filenameWithoutExtension = pathinfo($oldImageUri, PATHINFO_FILENAME);
-            $folderPath = pathinfo($oldImageUri, PATHINFO_DIRNAME);
+            $extension = pathinfo($storagePath, PATHINFO_EXTENSION);
+            $filenameWithoutExtension = pathinfo($storagePath, PATHINFO_FILENAME);
+            $folderPath = pathinfo($storagePath, PATHINFO_DIRNAME);
 
             foreach ($cropSize as $key => $value) {
-                $thumbnailImage = $folderPath . '/' . $filenameWithoutExtension . '_' . $key . '.' . $extension;
-
-                if (file_exists($thumbnailImage)) {
-                    unlink($thumbnailImage);
-                }
+                $paths[] = $folderPath . '/' . $filenameWithoutExtension . '_' . $key . '.' . $extension;
             }
-
         }
 
-        unlink($oldImageUri);
-        return ['error' => false, 'message' => 'Files removed from directory'];
+        if ($this->isCloudDisk()) {
+            Storage::disk($this->mediaDisk())->delete($paths);
+            return ['error' => false, 'message' => 'Files removed from cloud storage'];
+        }
+
+        foreach ($paths as $path) {
+            $absolutePath = public_path($path);
+            if (file_exists($absolutePath)) {
+                @unlink($absolutePath);
+            }
+        }
+
+        return ['error' => false, 'message' => 'Files removed from local storage'];
     }
 
 
