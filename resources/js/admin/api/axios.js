@@ -30,14 +30,16 @@ api.interceptors.request.use(config => {
     }
 
     // Normalize API paths for serverless deployments where /api can be stripped.
-    // Public v1/auth use stripped paths + web.php forwarders. Admin must stay as
-    // /api/admin/* (or be matched as /admin/* with JSON/XHR) — rewriting to /admin/*
-    // collides with the admin SPA HTML route for the same paths.
+    // Keep all app calls on stripped runtime paths that are known to resolve on Vercel.
+    // Admin endpoints are requested as /admin/* with XHR/JSON headers so they are
+    // forwarded to API handlers instead of the admin SPA HTML shell.
     if (typeof config.url === 'string') {
         if (config.url.startsWith('/api/v1/')) {
             config.url = config.url.replace('/api/v1/', '/v1/');
         } else if (config.url.startsWith('/api/auth/')) {
             config.url = config.url.replace('/api/auth/', '/auth/');
+        } else if (config.url.startsWith('/api/admin/')) {
+            config.url = config.url.replace('/api/admin/', '/admin/');
         }
     }
 
