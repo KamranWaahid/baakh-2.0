@@ -57,16 +57,16 @@ const SidebarRight = ({ lang }) => {
                 await import('../../admin/api/axios').then(async (module) => {
                     const api = module.default;
 
-                    // Fetch Staff Picks
-                    const picksResponse = await api.get('/api/v1/sidebar/staff-picks', {
-                        headers: { 'Accept-Language': lang }
-                    });
-                    setStaffPicks(normalizeArrayPayload(picksResponse.data).filter(Boolean));
+                    const [picksResponse, topicsResponse] = await Promise.all([
+                        api.get('/api/v1/sidebar/staff-picks', {
+                            headers: { 'Accept-Language': lang }
+                        }),
+                        api.get('/api/v1/sidebar/topics', {
+                            headers: { 'Accept-Language': lang }
+                        })
+                    ]);
 
-                    // Fetch Topics
-                    const topicsResponse = await api.get('/api/v1/sidebar/topics', {
-                        headers: { 'Accept-Language': lang }
-                    });
+                    setStaffPicks(normalizeArrayPayload(picksResponse.data).filter(Boolean));
                     setTopics(normalizeArrayPayload(topicsResponse.data).filter(Boolean));
                 });
             } catch (error) {
