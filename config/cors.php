@@ -21,7 +21,14 @@ return [
 
     'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://127.0.0.1:8000,https://baakh.com,https://beta.baakh.com')),
 
-    'allowed_origins_patterns' => [],
+    /*
+    | Vercel preview / production (*.vercel.app) when SPA calls API from another origin.
+    | Patterns are passed to preg_match — include delimiters (e.g. #pattern#).
+    */
+    'allowed_origins_patterns' => array_values(array_filter(array_map('trim', explode(',', env(
+        'CORS_ALLOWED_ORIGIN_PATTERNS',
+        '#^https://.*\\.vercel\\.app$#'
+    )))),
 
     'allowed_headers' => ['*'],
 
