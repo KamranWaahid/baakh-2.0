@@ -17,9 +17,13 @@ class StaticCacheService
     {
         $path = $this->getPath($key);
 
-        if (Storage::disk($this->disk)->exists($path)) {
-            $content = Storage::disk($this->disk)->get($path);
-            return json_decode($content, true);
+        try {
+            if (Storage::disk($this->disk)->exists($path)) {
+                $content = Storage::disk($this->disk)->get($path);
+                return json_decode($content, true);
+            }
+        } catch (\Exception $e) {
+            Log::warning("StaticCacheService: Failed to read cache for {$key}: " . $e->getMessage());
         }
 
         return null;
