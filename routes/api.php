@@ -20,6 +20,37 @@ use App\Http\Controllers\Api\Auth\MeController;
 |
 */
 
+Route::get('/health', function () {
+    return response()->json([
+        'ok' => true,
+        'service' => 'api',
+        'laravel' => app()->version(),
+        'environment' => app()->environment(),
+    ]);
+});
+
+Route::get('/health/database', function () {
+    $secret = trim((string) env('DEPLOY_HEALTH_SECRET'));
+    abort_unless($secret !== '' && hash_equals($secret, (string) request()->query('token', '')), 404);
+
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+
+        return response()->json([
+            'database' => 'connected',
+            'service' => 'api',
+            'connection' => config('database.default'),
+            'host' => config('database.connections.'.config('database.default').'.host'),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'database' => 'failed',
+            'service' => 'api',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
 // Auth Routes
 Route::prefix('auth')->group(function () {
     Route::middleware('throttle:6,1')->post('/login', LoginController::class);
