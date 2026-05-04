@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Dashboard from './pages/Dashboard';
 import AdminLayout from './layouts/AdminLayout';
 import api from './api/axios';
@@ -112,6 +113,7 @@ const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Analytics />
                 <Routes>
                     <Route path="/admin" element={
                         <ProtectedRoute>
