@@ -9,6 +9,8 @@ use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Services\StaticCacheService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class PoetController extends Controller
 {
@@ -21,7 +23,7 @@ class PoetController extends Controller
 
     public function index(Request $request)
     {
-        $lang = $request->header('Accept-Language', 'sd');
+        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         try {
             // Prefer static cache if no search/tag filtering
             if (!$request->has('search') && (!$request->has('tag') || $request->tag === 'all')) {
@@ -90,7 +92,7 @@ class PoetController extends Controller
                 return [
                     'id' => $poet->id,
                     'slug' => $poet->poet_slug,
-                    'avatar' => $poet->poet_pic ?: null,
+                    'avatar' => $this->resolvePoetAvatar($poet->poet_pic),
                     // English Data
                     'name_en' => $nameEn,
                     'name_sd' => $nameSd,
@@ -115,16 +117,48 @@ class PoetController extends Controller
 
             $page = (int) $request->get('page', 1);
             $perPage = (int) $request->get('per_page', 20);
+            try {
+                // Safety fallback: return minimal poet cards instead of empty dataset.
+                $fallback = Poets::query()
+                    ->where('visibility', 1)
+                    ->orderBy('created_at', 'desc')
+                    ->paginate($perPage, ['id', 'poet_slug', 'poet_pic'], 'page', $page);
 
-            return response()->json([
-                'data' => [],
-                'current_page' => $page,
-                'last_page' => 1,
-                'total' => 0,
-                'per_page' => $perPage,
-                'from' => null,
-                'to' => null,
-            ]);
+                $fallback->through(function ($poet) {
+                    $name = trim((string) str_replace('-', ' ', $poet->poet_slug));
+                    return [
+                        'id' => $poet->id,
+                        'slug' => $poet->poet_slug,
+                        'avatar' => $this->resolvePoetAvatar($poet->poet_pic),
+                        'name_en' => ucfirst($name),
+                        'name_sd' => ucfirst($name),
+                        'laqab_en' => ucfirst($name),
+                        'laqab_sd' => ucfirst($name),
+                        'bio_en' => '',
+                        'bio_sd' => '',
+                        'entries_count' => 0,
+                        'followers' => '0',
+                        'category' => 'all',
+                    ];
+                });
+
+                return response()->json($fallback);
+            } catch (\Throwable $fallbackError) {
+                Log::error('PoetController@index fallback failed', [
+                    'message' => $fallbackError->getMessage(),
+                    'lang' => $lang,
+                ]);
+
+                return response()->json([
+                    'data' => [],
+                    'current_page' => $page,
+                    'last_page' => 1,
+                    'total' => 0,
+                    'per_page' => $perPage,
+                    'from' => null,
+                    'to' => null,
+                ]);
+            }
         }
     }
 
@@ -132,22 +166,64 @@ class PoetController extends Controller
     {
         $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
         try {
-            $tags = Tags::where('type', 'poets')
+            // Prefer canonical poet tags table, but be resilient to schema/data drift.
+            $baseTags = Tags::query()
+                ->when(
+                    \Illuminate\Support\Facades\Schema::hasColumn('baakh_tags', 'type'),
+                    fn($q) => $q->where('type', 'poets')
+                )
                 ->with([
                     'details' => function ($q) use ($lang) {
                         $q->where('lang', $lang);
                     }
                 ])
-                ->get()
-                ->map(function ($tag) {
+                ->get();
+
+            $usedTagSlugs = Poets::query()
+                ->where('visibility', 1)
+                ->whereNotNull('poet_tags')
+                ->pluck('poet_tags')
+                ->flatMap(function ($value) {
+                    $decoded = json_decode((string) $value, true);
+                    return is_array($decoded) ? $decoded : [];
+                })
+                ->map(fn($slug) => trim((string) $slug))
+                ->filter()
+                ->unique()
+                ->values();
+
+            $selected = $usedTagSlugs->isNotEmpty()
+                ? $baseTags->whereIn('slug', $usedTagSlugs->all())->values()
+                : $baseTags;
+
+            // If canonical tags are missing/incomplete, fall back to used slugs from poets.
+            if ($selected->isEmpty() && $usedTagSlugs->isNotEmpty()) {
+                $tags = $usedTagSlugs->map(function ($slug) {
                     return [
-                        'tag' => $tag->details->first()?->name ?? $tag->slug,
+                        'tag' => Str::of($slug)->replace('-', ' ')->title()->value(),
+                        'slug' => $slug,
+                    ];
+                })->values();
+            } else {
+                $tags = $selected->map(function ($tag) {
+                    $label = $tag->details->first()?->name
+                        ?? $tag->details()->where('lang', 'en')->value('name')
+                        ?? $tag->details()->value('name')
+                        ?? Str::of($tag->slug)->replace('-', ' ')->title()->value();
+
+                    return [
+                        'tag' => $label,
                         'slug' => $tag->slug
                     ];
-                });
+                })->values();
+            }
 
             return response()->json($tags);
         } catch (\Throwable $e) {
+            Log::error('PoetController@tags failed', [
+                'message' => $e->getMessage(),
+                'lang' => $lang,
+            ]);
             return response()->json([]);
         }
     }
@@ -155,25 +231,28 @@ class PoetController extends Controller
     public function show(Request $request, $slug)
     {
         $lang = $request->get('lang', app()->getLocale());
-        $cached = $this->cache->get("poet_detail_{$slug}_{$lang}");
-        if ($cached) {
-            return response()->json($cached);
+        // Avoid stale/corrupt cache payloads breaking poet detail responses.
+        try {
+            $this->cache->forget("poet_detail_{$slug}_{$lang}");
+        } catch (\Throwable) {
+            // Ignore cache backend issues and continue with live query.
         }
 
-        $poet = Poets::where('poet_slug', $slug)
-            ->where('visibility', 1)
-            ->with([
-                'all_details',
-                'books' => function ($q) {
-                    $q->where('visibility', 1)->with('progress');
-                },
-                'poetry' => function ($q) {
-                    // Fetch recent poetry, limited
-                    $q->latest()->take(10);
-                }
-            ])
-            ->withCount('poetry')
-            ->firstOrFail();
+        try {
+            $poet = Poets::where('poet_slug', $slug)
+                ->where('visibility', 1)
+                ->with([
+                    'all_details',
+                    'books' => function ($q) {
+                        $q->where('visibility', 1)->with('progress');
+                    },
+                    'poetry' => function ($q) {
+                        // Fetch recent poetry, limited
+                        $q->latest()->take(10);
+                    }
+                ])
+                ->withCount('poetry')
+                ->firstOrFail();
 
         // Helper for details
         $getDetail = function ($lang) use ($poet) {
@@ -182,6 +261,7 @@ class PoetController extends Controller
 
         $detailSd = $getDetail('sd');
         $detailEn = $getDetail('en');
+        $detailAny = $poet->all_details->first();
 
         // Helper to get location string
         $getLocation = function ($cityId, $lang) {
@@ -202,9 +282,9 @@ class PoetController extends Controller
             if (!$city)
                 return null;
 
-            $cName = $city->details->first()->city_name ?? '';
-            $pName = $city->province->details->first()->province_name ?? '';
-            $coName = $city->province->country->details->first()->country_name ?? '';
+            $cName = $city->details->first()?->city_name ?? '';
+            $pName = $city->province?->details->first()?->province_name ?? '';
+            $coName = $city->province?->country?->details->first()?->country_name ?? '';
 
             $parts = array_filter([$cName, $pName, $coName]);
             return implode(', ', $parts);
@@ -220,11 +300,12 @@ class PoetController extends Controller
             ->map(function ($p) {
                 $dSd = $p->all_details->where('lang', 'sd')->first();
                 $dEn = $p->all_details->where('lang', 'en')->first();
+                $dAny = $p->all_details->first();
                 return [
-                    'name_en' => $dEn->poet_laqab ?? $dEn->poet_name ?? $dSd->poet_laqab ?? $dSd->poet_name ?? 'N/A',
-                    'name_sd' => $dSd->poet_laqab ?? $dSd->poet_name ?? $dEn->poet_laqab ?? $dEn->poet_name ?? 'N/A',
+                    'name_en' => $dEn?->poet_laqab ?? $dEn?->poet_name ?? $dSd?->poet_laqab ?? $dSd?->poet_name ?? $dAny?->poet_laqab ?? $dAny?->poet_name ?? 'N/A',
+                    'name_sd' => $dSd?->poet_laqab ?? $dSd?->poet_name ?? $dEn?->poet_laqab ?? $dEn?->poet_name ?? $dAny?->poet_laqab ?? $dAny?->poet_name ?? 'N/A',
                     'slug' => $p->poet_slug,
-                    'avatar' => $p->poet_pic ?: null,
+                    'avatar' => $this->resolvePoetAvatar($p->poet_pic),
                 ];
             });
 
@@ -238,25 +319,25 @@ class PoetController extends Controller
         $data = [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
-            'avatar' => $poet->poet_pic ?: null,
+            'avatar' => $this->resolvePoetAvatar($poet->poet_pic),
             'dob' => $poet->date_of_birth,
             'dod' => $poet->date_of_death,
 
             // English Data
-            'name_en' => $detailEn->poet_name ?: ($detailSd->poet_name ?: 'N/A'),
-            'laqab_en' => $detailEn->poet_laqab ?: ($detailEn->poet_name ?: ($detailSd->poet_laqab ?: ($detailSd->poet_name ?: 'N/A'))),
-            'pen_name_en' => $detailEn->pen_name ?? null,
-            'bio_en' => strip_tags($detailEn->poet_bio ?: ($detailSd->poet_bio ?: '')),
-            'birth_location_en' => $getLocation($detailEn->birth_place ?? $detailSd->birth_place ?? null, 'en'),
-            'death_location_en' => $getLocation($detailEn->death_place ?? $detailSd->death_place ?? null, 'en'),
+            'name_en' => $detailEn?->poet_name ?: ($detailSd?->poet_name ?: ($detailAny?->poet_name ?: 'N/A')),
+            'laqab_en' => $detailEn?->poet_laqab ?: ($detailEn?->poet_name ?: ($detailSd?->poet_laqab ?: ($detailSd?->poet_name ?: ($detailAny?->poet_laqab ?: ($detailAny?->poet_name ?: 'N/A'))))),
+            'pen_name_en' => $detailEn?->pen_name,
+            'bio_en' => strip_tags($detailEn?->poet_bio ?: ($detailSd?->poet_bio ?: ($detailAny?->poet_bio ?: ''))),
+            'birth_location_en' => $getLocation($detailEn?->birth_place ?? $detailSd?->birth_place ?? $detailAny?->birth_place, 'en'),
+            'death_location_en' => $getLocation($detailEn?->death_place ?? $detailSd?->death_place ?? $detailAny?->death_place, 'en'),
 
             // Sindhi Data
-            'name_sd' => $detailSd->poet_name ?: ($detailEn->poet_name ?: 'N/A'),
-            'laqab_sd' => $detailSd->poet_laqab ?: ($detailSd->poet_name ?: ($detailEn->poet_laqab ?: ($detailEn->poet_name ?: 'N/A'))),
-            'pen_name_sd' => $detailSd->pen_name ?? null,
-            'bio_sd' => strip_tags($detailSd->poet_bio ?: ($detailEn->poet_bio ?: '')),
-            'birth_location_sd' => $getLocation($detailSd->birth_place ?? $detailEn->birth_place ?? null, 'sd'),
-            'death_location_sd' => $getLocation($detailSd->death_place ?? $detailEn->death_place ?? null, 'sd'),
+            'name_sd' => $detailSd?->poet_name ?: ($detailEn?->poet_name ?: ($detailAny?->poet_name ?: 'N/A')),
+            'laqab_sd' => $detailSd?->poet_laqab ?: ($detailSd?->poet_name ?: ($detailEn?->poet_laqab ?: ($detailEn?->poet_name ?: ($detailAny?->poet_laqab ?: ($detailAny?->poet_name ?: 'N/A'))))),
+            'pen_name_sd' => $detailSd?->pen_name,
+            'bio_sd' => strip_tags($detailSd?->poet_bio ?: ($detailEn?->poet_bio ?: ($detailAny?->poet_bio ?: ''))),
+            'birth_location_sd' => $getLocation($detailSd?->birth_place ?? $detailEn?->birth_place ?? $detailAny?->birth_place, 'sd'),
+            'death_location_sd' => $getLocation($detailSd?->death_place ?? $detailEn?->death_place ?? $detailAny?->death_place, 'sd'),
 
             'entries_count' => $poet->poetry_count ?? 0,
             'couplets_count' => $coupletsCount ?? 0,
@@ -275,7 +356,52 @@ class PoetController extends Controller
             }),
         ];
 
-        return response()->json($data);
+            return response()->json(
+                $data,
+                200,
+                [],
+                JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+            );
+        } catch (\Throwable $e) {
+            Log::error('PoetController@show failed', [
+                'slug' => $slug,
+                'lang' => $lang,
+                'message' => $e->getMessage(),
+            ]);
+
+            $fallbackPoet = Poets::where('poet_slug', $slug)->with('all_details')->first();
+            if (!$fallbackPoet) {
+                return response()->json(['message' => 'Poet not found'], 404);
+            }
+
+            $dSd = $fallbackPoet->all_details->where('lang', 'sd')->first();
+            $dEn = $fallbackPoet->all_details->where('lang', 'en')->first();
+            $dAny = $fallbackPoet->all_details->first();
+
+            return response()->json([
+                'id' => $fallbackPoet->id,
+                'slug' => $fallbackPoet->poet_slug,
+                'avatar' => $this->resolvePoetAvatar($fallbackPoet->poet_pic),
+                'dob' => $fallbackPoet->date_of_birth,
+                'dod' => $fallbackPoet->date_of_death,
+                'name_en' => $dEn?->poet_name ?? $dSd?->poet_name ?? $dAny?->poet_name ?? 'N/A',
+                'laqab_en' => $dEn?->poet_laqab ?? $dEn?->poet_name ?? $dSd?->poet_laqab ?? $dSd?->poet_name ?? $dAny?->poet_laqab ?? $dAny?->poet_name ?? 'N/A',
+                'pen_name_en' => $dEn?->pen_name,
+                'bio_en' => strip_tags($dEn?->poet_bio ?? $dSd?->poet_bio ?? $dAny?->poet_bio ?? ''),
+                'birth_location_en' => null,
+                'death_location_en' => null,
+                'name_sd' => $dSd?->poet_name ?? $dEn?->poet_name ?? $dAny?->poet_name ?? 'N/A',
+                'laqab_sd' => $dSd?->poet_laqab ?? $dSd?->poet_name ?? $dEn?->poet_laqab ?? $dEn?->poet_name ?? $dAny?->poet_laqab ?? $dAny?->poet_name ?? 'N/A',
+                'pen_name_sd' => $dSd?->pen_name,
+                'bio_sd' => strip_tags($dSd?->poet_bio ?? $dEn?->poet_bio ?? $dAny?->poet_bio ?? ''),
+                'birth_location_sd' => null,
+                'death_location_sd' => null,
+                'entries_count' => 0,
+                'couplets_count' => 0,
+                'suggested' => [],
+                'books' => [],
+            ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        }
     }
     public function getPoetry(Request $request, $slug)
     {
@@ -333,7 +459,7 @@ class PoetController extends Controller
                 'cat_slug' => $p->category->slug ?? '',
                 'category' => $catDetail->cat_name ?? 'Uncategorized',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => $poet->poet_pic ?: null,
+                'author_avatar' => $this->resolvePoetAvatar($poet->poet_pic),
                 'date' => $p->created_at->format('d M Y'),
                 'readTime' => '2 min read', // Placeholder logic
                 'likes' => $p->likes_count ?? 0,
@@ -387,7 +513,7 @@ class PoetController extends Controller
                 'cat_slug' => 'couplets', // Dummy
                 'category' => 'Couplet',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => $poet->poet_pic ?: null,
+                'author_avatar' => $this->resolvePoetAvatar($poet->poet_pic),
                 'date' => $c->created_at->format('d M Y'),
                 'readTime' => '',
                 'likes' => $c->likes_count ?? 0,
@@ -425,5 +551,93 @@ class PoetController extends Controller
             });
 
         return response()->json($categories);
+    }
+
+    private function resolvePoetAvatar(?string $avatar): ?string
+    {
+        if (!$avatar) {
+            return null;
+        }
+        if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
+            return $avatar;
+        }
+
+        $relative = ltrim($avatar, '/');
+        if ($relative === '') {
+            return null;
+        }
+
+        $publicPath = public_path($relative);
+        if (File::exists($publicPath)) {
+            return '/' . $relative;
+        }
+
+        $candidates = $this->avatarPathCandidates($relative);
+        $resolvedCloudUrl = $this->resolveFirstReachableCloudUrl($relative, $candidates);
+        if ($resolvedCloudUrl) {
+            return $resolvedCloudUrl;
+        }
+
+        return null;
+    }
+
+    private function resolveFirstReachableCloudUrl(string $relative, array $candidates): ?string
+    {
+        $cloudBaseUrl = rtrim((string) config('filesystems.disks.s3.url', ''), '/');
+        if ($cloudBaseUrl === '') {
+            return null;
+        }
+        // Avoid external network checks in request path; choose the best
+        // deterministic candidate and return immediately.
+        $orderedCandidates = array_values(array_unique(array_filter([
+            $relative,
+            ...$candidates,
+        ])));
+        if (empty($orderedCandidates)) {
+            return null;
+        }
+
+        return $cloudBaseUrl . '/' . ltrim($orderedCandidates[0], '/');
+    }
+
+    private function avatarPathCandidates(string $relative): array
+    {
+        $relative = ltrim($relative, '/');
+        $fileName = basename($relative);
+        $dir = trim(dirname($relative), '.');
+        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+
+        $legacyBase = preg_replace('/_[a-f0-9]{8,}_opt$/i', '', $baseName) ?? $baseName;
+        $legacyBase = preg_replace('/_opt$/i', '', $legacyBase) ?? $legacyBase;
+
+        $isOptimizedVariant = str_contains(strtolower($baseName), '_opt');
+
+        $nameCandidates = array_values(array_unique([
+            $isOptimizedVariant ? ($legacyBase . '_small.jpg') : $fileName,
+            $fileName,
+            $legacyBase . '_small.jpg',
+            $legacyBase . '.jpg',
+            $legacyBase . '.jpeg',
+            $legacyBase . '.png',
+            $legacyBase . '.webp',
+        ]));
+
+        $dirCandidates = array_values(array_unique(array_filter([
+            $isOptimizedVariant ? 'Images' : null,
+            $dir !== '' ? $dir : null,
+            'assets/images/poets',
+            'assets/Images/poets',
+            'Images',
+            'images',
+        ])));
+
+        $paths = [$relative];
+        foreach ($dirCandidates as $dirCandidate) {
+            foreach ($nameCandidates as $nameCandidate) {
+                $paths[] = trim($dirCandidate, '/') . '/' . $nameCandidate;
+            }
+        }
+
+        return array_values(array_unique($paths));
     }
 }

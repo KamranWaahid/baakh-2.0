@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,35 +19,6 @@ const SidebarRight = ({ lang }) => {
     const [staffPicks, setStaffPicks] = useState([]);
     const [topics, setTopics] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [stickyTop, setStickyTop] = useState(85);
-    const sidebarRef = useRef(null);
-
-    const updateSticky = useCallback(() => {
-        if (!sidebarRef.current) return;
-        const sidebarHeight = sidebarRef.current.offsetHeight;
-        const windowHeight = window.innerHeight;
-        const headerHeight = 65;
-        const padding = 20;
-
-        if (sidebarHeight + headerHeight + padding < windowHeight) {
-            setStickyTop(headerHeight + padding);
-        } else {
-            setStickyTop(windowHeight - sidebarHeight - padding);
-        }
-    }, []);
-
-    useEffect(() => {
-        updateSticky();
-
-        const observer = new ResizeObserver(() => updateSticky());
-        if (sidebarRef.current) observer.observe(sidebarRef.current);
-
-        window.addEventListener('resize', updateSticky);
-        return () => {
-            observer.disconnect();
-            window.removeEventListener('resize', updateSticky);
-        };
-    }, [updateSticky, staffPicks, topics, loading]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -83,9 +54,8 @@ const SidebarRight = ({ lang }) => {
 
     return (
         <aside
-            ref={sidebarRef}
             className="w-[368px] hidden xl:block shrink-0 border-s border-gray-100 p-8 sticky flex flex-col"
-            style={{ top: stickyTop }}
+            style={{ top: 85 }}
         >
             <section className="mb-10">
                 <h3 className="font-bold text-black mb-4">{isRtl ? 'اسٽاف جا چونڊيل' : 'Staff Picks'}</h3>

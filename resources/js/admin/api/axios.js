@@ -62,19 +62,8 @@ api.interceptors.request.use(config => {
         config.headers['Accept-Language'] = lang;
     }
 
-    // Normalize API paths for serverless deployments where /api can be stripped.
-    // Keep all app calls on stripped runtime paths that are known to resolve on Vercel.
-    // Admin endpoints are requested as /admin/* with XHR/JSON headers so they are
-    // forwarded to API handlers instead of the admin SPA HTML shell.
-    if (typeof config.url === 'string') {
-        if (config.url.startsWith('/api/v1/')) {
-            config.url = config.url.replace('/api/v1/', '/v1/');
-        } else if (config.url.startsWith('/api/auth/')) {
-            config.url = config.url.replace('/api/auth/', '/auth/');
-        } else if (config.url.startsWith('/api/admin/')) {
-            config.url = config.url.replace('/api/admin/', '/admin/');
-        }
-    }
+    // Keep explicit API prefixes untouched to avoid hitting SPA/web routes.
+    // All callers use /api/* paths and should resolve through Laravel API routes.
 
     return config;
 });

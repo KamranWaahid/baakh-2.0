@@ -59,7 +59,8 @@ class PoetController extends Controller
             return [
                 'id' => $poet->id,
                 'poet_slug' => $poet->poet_slug,
-                'poet_pic' => $poet->poet_pic,
+                'poet_pic' => $this->resolvePoetPicUrl($poet->poet_pic),
+                'poet_pic_raw' => $poet->poet_pic,
                 'poet_name' => $detail->poet_name ?? 'N/A',
                 'poet_laqab' => $detail->poet_laqab ?? 'N/A',
                 'visibility' => $poet->visibility,
@@ -75,8 +76,50 @@ class PoetController extends Controller
 
     public function show($id)
     {
-        $poet = Poets::with('all_details')->findOrFail($id);
-        return response()->json($poet);
+        try {
+            $poet = Poets::with('all_details')->findOrFail($id);
+
+            $payload = [
+                'id' => $poet->id,
+                'poet_slug' => $poet->poet_slug,
+                'poet_pic' => $this->resolvePoetPicUrl($poet->poet_pic),
+                'poet_pic_raw' => $poet->poet_pic,
+                'poet_pic_url' => $this->resolvePoetPicUrl($poet->poet_pic),
+                'date_of_birth' => $poet->date_of_birth,
+                'date_of_death' => $poet->date_of_death,
+                'visibility' => $poet->visibility,
+                'is_featured' => $poet->is_featured,
+                'poet_tags' => $poet->poet_tags,
+                'all_details' => $poet->all_details->map(function ($detail) {
+                    return [
+                        'id' => $detail->id,
+                        'poet_id' => $detail->poet_id,
+                        'poet_name' => $detail->poet_name,
+                        'poet_laqab' => $detail->poet_laqab,
+                        'pen_name' => $detail->pen_name,
+                        'tagline' => $detail->tagline,
+                        'poet_bio' => $detail->poet_bio,
+                        'birth_place' => $detail->birth_place,
+                        'death_place' => $detail->death_place,
+                        'lang' => $detail->lang,
+                    ];
+                })->values(),
+            ];
+
+            return response()->json(
+                $payload,
+                200,
+                [],
+                JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+            );
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch poet for admin edit', [
+                'poet_id' => $id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Failed to fetch poet: ' . $e->getMessage()], 500);
+        }
     }
 
     public function create()
@@ -176,16 +219,16 @@ class PoetController extends Controller
         $poet = Poets::findOrFail($id);
 
         $request->validate([
-            'poet_slug' => ['required', new \App\Rules\SlugRulePoet($id)],
-            'date_of_birth' => 'nullable|date',
-            'date_of_death' => 'nullable|date',
-            'visibility' => 'required|boolean',
-            'is_featured' => 'required|boolean',
+            'poet_slug' => ['sometimes', 'required', new \App\Rules\SlugRulePoet($id)],
+            'date_of_birth' => 'sometimes|nullable|date',
+            'date_of_death' => 'sometimes|nullable|date',
+            'visibility' => 'sometimes|required|boolean',
+            'is_featured' => 'sometimes|required|boolean',
             'image' => 'nullable|image|mimes:jpeg,webp,jpg,png|max:10240',
-            'details' => 'required|array',
-            'details.*.poet_name' => 'required|string|min:3',
-            'details.*.poet_laqab' => 'required|string|min:3',
-            'details.*.lang' => 'required|string',
+            'details' => 'sometimes|required|array',
+            'details.*.poet_name' => 'sometimes|required|string|min:3',
+            'details.*.poet_laqab' => 'sometimes|required|string|min:3',
+            'details.*.lang' => 'sometimes|required|string',
             'details.*.birth_place' => 'nullable|exists:location_cities,id',
             'details.*.death_place' => 'nullable|exists:location_cities,id',
         ]);
@@ -194,47 +237,102 @@ class PoetController extends Controller
         try {
             $imagePath = $poet->poet_pic;
             if ($request->hasFile('image')) {
-                $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $request->poet_slug, true);
+                $slugForImage = $request->input('poet_slug', $poet->poet_slug);
+                $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $slugForImage, true);
                 if (isset($uploadImage['error']) && $uploadImage['error'] === true) {
                     return response()->json(['message' => $uploadImage['message']], 422);
                 }
                 $imagePath = $uploadImage['full_path'];
             }
 
-            $poet->update([
-                'poet_slug' => $request->poet_slug,
-                'poet_pic' => $imagePath,
-                'date_of_birth' => $request->date_of_birth,
-                'date_of_death' => $request->date_of_death,
-                'visibility' => $request->visibility,
-                'is_featured' => $request->is_featured,
-            ]);
+            $updates = [];
+            if ($request->has('poet_slug')) {
+                $updates['poet_slug'] = $request->poet_slug;
+            }
+            if ($request->has('date_of_birth')) {
+                $updates['date_of_birth'] = $request->date_of_birth;
+            }
+            if ($request->has('date_of_death')) {
+                $updates['date_of_death'] = $request->date_of_death;
+            }
+            if ($request->has('visibility')) {
+                $updates['visibility'] = $request->visibility;
+            }
+            if ($request->has('is_featured')) {
+                $updates['is_featured'] = $request->is_featured;
+            }
+            if ($request->hasFile('image')) {
+                $updates['poet_pic'] = $imagePath;
+            }
 
-            // Remove old details and re-create
-            $poet->all_details()->forceDelete();
+            if (!empty($updates)) {
+                $poet->update($updates);
+            }
 
-            foreach ($request->details as $detail) {
-                if (is_string($detail)) {
-                    $detail = json_decode($detail, true);
+            // Only replace language details when details payload is explicitly sent.
+            if ($request->has('details')) {
+                $poet->all_details()->forceDelete();
+
+                foreach ($request->details as $detail) {
+                    if (is_string($detail)) {
+                        $detail = json_decode($detail, true);
+                    }
+                    if (!is_array($detail) || empty($detail['lang'])) {
+                        continue;
+                    }
+
+                    $poet->all_details()->create([
+                        'poet_name' => $detail['poet_name'] ?? null,
+                        'poet_laqab' => $detail['poet_laqab'] ?? null,
+                        'pen_name' => $detail['pen_name'] ?? null,
+                        'tagline' => $detail['tagline'] ?? null,
+                        'poet_bio' => $detail['poet_bio'] ?? null,
+                        'birth_place' => $detail['birth_place'] ?? null,
+                        'death_place' => $detail['death_place'] ?? null,
+                        'lang' => $detail['lang'],
+                    ]);
                 }
-
-                $poet->all_details()->create([
-                    'poet_name' => $detail['poet_name'] ?? null,
-                    'poet_laqab' => $detail['poet_laqab'] ?? null,
-                    'pen_name' => $detail['pen_name'] ?? null,
-                    'tagline' => $detail['tagline'] ?? null,
-                    'poet_bio' => $detail['poet_bio'] ?? null,
-                    'birth_place' => $detail['birth_place'] ?? null,
-                    'death_place' => $detail['death_place'] ?? null,
-                    'lang' => $detail['lang'],
-                ]);
             }
 
             DB::commit();
             return response()->json(['message' => 'Poet updated successfully']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+            Log::error('Failed to update poet', [
+                'poet_id' => $id,
+                'message' => $e->getMessage(),
+            ]);
             return response()->json(['message' => 'Failed to update poet: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function resolvePoetPicUrl(?string $value): ?string
+    {
+        try {
+            if (!$value) {
+                return null;
+            }
+            if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+                return $value;
+            }
+
+            $relative = ltrim($value, '/');
+            if ($relative === '') {
+                return null;
+            }
+
+            $cloudBaseUrl = rtrim((string) config('filesystems.disks.s3.url', ''), '/');
+            if ($cloudBaseUrl !== '') {
+                return $cloudBaseUrl . '/' . $relative;
+            }
+
+            return '/' . $relative;
+        } catch (\Throwable $e) {
+            Log::warning('Failed to resolve poet image URL in admin', [
+                'value' => $value,
+                'message' => $e->getMessage(),
+            ]);
+            return $value;
         }
     }
 

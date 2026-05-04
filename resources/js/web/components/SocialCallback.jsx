@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import api from '@/admin/api/axios';
 import { Loader2 } from 'lucide-react';
 
 const SocialCallback = () => {
     const [searchParams] = useSearchParams();
     const { lang } = useParams();
     const navigate = useNavigate();
-    const { checkAuth } = useAuth();
+    const { setUser, checkAuth } = useAuth();
 
     useEffect(() => {
         const handleCallback = async () => {
@@ -20,13 +21,16 @@ const SocialCallback = () => {
                 localStorage.setItem('auth_token', token);
 
                 try {
-                    // Force a small delay to ensure token is set
-                    await new Promise(resolve => setTimeout(resolve, 100));
-
-                    // Synchronize state with backend
-                    const user = await checkAuth();
+                    // Verify token explicitly to avoid transient context/race issues.
+                    const meResponse = await api.get('/api/auth/me', {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    const user = meResponse?.data?.user || null;
 
                     if (user) {
+                        setUser(user);
                         const canAccessAdmin = user.permissions?.includes('view_dashboard');
 
                         if (isNewUser) {
@@ -41,6 +45,21 @@ const SocialCallback = () => {
                             window.location.replace(`/${lang}/`);
                         }
                     } else {
+                        // Fallback to legacy auth sync path before failing hard.
+                        const fallbackUser = await checkAuth();
+                        if (fallbackUser) {
+                            setUser(fallbackUser);
+                            const canAccessAdmin = fallbackUser.permissions?.includes('view_dashboard');
+                            if (isNewUser) {
+                                navigate(`/${lang}/auth/set-password`, { replace: true });
+                            } else if (canAccessAdmin) {
+                                window.location.href = '/admin';
+                            } else {
+                                window.location.replace(`/${lang}/`);
+                            }
+                            return;
+                        }
+
                         // Failed to verify user even with token
                         console.error('Failed to verify user after social login. Token:', token.substring(0, 10) + '...');
                         navigate(`/${lang}/?error=auth_failed_verification`, { replace: true });

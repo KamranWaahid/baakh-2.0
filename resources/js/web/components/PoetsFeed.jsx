@@ -126,7 +126,7 @@ const PoetsFeed = ({ lang }) => {
     const displayedPoets = poets.length > 0 ? poets : staticPoets;
 
     // Intersection Observer for infinite scroll
-    const { ref, InView } = useInView({
+    const { ref } = useInView({
         threshold: 0,
         onChange: (inView) => {
             if (inView && hasNextPage && !isFetchingNextPage) {
@@ -185,6 +185,8 @@ const PoetsFeed = ({ lang }) => {
         </div>
     );
 
+    const shouldShowSkeleton = displayedPoets.length === 0 && (isLoading || isLoadingStaticPoets);
+
     return (
         <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
             <div className="mb-8">
@@ -226,7 +228,7 @@ const PoetsFeed = ({ lang }) => {
             </div>
 
             <div className="space-y-4">
-                {(isLoading || isLoadingStaticPoets) ? (
+                {shouldShowSkeleton ? (
                     Array(5).fill(0).map((_, i) => (
                         <div key={i} className="flex items-center gap-4 p-4 border rounded-lg bg-white shadow-sm border-gray-100">
                             <Skeleton className="h-16 w-16 rounded-full" />

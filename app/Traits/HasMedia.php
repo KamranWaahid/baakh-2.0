@@ -15,6 +15,19 @@ trait HasMedia
         return trim((string) config('media.base_path', 'assets/images'), '/');
     }
 
+    private function cloudMediaBasePath(): string
+    {
+        return trim((string) config('media.cloud_base_path', 'Images'), '/');
+    }
+
+    private function mediaBasePathForDisk(?string $disk = null): string
+    {
+        $resolved = $disk ?? $this->resolveUploadDisk();
+        return $this->isResolvedCloudDisk($resolved)
+            ? $this->cloudMediaBasePath()
+            : $this->mediaBasePath();
+    }
+
     /** Effective disk after optional auto-upgrade (e.g. read-only deploy root → S3). */
     private function resolveUploadDisk(): string
     {
@@ -46,6 +59,21 @@ trait HasMedia
             && filled((string) config('filesystems.disks.s3.secret'));
     }
 
+    private function cloudDiskIsConfigured(string $disk): bool
+    {
+        if ($disk !== 's3') {
+            return true;
+        }
+
+        $bucket = (string) config('filesystems.disks.s3.bucket');
+        $key = (string) config('filesystems.disks.s3.key');
+        $secret = (string) config('filesystems.disks.s3.secret');
+        $endpoint = (string) config('filesystems.disks.s3.endpoint');
+        $region = (string) config('filesystems.disks.s3.region');
+
+        return filled($bucket) && filled($key) && filled($secret) && (filled($endpoint) || filled($region));
+    }
+
     private function isPublicWebRootWritable(): bool
     {
         $dir = public_path();
@@ -53,9 +81,9 @@ trait HasMedia
         return is_dir($dir) && is_writable($dir);
     }
 
-    private function buildRelativePath(string $folderPath, string $fileName): string
+    private function buildRelativePath(string $folderPath, string $fileName, ?string $disk = null): string
     {
-        $base = $this->mediaBasePath();
+        $base = $this->mediaBasePathForDisk($disk);
         $folder = trim($folderPath, '/');
         return $folder !== '' ? "{$base}/{$folder}/{$fileName}" : "{$base}/{$fileName}";
     }
@@ -71,25 +99,32 @@ trait HasMedia
             return null;
         }
 
-        $base = $this->mediaBasePath() . '/';
+        $bases = [
+            $this->mediaBasePath() . '/',
+            $this->cloudMediaBasePath() . '/',
+        ];
 
         if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
             $path = ltrim((string) parse_url($value, PHP_URL_PATH), '/');
-            if (str_contains($path, $base)) {
-                return substr($path, strpos($path, $base));
+            foreach ($bases as $base) {
+                if (str_contains($path, $base)) {
+                    return substr($path, strpos($path, $base));
+                }
             }
             return null;
         }
 
         $path = ltrim($value, '/');
-        if (str_starts_with($path, $base)) {
-            return $path;
+        foreach ($bases as $base) {
+            if (str_starts_with($path, $base)) {
+                return $path;
+            }
         }
 
         // Legacy rows: DB stores bare filename while the site mounts it under poets/.
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         if ($path !== '' && !str_contains($path, '/') && in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'], true)) {
-            return $this->buildRelativePath('poets', basename($path));
+            return $this->buildRelativePath('poets', basename($path), $this->resolveUploadDisk());
         }
 
         return null;
@@ -118,6 +153,12 @@ trait HasMedia
         }
 
         $disk = $this->resolveUploadDisk();
+        if ($this->isResolvedCloudDisk($disk) && !$this->cloudDiskIsConfigured($disk)) {
+            return [
+                'error' => true,
+                'message' => 'Cloud storage is selected but not fully configured. Please set AWS_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_ENDPOINT (for R2) or AWS_DEFAULT_REGION.',
+            ];
+        }
         if (!$this->isResolvedCloudDisk($disk) && !$this->isPublicWebRootWritable()) {
             return [
                 'error' => true,
@@ -142,22 +183,29 @@ trait HasMedia
             $imageName = date('dmY') . '_' . uniqid() . '.webp';
         }
 
-        $relativePath = $this->buildRelativePath($folderPath, $imageName);
+        $relativePath = $this->buildRelativePath($folderPath, $imageName, $disk);
         $encoded = (string) $image->toWebp(80);
 
-        if ($this->isResolvedCloudDisk($disk)) {
-            Storage::disk($disk)->put($relativePath, $encoded, [
-                'visibility' => 'public',
-                'ContentType' => 'image/webp',
-            ]);
-            $fullPath = Storage::disk($disk)->url($relativePath);
-        } else {
-            $destination = public_path(dirname($relativePath));
-            if (!file_exists($destination)) {
-                mkdir($destination, 0755, true);
+        try {
+            if ($this->isResolvedCloudDisk($disk)) {
+                Storage::disk($disk)->put($relativePath, $encoded, [
+                    'visibility' => 'public',
+                    'ContentType' => 'image/webp',
+                ]);
+                $fullPath = Storage::disk($disk)->url($relativePath);
+            } else {
+                $destination = public_path(dirname($relativePath));
+                if (!file_exists($destination)) {
+                    mkdir($destination, 0755, true);
+                }
+                file_put_contents(public_path($relativePath), $encoded);
+                $fullPath = $relativePath;
             }
-            file_put_contents(public_path($relativePath), $encoded);
-            $fullPath = $relativePath;
+        } catch (\Throwable $e) {
+            return [
+                'error' => true,
+                'message' => 'Image upload failed on ' . $disk . ': ' . $e->getMessage(),
+            ];
         }
 
 
@@ -197,7 +245,7 @@ trait HasMedia
 
                 $thumb = clone $image;
                 $thumbEncoded = (string) $thumb->scale($value['width'], $value['height'])->toWebp(80);
-                $thumbRelativePath = $this->buildRelativePath($folderPath, $resizedName);
+                $thumbRelativePath = $this->buildRelativePath($folderPath, $resizedName, $disk);
 
                 if ($this->isResolvedCloudDisk($disk)) {
                     Storage::disk($disk)->put($thumbRelativePath, $thumbEncoded, [
@@ -279,7 +327,11 @@ trait HasMedia
         $disk = $this->resolveUploadDisk();
 
         if ($this->isResolvedCloudDisk($disk)) {
-            Storage::disk($disk)->delete($paths);
+            try {
+                Storage::disk($disk)->delete($paths);
+            } catch (\Throwable $e) {
+                // Never block admin CRUD on cloud cleanup failures.
+            }
         }
 
         foreach ($paths as $path) {

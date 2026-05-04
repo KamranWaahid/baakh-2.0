@@ -16,7 +16,8 @@ use App\Services\StaticCacheService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Collection;
 use Yajra\DataTables\Facades\DataTables;
 
 class HomeController extends UserController
@@ -61,19 +62,33 @@ class HomeController extends UserController
             $poet_tags = collect($cachedData['poet_tags'])->map(fn($t) => new Tags($t));
             $doodles = $cachedData['doodles'] ? new Doodle($cachedData['doodles']) : null;
 
-            // These are still randomized or dynamic per-request for now
-            $quiz_couplet = $this->getQuizCouplet($locale);
-            $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
-            $random_poetry = $this->showRandomPoetry(10, $locale);
+            // Keep dynamic sections cached for guests to reduce repeated heavy queries.
+            if (auth()->check()) {
+                $quiz_couplet = $this->getQuizCouplet($locale);
+                $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
+                $random_poetry = $this->showRandomPoetry(10, $locale);
+            } else {
+                $quizData = $this->getCachedHomepageQuizData($locale);
+                $quiz_couplet = $quizData['quiz_couplet'];
+                $quiz_poets = $quizData['quiz_poets'];
+                $random_poetry = Cache::remember("homepage_random_poetry_html_{$locale}", 300, fn() => $this->showRandomPoetry(10, $locale));
+            }
             $bundles = null;
         } else {
             $sliders = Sliders::where(['lang' => $locale, 'visibility' => 1])->get();
             $famous_poet = $this->getFamousPoets($locale);
             $ghazal_of_day = $this->getGhazalOfDay($locale);
             $bundles = null;
-            $quiz_couplet = $this->getQuizCouplet($locale);
-            $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
-            $random_poetry = $this->showRandomPoetry(10, $locale);
+            if (auth()->check()) {
+                $quiz_couplet = $this->getQuizCouplet($locale);
+                $quiz_poets = $this->getQuizPoets($quiz_couplet, $locale);
+                $random_poetry = $this->showRandomPoetry(10, $locale);
+            } else {
+                $quizData = $this->getCachedHomepageQuizData($locale);
+                $quiz_couplet = $quizData['quiz_couplet'];
+                $quiz_poets = $quizData['quiz_poets'];
+                $random_poetry = Cache::remember("homepage_random_poetry_html_{$locale}", 300, fn() => $this->showRandomPoetry(10, $locale));
+            }
             $poet_tags = Tags::where(['type' => 'poets', 'lang' => $locale])->get();
             $tags = Tags::where('lang', $locale)->limit(18)->get();
             $ghazal_of_day_poet = $ghazal_of_day?->poet;
@@ -105,18 +120,29 @@ class HomeController extends UserController
 
     private function getFamousPoets($locale)
     {
-        return Poets::with([
-            'details' => function ($q) use ($locale) {
-                $q->where('lang', $locale);
+        return Cache::remember("homepage_famous_poets_{$locale}", 300, function () use ($locale) {
+            $baseQuery = Poets::query()
+                ->where('visibility', '1')
+                ->whereHas('details', function ($query) use ($locale) {
+                    $query->where('lang', $locale);
+                });
+
+            $sampleIds = $this->sampleIdsFromQuery($baseQuery, 'id', 5);
+            if ($sampleIds->isEmpty()) {
+                return collect();
             }
-        ])
-            ->where('visibility', '1')
-            ->whereHas('details', function ($query) use ($locale) {
-                $query->where('lang', $locale);
-            })
-            ->inRandomOrder()
-            ->limit(5)
-            ->get();
+
+            $poets = Poets::with([
+                'details' => function ($q) use ($locale) {
+                    $q->where('lang', $locale);
+                }
+            ])
+                ->whereIn('id', $sampleIds)
+                ->get()
+                ->keyBy('id');
+
+            return $sampleIds->map(fn($id) => $poets->get($id))->filter()->values();
+        });
     }
 
     private function getGhazalOfDay($locale)
@@ -127,39 +153,61 @@ class HomeController extends UserController
 
     private function getQuizCouplet($locale)
     {
+        $baseQuery = Couplets::query()
+            ->whereRaw('LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, "\n", "")) = 1')
+            ->whereHas('poet', function ($query) {
+                $query->whereNull('deleted_at');
+            })
+            ->where('lang', $locale);
+
+        $id = $this->sampleIdsFromQuery($baseQuery, 'id', 1)->first();
+        if (!$id) {
+            return null;
+        }
+
         return Couplets::with([
             'poet.details' => function ($query) use ($locale) {
                 $query->where('poets_detail.lang', $locale);
             }
         ])
-            ->whereRaw('LENGTH(couplet_text) - LENGTH(REPLACE(couplet_text, "\n", "")) = 1')
-            ->whereHas('poet', function ($query) {
-                $query->whereNull('deleted_at');
-            })
-            ->where('lang', $locale)
-            ->inRandomOrder()
-            ->limit(1)
+            ->where('id', $id)
             ->first();
     }
 
     private function getQuizPoets($quiz_couplet, $locale)
     {
-        $random_poets = Poets::with([
-            'details' => function ($q) use ($locale) {
-                $q->where('lang', $locale);
-            }
-        ])
+        if (!$quiz_couplet) {
+            return collect();
+        }
+
+        $baseQuery = Poets::query()
             ->where('visibility', '1')
             ->whereHas('details', function ($query) use ($locale) {
                 $query->where('lang', $locale);
             })
-            ->where('id', '!=', $quiz_couplet->poet_id)
-            ->limit(2)
-            ->inRandomOrder()
-            ->get();
+            ->where('id', '!=', $quiz_couplet->poet_id);
+
+        $sampleIds = $this->sampleIdsFromQuery($baseQuery, 'id', 2);
+        $random_poets = Poets::with([
+            'details' => function ($q) use ($locale) {
+                $q->where('lang', $locale);
+            }
+        ])->whereIn('id', $sampleIds)->get();
+
         $quiz_poets = $random_poets->push($quiz_couplet->poet);
         $quiz_poets = $quiz_poets->shuffle();
         return $quiz_poets;
+    }
+
+    private function getCachedHomepageQuizData(string $locale): array
+    {
+        return Cache::remember("homepage_quiz_data_{$locale}", 300, function () use ($locale) {
+            $quizCouplet = $this->getQuizCouplet($locale);
+            return [
+                'quiz_couplet' => $quizCouplet,
+                'quiz_poets' => $this->getQuizPoets($quizCouplet, $locale),
+            ];
+        });
     }
 
     /**
@@ -188,23 +236,49 @@ class HomeController extends UserController
 
     private function showRandomPoetry($limit, $locale)
     {
-        // get all peotry couplets
-        $random_poetry = Couplets::with('poetry')->where('lang', $locale)->whereNotNull('couplet_slug')
+        $baseQuery = Couplets::query()
+            ->where('lang', $locale)
+            ->whereNotNull('couplet_slug')
             ->whereRaw('LENGTH(poetry_couplets.couplet_text) - LENGTH(REPLACE(poetry_couplets.couplet_text, "\n", "")) = 1')
             ->whereHas('poet', function ($query) {
                 $query->whereNull('deleted_at');
+            });
+
+        $sampleIds = $this->sampleIdsFromQuery($baseQuery, 'id', $limit);
+        $random_poetry = Couplets::with('poetry')->whereIn('id', $sampleIds)->get()->keyBy('id');
+        $random_poetry = $sampleIds->map(fn($id) => $random_poetry->get($id))->filter()->values();
+
+        $user = auth()->user();
+        $likedIds = collect();
+        if ($user && $random_poetry->isNotEmpty()) {
+            $likedIds = $user->likesDislikes()
+                ->where('likable_type', 'Couplets')
+                ->whereIn('likable_id', $random_poetry->pluck('id'))
+                ->pluck('likable_id')
+                ->flip();
+        }
+
+        $allTagSlugs = $random_poetry
+            ->pluck('couplet_tags')
+            ->filter()
+            ->flatMap(function ($tagJson) {
+                $decoded = json_decode($tagJson, true);
+                return is_array($decoded) ? $decoded : [];
             })
-            ->inRandomOrder()
-            ->limit($limit)
-            ->get();
+            ->unique()
+            ->values();
+
+        $tagsBySlug = $allTagSlugs->isNotEmpty()
+            ? Tags::where('lang', $locale)->whereIn('slug', $allTagSlugs)->pluck('tag', 'slug')->toArray()
+            : [];
 
         $html = '';
         foreach ($random_poetry as $item) {
-            $liked = $this->isLiked('Couplets', $item->id);
+            $liked = $likedIds->has($item->id) ? '-fill text-baakh' : '';
             if ($item->couplet_tags != NULL) {
-                $decodeTags = json_decode($item->couplet_tags);
-                if ($decodeTags) {
-                    $usedTags = Tags::whereIn('slug', $decodeTags)->where('lang', $locale)->pluck('tag', 'slug')->toArray();
+                $decodeTags = json_decode($item->couplet_tags, true);
+                if (is_array($decodeTags) && !empty($decodeTags)) {
+                    $usedTags = array_intersect_key($tagsBySlug, array_flip($decodeTags));
                 } else {
                     $usedTags = null;
                 }
@@ -214,6 +288,35 @@ class HomeController extends UserController
             }
         }
         return $html;
+    }
+
+    /**
+     * Sample random IDs without ORDER BY RAND() full-table sort.
+     */
+    private function sampleIdsFromQuery($baseQuery, string $idColumn, int $limit): Collection
+    {
+        if ($limit <= 0) {
+            return collect();
+        }
+
+        $count = (clone $baseQuery)->count();
+        if ($count === 0) {
+            return collect();
+        }
+
+        $window = min(max($limit * 25, 100), 1000);
+        $window = min($window, $count);
+        $maxOffset = max(0, $count - $window);
+        $offset = $maxOffset > 0 ? random_int(0, $maxOffset) : 0;
+
+        return (clone $baseQuery)
+            ->orderBy($idColumn)
+            ->skip($offset)
+            ->take($window)
+            ->pluck($idColumn)
+            ->shuffle()
+            ->take($limit)
+            ->values();
     }
 
     /**
@@ -256,15 +359,22 @@ class HomeController extends UserController
         $thisday = Carbon::now()->format('Y-m-d');
         $result = TodaysModule::where('table_name', 'poetry_main')->first();
 
-        if ($result->date_today != $thisday) {
-            $poetry = DB::select("SELECT p.* FROM poetry_main p
-            WHERE p.category_id = 1 AND p.poet_id != (SELECT b.poet_id FROM poetry_main b WHERE b.poetry_slug = ?)
-            AND p.visibility = 1 ORDER BY RAND() LIMIT 1", [$result->table_id ?? '']);
+        if ($result && $result->date_today != $thisday) {
+            $currentPoetId = Poetry::where('poetry_slug', $result->table_id)->value('poet_id');
+            $baseQuery = Poetry::query()
+                ->where('category_id', 1)
+                ->where('visibility', 1)
+                ->when($currentPoetId, function ($query) use ($currentPoetId) {
+                    $query->where('poet_id', '!=', $currentPoetId);
+                });
 
-            $id = $poetry[0]->poetry_slug;
+            $sampleSlug = $this->sampleIdsFromQuery($baseQuery, 'poetry_slug', 1)->first();
+            if (!$sampleSlug) {
+                return;
+            }
 
             $data = [
-                'table_id' => $id,
+                'table_id' => $sampleSlug,
                 'date_today' => $thisday,
             ];
 
@@ -459,7 +569,7 @@ class HomeController extends UserController
                 'title' => $p->info?->title ?? $p->poetry_title,
                 'slug' => $p->poetry_slug,
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
-                'author_avatar' => $p->poet?->poet_pic,
+                'author_avatar' => $this->resolvePoetAvatar($p->poet?->poet_pic),
                 'cover' => $p->media->first()?->media_url,
                 'date' => $p->created_at->toIso8601String(),
                 'date_human' => $p->created_at->diffForHumans(),
@@ -474,5 +584,92 @@ class HomeController extends UserController
         });
 
         return response()->json($poetry);
+    }
+
+    private function resolvePoetAvatar(?string $avatar): ?string
+    {
+        if (!$avatar) {
+            return null;
+        }
+        if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
+            return $avatar;
+        }
+
+        $relative = ltrim($avatar, '/');
+        if ($relative === '') {
+            return null;
+        }
+        if (File::exists(public_path($relative))) {
+            return '/' . $relative;
+        }
+
+        $candidates = $this->avatarPathCandidates($relative);
+        $resolvedCloudUrl = $this->resolveFirstReachableCloudUrl($relative, $candidates);
+        if ($resolvedCloudUrl) {
+            return $resolvedCloudUrl;
+        }
+
+        return null;
+    }
+
+    private function resolveFirstReachableCloudUrl(string $relative, array $candidates): ?string
+    {
+        $cloudBaseUrl = rtrim((string) config('filesystems.disks.s3.url', ''), '/');
+        if ($cloudBaseUrl === '') {
+            return null;
+        }
+        // Never block API responses on remote avatar existence checks.
+        // Build a deterministic URL from prioritized candidates and let the
+        // client/image layer handle missing assets gracefully.
+        $orderedCandidates = array_values(array_unique(array_filter([
+            $relative,
+            ...$candidates,
+        ])));
+        if (empty($orderedCandidates)) {
+            return null;
+        }
+
+        return $cloudBaseUrl . '/' . ltrim($orderedCandidates[0], '/');
+    }
+
+    private function avatarPathCandidates(string $relative): array
+    {
+        $relative = ltrim($relative, '/');
+        $fileName = basename($relative);
+        $dir = trim(dirname($relative), '.');
+        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+
+        $legacyBase = preg_replace('/_[a-f0-9]{8,}_opt$/i', '', $baseName) ?? $baseName;
+        $legacyBase = preg_replace('/_opt$/i', '', $legacyBase) ?? $legacyBase;
+
+        $isOptimizedVariant = str_contains(strtolower($baseName), '_opt');
+
+        $nameCandidates = array_values(array_unique([
+            $isOptimizedVariant ? ($legacyBase . '_small.jpg') : $fileName,
+            $fileName,
+            $legacyBase . '_small.jpg',
+            $legacyBase . '.jpg',
+            $legacyBase . '.jpeg',
+            $legacyBase . '.png',
+            $legacyBase . '.webp',
+        ]));
+
+        $dirCandidates = array_values(array_unique(array_filter([
+            $isOptimizedVariant ? 'Images' : null,
+            $dir !== '' ? $dir : null,
+            'assets/images/poets',
+            'assets/Images/poets',
+            'Images',
+            'images',
+        ])));
+
+        $paths = [$relative];
+        foreach ($dirCandidates as $dirCandidate) {
+            foreach ($nameCandidates as $nameCandidate) {
+                $paths[] = trim($dirCandidate, '/') . '/' . $nameCandidate;
+            }
+        }
+
+        return array_values(array_unique($paths));
     }
 }
