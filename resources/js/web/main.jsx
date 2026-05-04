@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import '../../css/app.css';
 
 // Components
@@ -171,6 +172,7 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <Analytics />
                     <ScrollToTop />
                     <MobileMenuProvider>
                         <React.Suspense fallback={<PageLoader />}>
