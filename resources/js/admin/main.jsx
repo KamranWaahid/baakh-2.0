@@ -45,6 +45,8 @@ const ProtectedRoute = ({ children }) => {
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+const enableVercelAnalytics = import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === 'true';
+
 const queryClient = new QueryClient();
 
 import PoetsList from './pages/Poets/PoetsList';
@@ -108,7 +110,7 @@ const App = () => {
     return (
         <QueryClientProvider client={queryClient}>
             <BrowserRouter basename={basename} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <Analytics />
+                {enableVercelAnalytics && <Analytics />}
                 <Routes>
                     <Route path="/admin" element={
                         <ProtectedRoute>

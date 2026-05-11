@@ -85,14 +85,6 @@
     }
 }
 
-@font-face {
-    font-family: 'SF Arabic';
-    src: url('/assets/fonts/SF-Arabic.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-
 /* Utilities */
 .font-arabic {
     font-family: 'SF Arabic', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
