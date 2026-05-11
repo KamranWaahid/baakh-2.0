@@ -210,12 +210,14 @@ Route::prefix('api')->group(function () {
     });
 
     Route::prefix('auth')->group(function () {
+        Route::get('google/redirect', [\App\Http\Controllers\LoginWithGoogleController::class, 'loginWithGoogle']);
         Route::get('google/mobile', [\App\Http\Controllers\Api\Auth\MobileGoogleController::class, 'help']);
         Route::post('google/mobile', [\App\Http\Controllers\Api\Auth\MobileGoogleController::class, 'login']);
     });
 
     Route::prefix('v1')->group(function () {
         Route::get('auth/ui', [\App\Http\Controllers\Api\Auth\MobileGoogleController::class, 'ui']);
+        Route::get('auth/google/redirect', [\App\Http\Controllers\LoginWithGoogleController::class, 'loginWithGoogle']);
         Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
         Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
         Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\MobileGoogleController;
+use App\Http\Controllers\LoginWithGoogleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +57,7 @@ Route::get('/health/database', function () {
 Route::prefix('auth')->group(function () {
     Route::middleware('throttle:6,1')->post('/login', LoginController::class);
     Route::middleware('throttle:6,1')->post('/register', RegisterController::class);
+    Route::middleware('throttle:12,1')->get('/google/redirect', [LoginWithGoogleController::class, 'loginWithGoogle']);
     Route::middleware('throttle:12,1')->get('/google/mobile', [MobileGoogleController::class, 'help']);
     Route::middleware('throttle:12,1')->post('/google/mobile', [MobileGoogleController::class, 'login']);
     Route::middleware('throttle:6,1')->post('/forgot-password', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendResetLinkEmail']);
@@ -85,6 +87,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::prefix('v1')->group(function () {
     Route::get('auth/ui', [MobileGoogleController::class, 'ui']);
+    Route::middleware('throttle:12,1')->get('auth/google/redirect', [LoginWithGoogleController::class, 'loginWithGoogle']);
     Route::get('poetry/{slug}', [App\Http\Controllers\PoetryController::class, 'apiShow']);
     Route::get('poets/{slug}/couplets', [App\Http\Controllers\Api\PoetController::class, 'getCouplets']);
     Route::get('poet-tags', [App\Http\Controllers\Api\PoetController::class, 'tags']);
