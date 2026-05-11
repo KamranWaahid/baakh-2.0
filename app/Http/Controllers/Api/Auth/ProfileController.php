@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Support\SafeUserData;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
@@ -63,7 +64,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully.',
-            'user' => $user,
+            'user' => SafeUserData::withRoles($user, '/api/auth/profile'),
         ]);
     }
 
@@ -105,7 +106,7 @@ class ProfileController extends Controller
         Log::info('SetPassword attempt', [
             'user_id' => $user->id,
             'google_id' => $user->google_id,
-            'user_attributes' => $user->toArray(),
+            'user_attributes' => SafeUserData::basic($user, '/api/auth/password/set'),
         ]);
 
         // Only allow if user has google_id (social login)

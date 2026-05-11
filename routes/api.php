@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\MobileGoogleController;
 use App\Http\Controllers\LoginWithGoogleController;
+use App\Support\SafeUserData;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,7 +83,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user()->load('roles');
+    return response()->json(SafeUserData::withRoles($request->user(), '/api/user'));
 });
 
 Route::prefix('v1')->group(function () {

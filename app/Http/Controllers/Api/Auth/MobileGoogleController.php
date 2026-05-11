@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\SafeUserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -197,25 +198,7 @@ class MobileGoogleController extends Controller
 
     private function userPayload(User $user): array
     {
-        return [
-            'id' => $user->id,
-            'name' => $this->safeUserAttribute($user, 'name'),
-            'email' => $this->safeUserAttribute($user, 'email'),
-            'username' => $user->username,
-            'avatar' => $user->avatar,
-            'status' => $user->status,
-            'google_id' => $user->google_id,
-        ];
-    }
-
-    private function safeUserAttribute(User $user, string $attribute): ?string
-    {
-        try {
-            $value = $user->{$attribute};
-            return is_string($value) ? $value : null;
-        } catch (\Throwable $e) {
-            return null;
-        }
+        return SafeUserData::basic($user, '/api/auth/google/mobile');
     }
 
     private function allowedGoogleClientIds(): array

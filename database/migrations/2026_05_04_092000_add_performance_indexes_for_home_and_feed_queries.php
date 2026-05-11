@@ -83,6 +83,23 @@ return new class extends Migration {
 
     private function indexExists(string $tableName, string $indexName): bool
     {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list('{$tableName}')");
+
+            return collect($indexes)->contains(fn($index) => ($index->name ?? null) === $indexName);
+        }
+
+        if ($driver === 'pgsql') {
+            $result = DB::selectOne(
+                'SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND tablename = ? AND indexname = ? LIMIT 1',
+                [$tableName, $indexName]
+            );
+
+            return (bool) $result;
+        }
+
         $databaseName = DB::getDatabaseName();
 
         $result = DB::selectOne(

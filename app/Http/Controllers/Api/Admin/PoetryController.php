@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Poetry;
 use App\Services\StaticCacheService;
+use App\Support\SafeUserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -68,8 +69,22 @@ class PoetryController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $poetry = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $poetry->getCollection()->transform(function (Poetry $item) {
+            return $this->serializeIndexItem($item);
+        });
 
         return response()->json($poetry);
+    }
+
+    private function serializeIndexItem(Poetry $poetry): array
+    {
+        $user = $poetry->relationLoaded('user') ? $poetry->getRelation('user') : null;
+        $poetry->unsetRelation('user');
+
+        $data = $poetry->toArray();
+        $data['user'] = SafeUserData::basic($user, '/api/admin/poetry');
+
+        return $data;
     }
 
     public function show($id)
