@@ -1,5 +1,10 @@
 <?php
 
+$googleMobileClientIds = array_values(array_filter(array_map(
+    'trim',
+    explode(',', (string) env('GOOGLE_MOBILE_CLIENT_IDS', ''))
+)));
+
 return [
 
     /*
@@ -17,6 +22,13 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'mobile_client_ids' => array_values(array_unique(array_filter([
+            env('GOOGLE_CLIENT_ID'),
+            env('GOOGLE_IOS_CLIENT_ID'),
+            env('GOOGLE_ANDROID_CLIENT_ID'),
+            env('GOOGLE_EXPO_CLIENT_ID'),
+            ...$googleMobileClientIds,
+        ]))),
         // Prefer explicit GOOGLE_REDIRECT_URI in production; otherwise follow APP_URL (e.g. https://www.baakh.com/auth/google-callback).
         'redirect' => env('GOOGLE_REDIRECT_URI') ?: rtrim((string) config('app.url'), '/') . '/auth/google-callback',
     ],
