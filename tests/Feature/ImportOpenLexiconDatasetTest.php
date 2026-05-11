@@ -26,6 +26,12 @@ class ImportOpenLexiconDatasetTest extends TestCase
     public function test_open_lexicon_import_is_idempotent(): void
     {
         $file = tempnam(sys_get_temp_dir(), 'open_lexicon_');
+        $longVariantList = implode(', ', array_merge(
+            ['canonical-headword'],
+            array_map(fn (int $index) => "variant-{$index}", range(1, 60))
+        ));
+
+        $this->assertGreaterThan(255, strlen($longVariantList));
 
         file_put_contents($file, implode(PHP_EOL, [
             json_encode([
@@ -53,6 +59,18 @@ class ImportOpenLexiconDatasetTest extends TestCase
                 'normalized_word' => 'test-word',
                 'normalized_definition' => 'second definition',
             ]),
+            json_encode([
+                'lexical_id' => 'slx_test_3',
+                'entry_id' => 3,
+                'word' => $longVariantList,
+                'part_of_speech' => null,
+                'domain' => 'Test Source',
+                'definition' => 'definition with a long variant headword',
+                'language_direction' => 'test',
+                'source_dictionary' => 'Test Source',
+                'normalized_word' => $longVariantList,
+                'normalized_definition' => 'definition with a long variant headword',
+            ]),
         ]) . PHP_EOL);
 
         $gzFile = $file . '.gz';
@@ -68,12 +86,18 @@ class ImportOpenLexiconDatasetTest extends TestCase
             '--chunk' => 1,
         ])->assertExitCode(0);
 
-        $this->assertDatabaseCount('lemmas', 1);
-        $this->assertDatabaseCount('senses', 2);
+        $this->assertDatabaseCount('lemmas', 2);
+        $this->assertDatabaseCount('senses', 3);
         $this->assertDatabaseHas('lemmas', [
             'lemma' => 'test-word',
             'normalized_lemma' => 'test-word',
             'pos' => 'noun',
+            'status' => 'approved',
+        ]);
+        $this->assertDatabaseHas('lemmas', [
+            'lemma' => 'canonical-headword',
+            'normalized_lemma' => 'canonical-headword',
+            'pos' => null,
             'status' => 'approved',
         ]);
         $this->assertDatabaseHas('senses', [
@@ -83,6 +107,16 @@ class ImportOpenLexiconDatasetTest extends TestCase
             'source_dictionary' => 'Test Source',
             'status' => 'approved',
         ]);
+        $this->assertDatabaseHas('senses', [
+            'lexical_id' => 'slx_test_3',
+            'definition' => 'definition with a long variant headword',
+            'word_variant' => $longVariantList,
+            'status' => 'approved',
+        ]);
+
+        $extra = json_decode((string) DB::table('senses')->where('lexical_id', 'slx_test_3')->value('extra'), true);
+        $this->assertSame($longVariantList, $extra['original_word'] ?? null);
+        $this->assertSame($longVariantList, $extra['original_normalized_word'] ?? null);
 
         @unlink($file);
         @unlink($gzFile);
@@ -112,7 +146,7 @@ class ImportOpenLexiconDatasetTest extends TestCase
             $table->text('definition_en')->nullable();
             $table->text('definition_sd')->nullable();
             $table->string('part_of_speech')->nullable()->index();
-            $table->string('word_variant')->nullable();
+            $table->text('word_variant')->nullable();
             $table->string('domain')->nullable()->index();
             $table->string('language_direction', 100)->nullable()->index();
             $table->string('source_dictionary', 150)->nullable()->index();

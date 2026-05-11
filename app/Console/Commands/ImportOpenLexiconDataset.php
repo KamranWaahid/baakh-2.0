@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class ImportOpenLexiconDataset extends Command
 {
     private const DEFAULT_SOURCE_FILE = 'database/sindhi_open_lexicon_master_223k_final/data/sindhi_open_lexicon_master_223342.jsonl';
+    private const INDEXED_TEXT_LIMIT = 255;
 
     protected $signature = 'dictionary:import-open-lexicon
         {--path= : JSONL or JSONL.GZ source file, relative to base path or absolute. Overrides --file}
@@ -133,8 +134,20 @@ class ImportOpenLexiconDataset extends Command
         }
 
         DB::transaction(function () use ($rows, &$stats) {
-            $words = collect($rows)
-                ->map(fn (array $row) => $this->nullableString($row['word'] ?? null))
+            $preparedRows = collect($rows)
+                ->map(fn (array $row) => $this->prepareRow($row))
+                ->filter()
+                ->values();
+
+            $lexicalIds = $preparedRows->pluck('lexical_id')->unique()->values();
+            $existingSensesByLexicalId = Sense::with('lemma')
+                ->whereIn('lexical_id', $lexicalIds)
+                ->get()
+                ->keyBy('lexical_id');
+
+            $words = $preparedRows
+                ->pluck('lemma')
+                ->merge($existingSensesByLexicalId->pluck('lemma.lemma'))
                 ->filter()
                 ->unique()
                 ->values();
@@ -145,16 +158,15 @@ class ImportOpenLexiconDataset extends Command
                 ->unique('lemma')
                 ->keyBy('lemma');
 
-            foreach ($rows as $row) {
-                $word = $this->nullableString($row['word'] ?? null);
-                $normalizedWord = $this->nullableString($row['normalized_word'] ?? null);
-                $partOfSpeech = $this->nullableString($row['part_of_speech'] ?? null);
-
-                $lemma = $lemmasByWord->get($word) ?: new Lemma(['lemma' => $word]);
+            foreach ($preparedRows as $row) {
+                $existingSense = $existingSensesByLexicalId->get($row['lexical_id']);
+                $lemma = $existingSense?->lemma
+                    ?: $lemmasByWord->get($row['lemma'])
+                    ?: new Lemma(['lemma' => $row['lemma']]);
                 $wasNewLemma = !$lemma->exists;
 
-                $lemma->normalized_lemma = $normalizedWord ?: $lemma->normalized_lemma;
-                $lemma->pos = $lemma->pos ?: $partOfSpeech;
+                $lemma->normalized_lemma = $row['normalized_lemma'] ?: $lemma->normalized_lemma;
+                $lemma->pos = $lemma->pos ?: $row['part_of_speech'];
 
                 if ($wasNewLemma || $lemma->status === 'pending') {
                     $lemma->status = 'approved';
@@ -163,30 +175,22 @@ class ImportOpenLexiconDataset extends Command
                 if ($lemma->isDirty()) {
                     $lemma->save();
                     $stats[$wasNewLemma ? 'lemmas_created' : 'lemmas_updated']++;
-                    $lemmasByWord->put($word, $lemma);
+                    $lemmasByWord->put($lemma->lemma, $lemma);
                 }
 
-                $lexicalId = $this->nullableString($row['lexical_id'] ?? null, 40)
-                    ?: 'slx_' . md5(implode('|', [
-                        $row['entry_id'] ?? '',
-                        $word,
-                        $row['source_dictionary'] ?? '',
-                        $row['definition'] ?? '',
-                    ]));
-
                 $sense = Sense::updateOrCreate(
-                    ['lexical_id' => $lexicalId],
+                    ['lexical_id' => $row['lexical_id']],
                     [
                         'lemma_id' => $lemma->id,
-                        'entry_id' => $this->nullableString($row['entry_id'] ?? null, 64),
-                        'definition' => (string) ($row['definition'] ?? ''),
-                        'part_of_speech' => $partOfSpeech,
-                        'word_variant' => $this->nullableString($row['word_with_airab_or_variant'] ?? null),
-                        'domain' => $this->nullableString($row['domain'] ?? null),
-                        'language_direction' => $this->nullableString($row['language_direction'] ?? null, 100),
-                        'source_dictionary' => $this->nullableString($row['source_dictionary'] ?? null, 150),
-                        'normalized_definition' => $this->nullableString($row['normalized_definition'] ?? null),
-                        'extra' => $this->encodedExtra($row),
+                        'entry_id' => $row['entry_id'],
+                        'definition' => $row['definition'],
+                        'part_of_speech' => $row['part_of_speech'],
+                        'word_variant' => $row['word_variant'],
+                        'domain' => $row['domain'],
+                        'language_direction' => $row['language_direction'],
+                        'source_dictionary' => $row['source_dictionary'],
+                        'normalized_definition' => $row['normalized_definition'],
+                        'extra' => $row['extra'],
                         'status' => 'approved',
                     ]
                 );
@@ -194,6 +198,54 @@ class ImportOpenLexiconDataset extends Command
                 $stats[$sense->wasRecentlyCreated ? 'senses_created' : 'senses_updated']++;
             }
         });
+    }
+
+    private function prepareRow(array $row): ?array
+    {
+        $sourceWord = $this->nullableString($row['word'] ?? null);
+        $definition = $this->nullableString($row['definition'] ?? null);
+
+        if ($sourceWord === null || $definition === null) {
+            return null;
+        }
+
+        $lemma = $this->canonicalLemma($sourceWord);
+        if ($lemma === null) {
+            return null;
+        }
+
+        $sourceNormalizedWord = $this->nullableString($row['normalized_word'] ?? null);
+        $normalizedLemma = $sourceNormalizedWord !== null
+            ? $this->canonicalLemma($sourceNormalizedWord)
+            : null;
+        $wordVariant = $this->nullableString($row['word_with_airab_or_variant'] ?? null)
+            ?: ($lemma !== $sourceWord ? $sourceWord : null);
+
+        return [
+            'lexical_id' => $this->lexicalId($row, $sourceWord),
+            'entry_id' => $this->nullableString($row['entry_id'] ?? null, 64),
+            'lemma' => $lemma,
+            'normalized_lemma' => $normalizedLemma,
+            'definition' => (string) ($row['definition'] ?? ''),
+            'part_of_speech' => $this->nullableString($row['part_of_speech'] ?? null, self::INDEXED_TEXT_LIMIT),
+            'word_variant' => $wordVariant,
+            'domain' => $this->nullableString($row['domain'] ?? null, self::INDEXED_TEXT_LIMIT),
+            'language_direction' => $this->nullableString($row['language_direction'] ?? null, 100),
+            'source_dictionary' => $this->nullableString($row['source_dictionary'] ?? null, 150),
+            'normalized_definition' => $this->nullableString($row['normalized_definition'] ?? null),
+            'extra' => $this->encodedExtra($row, $lemma, $normalizedLemma),
+        ];
+    }
+
+    private function lexicalId(array $row, string $sourceWord): string
+    {
+        return $this->nullableString($row['lexical_id'] ?? null, 40)
+            ?: 'slx_' . md5(implode('|', [
+                $row['entry_id'] ?? '',
+                $sourceWord,
+                $row['source_dictionary'] ?? '',
+                $row['definition'] ?? '',
+            ]));
     }
 
     private function resolvePath(string $path): string
@@ -271,7 +323,24 @@ class ImportOpenLexiconDataset extends Command
         return $value;
     }
 
-    private function encodedExtra(array $row): ?string
+    private function canonicalLemma(string $value): ?string
+    {
+        if ($this->stringLength($value) <= self::INDEXED_TEXT_LIMIT) {
+            return $value;
+        }
+
+        foreach (preg_split('/[,،;؛|]+/u', $value) ?: [] as $candidate) {
+            $candidate = $this->nullableString($candidate);
+
+            if ($candidate !== null && $this->stringLength($candidate) <= self::INDEXED_TEXT_LIMIT) {
+                return $candidate;
+            }
+        }
+
+        return $this->truncateString($value, self::INDEXED_TEXT_LIMIT);
+    }
+
+    private function encodedExtra(array $row, string $lemma, ?string $normalizedLemma): ?string
     {
         $extra = [
             'extra' => $row['extra'] ?? null,
@@ -280,9 +349,31 @@ class ImportOpenLexiconDataset extends Command
             'prepared_by' => $row['prepared_by'] ?? null,
         ];
 
+        $sourceWord = $this->nullableString($row['word'] ?? null);
+        if ($sourceWord !== null && $sourceWord !== $lemma) {
+            $extra['original_word'] = $sourceWord;
+        }
+
+        $sourceNormalizedWord = $this->nullableString($row['normalized_word'] ?? null);
+        if ($sourceNormalizedWord !== null && $sourceNormalizedWord !== $normalizedLemma) {
+            $extra['original_normalized_word'] = $sourceNormalizedWord;
+        }
+
         $extra = array_filter($extra, fn ($value) => $value !== null && $value !== '');
 
         return $extra === [] ? null : json_encode($extra, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    private function stringLength(string $value): int
+    {
+        return function_exists('mb_strlen') ? mb_strlen($value) : strlen($value);
+    }
+
+    private function truncateString(string $value, int $limit): string
+    {
+        return function_exists('mb_substr')
+            ? mb_substr($value, 0, $limit)
+            : substr($value, 0, $limit);
     }
 
     private function advanceProgress(int $target): void
