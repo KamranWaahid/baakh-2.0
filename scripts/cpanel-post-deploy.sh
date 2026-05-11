@@ -11,6 +11,52 @@ echo "Deploy source: $SOURCE_PATH"
 echo "App path: $APP_PATH"
 echo "Public path: $PUBLIC_PATH"
 
+verify_vite_build() {
+  php <<'PHP'
+<?php
+$buildPath = getcwd() . '/public/build';
+$manifestPath = $buildPath . '/manifest.json';
+
+if (!is_file($manifestPath)) {
+    fwrite(STDERR, "Missing Vite manifest: {$manifestPath}" . PHP_EOL);
+    exit(1);
+}
+
+$manifest = json_decode(file_get_contents($manifestPath), true);
+if (!is_array($manifest)) {
+    fwrite(STDERR, "Invalid Vite manifest: {$manifestPath}" . PHP_EOL);
+    exit(1);
+}
+
+$missing = [];
+foreach ($manifest as $entry) {
+    if (!is_array($entry)) {
+        continue;
+    }
+    foreach (['file', 'css', 'assets'] as $key) {
+        foreach ((array) ($entry[$key] ?? []) as $file) {
+            if (!is_string($file) || $file === '') {
+                continue;
+            }
+            if (!is_file($buildPath . '/' . ltrim($file, '/'))) {
+                $missing[] = $file;
+            }
+        }
+    }
+}
+
+if ($missing !== []) {
+    fwrite(STDERR, "Vite manifest references missing files:" . PHP_EOL);
+    foreach (array_unique($missing) as $file) {
+        fwrite(STDERR, " - {$file}" . PHP_EOL);
+    }
+    exit(1);
+}
+
+echo "Verified Vite manifest and built assets." . PHP_EOL;
+PHP
+}
+
 mkdir -p "$APP_PATH" "$PUBLIC_PATH"
 
 echo "Syncing application files..."
@@ -37,8 +83,10 @@ if command -v npm >/dev/null 2>&1; then
   npm run build
 else
   echo "npm not found on server; skipping asset build."
-  echo "Build assets locally and upload public/build if needed."
+  echo "A valid public/build directory must already exist in the deployment source."
 fi
+
+verify_vite_build
 
 echo "Running Laravel optimize tasks..."
 php artisan optimize:clear

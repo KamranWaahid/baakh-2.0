@@ -20,8 +20,39 @@ jobs:
 
       - name: Install NPM dependencies and build
         run: |
-          npm install
+          npm ci
           npm run build
+
+      - name: Verify built Vite assets
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const buildPath = path.join(process.cwd(), 'public', 'build');
+          const manifestPath = path.join(buildPath, 'manifest.json');
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          const missing = new Set();
+
+          for (const entry of Object.values(manifest)) {
+            if (!entry || typeof entry !== 'object') continue;
+            for (const key of ['file', 'css', 'assets']) {
+              for (const file of [entry[key]].flat()) {
+                if (typeof file === 'string' && file && !fs.existsSync(path.join(buildPath, file))) {
+                  missing.add(file);
+                }
+              }
+            }
+          }
+
+          if (missing.size) {
+            console.error('Vite manifest references missing files:');
+            for (const file of missing) console.error(` - ${file}`);
+            process.exit(1);
+          }
+
+          console.log('Verified Vite manifest and built assets.');
+          NODE
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -32,6 +63,7 @@ jobs:
           local-dir: ./
           server-dir: ./
           state-name: .ftp-deploy-sync-state.json
+          # Do not exclude public/build; Laravel serves Vite assets from /build/*.
           exclude: |
             **/.git*
             **/.git*/**

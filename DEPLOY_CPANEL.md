@@ -12,6 +12,7 @@ For cPanel shared hosting, deploy app code outside `public_html` and publish onl
   - syncs repository into `APP_PATH` (default: `/home/<user>/baakh_app`),
   - runs `composer install --no-dev`,
   - runs `npm ci && npm run build` (if npm is available),
+  - verifies `public/build/manifest.json` references files that actually exist,
   - caches Laravel config/views/events and creates storage symlink,
   - syncs `public/` into `PUBLIC_PATH` (default: `/home/<user>/public_html`),
   - rewrites `public_html/index.php` so it boots Laravel from `APP_PATH`.
@@ -103,7 +104,7 @@ npm ci
 npm run build
 ```
 
-Then include `public/build` in deployment by uploading/syncing it to `/home/<user>/baakh_app/public/build` before deploy.
+Then include `public/build` in deployment by uploading/syncing it with the deploy source; the deploy script will stop before publishing if Vite assets are missing or incomplete.
 
 ## Troubleshooting (Terminal)
 
