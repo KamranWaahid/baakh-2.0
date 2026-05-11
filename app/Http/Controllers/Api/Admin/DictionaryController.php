@@ -15,7 +15,7 @@ class DictionaryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Lemma::withCount(['senses', 'lemmaRelations'])
+        $query = Lemma::withCount(['senses', 'lemmaRelations', 'variants'])
             ->with([
                 'morphology',
                 'senses' => function ($query) {
@@ -87,10 +87,194 @@ class DictionaryController extends Controller
 
         return response()->json([
             'total_lemmas' => Lemma::count(),
+            'pending_lemmas' => Lemma::where('status', 'pending')->count(),
             'approved_lemmas' => Lemma::where('status', 'approved')->count(),
             'total_senses' => Sense::count(),
             'open_lexicon_entries' => Sense::whereNotNull('lexical_id')->count(),
+            'variant_entries' => Sense::whereNotNull('word_variant')->where('word_variant', '<>', '')->count(),
             'sources' => $sources,
+        ]);
+    }
+
+    public function senses(Request $request)
+    {
+        $query = Sense::query()
+            ->with(['lemma:id,lemma,normalized_lemma,pos,status'])
+            ->select([
+                'id',
+                'lemma_id',
+                'lexical_id',
+                'entry_id',
+                'definition',
+                'part_of_speech',
+                'word_variant',
+                'domain',
+                'language_direction',
+                'source_dictionary',
+                'status',
+                'created_at',
+            ]);
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($query) use ($search) {
+                $query->where('definition', 'like', '%' . $search . '%')
+                    ->orWhere('normalized_definition', 'like', '%' . $search . '%')
+                    ->orWhere('lexical_id', $search)
+                    ->orWhere('source_dictionary', 'like', '%' . $search . '%')
+                    ->orWhereHas('lemma', function ($query) use ($search) {
+                        $query->where('lemma', 'like', '%' . $search . '%')
+                            ->orWhere('normalized_lemma', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        if ($request->filled('source')) {
+            $query->where('source_dictionary', $request->source);
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $limit = min(100, max(1, (int) $request->get('limit', 20)));
+
+        return response()->json($query->orderByDesc('id')->paginate($limit));
+    }
+
+    public function morphology(Request $request)
+    {
+        $query = Lemma::query()
+            ->with(['morphology'])
+            ->withCount(['senses', 'variants']);
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($query) use ($search) {
+                $query->where('lemma', 'like', '%' . $search . '%')
+                    ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
+                    ->orWhereHas('morphology', function ($query) use ($search) {
+                        $query->where('root', 'like', '%' . $search . '%')
+                            ->orWhere('pattern', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->boolean('missing')) {
+            $query->whereDoesntHave('morphology');
+        }
+
+        $limit = min(100, max(1, (int) $request->get('limit', 20)));
+
+        return response()->json($query->orderBy('lemma')->paginate($limit));
+    }
+
+    public function variants(Request $request)
+    {
+        $query = Sense::query()
+            ->with(['lemma:id,lemma,normalized_lemma,pos,status'])
+            ->select([
+                'id',
+                'lemma_id',
+                'lexical_id',
+                'definition',
+                'part_of_speech',
+                'word_variant',
+                'language_direction',
+                'source_dictionary',
+            ])
+            ->whereNotNull('word_variant')
+            ->where('word_variant', '<>', '');
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($query) use ($search) {
+                $query->where('word_variant', 'like', '%' . $search . '%')
+                    ->orWhere('definition', 'like', '%' . $search . '%')
+                    ->orWhereHas('lemma', function ($query) use ($search) {
+                        $query->where('lemma', 'like', '%' . $search . '%')
+                            ->orWhere('normalized_lemma', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        if ($request->filled('source')) {
+            $query->where('source_dictionary', $request->source);
+        }
+
+        $limit = min(100, max(1, (int) $request->get('limit', 20)));
+        $page = $query->orderByDesc('id')->paginate($limit);
+
+        $page->getCollection()->transform(function (Sense $sense) {
+            return [
+                'id' => $sense->id,
+                'lemma_id' => $sense->lemma_id,
+                'lemma' => $sense->lemma,
+                'variant' => $sense->word_variant,
+                'type' => 'lexicon_variant',
+                'dialect' => $sense->language_direction,
+                'source_dictionary' => $sense->source_dictionary,
+                'part_of_speech' => $sense->part_of_speech,
+                'definition' => $sense->definition,
+                'lexical_id' => $sense->lexical_id,
+            ];
+        });
+
+        return response()->json($page);
+    }
+
+    public function qa()
+    {
+        $missingSenses = Lemma::query()
+            ->withCount('senses')
+            ->doesntHave('senses')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get(['id', 'lemma', 'status', 'created_at']);
+
+        $pending = Lemma::query()
+            ->withCount('senses')
+            ->where('status', 'pending')
+            ->orderByDesc('updated_at')
+            ->limit(10)
+            ->get(['id', 'lemma', 'status', 'updated_at']);
+
+        $missingNormalized = Lemma::query()
+            ->whereNull('normalized_lemma')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get(['id', 'lemma', 'status']);
+
+        $duplicateLemmas = Lemma::query()
+            ->select('lemma', DB::raw('COUNT(*) as total'))
+            ->groupBy('lemma')
+            ->having('total', '>', 1)
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'summary' => [
+                'pending_lemmas' => Lemma::where('status', 'pending')->count(),
+                'lemmas_without_senses' => Lemma::doesntHave('senses')->count(),
+                'lemmas_without_normalized_form' => Lemma::whereNull('normalized_lemma')->count(),
+                'duplicate_lemma_groups' => DB::query()
+                    ->fromSub(
+                        Lemma::query()->select('lemma')->groupBy('lemma')->havingRaw('COUNT(*) > 1'),
+                        'duplicate_lemmas'
+                    )
+                    ->count(),
+            ],
+            'issues' => [
+                'missing_senses' => $missingSenses,
+                'pending' => $pending,
+                'missing_normalized' => $missingNormalized,
+                'duplicate_lemmas' => $duplicateLemmas,
+            ],
         ]);
     }
 

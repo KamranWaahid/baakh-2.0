@@ -86,9 +86,6 @@ const DictionaryHome = () => {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="secondary" onClick={() => setIsBatchScrapeModalOpen(true)}>
-                        <Layers className="mr-2 h-4 w-4" /> Batch Scrape
-                    </Button>
                     <Button onClick={() => setIsAddModalOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" /> Add Word
                     </Button>

@@ -20,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Trash2, Plus, Check, Save, Loader2, ArrowLeft,
     BookOpen, Type, Languages, ArrowRightLeft, Layers, X, Globe,
-    Copy, CheckCircle2
+    Copy, CheckCircle2, Search, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,6 +28,8 @@ const SenseEditor = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const [listSearch, setListSearch] = useState('');
+    const [listPage, setListPage] = useState(1);
 
     // ── Fetch lemma with all relations ──
     const { data: lemma, isLoading, error } = useQuery({
@@ -38,6 +40,18 @@ const SenseEditor = () => {
             return res.data;
         },
         enabled: !!id
+    });
+
+    const { data: senseResponse, isLoading: isListLoading } = useQuery({
+        queryKey: ['dictionary-senses', listSearch, listPage],
+        queryFn: async () => {
+            const res = await api.get('/api/admin/dictionary/senses', {
+                params: { search: listSearch, page: listPage, limit: 20 }
+            });
+            return res.data;
+        },
+        enabled: !id,
+        placeholderData: (previousData) => previousData
     });
 
     // ── Local state for editable fields ──
@@ -186,6 +200,19 @@ const SenseEditor = () => {
         toast.success('Scraped data JSON copied to clipboard!');
         setTimeout(() => setIsScrapeCopied(false), 2000);
     };
+
+    if (!id) {
+        return (
+            <SenseListView
+                response={senseResponse}
+                isLoading={isListLoading}
+                search={listSearch}
+                setSearch={setListSearch}
+                page={listPage}
+                setPage={setListPage}
+            />
+        );
+    }
 
     if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="animate-spin h-8 w-8 text-muted-foreground" /></div>;
     if (error) return <div className="p-8 text-center text-red-500">Error loading lemma.</div>;
@@ -575,6 +602,82 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                 </Button>
             </CardFooter>
         </Card>
+    );
+};
+
+const SenseListView = ({ response, isLoading, search, setSearch, page, setPage }) => {
+    const senses = response?.data || [];
+    const meta = response || {};
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Sense Editor</h2>
+                    <p className="text-muted-foreground mt-1">Search Open Lexicon senses, then open a lemma for editing.</p>
+                </div>
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-4">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search words, definitions, lexical IDs, sources..."
+                                className="pl-8"
+                                value={search}
+                                onChange={(e) => {
+                                    setSearch(e.target.value);
+                                    setPage(1);
+                                }}
+                            />
+                        </div>
+                        {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-md border divide-y">
+                        {senses.length > 0 ? senses.map((sense) => (
+                            <div key={sense.id} className="p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div className="space-y-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-arabic text-xl font-semibold" dir="rtl">{sense.lemma?.lemma || '—'}</span>
+                                        {sense.part_of_speech && <Badge variant="secondary">{sense.part_of_speech}</Badge>}
+                                        {sense.source_dictionary && <Badge variant="outline">{sense.source_dictionary}</Badge>}
+                                    </div>
+                                    <p className="text-sm line-clamp-2 font-arabic" dir="auto">{sense.definition}</p>
+                                    {sense.lexical_id && <p className="text-xs text-muted-foreground">{sense.lexical_id}</p>}
+                                </div>
+                                <Button size="sm" variant="outline" asChild>
+                                    <Link to={`/admin/dictionary/lemmas/${sense.lemma_id}`}>
+                                        <BookOpen className="mr-2 h-4 w-4" /> Edit Lemma
+                                    </Link>
+                                </Button>
+                            </div>
+                        )) : !isLoading ? (
+                            <div className="h-32 flex items-center justify-center text-muted-foreground">
+                                No senses found.
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="flex items-center justify-between space-x-2 py-4">
+                        <div className="text-sm text-muted-foreground">
+                            Showing <strong>{meta.from || 0}</strong> to <strong>{meta.to || 0}</strong> of <strong>{meta.total || 0}</strong>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                                <ChevronLeft className="h-4 w-4" /> Previous
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={!meta.next_page_url}>
+                                Next <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 

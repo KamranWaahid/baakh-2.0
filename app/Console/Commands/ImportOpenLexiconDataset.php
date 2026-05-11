@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 class ImportOpenLexiconDataset extends Command
 {
+    private const DEFAULT_SOURCE_FILE = 'database/sindhi_open_lexicon_master_223k_final/data/sindhi_open_lexicon_master_223342.jsonl';
+
     protected $signature = 'dictionary:import-open-lexicon
+        {--path= : JSONL or JSONL.GZ source file, relative to base path or absolute. Overrides --file}
         {--file=database/sindhi_open_lexicon_master_223k_final/data/sindhi_open_lexicon_master_223342.jsonl : JSONL source file, relative to base path or absolute}
         {--limit= : Stop after this many source rows, useful for verification}
         {--chunk=1000 : Rows to commit per transaction}
@@ -19,20 +22,24 @@ class ImportOpenLexiconDataset extends Command
 
     public function handle(): int
     {
-        $filePath = $this->resolvePath($this->option('file'));
+        $requestedPath = $this->option('path') ?: $this->option('file') ?: self::DEFAULT_SOURCE_FILE;
+        $filePath = $this->resolvePath($requestedPath);
         $limit = $this->option('limit') !== null ? max(0, (int) $this->option('limit')) : null;
         $chunkSize = max(1, min(5000, (int) $this->option('chunk')));
         $dryRun = (bool) $this->option('dry-run');
 
         if (!is_file($filePath)) {
             $this->error("Lexicon file not found: {$filePath}");
+            $this->line('Expected the bundled compressed file at: ' . base_path(self::DEFAULT_SOURCE_FILE . '.gz'));
+            $this->line('Or pass an explicit source with: php artisan dictionary:import-open-lexicon --path=/absolute/path/to/sindhi_open_lexicon_master_223342.jsonl');
+            $this->line('The --path option also accepts .jsonl.gz files.');
 
             return self::FAILURE;
         }
 
         $this->info(($dryRun ? 'Dry-running' : 'Importing') . " open lexicon from: {$filePath}");
 
-        $handle = fopen($filePath, 'r');
+        $handle = $this->openSourceFile($filePath);
         if ($handle === false) {
             $this->error("Unable to open lexicon file: {$filePath}");
 
@@ -56,7 +63,7 @@ class ImportOpenLexiconDataset extends Command
 
         $batch = [];
 
-        while (($line = fgets($handle)) !== false) {
+        while (($line = $this->readSourceLine($handle, $filePath)) !== false) {
             if ($limit !== null && $stats['processed'] >= $limit) {
                 break;
             }
@@ -89,7 +96,7 @@ class ImportOpenLexiconDataset extends Command
             $this->importBatch($batch, $stats, $dryRun);
         }
 
-        fclose($handle);
+        $this->closeSourceFile($handle, $filePath);
 
         if ($target > 0) {
             $this->output->progressFinish();
@@ -192,10 +199,44 @@ class ImportOpenLexiconDataset extends Command
     private function resolvePath(string $path): string
     {
         if (str_starts_with($path, DIRECTORY_SEPARATOR)) {
+            return $this->resolveCompressedFallback($path);
+        }
+
+        return $this->resolveCompressedFallback(base_path($path));
+    }
+
+    private function resolveCompressedFallback(string $path): string
+    {
+        if (is_file($path)) {
             return $path;
         }
 
-        return base_path($path);
+        if (!str_ends_with($path, '.gz') && is_file($path . '.gz')) {
+            return $path . '.gz';
+        }
+
+        return $path;
+    }
+
+    private function openSourceFile(string $path)
+    {
+        return str_ends_with($path, '.gz') ? gzopen($path, 'rb') : fopen($path, 'r');
+    }
+
+    private function readSourceLine($handle, string $path): string|false
+    {
+        return str_ends_with($path, '.gz') ? gzgets($handle) : fgets($handle);
+    }
+
+    private function closeSourceFile($handle, string $path): void
+    {
+        if (str_ends_with($path, '.gz')) {
+            gzclose($handle);
+
+            return;
+        }
+
+        fclose($handle);
     }
 
     private function defaultTotalRows(): int

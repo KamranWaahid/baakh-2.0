@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CorpusSentence;
+use App\Models\CorpusStat;
+use App\Models\Sense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,15 +15,16 @@ class CorpusController extends Controller
     {
         $query = CorpusSentence::query();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $query->where('sentence', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->has('source')) {
+        if ($request->filled('source')) {
             $query->where('source', $request->source);
         }
 
-        $sentences = $query->latest()->paginate($request->get('limit', 20));
+        $limit = min(100, max(1, (int) $request->get('limit', 20)));
+        $sentences = $query->latest()->paginate($limit);
 
         return response()->json($sentences);
     }
@@ -39,43 +42,90 @@ class CorpusController extends Controller
 
     public function clusters()
     {
-        // Mocking clusters for UI functionality
-        // In reality, this would query a clusters table or run an LDA model
-        return response()->json([
-            [
-                'name' => 'Education',
-                'weight' => 42,
-                'keywords' => ['school', 'teacher', 'student', 'library', 'exam', 'class'],
-                'color' => 'blue'
-            ],
-            [
-                'name' => 'Literature',
-                'weight' => 28,
-                'keywords' => ['poetry', 'writer', 'pages', 'ink', 'rhyme', 'verse'],
-                'color' => 'green'
-            ],
-            [
-                'name' => 'Politics',
-                'weight' => 15,
-                'keywords' => ['election', 'government', 'policy', 'vote', 'assembly'],
-                'color' => 'amber'
-            ],
-        ]);
+        $corpusTotal = CorpusSentence::count();
+        if ($corpusTotal > 0) {
+            $clusters = CorpusSentence::query()
+                ->selectRaw("COALESCE(NULLIF(category, ''), NULLIF(source, ''), 'General') as name, COUNT(*) as count")
+                ->groupBy('name')
+                ->orderByDesc('count')
+                ->limit(12)
+                ->get()
+                ->map(function ($cluster) use ($corpusTotal) {
+                    return [
+                        'name' => $cluster->name,
+                        'weight' => round(($cluster->count / max(1, $corpusTotal)) * 100, 1),
+                        'count' => (int) $cluster->count,
+                        'keywords' => CorpusStat::query()
+                            ->orderByDesc('frequency')
+                            ->limit(8)
+                            ->pluck('word')
+                            ->all(),
+                        'source' => 'corpus_sentences',
+                    ];
+                });
+
+            return response()->json($clusters);
+        }
+
+        $senseTotal = Sense::count();
+        $clusters = Sense::query()
+            ->selectRaw("COALESCE(NULLIF(domain, ''), NULLIF(source_dictionary, ''), 'General') as name, COUNT(*) as count")
+            ->groupBy('name')
+            ->orderByDesc('count')
+            ->limit(12)
+            ->get()
+            ->map(function ($cluster) use ($senseTotal) {
+                $keywords = Sense::query()
+                    ->join('lemmas', 'senses.lemma_id', '=', 'lemmas.id')
+                    ->where(function ($query) use ($cluster) {
+                        $query->where('senses.domain', $cluster->name)
+                            ->orWhere('senses.source_dictionary', $cluster->name);
+                    })
+                    ->orderBy('lemmas.lemma')
+                    ->limit(8)
+                    ->pluck('lemmas.lemma')
+                    ->all();
+
+                return [
+                    'name' => $cluster->name,
+                    'weight' => round(($cluster->count / max(1, $senseTotal)) * 100, 1),
+                    'count' => (int) $cluster->count,
+                    'keywords' => $keywords,
+                    'source' => 'lexicon_senses',
+                ];
+            });
+
+        return response()->json($clusters);
     }
 
     public function trends()
     {
-        // Mocking trends for UI
+        $top = CorpusStat::query()
+            ->orderByDesc('frequency')
+            ->limit(10)
+            ->get(['word', 'frequency'])
+            ->map(fn ($row) => [
+                'word' => $row->word,
+                'change' => number_format((int) $row->frequency) . ' uses',
+                'frequency' => (int) $row->frequency,
+                'trend' => 'top_frequency',
+            ]);
+
+        $rare = CorpusStat::query()
+            ->where('frequency', '>', 0)
+            ->orderBy('frequency')
+            ->limit(10)
+            ->get(['word', 'frequency'])
+            ->map(fn ($row) => [
+                'word' => $row->word,
+                'change' => number_format((int) $row->frequency) . ' uses',
+                'frequency' => (int) $row->frequency,
+                'trend' => 'low_frequency',
+            ]);
+
         return response()->json([
-            'trending_up' => [
-                ['word' => 'ڊجيٽل', 'change' => '+45%', 'trend' => 'up'],
-                ['word' => 'آرٽيفيشل', 'change' => '+32%', 'trend' => 'up'],
-                ['word' => 'نيٽورڪ', 'change' => '+28%', 'trend' => 'up'],
-            ],
-            'trending_down' => [
-                ['word' => 'ٽيليگراف', 'change' => '-12%', 'trend' => 'down'],
-                ['word' => 'فلاپي', 'change' => '-8%', 'trend' => 'down'],
-            ]
+            'trending_up' => $top,
+            'trending_down' => $rare,
         ]);
     }
 }

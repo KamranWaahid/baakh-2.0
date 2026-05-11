@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,10 +16,12 @@ import {
     Edit2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const LemmaInbox = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const queryClient = useQueryClient();
 
     const { data: response, isLoading } = useQuery({
         queryKey: ['lemmas', search, page],
@@ -30,6 +32,15 @@ const LemmaInbox = () => {
             return res.data;
         },
         placeholderData: (previousData) => previousData
+    });
+
+    const approveLemma = useMutation({
+        mutationFn: (id) => api.patch(`/api/admin/dictionary/lemmas/${id}/approve`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['lemmas'] });
+            toast.success('Lemma approved.');
+        },
+        onError: () => toast.error('Failed to approve lemma.'),
     });
 
     const lemmas = response?.data || [];
@@ -105,7 +116,13 @@ const LemmaInbox = () => {
                                                             <Edit2 className="mr-2 h-3 w-3" /> Edit
                                                         </Link>
                                                     </Button>
-                                                    <Button size="sm">Approve</Button>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => approveLemma.mutate(lemma.id)}
+                                                        disabled={approveLemma.isPending}
+                                                    >
+                                                        Approve
+                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>

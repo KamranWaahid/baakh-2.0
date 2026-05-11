@@ -8,9 +8,9 @@ import { Badge } from '@/components/ui/badge';
 
 const UsageTrends = () => {
     const { data: trends, isLoading } = useQuery({
-        queryKey: ['corpus-trends'],
+        queryKey: ['analytics-trends'],
         queryFn: async () => {
-            const res = await api.get('/api/admin/corpus/trends');
+            const res = await api.get('/api/admin/analytics/trends');
             return res.data;
         }
     });
@@ -29,12 +29,18 @@ const UsageTrends = () => {
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4" /> Historical Word Usage
+                            <TrendingUp className="h-4 w-4" /> Lexicon Composition
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[350px] flex items-center justify-center border rounded-lg border-dashed text-muted-foreground italic">
-                            {isLoading ? <Loader2 className="animate-spin h-8 w-8" /> : "Time-series Word Frequency Chart Visualization enabled."}
+                        <div className="h-[350px] flex flex-col items-center justify-center border rounded-lg border-dashed text-muted-foreground italic gap-2">
+                            {isLoading ? <Loader2 className="animate-spin h-8 w-8" /> : (
+                                <>
+                                    <div>{Number(trends?.totals?.lemmas || 0).toLocaleString()} lemmas</div>
+                                    <div>{Number(trends?.totals?.senses || 0).toLocaleString()} senses</div>
+                                    <div>{Number(trends?.totals?.approved_lemmas || 0).toLocaleString()} approved lemmas</div>
+                                </>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -42,14 +48,14 @@ const UsageTrends = () => {
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Trending Up</CardTitle>
+                            <CardTitle className="text-sm font-medium">Source Dictionaries</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {trends?.trending_up?.map((item) => (
-                                <div key={item.word} className="flex items-center justify-between">
-                                    <span className="font-arabic text-lg" dir="rtl">{item.word}</span>
+                            {trends?.sources?.map((item) => (
+                                <div key={item.source_dictionary} className="flex items-center justify-between">
+                                    <span className="text-sm">{item.source_dictionary || 'Unknown source'}</span>
                                     <div className="flex items-center text-green-500 text-sm font-semibold">
-                                        <ArrowUpRight className="h-4 w-4 mr-1" /> {item.change}
+                                        <ArrowUpRight className="h-4 w-4 mr-1" /> {Number(item.total || 0).toLocaleString()}
                                     </div>
                                 </div>
                             )) || (isLoading && <Loader2 className="animate-spin h-4 w-4" />)}
@@ -58,14 +64,14 @@ const UsageTrends = () => {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-medium">Trending Down</CardTitle>
+                            <CardTitle className="text-sm font-medium">Parts of Speech</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {trends?.trending_down?.map((item) => (
-                                <div key={item.word} className="flex items-center justify-between opacity-70">
-                                    <span className="font-arabic text-lg" dir="rtl">{item.word}</span>
+                            {trends?.parts_of_speech?.map((item) => (
+                                <div key={item.name} className="flex items-center justify-between opacity-70">
+                                    <span className="text-sm">{item.name}</span>
                                     <div className="flex items-center text-muted-foreground text-sm font-semibold">
-                                        <TrendingDown className="h-4 w-4 mr-1" /> {item.change}
+                                        <TrendingDown className="h-4 w-4 mr-1" /> {Number(item.total || 0).toLocaleString()}
                                     </div>
                                 </div>
                             )) || (isLoading && <Loader2 className="animate-spin h-4 w-4" />)}
@@ -76,12 +82,18 @@ const UsageTrends = () => {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2"><Clock className="h-5 w-5" /> Seasonal Word Usage</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2"><Clock className="h-5 w-5" /> Recently Updated Lemmas</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="h-[200px] flex items-center justify-center border rounded-lg border-dashed text-muted-foreground italic">
-                        Heatmap of word usage by season/month
-                    </div>
+                <CardContent className="space-y-3">
+                    {(trends?.recent_lemmas || []).map((lemma) => (
+                        <div key={lemma.id} className="flex items-center justify-between rounded-md border p-3">
+                            <span className="font-arabic text-lg" dir="rtl">{lemma.lemma}</span>
+                            <Badge variant="outline">{lemma.senses_count} senses · {lemma.status}</Badge>
+                        </div>
+                    ))}
+                    {(!trends?.recent_lemmas || trends.recent_lemmas.length === 0) && !isLoading && (
+                        <p className="text-sm text-muted-foreground">No recently updated lemma data available.</p>
+                    )}
                 </CardContent>
             </Card>
         </div>

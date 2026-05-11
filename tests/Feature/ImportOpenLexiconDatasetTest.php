@@ -55,8 +55,11 @@ class ImportOpenLexiconDatasetTest extends TestCase
             ]),
         ]) . PHP_EOL);
 
+        $gzFile = $file . '.gz';
+        file_put_contents($gzFile, gzencode((string) file_get_contents($file)));
+
         $this->artisan('dictionary:import-open-lexicon', [
-            '--file' => $file,
+            '--path' => $gzFile,
             '--chunk' => 1,
         ])->assertExitCode(0);
 
@@ -82,6 +85,7 @@ class ImportOpenLexiconDatasetTest extends TestCase
         ]);
 
         @unlink($file);
+        @unlink($gzFile);
     }
 
     private function createDictionarySchema(): void
