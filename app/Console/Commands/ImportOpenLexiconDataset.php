@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\DB;
 class ImportOpenLexiconDataset extends Command
 {
     private const DEFAULT_SOURCE_FILE = 'database/sindhi_open_lexicon_master_223k_final/data/sindhi_open_lexicon_master_223342.jsonl';
-    private const INDEXED_TEXT_LIMIT = 255;
+    private const DEFAULT_STRING_COLUMN_LIMIT = 191;
+    private const INDEXED_TEXT_LIMIT = self::DEFAULT_STRING_COLUMN_LIMIT;
+    private const LEMMA_COLUMN_LIMIT = self::DEFAULT_STRING_COLUMN_LIMIT;
 
     protected $signature = 'dictionary:import-open-lexicon
         {--path= : JSONL or JSONL.GZ source file, relative to base path or absolute. Overrides --file}
@@ -209,15 +211,19 @@ class ImportOpenLexiconDataset extends Command
             return null;
         }
 
+        $sourceWordHasVariants = $this->hasLemmaVariants($sourceWord);
         $lemma = $this->canonicalLemma($sourceWord);
         if ($lemma === null) {
             return null;
         }
 
         $sourceNormalizedWord = $this->nullableString($row['normalized_word'] ?? null);
-        $normalizedLemma = $sourceNormalizedWord !== null
-            ? $this->canonicalLemma($sourceNormalizedWord)
-            : null;
+        $normalizedLemma = null;
+        if ($sourceNormalizedWord !== null) {
+            $normalizedLemma = $sourceWordHasVariants
+                ? $lemma
+                : $this->canonicalLemma($sourceNormalizedWord);
+        }
         $wordVariant = $this->nullableString($row['word_with_airab_or_variant'] ?? null)
             ?: ($lemma !== $sourceWord ? $sourceWord : null);
 
@@ -325,19 +331,41 @@ class ImportOpenLexiconDataset extends Command
 
     private function canonicalLemma(string $value): ?string
     {
-        if ($this->stringLength($value) <= self::INDEXED_TEXT_LIMIT) {
-            return $value;
+        foreach ($this->lemmaCandidates($value) as $candidate) {
+            if ($this->stringLength($candidate) <= self::LEMMA_COLUMN_LIMIT) {
+                return $candidate;
+            }
+
+            return $this->truncateString($candidate, self::LEMMA_COLUMN_LIMIT);
         }
 
-        foreach (preg_split('/[,،;؛|]+/u', $value) ?: [] as $candidate) {
-            $candidate = $this->nullableString($candidate);
+        return null;
+    }
 
-            if ($candidate !== null && $this->stringLength($candidate) <= self::INDEXED_TEXT_LIMIT) {
-                return $candidate;
+    private function lemmaCandidates(string $value): array
+    {
+        $value = $this->nullableString($value);
+        if ($value === null) {
+            return [];
+        }
+
+        $parts = preg_split('/(?:\s*[,،;؛\/|]+\s*|\s+يا\s+)/u', $value) ?: [$value];
+        $candidates = [];
+
+        foreach ($parts as $part) {
+            $candidate = $this->nullableString($part);
+
+            if ($candidate !== null) {
+                $candidates[] = $candidate;
             }
         }
 
-        return $this->truncateString($value, self::INDEXED_TEXT_LIMIT);
+        return $candidates !== [] ? $candidates : [$value];
+    }
+
+    private function hasLemmaVariants(string $value): bool
+    {
+        return count($this->lemmaCandidates($value)) > 1;
     }
 
     private function encodedExtra(array $row, string $lemma, ?string $normalizedLemma): ?string

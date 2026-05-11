@@ -30,8 +30,10 @@ class ImportOpenLexiconDatasetTest extends TestCase
             ['canonical-headword'],
             array_map(fn (int $index) => "variant-{$index}", range(1, 60))
         ));
+        $failingSindhiVariantList = 'ايڏنئين، ايڏئن، ايڏئون، ايڏئون، ايڏنهن، ايڏهنئن، ايڏهين، ايڏهن، ايڏهون، ايڏهون، ايڏانئين، ايڏانئون، ايڏانئون، ايڏانهنئن، ايڏانهين، ايڏانهون، ايڏانهون، ايڏي، ايڏهئن، ايڏهان، ايڏهين، ايڏهون يا ايڏهون';
 
         $this->assertGreaterThan(255, strlen($longVariantList));
+        $this->assertGreaterThan(191, mb_strlen($failingSindhiVariantList));
 
         file_put_contents($file, implode(PHP_EOL, [
             json_encode([
@@ -71,6 +73,18 @@ class ImportOpenLexiconDatasetTest extends TestCase
                 'normalized_word' => $longVariantList,
                 'normalized_definition' => 'definition with a long variant headword',
             ]),
+            json_encode([
+                'lexical_id' => 'slx_test_4',
+                'entry_id' => 4,
+                'word' => $failingSindhiVariantList,
+                'part_of_speech' => null,
+                'domain' => 'Test Source',
+                'definition' => 'definition with the production failing Sindhi variant list',
+                'language_direction' => 'test',
+                'source_dictionary' => 'Test Source',
+                'normalized_word' => $failingSindhiVariantList,
+                'normalized_definition' => 'definition with the production failing Sindhi variant list',
+            ]),
         ]) . PHP_EOL);
 
         $gzFile = $file . '.gz';
@@ -86,8 +100,8 @@ class ImportOpenLexiconDatasetTest extends TestCase
             '--chunk' => 1,
         ])->assertExitCode(0);
 
-        $this->assertDatabaseCount('lemmas', 2);
-        $this->assertDatabaseCount('senses', 3);
+        $this->assertDatabaseCount('lemmas', 3);
+        $this->assertDatabaseCount('senses', 4);
         $this->assertDatabaseHas('lemmas', [
             'lemma' => 'test-word',
             'normalized_lemma' => 'test-word',
@@ -117,6 +131,19 @@ class ImportOpenLexiconDatasetTest extends TestCase
         $extra = json_decode((string) DB::table('senses')->where('lexical_id', 'slx_test_3')->value('extra'), true);
         $this->assertSame($longVariantList, $extra['original_word'] ?? null);
         $this->assertSame($longVariantList, $extra['original_normalized_word'] ?? null);
+
+        $failingLemma = DB::table('lemmas')->where('lemma', 'ايڏنئين')->first();
+        $this->assertNotNull($failingLemma);
+        $this->assertLessThanOrEqual(255, mb_strlen($failingLemma->lemma));
+        $this->assertLessThanOrEqual(191, mb_strlen($failingLemma->lemma));
+        $this->assertSame('ايڏنئين', $failingLemma->normalized_lemma);
+
+        $failingSense = DB::table('senses')->where('lexical_id', 'slx_test_4')->first();
+        $this->assertSame($failingSindhiVariantList, $failingSense->word_variant);
+
+        $failingExtra = json_decode((string) $failingSense->extra, true);
+        $this->assertSame($failingSindhiVariantList, $failingExtra['original_word'] ?? null);
+        $this->assertSame($failingSindhiVariantList, $failingExtra['original_normalized_word'] ?? null);
 
         @unlink($file);
         @unlink($gzFile);
