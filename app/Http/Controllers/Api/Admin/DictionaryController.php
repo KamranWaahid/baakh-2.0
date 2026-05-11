@@ -15,14 +15,50 @@ class DictionaryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Lemma::withCount(['senses', 'lemmaRelations'])->with('morphology');
+        $query = Lemma::withCount(['senses', 'lemmaRelations'])
+            ->with([
+                'morphology',
+                'senses' => function ($query) {
+                    $query->select([
+                        'id',
+                        'lemma_id',
+                        'lexical_id',
+                        'definition',
+                        'part_of_speech',
+                        'word_variant',
+                        'domain',
+                        'language_direction',
+                        'source_dictionary',
+                        'status',
+                    ])->orderBy('id');
+                },
+            ]);
 
-        if ($request->has('search')) {
-            $query->where('lemma', 'like', '%' . $request->search . '%');
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+
+            $query->where(function ($query) use ($search) {
+                $query->where('lemma', 'like', '%' . $search . '%')
+                    ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
+                    ->orWhere('transliteration', 'like', '%' . $search . '%')
+                    ->orWhereHas('senses', function ($query) use ($search) {
+                        $query->where('definition', 'like', '%' . $search . '%')
+                            ->orWhere('normalized_definition', 'like', '%' . $search . '%')
+                            ->orWhere('source_dictionary', 'like', '%' . $search . '%')
+                            ->orWhere('domain', 'like', '%' . $search . '%')
+                            ->orWhere('lexical_id', $search);
+                    });
+            });
         }
 
-        if ($request->has('pos')) {
+        if ($request->filled('pos')) {
             $query->where('pos', $request->pos);
+        }
+
+        if ($request->filled('source')) {
+            $query->whereHas('senses', function ($query) use ($request) {
+                $query->where('source_dictionary', $request->source);
+            });
         }
 
         if ($request->has('status')) {
@@ -34,7 +70,28 @@ class DictionaryController extends Controller
             $query->where('status', 'approved');
         }
 
-        return response()->json($query->latest()->paginate($request->get('limit', 20)));
+        $limit = min(100, max(1, (int) $request->get('limit', 20)));
+
+        return response()->json($query->orderBy('lemma')->paginate($limit));
+    }
+
+    public function stats()
+    {
+        $sources = Sense::query()
+            ->select('source_dictionary', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('source_dictionary')
+            ->groupBy('source_dictionary')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'total_lemmas' => Lemma::count(),
+            'approved_lemmas' => Lemma::where('status', 'approved')->count(),
+            'total_senses' => Sense::count(),
+            'open_lexicon_entries' => Sense::whereNotNull('lexical_id')->count(),
+            'sources' => $sources,
+        ]);
     }
 
     public function store(Request $request)

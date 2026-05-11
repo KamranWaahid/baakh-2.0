@@ -9,7 +9,7 @@ class Lemma extends Model
 {
     use Searchable;
 
-    protected $fillable = ['lemma', 'transliteration', 'pos', 'frequency', 'status'];
+    protected $fillable = ['lemma', 'normalized_lemma', 'transliteration', 'pos', 'frequency', 'status'];
 
     public function senses()
     {
