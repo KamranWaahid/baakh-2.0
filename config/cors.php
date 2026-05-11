@@ -1,5 +1,20 @@
 <?php
 
+$defaultAllowedOrigins = [
+    'https://baakh.com',
+    'https://www.baakh.com',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:8081',
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1:8081',
+];
+
+$configuredAllowedOrigins = array_values(array_filter(array_map(
+    'trim',
+    explode(',', (string) env('CORS_ALLOWED_ORIGINS', ''))
+)));
+
 return [
 
     /*
@@ -29,7 +44,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:5174,http://127.0.0.1:8000,https://baakh.com,https://baakh-2-0-one.vercel.app')),
+    'allowed_origins' => $configuredAllowedOrigins ?: $defaultAllowedOrigins,
 
     /*
     | Vercel preview / production (*.vercel.app) when SPA calls API from another origin.
