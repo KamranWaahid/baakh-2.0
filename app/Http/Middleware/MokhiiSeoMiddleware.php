@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\MokhiiPageMeta;
 use Closure;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -29,9 +30,14 @@ class MokhiiSeoMiddleware
             return $response;
         }
 
-        // Look up fixes for this URL
-        $url = $request->fullUrl();
-        $meta = MokhiiPageMeta::where('url', $url)->first();
+        // Look up fixes for this URL. Missing optional Mokhii tables must not
+        // prevent the already-rendered page from being returned.
+        try {
+            $url = $request->fullUrl();
+            $meta = MokhiiPageMeta::where('url', $url)->first();
+        } catch (QueryException) {
+            return $response;
+        }
 
         if (!$meta || empty($meta->mokhii_fixes)) {
             return $response;
