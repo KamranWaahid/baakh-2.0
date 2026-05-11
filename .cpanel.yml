@@ -1,5 +1,6 @@
+# After deploy, use cPanel Terminal (Advanced → Terminal) for artisan/.env fixes—equivalent to SSH.
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/kamranwahid/public_html
-    - /bin/cp -rf public/* $DEPLOYPATH
-    - /bin/cp -rf app bootstrap config database lang resources routes storage vendor artisan composer.json $DEPLOYPATH/../
+    - export APP_PATH=/home/$USER/baakh_app
+    - export PUBLIC_PATH=/home/$USER/public_html
+    - /bin/bash scripts/cpanel-post-deploy.sh
