@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LocationCombobox } from '@/components/ui/location-combobox';
+import AvatarImgOrIcon from '@/web/components/AvatarImgOrIcon';
 
 // Simple Error Boundary to catch render crashes
 class EditPoetErrorBoundary extends React.Component {
@@ -138,39 +139,59 @@ const EditPoetContent = () => {
                 })) : [],
             });
             if (poet.poet_pic) {
-                setPreview('/' + poet.poet_pic);
+                const pic = poet.poet_pic;
+                setPreview(/^https?:\/\//i.test(pic) ? pic : pic.startsWith('/') ? pic : `/${pic}`);
             }
         }
     }, [poet, form]);
 
     const onSubmit = async (data) => {
+        const dirty = form.formState.dirtyFields || {};
         const formData = new FormData();
-        formData.append('_method', 'PUT');
-        formData.append('poet_slug', data.poet_slug || '');
-        formData.append('date_of_birth', data.date_of_birth || '');
-        formData.append('date_of_death', data.date_of_death || '');
-        formData.append('visibility', data.visibility ? '1' : '0');
-        formData.append('is_featured', data.is_featured ? '1' : '0');
+        // Laravel/PHP reliably parses multipart payload as POST; tunnel PATCH via _method.
+        formData.append('_method', 'PATCH');
+
+        if (dirty.poet_slug) {
+            formData.append('poet_slug', data.poet_slug || '');
+        }
+        if (dirty.date_of_birth) {
+            formData.append('date_of_birth', data.date_of_birth || '');
+        }
+        if (dirty.date_of_death) {
+            formData.append('date_of_death', data.date_of_death || '');
+        }
+        if (dirty.visibility) {
+            formData.append('visibility', data.visibility ? '1' : '0');
+        }
+        if (dirty.is_featured) {
+            formData.append('is_featured', data.is_featured ? '1' : '0');
+        }
 
         if (data.image && data.image.length > 0) {
             formData.append('image', data.image[0]);
         }
 
-        data.details.forEach((detail, index) => {
-            formData.append(`details[${index}][lang]`, detail.lang || 'sd');
-            formData.append(`details[${index}][poet_name]`, detail.poet_name || '');
-            formData.append(`details[${index}][poet_laqab]`, detail.poet_laqab || '');
-            formData.append(`details[${index}][pen_name]`, detail.pen_name || '');
-            formData.append(`details[${index}][tagline]`, detail.tagline || '');
-            formData.append(`details[${index}][poet_bio]`, detail.poet_bio || '');
-            formData.append(`details[${index}][birth_place]`, detail.birth_place || '');
-            formData.append(`details[${index}][death_place]`, detail.death_place || '');
-        });
+        if (dirty.details) {
+            data.details.forEach((detail, index) => {
+                formData.append(`details[${index}][lang]`, detail.lang || 'sd');
+                formData.append(`details[${index}][poet_name]`, detail.poet_name || '');
+                formData.append(`details[${index}][poet_laqab]`, detail.poet_laqab || '');
+                formData.append(`details[${index}][pen_name]`, detail.pen_name || '');
+                formData.append(`details[${index}][tagline]`, detail.tagline || '');
+                formData.append(`details[${index}][poet_bio]`, detail.poet_bio || '');
+                formData.append(`details[${index}][birth_place]`, detail.birth_place || '');
+                formData.append(`details[${index}][death_place]`, detail.death_place || '');
+            });
+        }
+
+        // No-op guard: if nothing changed, avoid unnecessary request.
+        if ([...formData.keys()].length === 1) {
+            navigate('/admin/poets');
+            return;
+        }
 
         try {
-            await api.post(`/api/admin/poets/${id}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await api.post(`/api/admin/poets/${id}`, formData);
             navigate('/admin/poets');
         } catch (error) {
             console.error(error);
@@ -334,7 +355,15 @@ const EditPoetContent = () => {
                                             />
                                         </FormControl>
                                         {preview && (
-                                            <img src={preview} alt="Preview" className="w-32 h-32 object-cover rounded-md mt-2" />
+                                            <div className="mt-2 h-32 w-32 overflow-hidden rounded-md">
+                                                <AvatarImgOrIcon
+                                                    src={preview}
+                                                    imageType="poet"
+                                                    alt=""
+                                                    className="h-full w-full rounded-md"
+                                                    imgClassName="h-full w-full rounded-md object-cover"
+                                                />
+                                            </div>
                                         )}
                                         <FormMessage />
                                     </FormItem>

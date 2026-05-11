@@ -201,20 +201,28 @@ trait SQLiteTrait
      */
     protected function runSQLiteSilently($callback)
     {
-        $connection = DB::connection('sqlite');
-
-        // Ensure schema exists before running operations
-        $this->ensureSQLiteSchema($connection);
-
-        $dispatcher = $connection->getEventDispatcher();
-        $connection->unsetEventDispatcher();
-
         try {
-            return $callback($connection);
-        } finally {
-            if ($dispatcher) {
-                $connection->setEventDispatcher($dispatcher);
+            $connection = DB::connection('sqlite');
+
+            // Ensure schema exists before running operations
+            $this->ensureSQLiteSchema($connection);
+
+            $dispatcher = $connection->getEventDispatcher();
+            $connection->unsetEventDispatcher();
+
+            try {
+                return $callback($connection);
+            } finally {
+                if ($dispatcher) {
+                    $connection->setEventDispatcher($dispatcher);
+                }
             }
+        } catch (\Throwable $e) {
+            // SQLite-backed unified search index should never block CRUD flows.
+            Log::warning('SQLiteTrait: skipping sqlite sync operation', [
+                'message' => $e->getMessage(),
+            ]);
+            return null;
         }
     }
 

@@ -109,7 +109,11 @@ const Navbar = ({ lang }) => {
                                 <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label="User account menu">
                                     <Avatar className="h-8 w-8 border border-gray-200">
                                         <AvatarImage src={getImageUrl(user.avatar, 'user')} alt={user.name} />
-                                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback className="text-xs font-semibold uppercase">
+                                            {(user.name?.trim()?.charAt(0)?.toUpperCase()) || (
+                                                <UserIcon className="h-4 w-4 text-muted-foreground" aria-hidden />
+                                            )}
+                                        </AvatarFallback>
                                     </Avatar>
                                 </Button>
                             </DropdownMenuTrigger>

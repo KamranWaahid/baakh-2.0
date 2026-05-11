@@ -147,6 +147,7 @@ const Profile = () => {
                         <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6">
                             <div className="relative group shrink-0">
                                 <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-2 border-gray-100 transition-opacity">
+                                    <AvatarImage src={avatarSrc} alt={user.username || ''} className="object-cover" />
                                     <AvatarFallback
                                         className="text-2xl sm:text-3xl font-bold text-white relative overflow-hidden"
                                         style={{ backgroundColor: getAvatarColor(user.username || user.name) }}

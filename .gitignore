@@ -17,3 +17,7 @@ yarn-error.log
 /.idea
 /.vscode
 /.env
+.vercel
+
+# macOS
+.DS_Store

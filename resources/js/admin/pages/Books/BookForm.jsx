@@ -115,14 +115,9 @@ const BookForm = () => {
             }
 
             if (isEdit) {
-                fd.append('_method', 'PUT');
-                return await api.post(`/api/admin/poet-books/${id}`, fd, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                return await api.patch(`/api/admin/poet-books/${id}`, fd);
             }
-            return await api.post('/api/admin/poet-books', fd, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            return await api.post('/api/admin/poet-books', fd);
         },
         onSuccess: () => {
             toast.success(isEdit ? 'Book updated successfully' : 'Book created successfully');

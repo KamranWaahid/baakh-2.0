@@ -11,6 +11,10 @@ export const getImageUrl = (path, type = null) => {
         return '/assets/images/logo/logo.svg';
     }
 
+    if (typeof path === 'string' && path.startsWith('blob:')) {
+        return path;
+    }
+
     // If it's already a full URL, return it
     if (path.startsWith('http')) {
         return path;

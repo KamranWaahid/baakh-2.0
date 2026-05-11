@@ -14,14 +14,27 @@ const PoetsFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [search, setSearch] = useState('');
     const [selectedTag, setSelectedTag] = useState('all');
+    const slugToTitle = (slug = '') =>
+        slug
+            .split('-')
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
 
     // Fetch tags
     const { data: tagsData } = useQuery({
         queryKey: ['poet-tags', lang],
         queryFn: async () => {
-            const response = await api.get('/api/v1/poet-tags');
-            return response.data;
-        }
+            try {
+                const response = await api.get('/v1/poet-tags');
+                return response.data;
+            } catch (error) {
+                return [];
+            }
+        },
+        retry: false,
+        refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000,
     });
 
     const tags = tagsData || [];
@@ -36,28 +49,84 @@ const PoetsFeed = ({ lang }) => {
     } = useInfiniteQuery({
         queryKey: ['poets', search, selectedTag, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            // In real app, might want to debounce search here or in the UI
-            const params = { search, page: pageParam };
-            if (selectedTag !== 'all') {
-                params.tag = selectedTag;
+            try {
+                // In real app, might want to debounce search here or in the UI
+                const params = { search, page: pageParam };
+                if (selectedTag !== 'all') {
+                    params.tag = selectedTag;
+                }
+                const response = await api.get('/v1/poets', {
+                    params
+                });
+                return response.data;
+            } catch (error) {
+                return {
+                    data: [],
+                    current_page: pageParam,
+                    last_page: pageParam,
+                    total: 0,
+                    per_page: 20,
+                    from: null,
+                    to: null,
+                };
             }
-            const response = await api.get('/api/v1/poets', {
-                params
-            });
-            return response.data;
         },
         getNextPageParam: (lastPage) => {
             if (lastPage.current_page < lastPage.last_page) {
                 return lastPage.current_page + 1;
             }
             return undefined;
-        }
+        },
+        retry: false,
+        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000,
     });
 
-    const poets = data?.pages.flatMap(page => page.data) || [];
+    const poets = (data?.pages.flatMap(page => page.data) || []);
+
+    // If API is down in production, hydrate with local static poets list.
+    const {
+        data: staticPoets = [],
+        isLoading: isLoadingStaticPoets,
+    } = useQuery({
+        queryKey: ['static-poets-fallback', lang, search],
+        queryFn: async () => {
+            const response = await fetch('/json/poets.json', { cache: 'no-store' });
+            if (!response.ok) return [];
+            const data = await response.json();
+            const normalized = (Array.isArray(data) ? data : []).map((item, idx) => {
+                const route = String(item.route || '');
+                const slug = route.split('/').filter(Boolean).pop() || `poet-${idx}`;
+                const nameSd = String(item.keyword || '').trim() || slugToTitle(slug);
+                return {
+                    id: `static-${idx}`,
+                    slug,
+                    avatar: null,
+                    name_sd: nameSd,
+                    name_en: slugToTitle(slug),
+                    bio_sd: '',
+                    bio_en: '',
+                    entries_count: 0,
+                };
+            });
+            if (!search.trim()) return normalized;
+            const q = search.trim().toLowerCase();
+            return normalized.filter(p =>
+                p.name_en.toLowerCase().includes(q) ||
+                p.slug.toLowerCase().includes(q) ||
+                p.name_sd.includes(search.trim())
+            );
+        },
+        enabled: poets.length === 0 && !isLoading,
+        retry: false,
+        refetchOnWindowFocus: false,
+        staleTime: 60 * 1000,
+    });
+
+    const displayedPoets = poets.length > 0 ? poets : staticPoets;
 
     // Intersection Observer for infinite scroll
-    const { ref, InView } = useInView({
+    const { ref } = useInView({
         threshold: 0,
         onChange: (inView) => {
             if (inView && hasNextPage && !isFetchingNextPage) {
@@ -77,9 +146,9 @@ const PoetsFeed = ({ lang }) => {
                         loading="lazy"
                         decoding="async"
                     />
-                    <AvatarFallback className="text-xl md:text-2xl font-bold text-gray-400 bg-gray-100">
-                        {poet.name_en?.charAt(0) || poet.name_sd?.charAt(0) || 'P'}
-                    </AvatarFallback>
+                                    <AvatarFallback className="bg-muted">
+                                        <User className="h-7 w-7 md:h-10 md:w-10 text-muted-foreground" strokeWidth={1.75} />
+                                    </AvatarFallback>
                 </Avatar>
             </Link>
 
@@ -115,6 +184,8 @@ const PoetsFeed = ({ lang }) => {
             </Button>
         </div>
     );
+
+    const shouldShowSkeleton = displayedPoets.length === 0 && (isLoading || isLoadingStaticPoets);
 
     return (
         <div className="flex-1 max-w-[1080px] w-full mx-auto px-4 md:px-8 py-6">
@@ -157,7 +228,7 @@ const PoetsFeed = ({ lang }) => {
             </div>
 
             <div className="space-y-4">
-                {isLoading ? (
+                {shouldShowSkeleton ? (
                     Array(5).fill(0).map((_, i) => (
                         <div key={i} className="flex items-center gap-4 p-4 border rounded-lg bg-white shadow-sm border-gray-100">
                             <Skeleton className="h-16 w-16 rounded-full" />
@@ -168,8 +239,8 @@ const PoetsFeed = ({ lang }) => {
                             <Skeleton className="h-9 w-24 rounded-full" />
                         </div>
                     ))
-                ) : poets.length > 0 ? (
-                    poets.map(poet => <PoetCard key={poet.id} poet={poet} />)
+                ) : displayedPoets.length > 0 ? (
+                    displayedPoets.map(poet => <PoetCard key={poet.id} poet={poet} />)
                 ) : (
                     <div className="py-20 text-center text-gray-500">
                         {isRtl ? 'ڪو به شاعر نه مليو' : 'No poets found.'}

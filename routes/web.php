@@ -15,21 +15,82 @@ require __DIR__ . '/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| Admin SPA Route
+| Admin SPA + stripped-path API (Vercel)
 |--------------------------------------------------------------------------
+| Serverless routing often forwards /api/admin/* as /admin/*. The catch-all
+| admin route would otherwise return HTML for XHRs. When the request looks
+| like an API call and has a sub-path, dispatch the same /api/admin/* route.
 */
+$forwardStrippedAdminApi = static function (Request $request, ?string $any): ?\Symfony\Component\HttpFoundation\Response {
+    $suffix = trim((string) ($any ?? ''), '/');
+    if ($suffix === '') {
+        return null;
+    }
+    $wantsApi = $request->expectsJson()
+        || $request->ajax()
+        || $request->bearerToken() !== null
+        || strcasecmp((string) $request->header('X-Requested-With', ''), 'XMLHttpRequest') === 0;
+    if (!$wantsApi) {
+        return null;
+    }
+
+    $forwardPath = '/api/admin/' . $suffix;
+    $query = $request->getQueryString();
+    $forwardUrl = $query ? "{$forwardPath}?{$query}" : $forwardPath;
+
+    $subRequest = Request::create(
+        $forwardUrl,
+        $request->getMethod(),
+        $request->request->all(),
+        $request->cookies->all(),
+        $request->files->all(),
+        $request->server->all(),
+        $request->getContent()
+    );
+    $subRequest->headers->replace($request->headers->all());
+
+    try {
+        return app('router')->dispatch($subRequest);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => 'Admin API forward failed',
+            'path' => $suffix,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+};
+
 // Allow SPA to load (Frontend handles auth via API)
-Route::get('admin/{any?}', function () {
+Route::any('admin/{any?}', function (Request $request, $any = null) use ($forwardStrippedAdminApi) {
+    $forwarded = $forwardStrippedAdminApi($request, $any);
+    if ($forwarded !== null) {
+        return $forwarded;
+    }
+
+    if (!$request->isMethod('get')) {
+        abort(404);
+    }
+
     return view('admin.app');
 })->where('any', '.*')->name('admin.spa');
 
 // Admin SPA with locale prefix (e.g. /sd/admin, /en/admin)
-Route::get('{lang}/admin/{any?}', function ($lang, $any = null) {
-    if (in_array($lang, ['en', 'sd'])) {
-        app()->setLocale($lang);
-        return view('admin.app');
+Route::any('{lang}/admin/{any?}', function (Request $request, string $lang, $any = null) use ($forwardStrippedAdminApi) {
+    if (!in_array($lang, ['en', 'sd'], true)) {
+        abort(404);
     }
-    abort(404);
+    app()->setLocale($lang);
+
+    $forwarded = $forwardStrippedAdminApi($request, $any);
+    if ($forwarded !== null) {
+        return $forwarded;
+    }
+
+    if (!$request->isMethod('get')) {
+        abort(404);
+    }
+
+    return view('admin.app');
 })->where('lang', 'en|sd')->where('any', '.*')->name('admin.spa.locale');
 
 Route::get('og-image/poetry/{slug}', [\App\Http\Controllers\OgImageController::class, 'generatePoetryImage'])->name('og.poetry');
@@ -175,6 +236,8 @@ Route::get('/health', function () {
 
 Route::prefix('v1')->group(function () {
     Route::get('feed', [App\Http\Controllers\HomeController::class, 'feed']);
+    Route::get('poets', [App\Http\Controllers\Api\PoetController::class, 'index']);
+    Route::get('poet-tags', [App\Http\Controllers\Api\PoetController::class, 'tags']);
     Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
     Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
@@ -204,7 +267,16 @@ Route::any('{apiPath}', function (Request $request, string $apiPath) {
 
     $subRequest->headers->replace($request->headers->all());
 
-    return app('router')->dispatch($subRequest);
+    try {
+        return app('router')->dispatch($subRequest);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => 'API forwarder failed',
+            'path' => $apiPath,
+            'error' => $e->getMessage(),
+            'exception' => get_class($e),
+        ], 500);
+    }
 })->where('apiPath', '^(v1|auth|admin)(/.*)?$');
 
 Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');

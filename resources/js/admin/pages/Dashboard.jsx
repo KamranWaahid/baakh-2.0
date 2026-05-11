@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
     Users,
     BookOpen,
@@ -215,6 +216,15 @@ const Dashboard = () => {
     return (
         <div className="flex flex-col gap-6 p-4 md:p-8 fade-in-bottom">
             {/* Header Section */}
+            {isError ? (
+                <Alert variant="destructive">
+                    <AlertTitle>Could not load dashboard</AlertTitle>
+                    <AlertDescription>
+                        The stats API did not respond. Check that you are signed in with admin access and try refreshing the page.
+                    </AlertDescription>
+                </Alert>
+            ) : null}
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">Dashboard</h1>
@@ -380,13 +390,10 @@ const Dashboard = () => {
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Activity Feed */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Activity className="h-5 w-5 text-muted-foreground" /> Recent Activity
                         </CardTitle>
-                        <Button variant="ghost" size="sm" asChild>
-                            <Link to="/admin/system/activity-logs">View All</Link>
-                        </Button>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
@@ -460,7 +467,7 @@ const Dashboard = () => {
                             {data?.recent_feedback?.length > 0 ? data.recent_feedback.map((feedback) => (
                                 <div key={feedback.id} className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0">
                                     <div className="h-8 w-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center shrink-0 font-bold text-xs uppercase">
-                                        {feedback.user.name[0]}
+                                        {(feedback.user?.name || '?')[0]}
                                     </div>
                                     <div className="flex-1 space-y-1">
                                         <div className="flex items-center justify-between">

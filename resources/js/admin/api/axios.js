@@ -9,6 +9,39 @@ const api = axios.create({
     withCredentials: true,
 });
 
+function looksLikeHtmlPayload(data) {
+    if (typeof data !== 'string') {
+        return false;
+    }
+    const s = data.trimStart().toLowerCase();
+    return s.startsWith('<!doctype') || s.startsWith('<html');
+}
+
+api.interceptors.response.use(
+    (response) => {
+        const ct = response.headers['content-type'] || '';
+        if (
+            ct.includes('text/html') &&
+            looksLikeHtmlPayload(response.data)
+        ) {
+            const err = new Error(
+                'Server returned HTML instead of JSON. Fix API routing or sign in again.'
+            );
+            err.response = response;
+            return Promise.reject(err);
+        }
+        return response;
+    },
+    (error) => {
+        const data = error.response?.data;
+        if (typeof data === 'string' && looksLikeHtmlPayload(data)) {
+            error.message =
+                'Server returned HTML instead of JSON. Fix API routing or sign in again.';
+        }
+        return Promise.reject(error);
+    }
+);
+
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('auth_token');
     if (token) {
@@ -28,6 +61,9 @@ api.interceptors.request.use(config => {
         };
         config.headers['Accept-Language'] = lang;
     }
+
+    // Keep explicit API prefixes untouched to avoid hitting SPA/web routes.
+    // All callers use /api/* paths and should resolve through Laravel API routes.
 
     return config;
 });

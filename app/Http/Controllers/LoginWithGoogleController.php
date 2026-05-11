@@ -97,7 +97,7 @@ class LoginWithGoogleController extends Controller
         $lang = app()->getLocale();
 
         // Redirect to the SPA callback route with the token
-        $redirectUrl = "/{$lang}/auth/social-callback?token={$token}";
+        $redirectUrl = "/{$lang}/auth/social-callback?token=" . urlencode($token);
         if (isset($isNewUser) && $isNewUser) {
             $redirectUrl .= "&new_user=1";
         }

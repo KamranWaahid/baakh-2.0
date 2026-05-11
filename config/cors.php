@@ -15,7 +15,17 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => [
+        'api/*',
+        /*
+         * Stripped runtime paths (see resources/js/admin/api/axios.js). CORS must apply
+         * when the SPA calls these from another origin (e.g. Vite dev or split hosts).
+         */
+        'admin/*',
+        'auth/*',
+        'v1/*',
+        'sanctum/csrf-cookie',
+    ],
 
     'allowed_methods' => ['*'],
 

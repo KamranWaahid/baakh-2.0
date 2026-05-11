@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sparkles, User } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getImageUrl } from '../utils/url';
 
 const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
     const benefits = isRtl ? [
@@ -50,13 +51,10 @@ const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
                         <div key={i} className="flex flex-col items-center text-center">
                             <Link to={`/${isRtl ? 'sd' : 'en'}/poet/${poet.slug}`} className="group">
                                 <Avatar className="h-[74px] w-[74px] mb-4 border-2 border-white shadow-sm ring-1 ring-gray-100 transition-all">
-                                    {poet.img ? (
-                                        <AvatarImage src={poet.img} className="object-cover" />
-                                    ) : (
-                                        <div className="h-full w-full bg-gray-50 flex items-center justify-center text-gray-400">
-                                            <User className="h-8 w-8" />
-                                        </div>
-                                    )}
+                                    <AvatarImage src={getImageUrl(poet.img, 'poet')} className="object-cover" />
+                                    <AvatarFallback className="bg-muted">
+                                        <User className="h-9 w-9 text-muted-foreground" strokeWidth={1.75} />
+                                    </AvatarFallback>
                                 </Avatar>
                             </Link>
                             <span className="text-gray-900 text-[15px] leading-tight mb-1 font-bold">{poet.name}</span>
