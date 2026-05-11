@@ -279,7 +279,7 @@ Route::any('{apiPath}', function (Request $request, string $apiPath) {
     }
 })->where('apiPath', '^(v1|auth|admin)(/.*)?$');
 
-Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|robots\.txt|_health).*$')->name('web.spa');
+Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|robots\.txt|_health).*$')->name('web.spa');
 
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
