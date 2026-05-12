@@ -8,4 +8,4 @@ use Illuminate\Support\Facades\Route;
  */
 Route::get('{any?}', function () {
     return view('admin.app');
-})->where('any', '.*')->name('admin.spa');
+})->where('any', '.*')->name('admin.spa.protected');
