@@ -87,6 +87,8 @@ const MorphologyLab = () => {
     if (!lemma && id) return <div className="p-8 text-center text-red-500">Lemma not found.</div>;
 
     const currentLemma = lemma || { lemma: 'Development Mode', id: 0 };
+    const sourceSummary = lemma?.source_summary || {};
+    const hasRealMorphology = !!lemma?.has_real_morphology;
 
     return (
         <div className="space-y-6">
@@ -105,6 +107,22 @@ const MorphologyLab = () => {
             </div>
 
             <Card>
+                {!hasRealMorphology ? (
+                    <CardContent className="p-6">
+                        <div className="rounded-lg border border-dashed p-5">
+                            <p className="font-medium">No morphology fields are available for this imported entry.</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                                Source metadata is available, but Open Lexicon did not provide root, pattern, gender, number, case, aspect, or tense for this lemma.
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
+                                <MetaLine label="Language" value={(sourceSummary.language_labels || []).join(', ')} />
+                                <MetaLine label="Source" value={(sourceSummary.source_dictionaries || []).join(', ')} />
+                                <MetaLine label="Domain" value={(sourceSummary.domains || []).join(', ')} />
+                                <MetaLine label="Normalized word" value={(sourceSummary.normalized_words || []).join(', ')} />
+                            </div>
+                        </div>
+                    </CardContent>
+                ) : (
                     <CardContent className="p-6">
                         <Tabs defaultValue="plurals" className="w-full">
                             <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
@@ -204,15 +222,29 @@ const MorphologyLab = () => {
                             </TabsContent>
                         </Tabs>
                     </CardContent>
+                )}
             </Card>
 
-            <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => navigate('/admin/dictionary/lemma-inbox')}>Cancel</Button>
-                <Button onClick={handleSave} disabled={saveMorphologyMutation.isPending}>
-                    {saveMorphologyMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                    Save Morphology
-                </Button>
-            </div>
+            {hasRealMorphology && (
+                <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => navigate('/admin/dictionary/lemma-inbox')}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={saveMorphologyMutation.isPending}>
+                        {saveMorphologyMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                        Save Morphology
+                    </Button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const MetaLine = ({ label, value }) => {
+    if (!value) return null;
+
+    return (
+        <div className="rounded-md border bg-background/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+            <p className="mt-1 break-words" dir="auto">{value}</p>
         </div>
     );
 };

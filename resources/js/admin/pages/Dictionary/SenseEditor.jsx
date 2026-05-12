@@ -223,6 +223,11 @@ const SenseEditor = () => {
     const hypernyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'hypernym');
     const senses = lemma.senses || [];
     const variants = lemma.variants || [];
+    const sourceSummary = lemma.source_summary || {};
+    const isSourceTerm = !!sourceSummary.is_source_term;
+    const wordLabel = sourceSummary.word_label || 'Word (سنڌي)';
+    const sourceWordDir = isSourceTerm ? 'auto' : 'rtl';
+    const hasRealMorphology = !!lemma.has_real_morphology;
 
     return (
         <div className="space-y-6">
@@ -235,8 +240,10 @@ const SenseEditor = () => {
                         </Button>
                     </div>
                     <div className="flex items-center gap-3">
-                        <h2 className="text-3xl font-bold font-arabic">{lemma.lemma}</h2>
+                        <h2 className={`text-3xl font-bold ${isSourceTerm ? '' : 'font-arabic'}`} dir={sourceWordDir}>{lemma.lemma}</h2>
                         <Badge variant="outline">{lemma.pos || 'no POS'}</Badge>
+                        {sourceSummary.primary_language && <Badge variant="secondary">{sourceSummary.primary_language}</Badge>}
+                        {sourceSummary.source_dictionaries?.[0] && <Badge variant="outline">{sourceSummary.source_dictionaries[0]}</Badge>}
                         <Badge variant={lemma.status === 'approved' ? 'default' : lemma.status === 'rejected' ? 'destructive' : 'outline'}>
                             {lemma.status}
                         </Badge>
@@ -271,8 +278,8 @@ const SenseEditor = () => {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Word (سنڌي)</Label>
-                                    <Input value={lemmaForm.lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, lemma: e.target.value })} className="font-arabic text-xl" dir="rtl" />
+                                    <Label>{wordLabel}</Label>
+                                    <Input value={lemmaForm.lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, lemma: e.target.value })} className={`${isSourceTerm ? '' : 'font-arabic'} text-xl`} dir={sourceWordDir} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Transliteration (Roman)</Label>
@@ -314,27 +321,51 @@ const SenseEditor = () => {
                             </Button>
                         </CardFooter>
                     </Card>
+
+                    <OpenLexiconCard lemma={lemma} className="mt-4" />
                 </TabsContent>
 
                 {/* ═══ Morphology Tab ═══ */}
                 <TabsContent value="morphology" className="mt-4">
                     <Card>
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Type className="h-4 w-4" /> Morphology</CardTitle></CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {['root', 'pattern', 'gender', 'number', 'case', 'tense'].map(field => (
-                                    <div key={field} className="space-y-2">
-                                        <Label className="capitalize">{field}</Label>
-                                        <Input value={morphForm[field] || ''} onChange={(e) => setMorphForm({ ...morphForm, [field]: e.target.value })} placeholder={`Enter ${field}`} />
+                        <CardContent className="space-y-4">
+                            {hasRealMorphology ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {['root', 'pattern', 'gender', 'number', 'case', 'tense'].map(field => (
+                                        <div key={field} className="space-y-2">
+                                            <Label className="capitalize">{field}</Label>
+                                            <Input value={morphForm[field] || ''} onChange={(e) => setMorphForm({ ...morphForm, [field]: e.target.value })} placeholder={`Enter ${field}`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="rounded-lg border border-dashed p-5 space-y-3">
+                                    <div>
+                                        <p className="font-medium">No morphology fields are available for this imported entry.</p>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Open Lexicon metadata for this row includes source, language direction, normalized word, domain, and definitions, but not root, pattern, gender, number, case, or tense.
+                                        </p>
                                     </div>
-                                ))}
-                            </div>
+                                    <MetadataGrid
+                                        items={[
+                                            ['Language direction', sourceSummary.language_labels?.join(', ')],
+                                            ['Source dictionary', sourceSummary.source_dictionaries?.join(', ')],
+                                            ['Domain', sourceSummary.domains?.join(', ')],
+                                            ['Normalized word', sourceSummary.normalized_words?.join(', ')],
+                                            ['Part of speech', lemma.pos || senses.find(s => s.part_of_speech)?.part_of_speech],
+                                        ]}
+                                    />
+                                </div>
+                            )}
                         </CardContent>
-                        <CardFooter className="border-t py-3 flex justify-end">
-                            <Button onClick={() => updateMorphology.mutate(morphForm)} disabled={updateMorphology.isPending}>
-                                <Save className="mr-2 h-4 w-4" /> {updateMorphology.isPending ? 'Saving...' : 'Save Morphology'}
-                            </Button>
-                        </CardFooter>
+                        {hasRealMorphology && (
+                            <CardFooter className="border-t py-3 flex justify-end">
+                                <Button onClick={() => updateMorphology.mutate(morphForm)} disabled={updateMorphology.isPending}>
+                                    <Save className="mr-2 h-4 w-4" /> {updateMorphology.isPending ? 'Saving...' : 'Save Morphology'}
+                                </Button>
+                            </CardFooter>
+                        )}
                     </Card>
                 </TabsContent>
 
@@ -360,6 +391,12 @@ const SenseEditor = () => {
                     <Card>
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ArrowRightLeft className="h-4 w-4" /> Linguistic Relations</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
+                            {synonyms.length + antonyms.length + hypernyms.length === 0 && (
+                                <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                    No imported relations were present in Open Lexicon for this entry. Add manual relations here when editorial links are known.
+                                </div>
+                            )}
+
                             {/* Synonyms */}
                             <div>
                                 <Label className="text-muted-foreground mb-2 block">Synonyms ({synonyms.length})</Label>
@@ -442,20 +479,31 @@ const SenseEditor = () => {
                                             <tr>
                                                 <th className="py-2 px-3 text-left">Variant</th>
                                                 <th className="py-2 px-3 text-left">Type</th>
-                                                <th className="py-2 px-3 text-left">Dialect</th>
+                                                <th className="py-2 px-3 text-left">Source</th>
                                                 <th className="py-2 px-3 text-right">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {variants.map(v => (
                                                 <tr key={v.id} className="border-t">
-                                                    <td className="py-2 px-3 font-arabic text-lg">{v.variant}</td>
-                                                    <td className="py-2 px-3"><Badge variant="outline">{v.type}</Badge></td>
-                                                    <td className="py-2 px-3 text-muted-foreground">{v.dialect || '—'}</td>
+                                                    <td className="py-2 px-3 font-arabic text-lg" dir="auto">{v.variant}</td>
+                                                    <td className="py-2 px-3">
+                                                        <Badge variant={v.is_imported ? 'secondary' : 'outline'}>
+                                                            {v.is_imported ? 'imported variant' : v.type}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="py-2 px-3 text-muted-foreground">
+                                                        {v.source_dictionary || v.dialect || v.source || '—'}
+                                                        {v.lexical_id && <div className="text-xs">{v.lexical_id}</div>}
+                                                    </td>
                                                     <td className="py-2 px-3 text-right">
-                                                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if (confirm('Delete this variant?')) deleteVariant.mutate(v.id); }}>
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                        </Button>
+                                                        {v.is_imported ? (
+                                                            <span className="text-xs text-muted-foreground">Read-only</span>
+                                                        ) : (
+                                                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if (confirm('Delete this variant?')) deleteVariant.mutate(v.id); }}>
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -463,7 +511,7 @@ const SenseEditor = () => {
                                     </table>
                                 </div>
                             ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">No variants recorded.</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">No manual or imported variants recorded for this entry.</p>
                             )}
 
                             {/* Add Variant */}
@@ -595,6 +643,7 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                     <Label>Domain</Label>
                     <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. medicine, poetry, colloquial..." />
                 </div>
+                <SourceMetadataPanel sense={sense} />
             </CardContent>
             <CardFooter className="bg-muted/10 border-t py-3 flex justify-end">
                 <Button size="sm" onClick={() => onUpdate({ definition, definition_en: definitionEn, definition_sd: definitionSd, domain })} disabled={saving}>
@@ -603,6 +652,113 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
             </CardFooter>
         </Card>
     );
+};
+
+const OpenLexiconCard = ({ lemma, className = '' }) => {
+    const summary = lemma.source_summary || {};
+    if (!summary.is_open_lexicon) return null;
+
+    return (
+        <Card className={className}>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <Globe className="h-4 w-4" /> Open Lexicon Source
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <MetadataGrid
+                    items={[
+                        ['Source word', joinValues(summary.source_words)],
+                        ['Normalized word', joinValues(summary.normalized_words)],
+                        ['Language direction', joinValues(summary.language_labels)],
+                        ['Source dictionary', joinValues(summary.source_dictionaries)],
+                        ['Domain', joinValues(summary.domains)],
+                        ['Lexical ID', joinValues(summary.lexical_ids)],
+                        ['Entry ID', joinValues(summary.entry_ids)],
+                        ['Publisher', summary.publisher],
+                        ['Prepared by', summary.prepared_by],
+                    ]}
+                />
+                {summary.publisher_url && (
+                    <p className="text-xs text-muted-foreground">
+                        Publisher URL: <a href={summary.publisher_url} target="_blank" rel="noreferrer" className="underline">{summary.publisher_url}</a>
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    );
+};
+
+const SourceMetadataPanel = ({ sense }) => {
+    const metadata = sense.source_metadata || {};
+    const hasMetadata = [
+        metadata.lexical_id,
+        metadata.entry_id,
+        metadata.source_word,
+        metadata.source_variant,
+        metadata.normalized_word,
+        metadata.normalized_definition,
+        metadata.source_dictionary,
+        metadata.language_label,
+    ].some(Boolean);
+
+    if (!hasMetadata) return null;
+
+    return (
+        <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="secondary">Open Lexicon</Badge>
+                {metadata.source_dictionary && <Badge variant="outline">{metadata.source_dictionary}</Badge>}
+                {metadata.language_label && <Badge variant="outline">{metadata.language_label}</Badge>}
+            </div>
+            <MetadataGrid
+                items={[
+                    ['Source word', metadata.source_word],
+                    ['Variant / airab', metadata.source_variant],
+                    ['Normalized word', metadata.normalized_word],
+                    ['Normalized definition', metadata.normalized_definition],
+                    ['Lexical ID', metadata.lexical_id],
+                    ['Entry ID', metadata.entry_id],
+                    ['Part of speech', metadata.part_of_speech],
+                    ['Source extra', metadata.source_extra],
+                ]}
+            />
+        </div>
+    );
+};
+
+const MetadataGrid = ({ items }) => {
+    const visibleItems = (items || []).filter(([, value]) => hasDisplayValue(value));
+
+    if (visibleItems.length === 0) {
+        return <p className="text-sm text-muted-foreground">No imported metadata available.</p>;
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {visibleItems.map(([label, value]) => (
+                <div key={label} className="rounded-md border bg-background/70 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+                    <p className="mt-1 text-sm break-words" dir="auto">{displayValue(value)}</p>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const hasDisplayValue = (value) => {
+    if (Array.isArray(value)) return value.some(hasDisplayValue);
+    return value !== null && value !== undefined && String(value).trim() !== '';
+};
+
+const displayValue = (value) => {
+    if (Array.isArray(value)) return joinValues(value);
+    return String(value);
+};
+
+const joinValues = (value) => {
+    if (!Array.isArray(value)) return value;
+    return value.filter(hasDisplayValue).join(', ');
 };
 
 const SenseListView = ({ response, isLoading, search, setSearch, page, setPage }) => {

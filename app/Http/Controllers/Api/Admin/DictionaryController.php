@@ -316,7 +316,256 @@ class DictionaryController extends Controller
             }
         }
 
-        return response()->json($lemma);
+        return response()->json($this->lemmaDetailPayload($lemma));
+    }
+
+    private function lemmaDetailPayload(Lemma $lemma): array
+    {
+        $payload = $lemma->toArray();
+
+        $payload['senses'] = $lemma->senses
+            ->map(function (Sense $sense) use ($lemma) {
+                $sensePayload = $sense->toArray();
+                $metadata = $this->senseSourceMetadata($sense, $lemma);
+
+                $sensePayload['extra'] = $metadata['extra'];
+                $sensePayload['source_metadata'] = $metadata;
+
+                return $sensePayload;
+            })
+            ->values()
+            ->all();
+
+        $manualVariants = $lemma->variants
+            ->map(fn (Variant $variant) => array_merge($variant->toArray(), [
+                'source' => 'Manual',
+                'is_imported' => false,
+            ]))
+            ->values();
+        $importedVariants = $this->importedVariantsForLemma($lemma);
+
+        $payload['source_summary'] = $this->lemmaSourceSummary($lemma, $payload['senses']);
+        $payload['manual_variants_count'] = $manualVariants->count();
+        $payload['imported_variants_count'] = count($importedVariants);
+        $payload['imported_variants'] = $importedVariants;
+        $payload['variants'] = $manualVariants
+            ->merge($importedVariants)
+            ->values()
+            ->all();
+        $payload['has_real_morphology'] = $this->hasRealMorphology($lemma);
+
+        return $payload;
+    }
+
+    private function senseSourceMetadata(Sense $sense, Lemma $lemma): array
+    {
+        $extra = $this->decodeSenseExtra($sense->extra);
+
+        return [
+            'lexical_id' => $sense->lexical_id,
+            'entry_id' => $sense->entry_id,
+            'source_word' => $extra['original_word'] ?? $lemma->lemma,
+            'source_variant' => $sense->word_variant,
+            'normalized_word' => $extra['original_normalized_word'] ?? $lemma->normalized_lemma,
+            'normalized_definition' => $sense->normalized_definition,
+            'part_of_speech' => $sense->part_of_speech,
+            'domain' => $sense->domain,
+            'language_direction' => $sense->language_direction,
+            'language_label' => $this->languageLabel($sense->language_direction),
+            'source_dictionary' => $sense->source_dictionary,
+            'publisher' => $extra['publisher'] ?? null,
+            'publisher_url' => $extra['publisher_url'] ?? null,
+            'prepared_by' => $extra['prepared_by'] ?? null,
+            'source_extra' => $extra['extra'] ?? null,
+            'extra' => $extra,
+        ];
+    }
+
+    private function lemmaSourceSummary(Lemma $lemma, array $senses): array
+    {
+        $metadata = collect($senses)
+            ->pluck('source_metadata')
+            ->filter(fn ($item) => is_array($item));
+
+        $languageDirections = $this->uniqueFilled($metadata->pluck('language_direction')->all());
+        $languageLabels = $this->uniqueFilled(array_map(
+            fn ($direction) => $this->languageLabel($direction),
+            $languageDirections
+        ));
+        $sourceDictionaries = $this->uniqueFilled($metadata->pluck('source_dictionary')->all());
+        $domains = $this->uniqueFilled($metadata->pluck('domain')->all());
+        $sourceWords = $this->uniqueFilled($metadata->pluck('source_word')->all());
+        $normalizedWords = $this->uniqueFilled($metadata->pluck('normalized_word')->all());
+        $lexicalIds = $this->uniqueFilled($metadata->pluck('lexical_id')->all());
+        $entryIds = $this->uniqueFilled($metadata->pluck('entry_id')->all());
+
+        $primaryLanguage = $languageLabels[0] ?? null;
+        $isSourceTerm = $this->isSourceTerm($languageDirections, $sourceDictionaries);
+
+        return [
+            'is_open_lexicon' => count($lexicalIds) > 0,
+            'is_source_term' => $isSourceTerm,
+            'word_label' => $isSourceTerm && $primaryLanguage
+                ? "{$primaryLanguage} Source Term"
+                : 'Word (سنڌي)',
+            'primary_language' => $primaryLanguage,
+            'language_directions' => $languageDirections,
+            'language_labels' => $languageLabels,
+            'source_dictionaries' => $sourceDictionaries,
+            'domains' => $domains,
+            'source_words' => $sourceWords,
+            'normalized_words' => $normalizedWords,
+            'lexical_ids' => $lexicalIds,
+            'entry_ids' => $entryIds,
+            'publisher' => $metadata->pluck('publisher')->first(fn ($value) => filled($value)),
+            'publisher_url' => $metadata->pluck('publisher_url')->first(fn ($value) => filled($value)),
+            'prepared_by' => $metadata->pluck('prepared_by')->first(fn ($value) => filled($value)),
+            'available_morphology_fields' => $this->hasRealMorphology($lemma)
+                ? $this->filledMorphologyFields($lemma)
+                : [],
+        ];
+    }
+
+    private function importedVariantsForLemma(Lemma $lemma): array
+    {
+        $variants = [];
+        $seen = [];
+
+        foreach ($lemma->senses as $sense) {
+            $extra = $this->decodeSenseExtra($sense->extra);
+            $sources = [
+                $sense->word_variant,
+                $extra['original_word'] ?? null,
+            ];
+
+            foreach ($sources as $sourceText) {
+                foreach ($this->variantCandidates($sourceText) as $candidate) {
+                    if ($this->sameDictionaryValue($candidate, $lemma->lemma)) {
+                        continue;
+                    }
+
+                    $key = mb_strtolower($candidate) . '|' . ($sense->lexical_id ?? $sense->id);
+                    if (isset($seen[$key])) {
+                        continue;
+                    }
+
+                    $seen[$key] = true;
+                    $variants[] = [
+                        'id' => 'imported-' . $sense->id . '-' . count($variants),
+                        'lemma_id' => $lemma->id,
+                        'variant' => $candidate,
+                        'type' => 'imported',
+                        'dialect' => $sense->language_direction,
+                        'source' => 'Open Lexicon',
+                        'source_dictionary' => $sense->source_dictionary,
+                        'definition' => $sense->definition,
+                        'domain' => $sense->domain,
+                        'sense_id' => $sense->id,
+                        'lexical_id' => $sense->lexical_id,
+                        'is_imported' => true,
+                    ];
+                }
+            }
+        }
+
+        return $variants;
+    }
+
+    private function variantCandidates(?string $value): array
+    {
+        if (!filled($value)) {
+            return [];
+        }
+
+        $parts = preg_split('/(?:\s*[,،;؛\/|]+\s*|\s+يا\s+)/u', trim($value)) ?: [$value];
+
+        return collect($parts)
+            ->map(fn ($part) => trim((string) $part))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function decodeSenseExtra(mixed $extra): array
+    {
+        if (is_array($extra)) {
+            return $extra;
+        }
+
+        if (!filled($extra)) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $extra, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function uniqueFilled(array $values): array
+    {
+        return collect($values)
+            ->map(fn ($value) => is_scalar($value) ? trim((string) $value) : null)
+            ->filter(fn ($value) => filled($value))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function languageLabel(?string $direction): ?string
+    {
+        if (!filled($direction)) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($direction));
+
+        return match ($normalized) {
+            'sd', 'sindhi' => 'Sindhi',
+            'en', 'eng', 'english' => 'English',
+            'hi', 'hindi' => 'Hindi',
+            'ar', 'arabic' => 'Arabic',
+            default => str($direction)->replace(['_', '-'], ' ')->title()->toString(),
+        };
+    }
+
+    private function isSourceTerm(array $languageDirections, array $sourceDictionaries): bool
+    {
+        $directions = array_map(fn ($value) => strtolower((string) $value), $languageDirections);
+        if (count(array_diff($directions, ['', 'sd', 'sindhi'])) > 0) {
+            return true;
+        }
+
+        foreach ($sourceDictionaries as $source) {
+            if (str_contains((string) $source, '→ Sindhi')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function sameDictionaryValue(string $left, ?string $right): bool
+    {
+        return filled($right) && mb_strtolower(trim($left)) === mb_strtolower(trim((string) $right));
+    }
+
+    private function hasRealMorphology(Lemma $lemma): bool
+    {
+        return $this->filledMorphologyFields($lemma) !== [];
+    }
+
+    private function filledMorphologyFields(Lemma $lemma): array
+    {
+        if (!$lemma->morphology) {
+            return [];
+        }
+
+        return collect($lemma->morphology->only(['root', 'pattern', 'gender', 'number', 'case', 'aspect', 'tense']))
+            ->filter(fn ($value) => filled($value))
+            ->keys()
+            ->values()
+            ->all();
     }
 
     public function update(Request $request, $id)

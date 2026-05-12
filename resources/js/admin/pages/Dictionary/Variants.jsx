@@ -83,6 +83,7 @@ const Variants = () => {
 
     const currentLemma = lemma || { lemma: 'Development Mode', id: 0 };
     const variants = lemma?.variants || [];
+    const importedVariants = variants.filter(v => v.is_imported);
 
     return (
         <div className="space-y-6">
@@ -110,6 +111,29 @@ const Variants = () => {
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {importedVariants.length > 0 && (
+                        <Card className="md:col-span-2">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Layers className="h-4 w-4 text-primary" /> Open Lexicon Variants
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {importedVariants.map((v) => (
+                                    <div key={v.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
+                                        <div className="min-w-0">
+                                            <p className="font-arabic text-lg" dir="auto">{v.variant}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {[v.source_dictionary, v.lexical_id].filter(Boolean).join(' · ') || 'Open Lexicon'}
+                                            </p>
+                                        </div>
+                                        <Badge variant="secondary">Read-only import</Badge>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
+
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
