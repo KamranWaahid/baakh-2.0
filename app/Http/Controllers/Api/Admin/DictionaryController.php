@@ -8,8 +8,10 @@ use App\Models\Sense;
 use App\Models\SenseExample;
 use App\Models\Morphology;
 use App\Models\Variant;
+use App\Services\DictionaryCompletionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class DictionaryController extends Controller
 {
@@ -21,16 +23,21 @@ class DictionaryController extends Controller
                 'senses' => function ($query) {
                     $query->select([
                         'id',
+                        'public_id',
                         'lemma_id',
                         'lexical_id',
                         'definition',
+                        'short_gloss',
+                        'full_definition',
                         'part_of_speech',
                         'word_variant',
                         'domain',
                         'language_direction',
                         'source_dictionary',
+                        'source',
+                        'review_status',
                         'status',
-                    ])->orderBy('id');
+                    ])->orderBy('sense_order')->orderBy('id');
                 },
             ]);
 
@@ -41,11 +48,23 @@ class DictionaryController extends Controller
                 $query->where('lemma', 'like', '%' . $search . '%')
                     ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
                     ->orWhere('transliteration', 'like', '%' . $search . '%')
+                        ->orWhereHas('variants', function ($query) use ($search) {
+                            $query->where('variant', 'like', '%' . $search . '%')
+                                ->orWhere('source', 'like', '%' . $search . '%')
+                                ->orWhere('source_entry_id', 'like', '%' . $search . '%');
+                        })
                     ->orWhereHas('senses', function ($query) use ($search) {
                         $query->where('definition', 'like', '%' . $search . '%')
+                                ->orWhere('definition_en', 'like', '%' . $search . '%')
+                                ->orWhere('definition_sd', 'like', '%' . $search . '%')
+                                ->orWhere('short_gloss', 'like', '%' . $search . '%')
+                                ->orWhere('full_definition', 'like', '%' . $search . '%')
                             ->orWhere('normalized_definition', 'like', '%' . $search . '%')
                             ->orWhere('source_dictionary', 'like', '%' . $search . '%')
+                                ->orWhere('source', 'like', '%' . $search . '%')
+                                ->orWhere('source_entry_id', 'like', '%' . $search . '%')
                             ->orWhere('domain', 'like', '%' . $search . '%')
+                                ->orWhere('word_variant', 'like', '%' . $search . '%')
                             ->orWhere('lexical_id', $search);
                     });
             });
@@ -57,8 +76,13 @@ class DictionaryController extends Controller
 
         if ($request->filled('source')) {
             $query->whereHas('senses', function ($query) use ($request) {
-                $query->where('source_dictionary', $request->source);
+                $query->where('source_dictionary', $request->source)
+                    ->orWhere('source', $request->source);
             });
+        }
+
+        if ($request->filled('completion_status') && $request->completion_status !== 'all') {
+            $query->completionStatus($request->completion_status);
         }
 
         if ($request->has('status')) {
@@ -77,6 +101,10 @@ class DictionaryController extends Controller
 
     public function stats()
     {
+        $totalLemmas = Lemma::count();
+        $completeLemmas = Lemma::complete()->count();
+        $pendingCompletion = Lemma::pendingCompletion()->count();
+
         $sources = Sense::query()
             ->select('source_dictionary', DB::raw('COUNT(*) as total'))
             ->whereNotNull('source_dictionary')
@@ -86,13 +114,42 @@ class DictionaryController extends Controller
             ->get();
 
         return response()->json([
-            'total_lemmas' => Lemma::count(),
+            'total_lemmas' => $totalLemmas,
             'pending_lemmas' => Lemma::where('status', 'pending')->count(),
             'approved_lemmas' => Lemma::where('status', 'approved')->count(),
+            'complete_lemmas' => $completeLemmas,
+            'pending_completion_lemmas' => $pendingCompletion,
+            'completion_percentage' => $totalLemmas > 0 ? round(($completeLemmas / $totalLemmas) * 100, 1) : 0,
             'total_senses' => Sense::count(),
             'open_lexicon_entries' => Sense::whereNotNull('lexical_id')->count(),
             'variant_entries' => Sense::whereNotNull('word_variant')->where('word_variant', '<>', '')->count(),
             'sources' => $sources,
+            'pending_by_pos' => Lemma::pendingCompletion()
+                ->select('pos', DB::raw('COUNT(*) as total'))
+                ->groupBy('pos')
+                ->orderByDesc('total')
+                ->limit(10)
+                ->get(),
+            'pending_by_domain' => Sense::query()
+                ->join('lemmas', 'lemmas.id', '=', 'senses.lemma_id')
+                ->where('lemmas.completion_status', Lemma::COMPLETION_PENDING)
+                ->select('senses.domain', DB::raw('COUNT(DISTINCT lemmas.id) as total'))
+                ->groupBy('senses.domain')
+                ->orderByDesc('total')
+                ->limit(10)
+                ->get(),
+            'pending_by_source' => Sense::query()
+                ->join('lemmas', 'lemmas.id', '=', 'senses.lemma_id')
+                ->where('lemmas.completion_status', Lemma::COMPLETION_PENDING)
+                ->select('senses.source_dictionary', DB::raw('COUNT(DISTINCT lemmas.id) as total'))
+                ->groupBy('senses.source_dictionary')
+                ->orderByDesc('total')
+                ->limit(10)
+                ->get(),
+            'recently_completed' => Lemma::complete()
+                ->orderByDesc('completed_at')
+                ->limit(10)
+                ->get(['id', 'public_id', 'lemma', 'normalized_lemma', 'pos', 'completed_at', 'completed_by', 'completion_score']),
         ]);
     }
 
@@ -102,15 +159,24 @@ class DictionaryController extends Controller
             ->with(['lemma:id,lemma,normalized_lemma,pos,status'])
             ->select([
                 'id',
+                'public_id',
                 'lemma_id',
                 'lexical_id',
                 'entry_id',
+                'sense_order',
                 'definition',
+                'short_gloss',
+                'full_definition',
                 'part_of_speech',
                 'word_variant',
                 'domain',
+                'register',
+                'dialect',
                 'language_direction',
                 'source_dictionary',
+                'source',
+                'source_entry_id',
+                'review_status',
                 'status',
                 'created_at',
             ]);
@@ -119,9 +185,16 @@ class DictionaryController extends Controller
             $search = trim($request->search);
             $query->where(function ($query) use ($search) {
                 $query->where('definition', 'like', '%' . $search . '%')
+                    ->orWhere('definition_en', 'like', '%' . $search . '%')
+                    ->orWhere('definition_sd', 'like', '%' . $search . '%')
+                    ->orWhere('short_gloss', 'like', '%' . $search . '%')
+                    ->orWhere('full_definition', 'like', '%' . $search . '%')
                     ->orWhere('normalized_definition', 'like', '%' . $search . '%')
                     ->orWhere('lexical_id', $search)
                     ->orWhere('source_dictionary', 'like', '%' . $search . '%')
+                    ->orWhere('source', 'like', '%' . $search . '%')
+                    ->orWhere('source_entry_id', 'like', '%' . $search . '%')
+                    ->orWhere('word_variant', 'like', '%' . $search . '%')
                     ->orWhereHas('lemma', function ($query) use ($search) {
                         $query->where('lemma', 'like', '%' . $search . '%')
                             ->orWhere('normalized_lemma', 'like', '%' . $search . '%');
@@ -186,6 +259,8 @@ class DictionaryController extends Controller
                 'word_variant',
                 'language_direction',
                 'source_dictionary',
+                'source',
+                'source_entry_id',
             ])
             ->whereNotNull('word_variant')
             ->where('word_variant', '<>', '');
@@ -217,7 +292,8 @@ class DictionaryController extends Controller
                 'variant' => $sense->word_variant,
                 'type' => 'lexicon_variant',
                 'dialect' => $sense->language_direction,
-                'source_dictionary' => $sense->source_dictionary,
+                'source_dictionary' => $sense->source_dictionary ?? $sense->source,
+                'source_entry_id' => $sense->source_entry_id,
                 'part_of_speech' => $sense->part_of_speech,
                 'definition' => $sense->definition,
                 'lexical_id' => $sense->lexical_id,
@@ -227,27 +303,52 @@ class DictionaryController extends Controller
         return response()->json($page);
     }
 
-    public function qa()
+    public function qa(DictionaryCompletionService $completion)
     {
         $missingSenses = Lemma::query()
             ->withCount('senses')
             ->doesntHave('senses')
             ->orderByDesc('id')
             ->limit(10)
-            ->get(['id', 'lemma', 'status', 'created_at']);
+            ->get(['id', 'lemma', 'status', 'completion_status', 'created_at']);
 
         $pending = Lemma::query()
             ->withCount('senses')
-            ->where('status', 'pending')
+            ->pendingCompletion()
             ->orderByDesc('updated_at')
             ->limit(10)
-            ->get(['id', 'lemma', 'status', 'updated_at']);
+            ->get(['id', 'lemma', 'status', 'completion_status', 'completion_score', 'updated_at']);
 
         $missingNormalized = Lemma::query()
             ->whereNull('normalized_lemma')
             ->orderByDesc('id')
             ->limit(10)
-            ->get(['id', 'lemma', 'status']);
+            ->get(['id', 'lemma', 'status', 'completion_status']);
+
+        $missingDefinitions = Sense::query()
+            ->with(['lemma:id,lemma,completion_status'])
+            ->where(function ($query) {
+                $query->where(function ($query) {
+                    $query->whereNull('definition')->orWhere('definition', '');
+                })
+                    ->where(function ($query) {
+                        $query->whereNull('short_gloss')->orWhere('short_gloss', '');
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('full_definition')->orWhere('full_definition', '');
+                    });
+            })
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get(['id', 'lemma_id', 'lexical_id', 'definition', 'short_gloss', 'full_definition']);
+
+        $emptyPos = Lemma::query()
+            ->where(function ($query) {
+                $query->whereNull('pos')->orWhere('pos', '');
+            })
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get(['id', 'lemma', 'status', 'completion_status']);
 
         $duplicateLemmas = Lemma::query()
             ->select('lemma', DB::raw('COUNT(*) as total'))
@@ -257,23 +358,80 @@ class DictionaryController extends Controller
             ->limit(10)
             ->get();
 
+        $duplicateLexicalIds = Sense::query()
+            ->select('lexical_id', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('lexical_id')
+            ->groupBy('lexical_id')
+            ->having('total', '>', 1)
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        $malformedDirections = Sense::query()
+            ->whereNotNull('language_direction')
+            ->where('language_direction', '<>', '')
+            ->get(['id', 'lemma_id', 'language_direction', 'lexical_id'])
+            ->filter(fn (Sense $sense) => !$completion->isValidLanguageDirection($sense->language_direction));
+
+        $malformedExtra = Sense::query()
+            ->whereNotNull('extra')
+            ->where('extra', '<>', '')
+            ->get(['id', 'lemma_id', 'lexical_id', 'extra'])
+            ->filter(function (Sense $sense) {
+                json_decode((string) $sense->extra, true);
+
+                return json_last_error() !== JSON_ERROR_NONE;
+            });
+
         return response()->json([
             'summary' => [
-                'pending_lemmas' => Lemma::where('status', 'pending')->count(),
+                'pending_lemmas' => Lemma::pendingCompletion()->count(),
+                'complete_lemmas' => Lemma::complete()->count(),
                 'lemmas_without_senses' => Lemma::doesntHave('senses')->count(),
                 'lemmas_without_normalized_form' => Lemma::whereNull('normalized_lemma')->count(),
+                'senses_without_definitions' => Sense::query()
+                    ->where(function ($query) {
+                        $query->where(function ($query) {
+                            $query->whereNull('definition')->orWhere('definition', '');
+                        })
+                            ->where(function ($query) {
+                                $query->whereNull('short_gloss')->orWhere('short_gloss', '');
+                            })
+                            ->where(function ($query) {
+                                $query->whereNull('full_definition')->orWhere('full_definition', '');
+                            });
+                    })
+                    ->count(),
+                'empty_pos_lemmas' => Lemma::query()
+                    ->where(function ($query) {
+                        $query->whereNull('pos')->orWhere('pos', '');
+                    })
+                    ->count(),
                 'duplicate_lemma_groups' => DB::query()
                     ->fromSub(
                         Lemma::query()->select('lemma')->groupBy('lemma')->havingRaw('COUNT(*) > 1'),
                         'duplicate_lemmas'
                     )
                     ->count(),
+                'duplicate_lexical_id_groups' => DB::query()
+                    ->fromSub(
+                        Sense::query()->select('lexical_id')->whereNotNull('lexical_id')->groupBy('lexical_id')->havingRaw('COUNT(*) > 1'),
+                        'duplicate_lexical_ids'
+                    )
+                    ->count(),
+                'malformed_language_directions' => $malformedDirections->count(),
+                'malformed_extra_json' => $malformedExtra->count(),
             ],
             'issues' => [
                 'missing_senses' => $missingSenses,
                 'pending' => $pending,
                 'missing_normalized' => $missingNormalized,
+                'missing_definitions' => $missingDefinitions,
+                'empty_pos' => $emptyPos,
                 'duplicate_lemmas' => $duplicateLemmas,
+                'duplicate_lexical_ids' => $duplicateLexicalIds,
+                'malformed_language_directions' => $malformedDirections->take(10)->values(),
+                'malformed_extra_json' => $malformedExtra->take(10)->values(),
             ],
         ]);
     }
@@ -282,10 +440,23 @@ class DictionaryController extends Controller
     {
         $validated = $request->validate([
             'lemma' => 'required|string',
+            'normalized_lemma' => 'nullable|string',
             'pos' => 'nullable|string',
             'transliteration' => 'nullable|string',
+            'ipa' => 'nullable|string',
+            'phonetic' => 'nullable|string',
+            'audio_url' => 'nullable|url',
+            'syllabification' => 'nullable|string',
             'status' => 'nullable|in:pending,approved,rejected',
+            'completion_notes' => 'nullable|string',
+            'variants_reviewed' => 'nullable|boolean',
+            'examples_reviewed' => 'nullable|boolean',
+            'morphology_reviewed' => 'nullable|boolean',
+            'pronunciation_reviewed' => 'nullable|boolean',
         ]);
+
+        $validated['normalized_lemma'] = $validated['normalized_lemma'] ?? $this->defaultNormalizedLemma($validated['lemma']);
+        $validated['completion_status'] = Lemma::COMPLETION_PENDING;
 
         $lemma = Lemma::create($validated);
 
@@ -351,6 +522,7 @@ class DictionaryController extends Controller
         $payload['imported_variants'] = $importedVariants;
         $payload['variants'] = array_values(array_merge($manualVariants, $importedVariants));
         $payload['has_real_morphology'] = $this->hasRealMorphology($lemma);
+        $payload['completion'] = app(DictionaryCompletionService::class)->evaluate($lemma);
 
         return $payload;
     }
@@ -371,9 +543,13 @@ class DictionaryController extends Controller
             'language_direction' => $sense->language_direction,
             'language_label' => $this->languageLabel($sense->language_direction),
             'source_dictionary' => $sense->source_dictionary,
-            'publisher' => $this->metadataString($extra['publisher'] ?? null),
+            'source' => $sense->source,
+            'source_entry_id' => $sense->source_entry_id,
+            'publisher' => $sense->publisher ?: $this->metadataString($extra['publisher'] ?? null),
             'publisher_url' => $this->metadataString($extra['publisher_url'] ?? null),
             'prepared_by' => $this->metadataString($extra['prepared_by'] ?? null),
+            'license' => $sense->license,
+            'import_version' => $sense->import_version,
             'source_extra' => $extra['extra'] ?? null,
             'extra' => $extra,
         ];
@@ -592,10 +768,24 @@ class DictionaryController extends Controller
 
         $validated = $request->validate([
             'lemma' => 'string',
+            'normalized_lemma' => 'nullable|string',
             'pos' => 'nullable|string',
             'transliteration' => 'nullable|string',
+            'ipa' => 'nullable|string',
+            'phonetic' => 'nullable|string',
+            'audio_url' => 'nullable|url',
+            'syllabification' => 'nullable|string',
             'status' => 'nullable|in:pending,approved,rejected',
+            'completion_notes' => 'nullable|string',
+            'variants_reviewed' => 'nullable|boolean',
+            'examples_reviewed' => 'nullable|boolean',
+            'morphology_reviewed' => 'nullable|boolean',
+            'pronunciation_reviewed' => 'nullable|boolean',
         ]);
+
+        if (array_key_exists('lemma', $validated) && !array_key_exists('normalized_lemma', $validated)) {
+            $validated['normalized_lemma'] = $this->defaultNormalizedLemma($validated['lemma']);
+        }
 
         $lemma->update($validated);
 
@@ -633,7 +823,7 @@ class DictionaryController extends Controller
             $merge['lemma_id'] = $lemmaId;
         }
 
-        foreach (['definition', 'definition_en', 'definition_sd', 'domain', 'language_direction'] as $field) {
+        foreach (['definition', 'definition_en', 'definition_sd', 'short_gloss', 'full_definition', 'usage_notes', 'domain', 'language_direction', 'source_dictionary', 'source', 'source_entry_id', 'publisher', 'license', 'register', 'dialect'] as $field) {
             if ($request->has($field) && is_string($request->input($field))) {
                 $merge[$field] = trim($request->input($field));
             }
@@ -648,12 +838,26 @@ class DictionaryController extends Controller
             'definition' => 'required|string',
             'definition_en' => 'nullable|string',
             'definition_sd' => 'nullable|string',
+            'short_gloss' => 'nullable|string|max:255',
+            'full_definition' => 'nullable|string',
+            'usage_notes' => 'nullable|string',
+            'sense_order' => 'nullable|integer|min:0',
             'domain' => 'nullable|string',
+            'register' => 'nullable|string',
+            'dialect' => 'nullable|string',
+            'confidence' => 'nullable|integer|min:0|max:100',
             'language_direction' => 'nullable|string|max:100',
+            'source_dictionary' => 'nullable|string|max:150',
+            'source' => 'nullable|string',
+            'source_entry_id' => 'nullable|string|max:100',
+            'publisher' => 'nullable|string',
+            'license' => 'nullable|string',
+            'import_version' => 'nullable|string',
             'status' => 'nullable|in:pending,approved',
+            'review_status' => 'nullable|in:unreviewed,reviewed,curated,needs_work',
         ]);
 
-        foreach (['definition_en', 'definition_sd', 'domain', 'language_direction'] as $field) {
+        foreach (['definition_en', 'definition_sd', 'short_gloss', 'full_definition', 'usage_notes', 'domain', 'register', 'dialect', 'language_direction', 'source_dictionary', 'source', 'source_entry_id', 'publisher', 'license', 'import_version'] as $field) {
             if (($validated[$field] ?? null) === '') {
                 $validated[$field] = null;
             }
@@ -672,8 +876,23 @@ class DictionaryController extends Controller
             'definition' => 'string',
             'definition_en' => 'nullable|string',
             'definition_sd' => 'nullable|string',
+            'short_gloss' => 'nullable|string|max:255',
+            'full_definition' => 'nullable|string',
+            'usage_notes' => 'nullable|string',
+            'sense_order' => 'nullable|integer|min:0',
             'domain' => 'nullable|string',
+            'register' => 'nullable|string',
+            'dialect' => 'nullable|string',
+            'confidence' => 'nullable|integer|min:0|max:100',
+            'language_direction' => 'nullable|string|max:100',
+            'source_dictionary' => 'nullable|string|max:150',
+            'source' => 'nullable|string',
+            'source_entry_id' => 'nullable|string|max:100',
+            'publisher' => 'nullable|string',
+            'license' => 'nullable|string',
+            'import_version' => 'nullable|string',
             'status' => 'nullable|in:pending,approved',
+            'review_status' => 'nullable|in:unreviewed,reviewed,curated,needs_work',
         ]);
 
         $sense->update($validated);
@@ -688,12 +907,36 @@ class DictionaryController extends Controller
     }
 
     // Example Methods
+    public function storeExample(Request $request, $senseId)
+    {
+        $validated = $request->validate([
+            'sentence' => 'required|string',
+            'translation' => 'nullable|string',
+            'source' => 'nullable|string',
+            'citation' => 'nullable|string',
+            'quality_flag' => 'nullable|in:unreviewed,good,needs_work,rejected',
+            'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
+            'corpus_sentence_id' => 'nullable|integer',
+        ]);
+
+        $example = SenseExample::create([
+            'sense_id' => $senseId,
+            ...$validated,
+        ]);
+
+        return response()->json($example, 201);
+    }
+
     public function updateExample(Request $request, $id)
     {
         $example = SenseExample::findOrFail($id);
         $validated = $request->validate([
             'sentence' => 'string',
+            'translation' => 'nullable|string',
             'source' => 'nullable|string',
+            'citation' => 'nullable|string',
+            'quality_flag' => 'nullable|in:unreviewed,good,needs_work,rejected',
+            'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
             'corpus_sentence_id' => 'nullable|integer',
         ]);
 
@@ -720,6 +963,7 @@ class DictionaryController extends Controller
             'case' => 'nullable|string',
             'aspect' => 'nullable|string',
             'tense' => 'nullable|string',
+            'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
         ]);
 
         $morphology = Morphology::updateOrCreate(
@@ -737,13 +981,19 @@ class DictionaryController extends Controller
             'variant' => 'required|string',
             'type' => 'required|in:dialectal,misspelling,historical',
             'dialect' => 'nullable|string',
+            'source' => 'nullable|string',
+            'source_entry_id' => 'nullable|string|max:100',
+            'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
         ]);
 
         $variant = Variant::create([
             'lemma_id' => $lemmaId,
             'variant' => $validated['variant'],
             'type' => $validated['type'],
-            'dialect' => $validated['dialect'],
+            'dialect' => $validated['dialect'] ?? null,
+            'source' => $validated['source'] ?? null,
+            'source_entry_id' => $validated['source_entry_id'] ?? null,
+            'review_status' => $validated['review_status'] ?? 'unreviewed',
         ]);
 
         return response()->json($variant, 201);
@@ -763,18 +1013,63 @@ class DictionaryController extends Controller
         return response()->json(['message' => 'Lemma approved successfully']);
     }
 
+    public function completion($id, DictionaryCompletionService $completion)
+    {
+        $lemma = Lemma::with(['senses.examples', 'morphology', 'variants'])->findOrFail($id);
+
+        return response()->json($completion->evaluate($lemma));
+    }
+
+    public function updateCompletion(Request $request, $id, DictionaryCompletionService $completion)
+    {
+        $lemma = Lemma::with(['senses.examples', 'morphology', 'variants'])->findOrFail($id);
+
+        $validated = $request->validate([
+            'completion_status' => ['required', Rule::in([Lemma::COMPLETION_PENDING, Lemma::COMPLETION_COMPLETE])],
+            'completion_notes' => 'nullable|string',
+        ]);
+
+        $checklist = $completion->evaluate($lemma);
+
+        if ($validated['completion_status'] === Lemma::COMPLETION_COMPLETE && !$checklist['is_complete']) {
+            return response()->json([
+                'message' => 'This lemma is still missing required dictionary review items.',
+                'completion' => $checklist,
+            ], 422);
+        }
+
+        $lemma->update([
+            'completion_status' => $validated['completion_status'],
+            'completed_at' => $validated['completion_status'] === Lemma::COMPLETION_COMPLETE ? now() : null,
+            'completed_by' => $validated['completion_status'] === Lemma::COMPLETION_COMPLETE ? auth()->id() : null,
+            'completion_notes' => $validated['completion_notes'] ?? $lemma->completion_notes,
+            'completion_score' => $checklist['score'],
+            'checklist_json' => $checklist,
+        ]);
+
+        return response()->json([
+            'message' => $lemma->completion_status === Lemma::COMPLETION_COMPLETE
+                ? 'Lemma marked complete.'
+                : 'Lemma marked pending.',
+            'lemma' => $lemma->fresh(),
+            'completion' => $completion->evaluate($lemma->fresh(['senses.examples', 'morphology', 'variants'])),
+        ]);
+    }
+
     // Relation Methods
     public function storeRelation(Request $request, $lemmaId)
     {
         $validated = $request->validate([
             'relation_type' => 'required|in:synonym,antonym,hypernym',
             'related_word' => 'required|string',
+            'source' => 'nullable|string',
         ]);
 
         $relation = \App\Models\LemmaRelation::create([
             'lemma_id' => $lemmaId,
             'relation_type' => $validated['relation_type'],
             'related_word' => $validated['related_word'],
+            'source' => $validated['source'] ?? null,
         ]);
 
         return response()->json($relation, 201);
@@ -785,6 +1080,13 @@ class DictionaryController extends Controller
         $relation = \App\Models\LemmaRelation::findOrFail($id);
         $relation->delete();
         return response()->json(null, 204);
+    }
+
+    private function defaultNormalizedLemma(string $lemma): string
+    {
+        $lemma = trim($lemma);
+
+        return function_exists('mb_strtolower') ? mb_strtolower($lemma) : strtolower($lemma);
     }
 
     // Scraping Method

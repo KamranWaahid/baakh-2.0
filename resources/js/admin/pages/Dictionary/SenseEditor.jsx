@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import {
     Dialog,
     DialogContent,
@@ -31,6 +32,8 @@ const initialNewSenseForm = {
     definition_en: '',
     domain: '',
     language_direction: '',
+    source_dictionary: '',
+    review_status: 'unreviewed',
 };
 
 const trimValue = (value) => {
@@ -113,9 +116,19 @@ const SenseEditor = () => {
         if (lemma) {
             setLemmaForm({
                 lemma: lemma.lemma || '',
+                normalized_lemma: lemma.normalized_lemma || '',
                 pos: lemma.pos || '',
                 transliteration: lemma.transliteration || '',
+                ipa: lemma.ipa || '',
+                phonetic: lemma.phonetic || '',
+                audio_url: lemma.audio_url || '',
+                syllabification: lemma.syllabification || '',
                 status: lemma.status || 'pending',
+                completion_notes: lemma.completion_notes || '',
+                variants_reviewed: !!lemma.variants_reviewed,
+                examples_reviewed: !!lemma.examples_reviewed,
+                morphology_reviewed: !!lemma.morphology_reviewed,
+                pronunciation_reviewed: !!lemma.pronunciation_reviewed,
             });
             setMorphForm({
                 root: lemma.morphology?.root || '',
@@ -223,6 +236,18 @@ const SenseEditor = () => {
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to approve lemma.')),
     });
 
+    const updateCompletion = useMutation({
+        mutationFn: (completion_status) => api.patch(`/api/admin/dictionary/lemmas/${id}/completion`, {
+            completion_status,
+            completion_notes: lemmaForm.completion_notes || undefined,
+        }),
+        onSuccess: (res) => {
+            queryClient.invalidateQueries(['lemma', id]);
+            toast.success(res.data?.message || 'Completion status updated.');
+        },
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to update completion status.')),
+    });
+
     const handleScrape = async () => {
         setIsScraping(true);
         setScrapeError(null);
@@ -272,6 +297,10 @@ const SenseEditor = () => {
     const wordLabel = sourceSummary.word_label || 'Word (سنڌي)';
     const sourceWordDir = isSourceTerm ? 'auto' : 'rtl';
     const hasRealMorphology = !!lemma.has_real_morphology;
+    const completion = lemma.completion || {};
+    const completionChecks = completion.checks || {};
+    const missingRequirements = completion.missing_requirements || [];
+    const isComplete = lemma.completion_status === 'complete';
 
     const handleCreateSense = () => {
         if (!newSenseForm.definition.trim()) {
@@ -303,6 +332,12 @@ const SenseEditor = () => {
                         <Badge variant={lemma.status === 'approved' ? 'default' : lemma.status === 'rejected' ? 'destructive' : 'outline'}>
                             {lemma.status}
                         </Badge>
+                        <Badge
+                            variant={isComplete ? 'default' : 'outline'}
+                            className={isComplete ? 'bg-green-600 hover:bg-green-600' : 'text-amber-700 border-amber-200 bg-amber-50'}
+                        >
+                            {isComplete ? 'Complete' : `Pending${completion.score ? ` · ${completion.score}%` : ''}`}
+                        </Badge>
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -315,12 +350,22 @@ const SenseEditor = () => {
                             <Check className="mr-1 h-4 w-4" /> Approve
                         </Button>
                     )}
+                    {isComplete ? (
+                        <Button size="sm" variant="outline" onClick={() => updateCompletion.mutate('pending')} disabled={updateCompletion.isPending}>
+                            Mark Pending
+                        </Button>
+                    ) : (
+                        <Button size="sm" onClick={() => updateCompletion.mutate('complete')} disabled={updateCompletion.isPending}>
+                            <CheckCircle2 className="mr-1 h-4 w-4" /> Mark Complete
+                        </Button>
+                    )}
                 </div>
             </div>
 
             <Tabs defaultValue="general">
                 <TabsList>
                     <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="completion">Completion</TabsTrigger>
                     <TabsTrigger value="morphology">Morphology</TabsTrigger>
                     <TabsTrigger value="senses">Senses ({senses.length})</TabsTrigger>
                     <TabsTrigger value="relations">Relations ({synonyms.length + antonyms.length + hypernyms.length})</TabsTrigger>
@@ -338,8 +383,28 @@ const SenseEditor = () => {
                                     <Input value={lemmaForm.lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, lemma: e.target.value })} className={`${isSourceTerm ? '' : 'font-arabic'} text-xl`} dir={sourceWordDir} />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label>Normalized Form</Label>
+                                    <Input value={lemmaForm.normalized_lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, normalized_lemma: e.target.value })} dir="auto" />
+                                </div>
+                                <div className="space-y-2">
                                     <Label>Transliteration (Roman)</Label>
                                     <Input value={lemmaForm.transliteration || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, transliteration: e.target.value })} placeholder="e.g. dil" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>IPA</Label>
+                                    <Input value={lemmaForm.ipa || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, ipa: e.target.value })} placeholder="/dil/" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Phonetic Form</Label>
+                                    <Input value={lemmaForm.phonetic || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, phonetic: e.target.value })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Audio URL</Label>
+                                    <Input value={lemmaForm.audio_url || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, audio_url: e.target.value })} placeholder="https://..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Syllabification</Label>
+                                    <Input value={lemmaForm.syllabification || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, syllabification: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Part of Speech</Label>
@@ -370,6 +435,26 @@ const SenseEditor = () => {
                                     </Select>
                                 </div>
                             </div>
+                            <div className="rounded-lg border p-4">
+                                <Label className="mb-3 block">Review Flags</Label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                                    {[
+                                        ['variants_reviewed', 'Variants reviewed'],
+                                        ['examples_reviewed', 'Examples reviewed'],
+                                        ['morphology_reviewed', 'Morphology reviewed'],
+                                        ['pronunciation_reviewed', 'Pronunciation reviewed'],
+                                    ].map(([field, label]) => (
+                                        <label key={field} className="flex items-center gap-2 rounded-md border p-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={!!lemmaForm[field]}
+                                                onChange={(e) => setLemmaForm({ ...lemmaForm, [field]: e.target.checked })}
+                                            />
+                                            <span>{label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </CardContent>
                         <CardFooter className="border-t py-3 flex justify-end">
                             <Button onClick={() => updateLemma.mutate(lemmaForm)} disabled={updateLemma.isPending}>
@@ -379,6 +464,20 @@ const SenseEditor = () => {
                     </Card>
 
                     <OpenLexiconCard lemma={lemma} className="mt-4" />
+                </TabsContent>
+
+                <TabsContent value="completion" className="mt-4">
+                    <CompletionChecklistPanel
+                        completion={completion}
+                        checks={completionChecks}
+                        missingRequirements={missingRequirements}
+                        isComplete={isComplete}
+                        notes={lemmaForm.completion_notes ?? lemma.completion_notes ?? ''}
+                        setNotes={(value) => setLemmaForm({ ...lemmaForm, completion_notes: value })}
+                        onMarkComplete={() => updateCompletion.mutate('complete')}
+                        onMarkPending={() => updateCompletion.mutate('pending')}
+                        saving={updateCompletion.isPending}
+                    />
                 </TabsContent>
 
                 {/* ═══ Morphology Tab ═══ */}
@@ -492,6 +591,26 @@ const SenseEditor = () => {
                                             onChange={(e) => setNewSenseForm({ ...newSenseForm, language_direction: e.target.value })}
                                             placeholder={sourceSummary.language_labels?.[0] || 'Optional'}
                                         />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Source / Provenance</Label>
+                                        <Input
+                                            value={newSenseForm.source_dictionary}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, source_dictionary: e.target.value })}
+                                            placeholder="Dictionary, editor, import, or citation..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Review Status</Label>
+                                        <Select value={newSenseForm.review_status} onValueChange={(v) => setNewSenseForm({ ...newSenseForm, review_status: v })}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="unreviewed">Unreviewed</SelectItem>
+                                                <SelectItem value="reviewed">Reviewed</SelectItem>
+                                                <SelectItem value="curated">Curated</SelectItem>
+                                                <SelectItem value="needs_work">Needs work</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
                             </CardContent>
@@ -748,6 +867,10 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
     const [definitionEn, setDefinitionEn] = useState(sense.definition_en || '');
     const [definitionSd, setDefinitionSd] = useState(sense.definition_sd || '');
     const [domain, setDomain] = useState(sense.domain || '');
+    const [shortGloss, setShortGloss] = useState(sense.short_gloss || '');
+    const [languageDirection, setLanguageDirection] = useState(sense.language_direction || '');
+    const [sourceDictionary, setSourceDictionary] = useState(sense.source_dictionary || sense.source || '');
+    const [reviewStatus, setReviewStatus] = useState(sense.review_status || 'unreviewed');
 
     return (
         <Card>
@@ -767,6 +890,10 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                     <Label>Definition (Primary)</Label>
                     <Input value={definition} onChange={(e) => setDefinition(e.target.value)} className="font-arabic text-lg" dir="rtl" placeholder="Enter primary definition..." />
                 </div>
+                <div className="space-y-2">
+                    <Label>Short Gloss</Label>
+                    <Input value={shortGloss} onChange={(e) => setShortGloss(e.target.value)} placeholder="Human-friendly short gloss..." />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Sindhi Meaning</Label>
@@ -781,16 +908,122 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                     <Label>Domain</Label>
                     <Input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="e.g. medicine, poetry, colloquial..." />
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label>Language Direction</Label>
+                        <Input value={languageDirection} onChange={(e) => setLanguageDirection(e.target.value)} placeholder="sindhi, english, English → Sindhi..." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Source / Provenance</Label>
+                        <Input value={sourceDictionary} onChange={(e) => setSourceDictionary(e.target.value)} placeholder="Source dictionary or editor note..." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Review Status</Label>
+                        <Select value={reviewStatus} onValueChange={setReviewStatus}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="unreviewed">Unreviewed</SelectItem>
+                                <SelectItem value="reviewed">Reviewed</SelectItem>
+                                <SelectItem value="curated">Curated</SelectItem>
+                                <SelectItem value="needs_work">Needs work</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
                 <SourceMetadataPanel sense={sense} />
             </CardContent>
             <CardFooter className="bg-muted/10 border-t py-3 flex justify-end">
-                <Button size="sm" onClick={() => onUpdate({ definition, definition_en: definitionEn, definition_sd: definitionSd, domain })} disabled={saving}>
+                <Button
+                    size="sm"
+                    onClick={() => onUpdate({
+                        definition,
+                        definition_en: definitionEn,
+                        definition_sd: definitionSd,
+                        short_gloss: shortGloss,
+                        domain,
+                        language_direction: languageDirection,
+                        source_dictionary: sourceDictionary,
+                        review_status: reviewStatus,
+                    })}
+                    disabled={saving}
+                >
                     <Save className="mr-2 h-4 w-4" /> {saving ? 'Saving...' : 'Update Sense'}
                 </Button>
             </CardFooter>
         </Card>
     );
 };
+
+const CompletionChecklistPanel = ({ completion, checks, missingRequirements, isComplete, notes, setNotes, onMarkComplete, onMarkPending, saving }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" /> Completion Checklist
+            </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+            <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="font-medium">{isComplete ? 'Complete' : 'Pending completion'}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {completion.passed || 0} of {completion.total || 0} checks passing.
+                        </p>
+                    </div>
+                    <Badge
+                        variant={isComplete ? 'default' : 'outline'}
+                        className={isComplete ? 'bg-green-600 hover:bg-green-600' : 'text-amber-700 border-amber-200 bg-amber-50'}
+                    >
+                        {completion.score || 0}%
+                    </Badge>
+                </div>
+                <Progress value={completion.score || 0} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {Object.entries(checks).map(([key, check]) => (
+                    <div key={key} className={`rounded-md border p-3 ${check.passed ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'}`}>
+                        <div className="flex items-start gap-2">
+                            {check.passed ? (
+                                <CheckCircle2 className="mt-0.5 h-4 w-4 text-green-600" />
+                            ) : (
+                                <X className="mt-0.5 h-4 w-4 text-amber-600" />
+                            )}
+                            <div>
+                                <p className="text-sm font-medium">{check.label}</p>
+                                {!check.passed && <p className="text-xs text-muted-foreground mt-1">{check.missing}</p>}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {missingRequirements.length > 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="font-medium text-amber-900">Missing requirements</p>
+                    <ul className="mt-2 space-y-1 text-sm text-amber-900">
+                        {missingRequirements.map((item) => (
+                            <li key={item.key}>- {item.message}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            <div className="space-y-2">
+                <Label>Completion Notes</Label>
+                <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="What was reviewed or what remains?" />
+            </div>
+        </CardContent>
+        <CardFooter className="border-t py-3 flex justify-end gap-2">
+            <Button variant="outline" onClick={onMarkPending} disabled={saving || !isComplete}>
+                Mark Pending
+            </Button>
+            <Button onClick={onMarkComplete} disabled={saving || isComplete}>
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Mark Complete
+            </Button>
+        </CardFooter>
+    </Card>
+);
 
 const OpenLexiconCard = ({ lemma, className = '' }) => {
     const summary = lemma.source_summary || {};

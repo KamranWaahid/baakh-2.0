@@ -32,9 +32,14 @@ const DictionaryQA = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <SummaryCard label="Pending Lemmas" value={summary.pending_lemmas} />
+                <SummaryCard label="Complete Lemmas" value={summary.complete_lemmas} />
                 <SummaryCard label="Without Senses" value={summary.lemmas_without_senses} />
                 <SummaryCard label="Missing Normalized Form" value={summary.lemmas_without_normalized_form} />
-                <SummaryCard label="Duplicate Groups" value={summary.duplicate_lemma_groups} />
+                <SummaryCard label="Missing Definitions" value={summary.senses_without_definitions} />
+                <SummaryCard label="Empty POS" value={summary.empty_pos_lemmas} />
+                <SummaryCard label="Duplicate Lemmas" value={summary.duplicate_lemma_groups} />
+                <SummaryCard label="Duplicate Lexical IDs" value={summary.duplicate_lexical_id_groups} />
+                <SummaryCard label="Malformed Extra JSON" value={summary.malformed_extra_json} />
             </div>
 
             {totalIssues === 0 && !isLoading ? (
@@ -49,7 +54,12 @@ const DictionaryQA = () => {
                     <IssueList title="Pending Review" items={issues.pending || []} icon={CircleHelp} />
                     <IssueList title="Missing Senses" items={issues.missing_senses || []} icon={CircleAlert} />
                     <IssueList title="Missing Normalized Form" items={issues.missing_normalized || []} icon={CircleAlert} />
+                    <IssueList title="Empty POS" items={issues.empty_pos || []} icon={CircleAlert} />
+                    <SenseIssueList title="Missing Definitions" items={issues.missing_definitions || []} icon={CircleAlert} />
+                    <SenseIssueList title="Malformed Language Direction" items={issues.malformed_language_directions || []} icon={CircleAlert} />
                     <DuplicateList items={issues.duplicate_lemmas || []} />
+                    <DuplicateLexicalList items={issues.duplicate_lexical_ids || []} />
+                    <SenseIssueList title="Malformed Extra JSON" items={issues.malformed_extra_json || []} icon={CircleAlert} />
                 </div>
             )}
         </div>
@@ -107,6 +117,55 @@ const DuplicateList = ({ items }) => (
                 </div>
             )) : (
                 <p className="text-sm text-muted-foreground py-6 text-center">No duplicate groups found.</p>
+            )}
+        </CardContent>
+    </Card>
+);
+
+const DuplicateLexicalList = ({ items }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+                <CircleAlert className="h-5 w-5 text-amber-500" /> Duplicate Lexical IDs
+            </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+            {items.length > 0 ? items.map((item) => (
+                <div key={item.lexical_id} className="flex items-center justify-between rounded-lg border p-3">
+                    <span className="text-sm font-mono">{item.lexical_id}</span>
+                    <Badge variant="secondary">{item.total} records</Badge>
+                </div>
+            )) : (
+                <p className="text-sm text-muted-foreground py-6 text-center">No duplicate lexical IDs found.</p>
+            )}
+        </CardContent>
+    </Card>
+);
+
+const SenseIssueList = ({ title, items, icon: Icon }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+                <Icon className="h-5 w-5 text-amber-500" /> {title}
+            </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+            {items.length > 0 ? items.map((sense) => (
+                <div key={`${title}-${sense.id}`} className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="min-w-0">
+                        <p className="font-arabic text-lg" dir="auto">{sense.lemma?.lemma || sense.lexical_id || `Sense ${sense.id}`}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                            {[sense.lexical_id, sense.language_direction].filter(Boolean).join(' · ') || 'Sense issue'}
+                        </p>
+                    </div>
+                    {sense.lemma_id && (
+                        <Button size="sm" variant="outline" asChild>
+                            <Link to={`/admin/dictionary/lemmas/${sense.lemma_id}`}>Review</Link>
+                        </Button>
+                    )}
+                </div>
+            )) : (
+                <p className="text-sm text-muted-foreground py-6 text-center">No issues in this category.</p>
             )}
         </CardContent>
     </Card>

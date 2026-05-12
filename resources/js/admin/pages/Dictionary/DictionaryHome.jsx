@@ -27,6 +27,7 @@ import {
 const DictionaryHome = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [completionStatus, setCompletionStatus] = useState('all');
     const [activeTab, setActiveTab] = useState('browse');
     const [viewingLemmaId, setViewingLemmaId] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -43,10 +44,10 @@ const DictionaryHome = () => {
 
     // ── Lemma list ──
     const { data: response, isLoading } = useQuery({
-        queryKey: ['dictionary-browse', search, page],
+        queryKey: ['dictionary-browse', search, page, completionStatus],
         queryFn: async () => {
             const res = await api.get('/api/admin/dictionary/lemmas', {
-                params: { search, page, limit: 20 }
+                params: { search, page, limit: 20, completion_status: completionStatus }
             });
             return res.data;
         },
@@ -94,10 +95,10 @@ const DictionaryHome = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={Book} label="Open Lexicon Entries" value={stats?.open_lexicon_entries?.toLocaleString() || '—'} />
-                <StatCard icon={Layers} label="Approved Lemmas" value={stats?.approved_lemmas?.toLocaleString() || '—'} />
-                <StatCard icon={ArrowRightLeft} label="Definitions" value={stats?.total_senses?.toLocaleString() || '—'} sub="Senses" />
-                <StatCard icon={Type} label="Top Source" value={topSource?.total?.toLocaleString() || '—'} sub={topSource?.source_dictionary || 'Source'} />
+                <StatCard icon={Book} label="Total Lemmas" value={stats?.total_lemmas?.toLocaleString() || '—'} />
+                <StatCard icon={CheckCircle2} label="Complete" value={stats?.complete_lemmas?.toLocaleString() || '—'} />
+                <StatCard icon={Layers} label="Pending Completion" value={stats?.pending_completion_lemmas?.toLocaleString() || '—'} />
+                <StatCard icon={Type} label="Completion" value={`${stats?.completion_percentage ?? '—'}%`} sub={topSource?.source_dictionary || 'Top source'} />
             </div>
 
             {/* Tabs */}
@@ -121,6 +122,23 @@ const DictionaryHome = () => {
                                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                                     />
                                 </div>
+                                <div className="flex items-center gap-1 rounded-md border p-1">
+                                    {['all', 'pending', 'complete'].map((status) => (
+                                        <Button
+                                            key={status}
+                                            type="button"
+                                            size="sm"
+                                            variant={completionStatus === status ? 'default' : 'ghost'}
+                                            onClick={() => {
+                                                setCompletionStatus(status);
+                                                setPage(1);
+                                            }}
+                                            className="capitalize"
+                                        >
+                                            {status === 'all' ? 'All' : status}
+                                        </Button>
+                                    ))}
+                                </div>
                                 {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                             </div>
                         </CardHeader>
@@ -136,6 +154,7 @@ const DictionaryHome = () => {
                                             <TableHead>Source</TableHead>
                                             <TableHead>Senses</TableHead>
                                             <TableHead>Status</TableHead>
+                                            <TableHead>Completion</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -190,6 +209,9 @@ const DictionaryHome = () => {
                                                                 {lemma.status}
                                                             </Badge>
                                                         </TableCell>
+                                                        <TableCell>
+                                                            <CompletionBadge lemma={lemma} />
+                                                        </TableCell>
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-1">
                                                                 <Button size="sm" variant="ghost" onClick={() => setViewingLemmaId(lemma.id)}>
@@ -207,7 +229,7 @@ const DictionaryHome = () => {
                                             })
                                         ) : !isLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                                                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                                                     No words found.
                                                 </TableCell>
                                             </TableRow>
@@ -271,6 +293,7 @@ const DictionaryHome = () => {
                                         {lookupResult.pos && (
                                             <Badge variant="secondary">{lookupResult.pos}</Badge>
                                         )}
+                                        <CompletionBadge lemma={lookupResult} />
                                     </div>
 
                                     {lookupResult.romanized && (
@@ -284,6 +307,24 @@ const DictionaryHome = () => {
                                     )}
 
                                     {/* Meanings */}
+                                    {lookupResult.senses?.length > 0 && (
+                                        <div>
+                                            <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Structured Senses</h4>
+                                            <div className="space-y-2">
+                                                {lookupResult.senses.map((sense, i) => (
+                                                    <div key={sense.public_id || sense.id || i} className="rounded-md border p-2">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <Badge variant="outline">#{i + 1}</Badge>
+                                                            {sense.short_gloss && <span className="text-sm font-medium">{sense.short_gloss}</span>}
+                                                            {sense.source && <Badge variant="secondary">{sense.source}</Badge>}
+                                                        </div>
+                                                        <p className="text-sm font-arabic" dir="auto">{sense.definition || sense.full_definition}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {lookupResult.meanings?.length > 0 && (
                                         <div>
                                             <h4 className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Meanings</h4>
@@ -373,6 +414,20 @@ const StatCard = ({ icon: Icon, label, value, sub }) => (
         </CardContent>
     </Card>
 );
+
+const CompletionBadge = ({ lemma }) => {
+    const status = lemma?.completion_status || 'pending';
+    const isComplete = status === 'complete';
+
+    return (
+        <Badge
+            variant={isComplete ? 'default' : 'outline'}
+            className={isComplete ? 'bg-green-600 hover:bg-green-600' : 'text-amber-700 border-amber-200 bg-amber-50'}
+        >
+            {isComplete ? 'Complete' : `Pending${lemma?.completion_score ? ` · ${lemma.completion_score}%` : ''}`}
+        </Badge>
+    );
+};
 
 const QuickLink = ({ to, icon: Icon, label }) => (
     <Link to={to}>

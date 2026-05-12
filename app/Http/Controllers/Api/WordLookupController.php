@@ -14,16 +14,15 @@ class WordLookupController extends Controller
      */
     public function lookup(string $word)
     {
-        // 1. Exact match
-        $lemma = Lemma::where('lemma', $word)
-            ->with(['morphology', 'senses', 'lemmaRelations'])
-            ->first();
+        $word = trim($word);
+        $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations'];
 
-        // 2. Stripped-diacritics fallback
+        $lemma = $this->findLemma($word, $with);
+
         if (!$lemma) {
             $stripped = $this->stripDiacritics($word);
             $lemma = Lemma::whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(lemma, 'َ',''), 'ُ',''), 'ِ',''), 'ّ',''), 'ً',''), 'ٌ',''), 'ٍ',''), 'ْ','') = ?", [$stripped])
-                ->with(['morphology', 'senses', 'lemmaRelations'])
+                ->with($with)
                 ->first();
         }
 
@@ -47,18 +46,71 @@ class WordLookupController extends Controller
             ->pluck('related_word')
             ->values();
 
+        $senses = $lemma->senses->map(function ($sense) {
+            return [
+                'id' => $sense->id,
+                'public_id' => $sense->public_id,
+                'lexical_id' => $sense->lexical_id,
+                'sense_order' => $sense->sense_order,
+                'part_of_speech' => $sense->part_of_speech,
+                'short_gloss' => $sense->short_gloss,
+                'definition' => $sense->definition,
+                'definition_en' => $sense->definition_en,
+                'definition_sd' => $sense->definition_sd,
+                'full_definition' => $sense->full_definition,
+                'usage_notes' => $sense->usage_notes,
+                'register' => $sense->register,
+                'dialect' => $sense->dialect,
+                'domain' => $sense->domain,
+                'language_direction' => $sense->language_direction,
+                'source' => $sense->source ?? $sense->source_dictionary,
+                'source_dictionary' => $sense->source_dictionary,
+                'source_entry_id' => $sense->source_entry_id ?? $sense->entry_id,
+                'publisher' => $sense->publisher,
+                'license' => $sense->license,
+                'examples' => $sense->examples->map(fn ($example) => [
+                    'id' => $example->id,
+                    'public_id' => $example->public_id,
+                    'sentence' => $example->sentence,
+                    'translation' => $example->translation,
+                    'source' => $example->source,
+                    'citation' => $example->citation,
+                    'quality_flag' => $example->quality_flag,
+                ])->values(),
+            ];
+        })->values();
+
         $meanings = $lemma->senses->pluck('definition')->filter()->values();
         $meanings_en = $lemma->senses->pluck('definition_en')->filter()->values();
         $meanings_sd = $lemma->senses->pluck('definition_sd')->filter()->values();
 
         return response()->json([
             'found' => true,
+            'id' => $lemma->id,
+            'public_id' => $lemma->public_id,
             'word' => $lemma->lemma,
+            'normalized' => $lemma->normalized_lemma,
             'romanized' => $lemma->transliteration ?? \App\Models\Romanizer::where('word_sd', $lemma->lemma)->value('word_roman'),
+            'pronunciation' => [
+                'ipa' => $lemma->ipa,
+                'phonetic' => $lemma->phonetic,
+                'audio_url' => $lemma->audio_url,
+                'syllabification' => $lemma->syllabification,
+            ],
             'pos' => $lemma->pos,
+            'completion_status' => $lemma->completion_status,
             'gender' => $lemma->morphology?->gender,
             'number' => $lemma->morphology?->number,
             'tense' => $lemma->morphology?->tense,
+            'morphology' => $lemma->morphology,
+            'variants' => $lemma->variants->map(fn ($variant) => [
+                'id' => $variant->id,
+                'public_id' => $variant->public_id,
+                'variant' => $variant->variant,
+                'type' => $variant->type,
+                'dialect' => $variant->dialect,
+            ])->values(),
+            'senses' => $senses,
             'meanings' => $meanings,
             'meanings_en' => $meanings_en,
             'meanings_sd' => $meanings_sd,
@@ -66,6 +118,33 @@ class WordLookupController extends Controller
             'antonyms' => $antonyms,
             'hypernyms' => $hypernyms,
         ]);
+    }
+
+    private function findLemma(string $word, array $with): ?Lemma
+    {
+        return Lemma::query()
+            ->with($with)
+            ->where(function ($query) use ($word) {
+                $query->where('lemma', $word)
+                    ->orWhere('normalized_lemma', $word)
+                    ->orWhere('transliteration', $word)
+                    ->orWhereHas('variants', function ($query) use ($word) {
+                        $query->where('variant', $word);
+                    })
+                    ->orWhereHas('senses', function ($query) use ($word) {
+                        $query->where('word_variant', 'like', '%' . $word . '%')
+                            ->orWhere('definition', 'like', '%' . $word . '%')
+                            ->orWhere('definition_en', 'like', '%' . $word . '%')
+                            ->orWhere('definition_sd', 'like', '%' . $word . '%')
+                            ->orWhere('normalized_definition', 'like', '%' . $word . '%')
+                            ->orWhere('source', 'like', '%' . $word . '%')
+                            ->orWhere('source_dictionary', 'like', '%' . $word . '%')
+                            ->orWhere('source_entry_id', $word)
+                            ->orWhere('lexical_id', $word);
+                    });
+            })
+            ->orderByRaw('CASE WHEN lemma = ? THEN 0 WHEN normalized_lemma = ? THEN 1 WHEN transliteration = ? THEN 2 ELSE 3 END', [$word, $word, $word])
+            ->first();
     }
 
     private function stripDiacritics(string $text): string

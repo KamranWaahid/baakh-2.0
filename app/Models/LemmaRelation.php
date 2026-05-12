@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 
 class LemmaRelation extends Model
 {
+    use HasPublicId;
+
     protected $table = 'lemma_relations';
-    protected $fillable = ['lemma_id', 'relation_type', 'related_word', 'related_lemma_id'];
+    protected string $publicIdPrefix = 'rel';
+    protected $fillable = ['public_id', 'lemma_id', 'relation_type', 'related_word', 'related_lemma_id', 'source'];
 
     public function lemma()
     {

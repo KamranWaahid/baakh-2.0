@@ -155,31 +155,60 @@ class ImportOpenLexiconDatasetTest extends TestCase
 
         Schema::create('lemmas', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->string('lemma')->index();
             $table->string('normalized_lemma')->nullable()->index();
             $table->string('transliteration')->nullable();
+            $table->string('ipa')->nullable();
+            $table->string('phonetic')->nullable();
+            $table->string('audio_url')->nullable();
+            $table->string('syllabification')->nullable();
             $table->string('pos')->nullable()->index();
             $table->decimal('frequency', 8, 4)->default(0);
             $table->string('status')->default('pending')->index();
+            $table->string('completion_status')->default('pending')->index();
+            $table->timestamp('completed_at')->nullable();
+            $table->foreignId('completed_by')->nullable();
+            $table->text('completion_notes')->nullable();
+            $table->unsignedTinyInteger('completion_score')->default(0);
+            $table->json('checklist_json')->nullable();
+            $table->boolean('variants_reviewed')->default(false);
+            $table->boolean('examples_reviewed')->default(false);
+            $table->boolean('morphology_reviewed')->default(false);
+            $table->boolean('pronunciation_reviewed')->default(false);
             $table->timestamps();
         });
 
         Schema::create('senses', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->string('lexical_id', 40)->nullable()->unique();
             $table->string('entry_id', 64)->nullable()->index();
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
+            $table->unsignedInteger('sense_order')->default(0)->index();
             $table->text('definition');
+            $table->string('short_gloss')->nullable();
+            $table->text('full_definition')->nullable();
+            $table->text('usage_notes')->nullable();
             $table->text('definition_en')->nullable();
             $table->text('definition_sd')->nullable();
             $table->string('part_of_speech')->nullable()->index();
             $table->text('word_variant')->nullable();
             $table->string('domain')->nullable()->index();
+            $table->string('register')->nullable();
+            $table->string('dialect')->nullable();
+            $table->unsignedTinyInteger('confidence')->nullable();
             $table->string('language_direction', 100)->nullable()->index();
             $table->string('source_dictionary', 150)->nullable()->index();
+            $table->string('source')->nullable();
+            $table->string('source_entry_id', 100)->nullable()->index();
+            $table->string('publisher')->nullable();
+            $table->string('license')->nullable();
+            $table->string('import_version')->nullable();
             $table->text('normalized_definition')->nullable();
             $table->longText('extra')->nullable();
             $table->string('status')->default('pending');
+            $table->string('review_status')->default('unreviewed')->index();
             $table->timestamps();
         });
     }

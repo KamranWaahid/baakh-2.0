@@ -280,6 +280,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('dictionary/qa', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'qa']);
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
+        Route::get('dictionary/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'completion']);
+        Route::patch('dictionary/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateCompletion']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
         Route::put('dictionary/senses/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateSense']);
         Route::post('dictionary/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);

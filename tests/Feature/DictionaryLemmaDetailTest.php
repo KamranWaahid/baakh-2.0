@@ -270,51 +270,207 @@ class DictionaryLemmaDetailTest extends TestCase
         $this->assertSame(0, DB::table('senses')->count());
     }
 
+    public function test_completion_endpoint_blocks_incomplete_lemmas_and_marks_ready_lemmas_complete(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            'id' => 1,
+            'lemma' => 'completion-word',
+            'normalized_lemma' => 'completion-word',
+            'transliteration' => null,
+            'pos' => null,
+            'frequency' => 0,
+            'status' => 'approved',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('senses')->insert([
+            'id' => 10,
+            'lexical_id' => 'slx_completion',
+            'entry_id' => '10',
+            'lemma_id' => 1,
+            'definition' => 'curated definition',
+            'part_of_speech' => null,
+            'domain' => 'Test Source',
+            'language_direction' => 'test',
+            'source_dictionary' => 'Test Source',
+            'status' => 'approved',
+            'review_status' => 'reviewed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->getJson('/api/admin/dictionary/lemmas/1/completion')
+            ->assertOk()
+            ->assertJsonPath('is_complete', false)
+            ->assertJsonPath('checks.has_pos.passed', false);
+
+        $this->patchJson('/api/admin/dictionary/lemmas/1/completion', [
+            'completion_status' => 'complete',
+        ])
+            ->assertStatus(422)
+            ->assertJsonPath('completion.checks.has_pos.passed', false);
+
+        DB::table('lemmas')->where('id', 1)->update(['pos' => 'noun']);
+
+        $this->patchJson('/api/admin/dictionary/lemmas/1/completion', [
+            'completion_status' => 'complete',
+            'completion_notes' => 'Reviewed by editor.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('lemma.completion_status', 'complete')
+            ->assertJsonPath('completion.is_complete', true);
+
+        $this->assertDatabaseHas('lemmas', [
+            'id' => 1,
+            'completion_status' => 'complete',
+            'completion_score' => 100,
+            'completion_notes' => 'Reviewed by editor.',
+        ]);
+    }
+
+    public function test_public_lookup_returns_structured_senses_and_variant_matches(): void
+    {
+        DB::table('lemmas')->insert([
+            'id' => 1,
+            'public_id' => 'lem_1',
+            'lemma' => 'canonical-word',
+            'normalized_lemma' => 'canonical-word',
+            'transliteration' => 'canonical',
+            'pos' => 'noun',
+            'frequency' => 0,
+            'status' => 'approved',
+            'completion_status' => 'complete',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('lemma_variants')->insert([
+            'id' => 2,
+            'public_id' => 'var_2',
+            'lemma_id' => 1,
+            'variant' => 'variant-word',
+            'type' => 'dialectal',
+            'dialect' => 'test',
+            'review_status' => 'reviewed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('senses')->insert([
+            'id' => 10,
+            'public_id' => 'sen_10',
+            'lexical_id' => 'slx_lookup',
+            'entry_id' => '10',
+            'lemma_id' => 1,
+            'definition' => 'primary definition',
+            'short_gloss' => 'short gloss',
+            'definition_en' => 'English definition',
+            'part_of_speech' => 'noun',
+            'domain' => 'Test Domain',
+            'language_direction' => 'test',
+            'source_dictionary' => 'Test Source',
+            'source' => 'Test Source',
+            'source_entry_id' => '10',
+            'status' => 'approved',
+            'review_status' => 'reviewed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->getJson('/api/v1/word/variant-word')
+            ->assertOk()
+            ->assertJsonPath('found', true)
+            ->assertJsonPath('public_id', 'lem_1')
+            ->assertJsonPath('variants.0.variant', 'variant-word')
+            ->assertJsonPath('senses.0.public_id', 'sen_10')
+            ->assertJsonPath('senses.0.short_gloss', 'short gloss')
+            ->assertJsonPath('senses.0.source', 'Test Source')
+            ->assertJsonPath('meanings.0', 'primary definition');
+    }
+
     private function createDictionarySchema(): void
     {
         Schema::dropAllTables();
 
         Schema::create('lemmas', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->string('lemma')->index();
             $table->string('normalized_lemma')->nullable()->index();
             $table->string('transliteration')->nullable();
+            $table->string('ipa')->nullable();
+            $table->string('phonetic')->nullable();
+            $table->string('audio_url')->nullable();
+            $table->string('syllabification')->nullable();
             $table->string('pos')->nullable()->index();
             $table->decimal('frequency', 8, 4)->default(0);
             $table->string('status')->default('pending')->index();
+            $table->string('completion_status')->default('pending')->index();
+            $table->timestamp('completed_at')->nullable();
+            $table->foreignId('completed_by')->nullable();
+            $table->text('completion_notes')->nullable();
+            $table->unsignedTinyInteger('completion_score')->default(0);
+            $table->json('checklist_json')->nullable();
+            $table->boolean('variants_reviewed')->default(false);
+            $table->boolean('examples_reviewed')->default(false);
+            $table->boolean('morphology_reviewed')->default(false);
+            $table->boolean('pronunciation_reviewed')->default(false);
             $table->timestamps();
         });
 
         Schema::create('senses', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->string('lexical_id', 40)->nullable()->unique();
             $table->string('entry_id', 64)->nullable()->index();
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
+            $table->unsignedInteger('sense_order')->default(0)->index();
             $table->text('definition');
+            $table->string('short_gloss')->nullable();
+            $table->text('full_definition')->nullable();
+            $table->text('usage_notes')->nullable();
             $table->text('definition_en')->nullable();
             $table->text('definition_sd')->nullable();
             $table->string('part_of_speech')->nullable()->index();
             $table->text('word_variant')->nullable();
             $table->string('domain')->nullable()->index();
+            $table->string('register')->nullable();
+            $table->string('dialect')->nullable();
+            $table->unsignedTinyInteger('confidence')->nullable();
             $table->string('language_direction', 100)->nullable()->index();
             $table->string('source_dictionary', 150)->nullable()->index();
+            $table->string('source')->nullable();
+            $table->string('source_entry_id', 100)->nullable()->index();
+            $table->string('publisher')->nullable();
+            $table->string('license')->nullable();
+            $table->string('import_version')->nullable();
             $table->text('normalized_definition')->nullable();
             $table->longText('extra')->nullable();
             $table->string('status')->default('pending');
+            $table->string('review_status')->default('unreviewed')->index();
             $table->timestamps();
         });
 
         Schema::create('sense_examples', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->foreignId('sense_id')->constrained()->onDelete('cascade');
             $table->text('sentence');
+            $table->text('translation')->nullable();
             $table->string('source')->nullable();
+            $table->string('citation')->nullable();
+            $table->string('quality_flag')->default('unreviewed')->index();
+            $table->string('review_status')->default('unreviewed')->index();
             $table->foreignId('corpus_sentence_id')->nullable();
             $table->timestamps();
         });
 
         Schema::create('morphologies', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
             $table->string('root')->nullable()->index();
             $table->string('pattern')->nullable();
@@ -323,24 +479,31 @@ class DictionaryLemmaDetailTest extends TestCase
             $table->string('case')->nullable();
             $table->string('aspect')->nullable();
             $table->string('tense')->nullable();
+            $table->string('review_status')->default('unreviewed')->index();
             $table->timestamps();
         });
 
         Schema::create('lemma_variants', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
             $table->string('variant')->index();
             $table->string('type')->default('dialectal');
             $table->string('dialect')->nullable();
+            $table->string('source')->nullable();
+            $table->string('source_entry_id', 100)->nullable()->index();
+            $table->string('review_status')->default('unreviewed')->index();
             $table->timestamps();
         });
 
         Schema::create('lemma_relations', function ($table) {
             $table->id();
+            $table->string('public_id')->nullable()->unique();
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
             $table->string('relation_type');
             $table->string('related_word');
             $table->foreignId('related_lemma_id')->nullable()->constrained('lemmas')->nullOnDelete();
+            $table->string('source')->nullable();
             $table->timestamps();
         });
 
