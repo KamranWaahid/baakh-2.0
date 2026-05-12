@@ -9,6 +9,7 @@ use App\Models\SenseExample;
 use App\Models\Morphology;
 use App\Models\Variant;
 use App\Services\DictionaryCompletionService;
+use App\Support\DictionaryText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,8 @@ class DictionaryController extends Controller
                         'lemma_id',
                         'lexical_id',
                         'definition',
+                        'definition_en',
+                        'definition_sd',
                         'short_gloss',
                         'full_definition',
                         'part_of_speech',
@@ -43,17 +46,23 @@ class DictionaryController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
+            $normalizedSearch = DictionaryText::normalizeForLookup($search);
 
-            $query->where(function ($query) use ($search) {
+            $query->where(function ($query) use ($search, $normalizedSearch) {
                 $query->where('lemma', 'like', '%' . $search . '%')
                     ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
                     ->orWhere('transliteration', 'like', '%' . $search . '%')
+                    ->orWhereRaw($this->normalizedSql('lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                    ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
                         ->orWhereHas('variants', function ($query) use ($search) {
                             $query->where('variant', 'like', '%' . $search . '%')
                                 ->orWhere('source', 'like', '%' . $search . '%')
                                 ->orWhere('source_entry_id', 'like', '%' . $search . '%');
                         })
-                    ->orWhereHas('senses', function ($query) use ($search) {
+                    ->orWhereHas('variants', function ($query) use ($normalizedSearch) {
+                        $query->whereRaw($this->normalizedSql('variant') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
+                    })
+                    ->orWhereHas('senses', function ($query) use ($search, $normalizedSearch) {
                         $query->where('definition', 'like', '%' . $search . '%')
                                 ->orWhere('definition_en', 'like', '%' . $search . '%')
                                 ->orWhere('definition_sd', 'like', '%' . $search . '%')
@@ -65,6 +74,7 @@ class DictionaryController extends Controller
                                 ->orWhere('source_entry_id', 'like', '%' . $search . '%')
                             ->orWhere('domain', 'like', '%' . $search . '%')
                                 ->orWhere('word_variant', 'like', '%' . $search . '%')
+                                ->orWhereRaw($this->normalizedSql('word_variant') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
                             ->orWhere('lexical_id', $search);
                     });
             });
@@ -165,6 +175,8 @@ class DictionaryController extends Controller
                 'entry_id',
                 'sense_order',
                 'definition',
+                'definition_en',
+                'definition_sd',
                 'short_gloss',
                 'full_definition',
                 'part_of_speech',
@@ -183,7 +195,8 @@ class DictionaryController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($query) use ($search) {
+            $normalizedSearch = DictionaryText::normalizeForLookup($search);
+            $query->where(function ($query) use ($search, $normalizedSearch) {
                 $query->where('definition', 'like', '%' . $search . '%')
                     ->orWhere('definition_en', 'like', '%' . $search . '%')
                     ->orWhere('definition_sd', 'like', '%' . $search . '%')
@@ -195,9 +208,12 @@ class DictionaryController extends Controller
                     ->orWhere('source', 'like', '%' . $search . '%')
                     ->orWhere('source_entry_id', 'like', '%' . $search . '%')
                     ->orWhere('word_variant', 'like', '%' . $search . '%')
-                    ->orWhereHas('lemma', function ($query) use ($search) {
+                    ->orWhereRaw($this->normalizedSql('word_variant') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                    ->orWhereHas('lemma', function ($query) use ($search, $normalizedSearch) {
                         $query->where('lemma', 'like', '%' . $search . '%')
-                            ->orWhere('normalized_lemma', 'like', '%' . $search . '%');
+                            ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
+                            ->orWhereRaw($this->normalizedSql('lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                            ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
                     });
             });
         }
@@ -267,12 +283,16 @@ class DictionaryController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($query) use ($search) {
+            $normalizedSearch = DictionaryText::normalizeForLookup($search);
+            $query->where(function ($query) use ($search, $normalizedSearch) {
                 $query->where('word_variant', 'like', '%' . $search . '%')
+                    ->orWhereRaw($this->normalizedSql('word_variant') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
                     ->orWhere('definition', 'like', '%' . $search . '%')
-                    ->orWhereHas('lemma', function ($query) use ($search) {
+                    ->orWhereHas('lemma', function ($query) use ($search, $normalizedSearch) {
                         $query->where('lemma', 'like', '%' . $search . '%')
-                            ->orWhere('normalized_lemma', 'like', '%' . $search . '%');
+                            ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
+                            ->orWhereRaw($this->normalizedSql('lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                            ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
                     });
             });
         }
@@ -977,26 +997,51 @@ class DictionaryController extends Controller
     // Variant Methods
     public function storeVariant(Request $request, $lemmaId)
     {
+        Lemma::findOrFail($lemmaId);
+
+        foreach (['variant', 'type', 'dialect', 'source', 'source_entry_id'] as $field) {
+            if ($request->has($field) && is_string($request->input($field))) {
+                $request->merge([$field => trim($request->input($field))]);
+            }
+        }
+
         $validated = $request->validate([
             'variant' => 'required|string',
-            'type' => 'required|in:dialectal,misspelling,historical',
+            'type' => ['required', Rule::in(Variant::TYPES)],
             'dialect' => 'nullable|string',
             'source' => 'nullable|string',
             'source_entry_id' => 'nullable|string|max:100',
             'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
         ]);
 
-        $variant = Variant::create([
+        foreach (['dialect', 'source', 'source_entry_id'] as $field) {
+            if (($validated[$field] ?? null) === '') {
+                $validated[$field] = null;
+            }
+        }
+
+        $variant = Variant::firstOrCreate([
             'lemma_id' => $lemmaId,
             'variant' => $validated['variant'],
-            'type' => $validated['type'],
+        ], [
             'dialect' => $validated['dialect'] ?? null,
+            'type' => $validated['type'],
             'source' => $validated['source'] ?? null,
             'source_entry_id' => $validated['source_entry_id'] ?? null,
             'review_status' => $validated['review_status'] ?? 'unreviewed',
         ]);
 
-        return response()->json($variant, 201);
+        if (!$variant->wasRecentlyCreated) {
+            $variant->update([
+                'type' => $validated['type'],
+                'dialect' => $validated['dialect'] ?? $variant->dialect,
+                'source' => $validated['source'] ?? $variant->source,
+                'source_entry_id' => $validated['source_entry_id'] ?? $variant->source_entry_id,
+                'review_status' => $validated['review_status'] ?? $variant->review_status,
+            ]);
+        }
+
+        return response()->json($variant->fresh(), $variant->wasRecentlyCreated ? 201 : 200);
     }
 
     public function destroyVariant($id)
@@ -1084,9 +1129,23 @@ class DictionaryController extends Controller
 
     private function defaultNormalizedLemma(string $lemma): string
     {
-        $lemma = trim($lemma);
+        return DictionaryText::normalizeForLookup($lemma);
+    }
 
-        return function_exists('mb_strtolower') ? mb_strtolower($lemma) : strtolower($lemma);
+    private function normalizedSql(string $column): string
+    {
+        $expression = "LOWER(COALESCE({$column}, ''))";
+
+        foreach ($this->diacriticMarks() as $mark) {
+            $expression = "REPLACE({$expression}, '{$mark}', '')";
+        }
+
+        return $expression;
+    }
+
+    private function diacriticMarks(): array
+    {
+        return ['ً', 'ٌ', 'ٍ', 'َ', 'ُ', 'ِ', 'ّ', 'ْ', 'ٰ', 'ٓ', 'ٔ', 'ٕ', 'ٖ', 'ٗ', '٘', 'ٙ', 'ٚ', 'ٛ', 'ٜ', 'ٝ', 'ٞ', 'ٟ'];
     }
 
     // Scraping Method

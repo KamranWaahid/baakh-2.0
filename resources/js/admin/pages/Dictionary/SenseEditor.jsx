@@ -55,6 +55,15 @@ const cleanSensePayload = (data) => {
     return payload;
 };
 
+const variantTypeOptions = [
+    { value: 'diacritic', label: 'Diacritic / Airab' },
+    { value: 'spelling', label: 'Spelling' },
+    { value: 'normalized', label: 'Normalized' },
+    { value: 'dialectal', label: 'Dialectal' },
+    { value: 'misspelling', label: 'Misspelling' },
+    { value: 'historical', label: 'Historical' },
+];
+
 const apiErrorMessage = (error, fallback) => {
     const errors = error?.response?.data?.errors;
     if (errors) {
@@ -101,7 +110,7 @@ const SenseEditor = () => {
     const [lemmaForm, setLemmaForm] = useState({});
     const [morphForm, setMorphForm] = useState({});
     const [newRelation, setNewRelation] = useState({ relation_type: 'synonym', related_word: '' });
-    const [newVariant, setNewVariant] = useState({ variant: '', type: 'dialectal', dialect: '' });
+    const [newVariant, setNewVariant] = useState({ variant: '', type: 'diacritic', dialect: '', source: '' });
     const [isNewSenseFormOpen, setIsNewSenseFormOpen] = useState(false);
     const [newSenseForm, setNewSenseForm] = useState(initialNewSenseForm);
 
@@ -212,7 +221,7 @@ const SenseEditor = () => {
         mutationFn: (data) => api.post(`/api/admin/dictionary/lemmas/${id}/variants`, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
-            setNewVariant({ variant: '', type: 'dialectal', dialect: '' });
+            setNewVariant({ variant: '', type: 'diacritic', dialect: '', source: '' });
             toast.success('Variant added.');
         },
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add variant.')),
@@ -291,6 +300,7 @@ const SenseEditor = () => {
     const antonyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'antonym');
     const hypernyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'hypernym');
     const senses = lemma.senses || [];
+    const primarySense = senses[0] || null;
     const variants = lemma.variants || [];
     const sourceSummary = lemma.source_summary || {};
     const isSourceTerm = !!sourceSummary.is_source_term;
@@ -462,6 +472,13 @@ const SenseEditor = () => {
                             </Button>
                         </CardFooter>
                     </Card>
+
+                    <PrimaryMeaningCard
+                        sense={primarySense}
+                        className="mt-4"
+                        saving={updateSense.isPending}
+                        onUpdate={(data) => updateSense.mutate({ senseId: primarySense.id, data })}
+                    />
 
                     <OpenLexiconCard lemma={lemma} className="mt-4" />
                 </TabsContent>
@@ -774,23 +791,24 @@ const SenseEditor = () => {
                             {/* Add Variant */}
                             <div className="border-t pt-4">
                                 <Label className="text-sm mb-2 block">Add Variant</Label>
-                                <div className="flex gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_150px_120px_auto] gap-2">
                                     <Input
                                         value={newVariant.variant}
                                         onChange={(e) => setNewVariant({ ...newVariant, variant: e.target.value })}
-                                        placeholder="Variant word..."
+                                        placeholder="e.g. ھِڪ، ھِڪَ، ھڪ..."
                                         className="font-arabic"
                                         dir="rtl"
                                     />
                                     <Select value={newVariant.type} onValueChange={(v) => setNewVariant({ ...newVariant, type: v })}>
-                                        <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="dialectal">Dialectal</SelectItem>
-                                            <SelectItem value="misspelling">Misspelling</SelectItem>
-                                            <SelectItem value="historical">Historical</SelectItem>
+                                            {variantTypeOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
-                                    <Input value={newVariant.dialect} onChange={(e) => setNewVariant({ ...newVariant, dialect: e.target.value })} placeholder="Dialect (opt)" className="w-32" />
+                                    <Input value={newVariant.dialect} onChange={(e) => setNewVariant({ ...newVariant, dialect: e.target.value })} placeholder="Dialect/label" />
+                                    <Input value={newVariant.source} onChange={(e) => setNewVariant({ ...newVariant, source: e.target.value })} placeholder="Source" />
                                     <Button onClick={() => { if (newVariant.variant.trim()) addVariant.mutate(newVariant); }} disabled={addVariant.isPending}>
                                         <Plus className="h-4 w-4" />
                                     </Button>
@@ -858,6 +876,62 @@ const SenseEditor = () => {
                 </DialogContent>
             </Dialog>
         </div>
+    );
+};
+
+const PrimaryMeaningCard = ({ sense, className = '', saving, onUpdate }) => {
+    const [definition, setDefinition] = useState(sense?.definition || '');
+    const [definitionEn, setDefinitionEn] = useState(sense?.definition_en || '');
+    const [definitionSd, setDefinitionSd] = useState(sense?.definition_sd || '');
+
+    useEffect(() => {
+        setDefinition(sense?.definition || '');
+        setDefinitionEn(sense?.definition_en || '');
+        setDefinitionSd(sense?.definition_sd || '');
+    }, [sense?.id, sense?.definition, sense?.definition_en, sense?.definition_sd]);
+
+    return (
+        <Card className={className}>
+            <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <Languages className="h-4 w-4" /> Primary Meanings
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {!sense ? (
+                    <p className="text-sm text-muted-foreground">
+                        No sense exists yet. Add a sense in the Senses tab to enter Sindhi and English meanings.
+                    </p>
+                ) : (
+                    <>
+                        <div className="space-y-2">
+                            <Label>Primary Definition</Label>
+                            <Textarea value={definition} onChange={(e) => setDefinition(e.target.value)} className="font-arabic text-lg" dir="auto" rows={3} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Sindhi Meaning</Label>
+                                <Input value={definitionSd} onChange={(e) => setDefinitionSd(e.target.value)} className="font-arabic" dir="rtl" placeholder="Optional Sindhi meaning..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>English Meaning</Label>
+                                <Input value={definitionEn} onChange={(e) => setDefinitionEn(e.target.value)} placeholder="Optional English meaning..." />
+                            </div>
+                        </div>
+                    </>
+                )}
+            </CardContent>
+            {sense && (
+                <CardFooter className="border-t py-3 flex justify-end">
+                    <Button
+                        onClick={() => onUpdate({ definition, definition_en: definitionEn, definition_sd: definitionSd })}
+                        disabled={saving}
+                    >
+                        <Save className="mr-2 h-4 w-4" /> {saving ? 'Saving...' : 'Save Meanings'}
+                    </Button>
+                </CardFooter>
+            )}
+        </Card>
     );
 };
 

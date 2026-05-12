@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lemma;
-use Illuminate\Http\Request;
+use App\Support\DictionaryText;
 
 class WordLookupController extends Controller
 {
@@ -20,9 +20,19 @@ class WordLookupController extends Controller
         $lemma = $this->findLemma($word, $with);
 
         if (!$lemma) {
-            $stripped = $this->stripDiacritics($word);
-            $lemma = Lemma::whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(lemma, 'َ',''), 'ُ',''), 'ِ',''), 'ّ',''), 'ً',''), 'ٌ',''), 'ٍ',''), 'ْ','') = ?", [$stripped])
+            $normalized = DictionaryText::normalizeForLookup($word);
+            $lemma = Lemma::query()
                 ->with($with)
+                ->where(function ($query) use ($normalized) {
+                    $query->whereRaw($this->normalizedSql('lemma') . ' = ?', [$normalized])
+                        ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalized])
+                        ->orWhereHas('variants', function ($query) use ($normalized) {
+                            $query->whereRaw($this->normalizedSql('variant') . ' = ?', [$normalized]);
+                        })
+                        ->orWhereHas('senses', function ($query) use ($normalized) {
+                            $query->whereRaw($this->normalizedSql('word_variant') . ' LIKE ?', ['%' . $normalized . '%']);
+                        });
+                })
                 ->first();
         }
 
@@ -147,9 +157,19 @@ class WordLookupController extends Controller
             ->first();
     }
 
-    private function stripDiacritics(string $text): string
+    private function normalizedSql(string $column): string
     {
-        // Remove common Arabic/Sindhi diacritical marks
-        return preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $text);
+        $expression = "LOWER(COALESCE({$column}, ''))";
+
+        foreach ($this->diacriticMarks() as $mark) {
+            $expression = "REPLACE({$expression}, '{$mark}', '')";
+        }
+
+        return $expression;
+    }
+
+    private function diacriticMarks(): array
+    {
+        return ['ً', 'ٌ', 'ٍ', 'َ', 'ُ', 'ِ', 'ّ', 'ْ', 'ٰ', 'ٓ', 'ٔ', 'ٕ', 'ٖ', 'ٗ', '٘', 'ٙ', 'ٚ', 'ٛ', 'ٜ', 'ٝ', 'ٞ', 'ٟ'];
     }
 }

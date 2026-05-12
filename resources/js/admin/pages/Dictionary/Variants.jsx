@@ -7,13 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, MapPin, SpellCheck, TriangleAlert, Loader2, ArrowLeft, Layers, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const variantTypeOptions = [
+    { value: 'diacritic', label: 'Diacritic / Airab' },
+    { value: 'spelling', label: 'Spelling' },
+    { value: 'normalized', label: 'Normalized' },
+    { value: 'dialectal', label: 'Dialectal' },
+    { value: 'misspelling', label: 'Misspelling' },
+    { value: 'historical', label: 'Historical' },
+];
 
 const Variants = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [newVariant, setNewVariant] = useState({ variant: '', type: 'diacritic', dialect: '', source: '' });
 
     const queryClient = useQueryClient();
     const { data: lemma, isLoading } = useQuery({
@@ -44,6 +55,7 @@ const Variants = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
+            setNewVariant({ variant: '', type: 'diacritic', dialect: '', source: '' });
         }
     });
 
@@ -57,11 +69,10 @@ const Variants = () => {
         }
     });
 
-    const handleAddVariant = (type) => {
-        const variant = prompt(`Enter new ${type} variant:`);
-        if (variant) {
-            addVariantMutation.mutate({ variant, type: type === 'dialect' ? 'dialectal' : 'misspelling' });
-        }
+    const handleAddVariant = () => {
+        if (!newVariant.variant.trim()) return;
+
+        addVariantMutation.mutate(newVariant);
     };
 
     if (!id) {
@@ -84,6 +95,7 @@ const Variants = () => {
     const currentLemma = lemma || { lemma: 'Development Mode', id: 0 };
     const variants = lemma?.variants || [];
     const importedVariants = variants.filter(v => v.is_imported);
+    const manualVariants = variants.filter(v => !v.is_imported);
 
     return (
         <div className="space-y-6">
@@ -134,78 +146,58 @@ const Variants = () => {
                         </Card>
                     )}
 
-                    <Card>
+                    <Card className="md:col-span-2">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-primary" /> Dialect Variants
+                                <SpellCheck className="h-4 w-4 text-primary" /> Manual Variants
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {variants.filter(v => v.type === 'dialectal').length > 0 ? variants.filter(v => v.type === 'dialectal').map((v, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
-                                    <div>
-                                        <p className="font-arabic text-lg" dir="rtl">{v.variant}</p>
-                                        <p className="text-xs text-muted-foreground uppercase">{v.dialect || 'General'}</p>
+                            {manualVariants.length > 0 ? manualVariants.map((v) => (
+                                <div key={v.id} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
+                                    <div className="min-w-0">
+                                        <p className="font-arabic text-lg" dir="auto">{v.variant}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {[variantTypeOptions.find(option => option.value === v.type)?.label || v.type, v.dialect, v.source].filter(Boolean).join(' · ') || 'Manual'}
+                                        </p>
                                     </div>
-                                    <div className="flex gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-destructive"
-                                            onClick={() => deleteVariantMutation.mutate(v.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive"
+                                        onClick={() => deleteVariantMutation.mutate(v.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             )) : (
-                                <p className="text-sm text-muted-foreground italic text-center py-4">No dialect variants found.</p>
+                                <p className="text-sm text-muted-foreground italic text-center py-4">No manual variants recorded.</p>
                             )}
-                            <Button
-                                variant="outline"
-                                className="w-full border-dashed"
-                                onClick={() => handleAddVariant('dialect')}
-                            >
-                                <Plus className="mr-2 h-4 w-4" /> Add Dialect Variant
-                            </Button>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <SpellCheck className="h-4 w-4 text-amber-500" /> Common Misspellings
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {variants.filter(v => v.type === 'misspelling').length > 0 ? variants.filter(v => v.type === 'misspelling').map((v, i) => (
-                                <div key={v.id} className="flex items-center justify-between p-3 border rounded-lg bg-orange-50/20 border-orange-200">
-                                    <div className="flex items-center gap-3">
-                                        <TriangleAlert className="h-4 w-4 text-amber-500" />
-                                        <p className="font-arabic text-lg" dir="rtl">{v.variant}</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Badge variant="outline" className="bg-amber-100 text-amber-800">Auto-fix</Badge>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-destructive"
-                                            onClick={() => deleteVariantMutation.mutate(v.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                            <div className="border-t pt-4">
+                                <Label className="text-sm mb-2 block">Add Variant</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_150px_120px_auto] gap-2">
+                                    <Input
+                                        value={newVariant.variant}
+                                        onChange={(e) => setNewVariant({ ...newVariant, variant: e.target.value })}
+                                        placeholder="e.g. ھِڪ، ھِڪَ، ھڪ..."
+                                        className="font-arabic"
+                                        dir="rtl"
+                                    />
+                                    <Select value={newVariant.type} onValueChange={(value) => setNewVariant({ ...newVariant, type: value })}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {variantTypeOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Input value={newVariant.dialect} onChange={(e) => setNewVariant({ ...newVariant, dialect: e.target.value })} placeholder="Dialect/label" />
+                                    <Input value={newVariant.source} onChange={(e) => setNewVariant({ ...newVariant, source: e.target.value })} placeholder="Source" />
+                                    <Button onClick={handleAddVariant} disabled={addVariantMutation.isPending || !newVariant.variant.trim()}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                            )) : (
-                                <p className="text-sm text-muted-foreground italic text-center py-4">No misspellings recorded.</p>
-                            )}
-                            <Button
-                                variant="outline"
-                                className="w-full border-dashed"
-                                onClick={() => handleAddVariant('misspelling')}
-                            >
-                                <Plus className="mr-2 h-4 w-4" /> Add Misspelling
-                            </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

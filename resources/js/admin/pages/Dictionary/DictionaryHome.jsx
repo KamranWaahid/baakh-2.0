@@ -180,6 +180,11 @@ const DictionaryHome = () => {
                                                             <p className="line-clamp-2 text-sm font-arabic" dir="auto">
                                                                 {firstSense?.definition || '—'}
                                                             </p>
+                                                            {firstSense?.definition_en && (
+                                                                <p className="mt-1 line-clamp-1 text-xs text-muted-foreground" dir="ltr">
+                                                                    EN: {firstSense.definition_en}
+                                                                </p>
+                                                            )}
                                                             {firstSense?.lexical_id && (
                                                                 <p className="mt-1 text-xs text-muted-foreground">{firstSense.lexical_id}</p>
                                                             )}
@@ -319,6 +324,12 @@ const DictionaryHome = () => {
                                                             {sense.source && <Badge variant="secondary">{sense.source}</Badge>}
                                                         </div>
                                                         <p className="text-sm font-arabic" dir="auto">{sense.definition || sense.full_definition}</p>
+                                                        {sense.definition_en && (
+                                                            <p className="mt-1 text-sm text-muted-foreground" dir="ltr">EN: {sense.definition_en}</p>
+                                                        )}
+                                                        {sense.definition_sd && (
+                                                            <p className="mt-1 text-sm font-arabic text-muted-foreground" dir="rtl">SD: {sense.definition_sd}</p>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasPublicId;
+use App\Support\DictionaryText;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Scout\Searchable;
 
@@ -107,12 +108,20 @@ class Lemma extends Model
         $array['senses'] = $this->senses->map(function ($sense) {
             return [
                 'definition' => $sense->definition,
+                'definition_en' => $sense->definition_en,
+                'definition_sd' => $sense->definition_sd,
                 'domain' => $sense->domain,
             ];
         })->toArray();
 
         // Include variants
         $array['variants'] = $this->variants->pluck('variant')->toArray();
+        $array['variants_normalized'] = $this->variants
+            ->pluck('variant')
+            ->map(fn ($variant) => DictionaryText::normalizeForLookup((string) $variant))
+            ->unique()
+            ->values()
+            ->toArray();
         $array['completion_status'] = $this->completion_status;
         $array['completion_score'] = $this->completion_score;
 

@@ -270,6 +270,60 @@ class DictionaryLemmaDetailTest extends TestCase
         $this->assertSame(0, DB::table('senses')->count());
     }
 
+    public function test_admin_persists_english_meaning_and_diacritic_variants_are_lookupable(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            'id' => 1,
+            'public_id' => 'lem_diacritic',
+            'lemma' => 'canonical-entry',
+            'normalized_lemma' => 'canonical-entry',
+            'transliteration' => null,
+            'pos' => 'pronoun',
+            'frequency' => 0,
+            'status' => 'approved',
+            'completion_status' => 'complete',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson('/api/admin/dictionary/senses', [
+            'lemma_id' => 1,
+            'definition' => 'بنيادي سنڌي تعريف',
+            'definition_en' => 'one; a single thing',
+            'definition_sd' => 'هڪ شئي',
+            'status' => 'approved',
+            'review_status' => 'reviewed',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('definition_en', 'one; a single thing');
+
+        $this->postJson('/api/admin/dictionary/lemmas/1/variants', [
+            'variant' => 'ھِڪَ',
+            'type' => 'diacritic',
+            'dialect' => 'airab',
+            'source' => 'editor',
+            'review_status' => 'reviewed',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('variant', 'ھِڪَ')
+            ->assertJsonPath('type', 'diacritic');
+
+        $this->getJson('/api/admin/dictionary/lemmas/1')
+            ->assertOk()
+            ->assertJsonPath('senses.0.definition_en', 'one; a single thing')
+            ->assertJsonPath('variants.0.variant', 'ھِڪَ')
+            ->assertJsonPath('variants.0.type', 'diacritic');
+
+        $this->getJson('/api/v1/word/' . rawurlencode('ھڪ'))
+            ->assertOk()
+            ->assertJsonPath('found', true)
+            ->assertJsonPath('public_id', 'lem_diacritic')
+            ->assertJsonPath('meanings_en.0', 'one; a single thing')
+            ->assertJsonPath('variants.0.variant', 'ھِڪَ');
+    }
+
     public function test_completion_endpoint_blocks_incomplete_lemmas_and_marks_ready_lemmas_complete(): void
     {
         $this->withoutMiddleware();
