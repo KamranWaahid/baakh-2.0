@@ -138,6 +138,74 @@ class DictionaryLemmaDetailTest extends TestCase
             ->assertJsonPath('variants.3.variant', 'variant-three');
     }
 
+    public function test_admin_can_create_sense_for_lemma_route_without_body_lemma_id(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            'id' => 156471,
+            'lemma' => 'test-headword',
+            'normalized_lemma' => 'test-headword',
+            'transliteration' => null,
+            'pos' => null,
+            'frequency' => 0,
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/admin/dictionary/lemmas/156471/senses?lang=sd', [
+            'definition' => '  manual definition  ',
+            'domain' => '',
+            'language_direction' => 'sindhi',
+        ]);
+
+        $response
+            ->assertCreated()
+            ->assertJsonPath('lemma_id', 156471)
+            ->assertJsonPath('definition', 'manual definition')
+            ->assertJsonPath('domain', null)
+            ->assertJsonPath('language_direction', 'sindhi')
+            ->assertJsonPath('status', 'pending');
+
+        $this->assertDatabaseHas('senses', [
+            'lemma_id' => 156471,
+            'definition' => 'manual definition',
+            'domain' => null,
+            'language_direction' => 'sindhi',
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_admin_sense_creation_returns_validation_errors_for_blank_definition(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            'id' => 156471,
+            'lemma' => 'test-headword',
+            'normalized_lemma' => 'test-headword',
+            'transliteration' => null,
+            'pos' => null,
+            'frequency' => 0,
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/admin/dictionary/senses?lang=sd', [
+            'lemma_id' => 156471,
+            'definition' => '   ',
+            'domain' => '',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['definition']);
+
+        $this->assertSame(0, DB::table('senses')->count());
+    }
+
     private function createDictionarySchema(): void
     {
         Schema::dropAllTables();

@@ -607,16 +607,41 @@ class DictionaryController extends Controller
     }
 
     // Sense Methods
-    public function storeSense(Request $request)
+    public function storeSense(Request $request, ?int $lemmaId = null)
     {
+        $merge = [];
+
+        if ($lemmaId && !$request->filled('lemma_id')) {
+            $merge['lemma_id'] = $lemmaId;
+        }
+
+        foreach (['definition', 'definition_en', 'definition_sd', 'domain', 'language_direction'] as $field) {
+            if ($request->has($field) && is_string($request->input($field))) {
+                $merge[$field] = trim($request->input($field));
+            }
+        }
+
+        if (!empty($merge)) {
+            $request->merge($merge);
+        }
+
         $validated = $request->validate([
-            'lemma_id' => 'required|exists:lemmas,id',
+            'lemma_id' => 'required|integer|exists:lemmas,id',
             'definition' => 'required|string',
             'definition_en' => 'nullable|string',
             'definition_sd' => 'nullable|string',
             'domain' => 'nullable|string',
-            'lang' => 'nullable|string',
+            'language_direction' => 'nullable|string|max:100',
+            'status' => 'nullable|in:pending,approved',
         ]);
+
+        foreach (['definition_en', 'definition_sd', 'domain', 'language_direction'] as $field) {
+            if (($validated[$field] ?? null) === '') {
+                $validated[$field] = null;
+            }
+        }
+
+        $validated['status'] = $validated['status'] ?? 'pending';
 
         $sense = Sense::create($validated);
         return response()->json($sense, 201);

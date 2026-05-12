@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,6 +24,45 @@ import {
     Copy, CheckCircle2, Search, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+const initialNewSenseForm = {
+    definition: '',
+    definition_sd: '',
+    definition_en: '',
+    domain: '',
+    language_direction: '',
+};
+
+const trimValue = (value) => {
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
+};
+
+const cleanSensePayload = (data) => {
+    const payload = {};
+
+    Object.entries(data || {}).forEach(([key, value]) => {
+        const cleanValue = trimValue(value);
+        if (cleanValue !== null && cleanValue !== undefined) {
+            payload[key] = cleanValue;
+        }
+    });
+
+    return payload;
+};
+
+const apiErrorMessage = (error, fallback) => {
+    const errors = error?.response?.data?.errors;
+    if (errors) {
+        const validationMessages = Object.values(errors).flat().filter(Boolean);
+        if (validationMessages.length > 0) {
+            return validationMessages.join(' ');
+        }
+    }
+
+    return error?.response?.data?.message || fallback;
+};
 
 const SenseEditor = () => {
     const { id } = useParams();
@@ -59,6 +99,8 @@ const SenseEditor = () => {
     const [morphForm, setMorphForm] = useState({});
     const [newRelation, setNewRelation] = useState({ relation_type: 'synonym', related_word: '' });
     const [newVariant, setNewVariant] = useState({ variant: '', type: 'dialectal', dialect: '' });
+    const [isNewSenseFormOpen, setIsNewSenseFormOpen] = useState(false);
+    const [newSenseForm, setNewSenseForm] = useState(initialNewSenseForm);
 
     // ── Scraper State ──
     const [isScrapeModalOpen, setIsScrapeModalOpen] = useState(false);
@@ -93,7 +135,7 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Lemma changes saved successfully.');
         },
-        onError: () => toast.error('Failed to save lemma changes.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to save lemma changes.')),
     });
 
     const updateMorphology = useMutation({
@@ -102,16 +144,18 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Morphology saved successfully.');
         },
-        onError: () => toast.error('Failed to save morphology.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to save morphology.')),
     });
 
     const addSense = useMutation({
-        mutationFn: (data) => api.post(`/api/admin/dictionary/senses`, { lemma_id: id, ...data }),
+        mutationFn: (data) => api.post(`/api/admin/dictionary/senses`, { lemma_id: id, ...cleanSensePayload(data) }),
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
+            setNewSenseForm(initialNewSenseForm);
+            setIsNewSenseFormOpen(false);
             toast.success('New sense added.');
         },
-        onError: () => toast.error('Failed to add new sense.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add new sense.')),
     });
 
     const updateSense = useMutation({
@@ -120,7 +164,7 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Sense updated successfully.');
         },
-        onError: () => toast.error('Failed to update sense.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to update sense.')),
     });
 
     const deleteSense = useMutation({
@@ -129,7 +173,7 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Sense deleted successfully.');
         },
-        onError: () => toast.error('Failed to delete sense.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to delete sense.')),
     });
 
     const addRelation = useMutation({
@@ -139,7 +183,7 @@ const SenseEditor = () => {
             setNewRelation({ relation_type: 'synonym', related_word: '' });
             toast.success('Relation added.');
         },
-        onError: () => toast.error('Failed to add relation.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add relation.')),
     });
 
     const deleteRelation = useMutation({
@@ -148,7 +192,7 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Relation deleted.');
         },
-        onError: () => toast.error('Failed to delete relation.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to delete relation.')),
     });
 
     const addVariant = useMutation({
@@ -158,7 +202,7 @@ const SenseEditor = () => {
             setNewVariant({ variant: '', type: 'dialectal', dialect: '' });
             toast.success('Variant added.');
         },
-        onError: () => toast.error('Failed to add variant.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add variant.')),
     });
 
     const deleteVariant = useMutation({
@@ -167,7 +211,7 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Variant deleted.');
         },
-        onError: () => toast.error('Failed to delete variant.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to delete variant.')),
     });
 
     const approveLemma = useMutation({
@@ -176,7 +220,7 @@ const SenseEditor = () => {
             queryClient.invalidateQueries(['lemma', id]);
             toast.success('Lemma approved.');
         },
-        onError: () => toast.error('Failed to approve lemma.'),
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to approve lemma.')),
     });
 
     const handleScrape = async () => {
@@ -228,6 +272,18 @@ const SenseEditor = () => {
     const wordLabel = sourceSummary.word_label || 'Word (سنڌي)';
     const sourceWordDir = isSourceTerm ? 'auto' : 'rtl';
     const hasRealMorphology = !!lemma.has_real_morphology;
+
+    const handleCreateSense = () => {
+        if (!newSenseForm.definition.trim()) {
+            toast.error('Enter a primary definition before adding a sense.');
+            return;
+        }
+
+        addSense.mutate({
+            ...newSenseForm,
+            language_direction: newSenseForm.language_direction || sourceSummary.language_directions?.[0] || '',
+        });
+    };
 
     return (
         <div className="space-y-6">
@@ -381,9 +437,91 @@ const SenseEditor = () => {
                             saving={updateSense.isPending}
                         />
                     ))}
-                    <Button variant="outline" className="w-full border-dashed h-12" onClick={() => addSense.mutate({ definition: '', domain: '' })} disabled={addSense.isPending}>
-                        <Plus className="mr-2 h-4 w-4" /> Add New Sense
-                    </Button>
+                    {isNewSenseFormOpen ? (
+                        <Card className="border-dashed">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <Plus className="h-4 w-4" /> Add New Sense
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="space-y-2">
+                                    <Label>Definition (required)</Label>
+                                    <Textarea
+                                        value={newSenseForm.definition}
+                                        onChange={(e) => setNewSenseForm({ ...newSenseForm, definition: e.target.value })}
+                                        className="font-arabic text-lg"
+                                        dir="auto"
+                                        rows={3}
+                                        placeholder="Enter the primary definition before creating the sense..."
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Sindhi Meaning</Label>
+                                        <Input
+                                            value={newSenseForm.definition_sd}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, definition_sd: e.target.value })}
+                                            className="font-arabic"
+                                            dir="rtl"
+                                            placeholder="Optional Sindhi meaning..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>English Meaning</Label>
+                                        <Input
+                                            value={newSenseForm.definition_en}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, definition_en: e.target.value })}
+                                            placeholder="Optional English meaning..."
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Domain</Label>
+                                        <Input
+                                            value={newSenseForm.domain}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, domain: e.target.value })}
+                                            placeholder="e.g. medicine, poetry, colloquial..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Language direction</Label>
+                                        <Input
+                                            value={newSenseForm.language_direction}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, language_direction: e.target.value })}
+                                            placeholder={sourceSummary.language_labels?.[0] || 'Optional'}
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                            <CardFooter className="border-t py-3 flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => {
+                                        setNewSenseForm(initialNewSenseForm);
+                                        setIsNewSenseFormOpen(false);
+                                    }}
+                                    disabled={addSense.isPending}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={handleCreateSense}
+                                    disabled={addSense.isPending || !newSenseForm.definition.trim()}
+                                >
+                                    {addSense.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                                    Add Sense
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ) : (
+                        <Button variant="outline" className="w-full border-dashed h-12" onClick={() => setIsNewSenseFormOpen(true)} disabled={addSense.isPending}>
+                            <Plus className="mr-2 h-4 w-4" /> Add New Sense
+                        </Button>
+                    )}
                 </TabsContent>
 
                 {/* ═══ Relations Tab ═══ */}
