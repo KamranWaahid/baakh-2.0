@@ -30,6 +30,8 @@ const initialNewSenseForm = {
     definition: '',
     definition_sd: '',
     definition_en: '',
+    english_equivalents_text: '',
+    usage_label: '',
     domain: '',
     language_direction: '',
     source_dictionary: '',
@@ -55,7 +57,48 @@ const cleanSensePayload = (data) => {
     return payload;
 };
 
+const keywordsToText = (keywords, group) => (keywords?.[group] || []).join(', ');
+
+const textToKeywords = (value) => value
+    .split(/[,\n]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const buildLemmaPayload = (form) => ({
+    lemma: form.lemma,
+    normalized_lemma: form.normalized_lemma,
+    pos: form.pos,
+    transliteration: form.transliteration,
+    ipa: form.ipa,
+    phonetic: form.phonetic,
+    pronunciation_simple: form.pronunciation_simple,
+    audio_url: form.audio_url,
+    syllabification: form.syllabification,
+    etymology: form.etymology,
+    notes: form.notes,
+    source_confidence: form.source_confidence === '' ? null : form.source_confidence,
+    search_keywords_json: {
+        sindhi: textToKeywords(form.search_keywords_sindhi || ''),
+        english: textToKeywords(form.search_keywords_english || ''),
+        romanized: textToKeywords(form.search_keywords_romanized || ''),
+    },
+    metadata_json: {
+        region: trimValue(form.metadata_region || ''),
+        dialect_notes: trimValue(form.metadata_dialect_notes || ''),
+        version: trimValue(form.metadata_version || ''),
+    },
+    status: form.status,
+    completion_notes: form.completion_notes,
+    variants_reviewed: form.variants_reviewed,
+    examples_reviewed: form.examples_reviewed,
+    morphology_reviewed: form.morphology_reviewed,
+    pronunciation_reviewed: form.pronunciation_reviewed,
+});
+
 const variantTypeOptions = [
+    { value: 'short_vowel_variant', label: 'Short vowel variant' },
+    { value: 'fully_voweled_variant', label: 'Fully voweled variant' },
+    { value: 'fatha_variant', label: 'Fatha variant' },
     { value: 'diacritic', label: 'Diacritic / Airab' },
     { value: 'spelling', label: 'Spelling' },
     { value: 'normalized', label: 'Normalized' },
@@ -109,8 +152,10 @@ const SenseEditor = () => {
     // ── Local state for editable fields ──
     const [lemmaForm, setLemmaForm] = useState({});
     const [morphForm, setMorphForm] = useState({});
-    const [newRelation, setNewRelation] = useState({ relation_type: 'synonym', related_word: '' });
-    const [newVariant, setNewVariant] = useState({ variant: '', type: 'diacritic', dialect: '', source: '' });
+    const [newRelation, setNewRelation] = useState({ relation_type: 'synonym', related_word: '', romanization: '', note: '', gloss: '', part_of_speech: '' });
+    const [newVariant, setNewVariant] = useState({ variant: '', type: 'short_vowel_variant', romanization: '', dialect: '', note: '', source: '' });
+    const [newInflection, setNewInflection] = useState({ form: '', romanization: '', description: '' });
+    const [newIdiom, setNewIdiom] = useState({ phrase: '', romanization: '', english_gloss: '', example_sindhi: '', example_english: '' });
     const [isNewSenseFormOpen, setIsNewSenseFormOpen] = useState(false);
     const [newSenseForm, setNewSenseForm] = useState(initialNewSenseForm);
 
@@ -130,8 +175,18 @@ const SenseEditor = () => {
                 transliteration: lemma.transliteration || '',
                 ipa: lemma.ipa || '',
                 phonetic: lemma.phonetic || '',
+                pronunciation_simple: lemma.pronunciation_simple || '',
                 audio_url: lemma.audio_url || '',
                 syllabification: lemma.syllabification || '',
+                etymology: lemma.etymology || '',
+                notes: lemma.notes || '',
+                source_confidence: lemma.source_confidence ?? '',
+                search_keywords_sindhi: keywordsToText(lemma.search_keywords_json, 'sindhi'),
+                search_keywords_english: keywordsToText(lemma.search_keywords_json, 'english'),
+                search_keywords_romanized: keywordsToText(lemma.search_keywords_json, 'romanized'),
+                metadata_region: lemma.metadata_json?.region || '',
+                metadata_dialect_notes: lemma.metadata_json?.dialect_notes || '',
+                metadata_version: lemma.metadata_json?.version || '',
                 status: lemma.status || 'pending',
                 completion_notes: lemma.completion_notes || '',
                 variants_reviewed: !!lemma.variants_reviewed,
@@ -202,7 +257,7 @@ const SenseEditor = () => {
         mutationFn: (data) => api.post(`/api/admin/dictionary/lemmas/${id}/relations`, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
-            setNewRelation({ relation_type: 'synonym', related_word: '' });
+            setNewRelation({ relation_type: 'synonym', related_word: '', romanization: '', note: '', gloss: '', part_of_speech: '' });
             toast.success('Relation added.');
         },
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add relation.')),
@@ -221,7 +276,7 @@ const SenseEditor = () => {
         mutationFn: (data) => api.post(`/api/admin/dictionary/lemmas/${id}/variants`, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
-            setNewVariant({ variant: '', type: 'diacritic', dialect: '', source: '' });
+            setNewVariant({ variant: '', type: 'short_vowel_variant', romanization: '', dialect: '', note: '', source: '' });
             toast.success('Variant added.');
         },
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add variant.')),
@@ -243,6 +298,44 @@ const SenseEditor = () => {
             toast.success('Lemma approved.');
         },
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to approve lemma.')),
+    });
+
+    const addInflection = useMutation({
+        mutationFn: (data) => api.post(`/api/admin/dictionary/lemmas/${id}/inflections`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+            setNewInflection({ form: '', romanization: '', description: '' });
+            toast.success('Inflection added.');
+        },
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add inflection.')),
+    });
+
+    const deleteInflection = useMutation({
+        mutationFn: (inflectionId) => api.delete(`/api/admin/dictionary/inflections/${inflectionId}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+            toast.success('Inflection deleted.');
+        },
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to delete inflection.')),
+    });
+
+    const addIdiom = useMutation({
+        mutationFn: (data) => api.post(`/api/admin/dictionary/lemmas/${id}/idiomatic-expressions`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+            setNewIdiom({ phrase: '', romanization: '', english_gloss: '', example_sindhi: '', example_english: '' });
+            toast.success('Idiomatic expression added.');
+        },
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add idiomatic expression.')),
+    });
+
+    const deleteIdiom = useMutation({
+        mutationFn: (expressionId) => api.delete(`/api/admin/dictionary/idiomatic-expressions/${expressionId}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['lemma', id]);
+            toast.success('Idiomatic expression deleted.');
+        },
+        onError: (error) => toast.error(apiErrorMessage(error, 'Failed to delete idiomatic expression.')),
     });
 
     const updateCompletion = useMutation({
@@ -299,9 +392,12 @@ const SenseEditor = () => {
     const synonyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'synonym');
     const antonyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'antonym');
     const hypernyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'hypernym');
+    const relatedWords = (lemma.lemma_relations || []).filter(r => r.relation_type === 'related');
     const senses = lemma.senses || [];
     const primarySense = senses[0] || null;
     const variants = lemma.variants || [];
+    const inflections = lemma.inflections || [];
+    const idioms = lemma.idiomatic_expressions || [];
     const sourceSummary = lemma.source_summary || {};
     const isSourceTerm = !!sourceSummary.is_source_term;
     const wordLabel = sourceSummary.word_label || 'Word (سنڌي)';
@@ -320,6 +416,8 @@ const SenseEditor = () => {
 
         addSense.mutate({
             ...newSenseForm,
+            english_equivalents: textToKeywords(newSenseForm.english_equivalents_text || ''),
+            english_equivalents_text: undefined,
             language_direction: newSenseForm.language_direction || sourceSummary.language_directions?.[0] || '',
         });
     };
@@ -378,8 +476,9 @@ const SenseEditor = () => {
                     <TabsTrigger value="completion">Completion</TabsTrigger>
                     <TabsTrigger value="morphology">Morphology</TabsTrigger>
                     <TabsTrigger value="senses">Senses ({senses.length})</TabsTrigger>
-                    <TabsTrigger value="relations">Relations ({synonyms.length + antonyms.length + hypernyms.length})</TabsTrigger>
+                    <TabsTrigger value="relations">Relations ({synonyms.length + antonyms.length + hypernyms.length + relatedWords.length})</TabsTrigger>
                     <TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
+                    <TabsTrigger value="forms">Forms ({inflections.length + idioms.length})</TabsTrigger>
                 </TabsList>
 
                 {/* ═══ General Tab ═══ */}
@@ -409,6 +508,10 @@ const SenseEditor = () => {
                                     <Input value={lemmaForm.phonetic || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, phonetic: e.target.value })} />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label>Simple Pronunciation</Label>
+                                    <Input value={lemmaForm.pronunciation_simple || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, pronunciation_simple: e.target.value })} placeholder="Readable pronunciation..." />
+                                </div>
+                                <div className="space-y-2">
                                     <Label>Audio URL</Label>
                                     <Input value={lemmaForm.audio_url || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, audio_url: e.target.value })} placeholder="https://..." />
                                 </div>
@@ -434,6 +537,10 @@ const SenseEditor = () => {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
+                                    <Label>Source Confidence</Label>
+                                    <Input type="number" min="0" max="100" value={lemmaForm.source_confidence || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, source_confidence: e.target.value })} placeholder="0-100" />
+                                </div>
+                                <div className="space-y-2">
                                     <Label>Status</Label>
                                     <Select value={lemmaForm.status || ''} onValueChange={(v) => setLemmaForm({ ...lemmaForm, status: v })}>
                                         <SelectTrigger><SelectValue /></SelectTrigger>
@@ -443,6 +550,29 @@ const SenseEditor = () => {
                                             <SelectItem value="rejected">Rejected</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Etymology</Label>
+                                    <Textarea value={lemmaForm.etymology || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, etymology: e.target.value })} rows={3} placeholder="Origin or historical note..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Notes</Label>
+                                    <Textarea value={lemmaForm.notes || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, notes: e.target.value })} rows={3} placeholder="Editorial notes..." />
+                                </div>
+                            </div>
+                            <div className="rounded-lg border p-4 space-y-3">
+                                <Label className="block">Structured Search & Metadata</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <Textarea value={lemmaForm.search_keywords_sindhi || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, search_keywords_sindhi: e.target.value })} rows={2} className="font-arabic" dir="auto" placeholder="Sindhi keywords, comma separated" />
+                                    <Textarea value={lemmaForm.search_keywords_english || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, search_keywords_english: e.target.value })} rows={2} placeholder="English keywords, comma separated" />
+                                    <Textarea value={lemmaForm.search_keywords_romanized || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, search_keywords_romanized: e.target.value })} rows={2} placeholder="Romanized keywords, comma separated" />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <Input value={lemmaForm.metadata_region || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_region: e.target.value })} placeholder="Region" />
+                                    <Input value={lemmaForm.metadata_dialect_notes || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_dialect_notes: e.target.value })} placeholder="Dialect notes" />
+                                    <Input value={lemmaForm.metadata_version || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_version: e.target.value })} placeholder="Entry version" />
                                 </div>
                             </div>
                             <div className="rounded-lg border p-4">
@@ -467,7 +597,7 @@ const SenseEditor = () => {
                             </div>
                         </CardContent>
                         <CardFooter className="border-t py-3 flex justify-end">
-                            <Button onClick={() => updateLemma.mutate(lemmaForm)} disabled={updateLemma.isPending}>
+                            <Button onClick={() => updateLemma.mutate(buildLemmaPayload(lemmaForm))} disabled={updateLemma.isPending}>
                                 <Save className="mr-2 h-4 w-4" /> {updateLemma.isPending ? 'Saving...' : 'Save Changes'}
                             </Button>
                         </CardFooter>
@@ -502,21 +632,12 @@ const SenseEditor = () => {
                     <Card>
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Type className="h-4 w-4" /> Morphology</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                            {hasRealMorphology ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    {['root', 'pattern', 'gender', 'number', 'case', 'tense'].map(field => (
-                                        <div key={field} className="space-y-2">
-                                            <Label className="capitalize">{field}</Label>
-                                            <Input value={morphForm[field] || ''} onChange={(e) => setMorphForm({ ...morphForm, [field]: e.target.value })} placeholder={`Enter ${field}`} />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
+                            {!hasRealMorphology && (
                                 <div className="rounded-lg border border-dashed p-5 space-y-3">
                                     <div>
-                                        <p className="font-medium">No morphology fields are available for this imported entry.</p>
+                                        <p className="font-medium">No morphology fields have been curated for this entry yet.</p>
                                         <p className="text-sm text-muted-foreground mt-1">
-                                            Open Lexicon metadata for this row includes source, language direction, normalized word, domain, and definitions, but not root, pattern, gender, number, case, or tense.
+                                            Add root, gender, number, or related grammar values here when editorial data is available.
                                         </p>
                                     </div>
                                     <MetadataGrid
@@ -530,14 +651,20 @@ const SenseEditor = () => {
                                     />
                                 </div>
                             )}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {['root', 'pattern', 'gender', 'number', 'case', 'tense'].map(field => (
+                                    <div key={field} className="space-y-2">
+                                        <Label className="capitalize">{field}</Label>
+                                        <Input value={morphForm[field] || ''} onChange={(e) => setMorphForm({ ...morphForm, [field]: e.target.value })} placeholder={`Enter ${field}`} />
+                                    </div>
+                                ))}
+                            </div>
                         </CardContent>
-                        {hasRealMorphology && (
-                            <CardFooter className="border-t py-3 flex justify-end">
-                                <Button onClick={() => updateMorphology.mutate(morphForm)} disabled={updateMorphology.isPending}>
-                                    <Save className="mr-2 h-4 w-4" /> {updateMorphology.isPending ? 'Saving...' : 'Save Morphology'}
-                                </Button>
-                            </CardFooter>
-                        )}
+                        <CardFooter className="border-t py-3 flex justify-end">
+                            <Button onClick={() => updateMorphology.mutate(morphForm)} disabled={updateMorphology.isPending}>
+                                <Save className="mr-2 h-4 w-4" /> {updateMorphology.isPending ? 'Saving...' : 'Save Morphology'}
+                            </Button>
+                        </CardFooter>
                     </Card>
                 </TabsContent>
 
@@ -574,7 +701,7 @@ const SenseEditor = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Sindhi Meaning</Label>
+                                        <Label>Sindhi Definition</Label>
                                         <Input
                                             value={newSenseForm.definition_sd}
                                             onChange={(e) => setNewSenseForm({ ...newSenseForm, definition_sd: e.target.value })}
@@ -584,11 +711,27 @@ const SenseEditor = () => {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>English Meaning</Label>
+                                        <Label>English Definition</Label>
                                         <Input
                                             value={newSenseForm.definition_en}
                                             onChange={(e) => setNewSenseForm({ ...newSenseForm, definition_en: e.target.value })}
                                             placeholder="Optional English meaning..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>English Equivalents</Label>
+                                        <Input
+                                            value={newSenseForm.english_equivalents_text}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, english_equivalents_text: e.target.value })}
+                                            placeholder="one, single, a"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Usage Label</Label>
+                                        <Input
+                                            value={newSenseForm.usage_label}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, usage_label: e.target.value })}
+                                            placeholder="common, literary, colloquial..."
                                         />
                                     </div>
                                 </div>
@@ -665,7 +808,7 @@ const SenseEditor = () => {
                     <Card>
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ArrowRightLeft className="h-4 w-4" /> Linguistic Relations</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
-                            {synonyms.length + antonyms.length + hypernyms.length === 0 && (
+                            {synonyms.length + antonyms.length + hypernyms.length + relatedWords.length === 0 && (
                                 <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
                                     No imported relations were present in Open Lexicon for this entry. Add manual relations here when editorial links are known.
                                 </div>
@@ -713,6 +856,19 @@ const SenseEditor = () => {
                                 </div>
                             </div>
 
+                            <div>
+                                <Label className="text-muted-foreground mb-2 block">Related Words ({relatedWords.length})</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {relatedWords.map(r => (
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-purple-50 text-purple-700">
+                                            {r.related_word}
+                                            <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+                                        </Badge>
+                                    ))}
+                                    {relatedWords.length === 0 && <span className="text-xs text-muted-foreground">No related words</span>}
+                                </div>
+                            </div>
+
                             {/* Add Relation */}
                             <div className="border-t pt-4">
                                 <Label className="text-sm mb-2 block">Add Relation</Label>
@@ -723,6 +879,7 @@ const SenseEditor = () => {
                                             <SelectItem value="synonym">Synonym</SelectItem>
                                             <SelectItem value="antonym">Antonym</SelectItem>
                                             <SelectItem value="hypernym">Hypernym</SelectItem>
+                                            <SelectItem value="related">Related</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <Input
@@ -731,6 +888,16 @@ const SenseEditor = () => {
                                         placeholder="Enter word..."
                                         className="font-arabic"
                                         dir="rtl"
+                                    />
+                                    <Input
+                                        value={newRelation.romanization}
+                                        onChange={(e) => setNewRelation({ ...newRelation, romanization: e.target.value })}
+                                        placeholder="Romanization"
+                                    />
+                                    <Input
+                                        value={newRelation.note}
+                                        onChange={(e) => setNewRelation({ ...newRelation, note: e.target.value })}
+                                        placeholder="Note / gloss"
                                     />
                                     <Button onClick={() => { if (newRelation.related_word.trim()) addRelation.mutate(newRelation); }} disabled={addRelation.isPending}>
                                         <Plus className="h-4 w-4" />
@@ -791,7 +958,7 @@ const SenseEditor = () => {
                             {/* Add Variant */}
                             <div className="border-t pt-4">
                                 <Label className="text-sm mb-2 block">Add Variant</Label>
-                                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_150px_120px_auto] gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_140px_140px_1fr_120px_auto] gap-2">
                                     <Input
                                         value={newVariant.variant}
                                         onChange={(e) => setNewVariant({ ...newVariant, variant: e.target.value })}
@@ -807,12 +974,79 @@ const SenseEditor = () => {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <Input value={newVariant.romanization} onChange={(e) => setNewVariant({ ...newVariant, romanization: e.target.value })} placeholder="Romanization" />
                                     <Input value={newVariant.dialect} onChange={(e) => setNewVariant({ ...newVariant, dialect: e.target.value })} placeholder="Dialect/label" />
+                                    <Input value={newVariant.note} onChange={(e) => setNewVariant({ ...newVariant, note: e.target.value })} placeholder="Note" />
                                     <Input value={newVariant.source} onChange={(e) => setNewVariant({ ...newVariant, source: e.target.value })} placeholder="Source" />
                                     <Button onClick={() => { if (newVariant.variant.trim()) addVariant.mutate(newVariant); }} disabled={addVariant.isPending}>
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="forms" className="mt-4 space-y-4">
+                    <Card>
+                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Layers className="h-4 w-4" /> Inflections</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="rounded-md border divide-y">
+                                {inflections.length > 0 ? inflections.map((item) => (
+                                    <div key={item.id} className="p-3 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="font-arabic text-lg" dir="auto">{item.form}</p>
+                                            <p className="text-xs text-muted-foreground">{[item.romanization, item.description].filter(Boolean).join(' · ')}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if (confirm('Delete this inflection?')) deleteInflection.mutate(item.id); }}>
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                )) : (
+                                    <p className="p-4 text-sm text-muted-foreground text-center">No inflections recorded.</p>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_160px_1fr_auto] gap-2">
+                                <Input value={newInflection.form} onChange={(e) => setNewInflection({ ...newInflection, form: e.target.value })} className="font-arabic" dir="auto" placeholder="Form" />
+                                <Input value={newInflection.romanization} onChange={(e) => setNewInflection({ ...newInflection, romanization: e.target.value })} placeholder="Romanization" />
+                                <Input value={newInflection.description} onChange={(e) => setNewInflection({ ...newInflection, description: e.target.value })} placeholder="Description" />
+                                <Button onClick={() => { if (newInflection.form.trim()) addInflection.mutate(newInflection); }} disabled={addInflection.isPending || !newInflection.form.trim()}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><BookOpen className="h-4 w-4" /> Idiomatic Expressions</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="rounded-md border divide-y">
+                                {idioms.length > 0 ? idioms.map((item) => (
+                                    <div key={item.id} className="p-3 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="font-arabic text-lg" dir="auto">{item.phrase}</p>
+                                            <p className="text-xs text-muted-foreground">{[item.romanization, item.english_gloss].filter(Boolean).join(' · ')}</p>
+                                            {(item.example_sindhi || item.example_english) && (
+                                                <p className="text-sm mt-1" dir="auto">{[item.example_sindhi, item.example_english].filter(Boolean).join(' / ')}</p>
+                                            )}
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { if (confirm('Delete this expression?')) deleteIdiom.mutate(item.id); }}>
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                )) : (
+                                    <p className="p-4 text-sm text-muted-foreground text-center">No idiomatic expressions recorded.</p>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <Input value={newIdiom.phrase} onChange={(e) => setNewIdiom({ ...newIdiom, phrase: e.target.value })} className="font-arabic" dir="auto" placeholder="Phrase" />
+                                <Input value={newIdiom.romanization} onChange={(e) => setNewIdiom({ ...newIdiom, romanization: e.target.value })} placeholder="Romanization" />
+                                <Input value={newIdiom.english_gloss} onChange={(e) => setNewIdiom({ ...newIdiom, english_gloss: e.target.value })} placeholder="English gloss" />
+                                <Input value={newIdiom.example_sindhi} onChange={(e) => setNewIdiom({ ...newIdiom, example_sindhi: e.target.value })} className="font-arabic" dir="auto" placeholder="Example in Sindhi" />
+                                <Input value={newIdiom.example_english} onChange={(e) => setNewIdiom({ ...newIdiom, example_english: e.target.value })} placeholder="Example in English" />
+                                <Button onClick={() => { if (newIdiom.phrase.trim()) addIdiom.mutate(newIdiom); }} disabled={addIdiom.isPending || !newIdiom.phrase.trim()}>
+                                    <Plus className="mr-2 h-4 w-4" /> Add Expression
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -940,6 +1174,8 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
     const [definition, setDefinition] = useState(sense.definition || '');
     const [definitionEn, setDefinitionEn] = useState(sense.definition_en || '');
     const [definitionSd, setDefinitionSd] = useState(sense.definition_sd || '');
+    const [englishEquivalents, setEnglishEquivalents] = useState((sense.english_equivalents || []).join(', '));
+    const [usageLabel, setUsageLabel] = useState(sense.usage_label || '');
     const [domain, setDomain] = useState(sense.domain || '');
     const [shortGloss, setShortGloss] = useState(sense.short_gloss || '');
     const [languageDirection, setLanguageDirection] = useState(sense.language_direction || '');
@@ -970,12 +1206,20 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label>Sindhi Meaning</Label>
+                        <Label>Sindhi Definition</Label>
                         <Input value={definitionSd} onChange={(e) => setDefinitionSd(e.target.value)} className="font-arabic text-md" dir="rtl" placeholder="Enter Sindhi meaning..." />
                     </div>
                     <div className="space-y-2">
-                        <Label>English Meaning</Label>
+                        <Label>English Definition</Label>
                         <Input value={definitionEn} onChange={(e) => setDefinitionEn(e.target.value)} placeholder="Enter English meaning..." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>English Equivalents</Label>
+                        <Input value={englishEquivalents} onChange={(e) => setEnglishEquivalents(e.target.value)} placeholder="one, single, a" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Usage Label</Label>
+                        <Input value={usageLabel} onChange={(e) => setUsageLabel(e.target.value)} placeholder="common, literary, colloquial..." />
                     </div>
                 </div>
                 <div className="space-y-2">
@@ -1013,6 +1257,8 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                         definition,
                         definition_en: definitionEn,
                         definition_sd: definitionSd,
+                        english_equivalents: textToKeywords(englishEquivalents),
+                        usage_label: usageLabel,
                         short_gloss: shortGloss,
                         domain,
                         language_direction: languageDirection,

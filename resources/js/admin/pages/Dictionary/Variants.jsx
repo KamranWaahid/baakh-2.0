@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, MapPin, SpellCheck, TriangleAlert, Loader2, ArrowLeft, Layers, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const variantTypeOptions = [
+    { value: 'short_vowel_variant', label: 'Short vowel variant' },
+    { value: 'fully_voweled_variant', label: 'Fully voweled variant' },
+    { value: 'fatha_variant', label: 'Fatha variant' },
     { value: 'diacritic', label: 'Diacritic / Airab' },
     { value: 'spelling', label: 'Spelling' },
     { value: 'normalized', label: 'Normalized' },
@@ -24,7 +27,7 @@ const Variants = () => {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [newVariant, setNewVariant] = useState({ variant: '', type: 'diacritic', dialect: '', source: '' });
+    const [newVariant, setNewVariant] = useState({ variant: '', type: 'short_vowel_variant', romanization: '', dialect: '', note: '', source: '' });
 
     const queryClient = useQueryClient();
     const { data: lemma, isLoading } = useQuery({
@@ -55,7 +58,7 @@ const Variants = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
-            setNewVariant({ variant: '', type: 'diacritic', dialect: '', source: '' });
+            setNewVariant({ variant: '', type: 'short_vowel_variant', romanization: '', dialect: '', note: '', source: '' });
         }
     });
 
@@ -158,7 +161,7 @@ const Variants = () => {
                                     <div className="min-w-0">
                                         <p className="font-arabic text-lg" dir="auto">{v.variant}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            {[variantTypeOptions.find(option => option.value === v.type)?.label || v.type, v.dialect, v.source].filter(Boolean).join(' · ') || 'Manual'}
+                                            {[variantTypeOptions.find(option => option.value === v.type)?.label || v.type, v.romanization, v.note, v.dialect, v.source].filter(Boolean).join(' · ') || 'Manual'}
                                         </p>
                                     </div>
                                     <Button
@@ -175,7 +178,7 @@ const Variants = () => {
                             )}
                             <div className="border-t pt-4">
                                 <Label className="text-sm mb-2 block">Add Variant</Label>
-                                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_150px_120px_auto] gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_140px_140px_1fr_120px_auto] gap-2">
                                     <Input
                                         value={newVariant.variant}
                                         onChange={(e) => setNewVariant({ ...newVariant, variant: e.target.value })}
@@ -191,7 +194,9 @@ const Variants = () => {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    <Input value={newVariant.romanization} onChange={(e) => setNewVariant({ ...newVariant, romanization: e.target.value })} placeholder="Romanization" />
                                     <Input value={newVariant.dialect} onChange={(e) => setNewVariant({ ...newVariant, dialect: e.target.value })} placeholder="Dialect/label" />
+                                    <Input value={newVariant.note} onChange={(e) => setNewVariant({ ...newVariant, note: e.target.value })} placeholder="Note" />
                                     <Input value={newVariant.source} onChange={(e) => setNewVariant({ ...newVariant, source: e.target.value })} placeholder="Source" />
                                     <Button onClick={handleAddVariant} disabled={addVariantMutation.isPending || !newVariant.variant.trim()}>
                                         <Plus className="h-4 w-4" />

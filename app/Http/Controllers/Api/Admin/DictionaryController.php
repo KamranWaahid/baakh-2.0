@@ -8,7 +8,10 @@ use App\Models\Sense;
 use App\Models\SenseExample;
 use App\Models\Morphology;
 use App\Models\Variant;
+use App\Models\LemmaIdiomaticExpression;
+use App\Models\LemmaInflection;
 use App\Services\DictionaryCompletionService;
+use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,9 +32,11 @@ class DictionaryController extends Controller
                         'lexical_id',
                         'definition',
                         'definition_en',
+                        'english_equivalents',
                         'definition_sd',
                         'short_gloss',
                         'full_definition',
+                        'usage_label',
                         'part_of_speech',
                         'word_variant',
                         'domain',
@@ -52,19 +57,29 @@ class DictionaryController extends Controller
                 $query->where('lemma', 'like', '%' . $search . '%')
                     ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
                     ->orWhere('transliteration', 'like', '%' . $search . '%')
+                    ->orWhere('search_keywords_json', 'like', '%' . $search . '%')
                     ->orWhereRaw($this->normalizedSql('lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
                     ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
                         ->orWhereHas('variants', function ($query) use ($search) {
                             $query->where('variant', 'like', '%' . $search . '%')
+                                ->orWhere('romanization', 'like', '%' . $search . '%')
+                                ->orWhere('note', 'like', '%' . $search . '%')
                                 ->orWhere('source', 'like', '%' . $search . '%')
                                 ->orWhere('source_entry_id', 'like', '%' . $search . '%');
                         })
                     ->orWhereHas('variants', function ($query) use ($normalizedSearch) {
-                        $query->whereRaw($this->normalizedSql('variant') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
+                        $query->whereRaw($this->normalizedSql('variant') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                            ->orWhereRaw($this->normalizedSql('normalized_variant') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
+                    })
+                    ->orWhereHas('inflections', function ($query) use ($search, $normalizedSearch) {
+                        $query->where('form', 'like', '%' . $search . '%')
+                            ->orWhere('romanization', 'like', '%' . $search . '%')
+                            ->orWhereRaw($this->normalizedSql('form') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
                     })
                     ->orWhereHas('senses', function ($query) use ($search, $normalizedSearch) {
                         $query->where('definition', 'like', '%' . $search . '%')
                                 ->orWhere('definition_en', 'like', '%' . $search . '%')
+                                ->orWhere('english_equivalents', 'like', '%' . $search . '%')
                                 ->orWhere('definition_sd', 'like', '%' . $search . '%')
                                 ->orWhere('short_gloss', 'like', '%' . $search . '%')
                                 ->orWhere('full_definition', 'like', '%' . $search . '%')
@@ -176,9 +191,11 @@ class DictionaryController extends Controller
                 'sense_order',
                 'definition',
                 'definition_en',
+                'english_equivalents',
                 'definition_sd',
                 'short_gloss',
                 'full_definition',
+                'usage_label',
                 'part_of_speech',
                 'word_variant',
                 'domain',
@@ -465,8 +482,14 @@ class DictionaryController extends Controller
             'transliteration' => 'nullable|string',
             'ipa' => 'nullable|string',
             'phonetic' => 'nullable|string',
+            'pronunciation_simple' => 'nullable|string',
             'audio_url' => 'nullable|url',
             'syllabification' => 'nullable|string',
+            'etymology' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'source_confidence' => 'nullable|numeric|min:0|max:100',
+            'search_keywords_json' => 'nullable|array',
+            'metadata_json' => 'nullable|array',
             'status' => 'nullable|in:pending,approved,rejected',
             'completion_notes' => 'nullable|string',
             'variants_reviewed' => 'nullable|boolean',
@@ -496,7 +519,14 @@ class DictionaryController extends Controller
 
     public function show($id)
     {
-        $lemma = Lemma::with(['senses.examples', 'morphology', 'variants', 'lemmaRelations'])->findOrFail($id);
+        $lemma = Lemma::with([
+            'senses.examples',
+            'morphology',
+            'variants',
+            'lemmaRelations',
+            'inflections',
+            'idiomaticExpressions',
+        ])->findOrFail($id);
 
         // Auto-fetch transliteration from Romanizer if it's empty
         if (empty($lemma->transliteration)) {
@@ -543,6 +573,7 @@ class DictionaryController extends Controller
         $payload['variants'] = array_values(array_merge($manualVariants, $importedVariants));
         $payload['has_real_morphology'] = $this->hasRealMorphology($lemma);
         $payload['completion'] = app(DictionaryCompletionService::class)->evaluate($lemma);
+        $payload['structured_entry'] = app(StructuredDictionaryEntryService::class)->build($lemma);
 
         return $payload;
     }
@@ -793,8 +824,14 @@ class DictionaryController extends Controller
             'transliteration' => 'nullable|string',
             'ipa' => 'nullable|string',
             'phonetic' => 'nullable|string',
+            'pronunciation_simple' => 'nullable|string',
             'audio_url' => 'nullable|url',
             'syllabification' => 'nullable|string',
+            'etymology' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'source_confidence' => 'nullable|numeric|min:0|max:100',
+            'search_keywords_json' => 'nullable|array',
+            'metadata_json' => 'nullable|array',
             'status' => 'nullable|in:pending,approved,rejected',
             'completion_notes' => 'nullable|string',
             'variants_reviewed' => 'nullable|boolean',
@@ -843,7 +880,7 @@ class DictionaryController extends Controller
             $merge['lemma_id'] = $lemmaId;
         }
 
-        foreach (['definition', 'definition_en', 'definition_sd', 'short_gloss', 'full_definition', 'usage_notes', 'domain', 'language_direction', 'source_dictionary', 'source', 'source_entry_id', 'publisher', 'license', 'register', 'dialect'] as $field) {
+        foreach (['definition', 'definition_en', 'definition_sd', 'short_gloss', 'full_definition', 'usage_notes', 'usage_label', 'domain', 'language_direction', 'source_dictionary', 'source', 'source_entry_id', 'publisher', 'license', 'register', 'dialect'] as $field) {
             if ($request->has($field) && is_string($request->input($field))) {
                 $merge[$field] = trim($request->input($field));
             }
@@ -857,10 +894,13 @@ class DictionaryController extends Controller
             'lemma_id' => 'required|integer|exists:lemmas,id',
             'definition' => 'required|string',
             'definition_en' => 'nullable|string',
+            'english_equivalents' => 'nullable|array',
+            'english_equivalents.*' => 'nullable|string',
             'definition_sd' => 'nullable|string',
             'short_gloss' => 'nullable|string|max:255',
             'full_definition' => 'nullable|string',
             'usage_notes' => 'nullable|string',
+            'usage_label' => 'nullable|string|max:255',
             'sense_order' => 'nullable|integer|min:0',
             'domain' => 'nullable|string',
             'register' => 'nullable|string',
@@ -877,11 +917,12 @@ class DictionaryController extends Controller
             'review_status' => 'nullable|in:unreviewed,reviewed,curated,needs_work',
         ]);
 
-        foreach (['definition_en', 'definition_sd', 'short_gloss', 'full_definition', 'usage_notes', 'domain', 'register', 'dialect', 'language_direction', 'source_dictionary', 'source', 'source_entry_id', 'publisher', 'license', 'import_version'] as $field) {
+        foreach (['definition_en', 'definition_sd', 'short_gloss', 'full_definition', 'usage_notes', 'usage_label', 'domain', 'register', 'dialect', 'language_direction', 'source_dictionary', 'source', 'source_entry_id', 'publisher', 'license', 'import_version'] as $field) {
             if (($validated[$field] ?? null) === '') {
                 $validated[$field] = null;
             }
         }
+        $validated['english_equivalents'] = $this->cleanStringArray($validated['english_equivalents'] ?? []);
 
         $validated['status'] = $validated['status'] ?? 'pending';
 
@@ -895,10 +936,13 @@ class DictionaryController extends Controller
         $validated = $request->validate([
             'definition' => 'string',
             'definition_en' => 'nullable|string',
+            'english_equivalents' => 'nullable|array',
+            'english_equivalents.*' => 'nullable|string',
             'definition_sd' => 'nullable|string',
             'short_gloss' => 'nullable|string|max:255',
             'full_definition' => 'nullable|string',
             'usage_notes' => 'nullable|string',
+            'usage_label' => 'nullable|string|max:255',
             'sense_order' => 'nullable|integer|min:0',
             'domain' => 'nullable|string',
             'register' => 'nullable|string',
@@ -914,6 +958,10 @@ class DictionaryController extends Controller
             'status' => 'nullable|in:pending,approved',
             'review_status' => 'nullable|in:unreviewed,reviewed,curated,needs_work',
         ]);
+
+        if (array_key_exists('english_equivalents', $validated)) {
+            $validated['english_equivalents'] = $this->cleanStringArray($validated['english_equivalents']);
+        }
 
         $sense->update($validated);
         return response()->json($sense);
@@ -931,6 +979,7 @@ class DictionaryController extends Controller
     {
         $validated = $request->validate([
             'sentence' => 'required|string',
+            'romanization' => 'nullable|string',
             'translation' => 'nullable|string',
             'source' => 'nullable|string',
             'citation' => 'nullable|string',
@@ -952,6 +1001,7 @@ class DictionaryController extends Controller
         $example = SenseExample::findOrFail($id);
         $validated = $request->validate([
             'sentence' => 'string',
+            'romanization' => 'nullable|string',
             'translation' => 'nullable|string',
             'source' => 'nullable|string',
             'citation' => 'nullable|string',
@@ -999,7 +1049,7 @@ class DictionaryController extends Controller
     {
         Lemma::findOrFail($lemmaId);
 
-        foreach (['variant', 'type', 'dialect', 'source', 'source_entry_id'] as $field) {
+        foreach (['variant', 'type', 'romanization', 'dialect', 'note', 'source', 'source_entry_id'] as $field) {
             if ($request->has($field) && is_string($request->input($field))) {
                 $request->merge([$field => trim($request->input($field))]);
             }
@@ -1008,24 +1058,30 @@ class DictionaryController extends Controller
         $validated = $request->validate([
             'variant' => 'required|string',
             'type' => ['required', Rule::in(Variant::TYPES)],
+            'romanization' => 'nullable|string',
             'dialect' => 'nullable|string',
+            'note' => 'nullable|string',
             'source' => 'nullable|string',
             'source_entry_id' => 'nullable|string|max:100',
             'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
         ]);
 
-        foreach (['dialect', 'source', 'source_entry_id'] as $field) {
+        foreach (['romanization', 'dialect', 'note', 'source', 'source_entry_id'] as $field) {
             if (($validated[$field] ?? null) === '') {
                 $validated[$field] = null;
             }
         }
+        $validated['normalized_variant'] = DictionaryText::normalizeForLookup($validated['variant']);
 
         $variant = Variant::firstOrCreate([
             'lemma_id' => $lemmaId,
             'variant' => $validated['variant'],
         ], [
+            'normalized_variant' => $validated['normalized_variant'],
             'dialect' => $validated['dialect'] ?? null,
             'type' => $validated['type'],
+            'romanization' => $validated['romanization'] ?? null,
+            'note' => $validated['note'] ?? null,
             'source' => $validated['source'] ?? null,
             'source_entry_id' => $validated['source_entry_id'] ?? null,
             'review_status' => $validated['review_status'] ?? 'unreviewed',
@@ -1033,8 +1089,11 @@ class DictionaryController extends Controller
 
         if (!$variant->wasRecentlyCreated) {
             $variant->update([
+                'normalized_variant' => $validated['normalized_variant'],
                 'type' => $validated['type'],
+                'romanization' => $validated['romanization'] ?? $variant->romanization,
                 'dialect' => $validated['dialect'] ?? $variant->dialect,
+                'note' => $validated['note'] ?? $variant->note,
                 'source' => $validated['source'] ?? $variant->source,
                 'source_entry_id' => $validated['source_entry_id'] ?? $variant->source_entry_id,
                 'review_status' => $validated['review_status'] ?? $variant->review_status,
@@ -1105,8 +1164,12 @@ class DictionaryController extends Controller
     public function storeRelation(Request $request, $lemmaId)
     {
         $validated = $request->validate([
-            'relation_type' => 'required|in:synonym,antonym,hypernym',
+            'relation_type' => 'required|in:synonym,antonym,hypernym,related',
             'related_word' => 'required|string',
+            'romanization' => 'nullable|string',
+            'note' => 'nullable|string',
+            'gloss' => 'nullable|string|max:255',
+            'part_of_speech' => 'nullable|string|max:255',
             'source' => 'nullable|string',
         ]);
 
@@ -1114,6 +1177,10 @@ class DictionaryController extends Controller
             'lemma_id' => $lemmaId,
             'relation_type' => $validated['relation_type'],
             'related_word' => $validated['related_word'],
+            'romanization' => $validated['romanization'] ?? null,
+            'note' => $validated['note'] ?? null,
+            'gloss' => $validated['gloss'] ?? null,
+            'part_of_speech' => $validated['part_of_speech'] ?? null,
             'source' => $validated['source'] ?? null,
         ]);
 
@@ -1127,9 +1194,100 @@ class DictionaryController extends Controller
         return response()->json(null, 204);
     }
 
+    public function storeInflection(Request $request, $lemmaId)
+    {
+        Lemma::findOrFail($lemmaId);
+
+        $validated = $request->validate([
+            'form' => 'required|string',
+            'romanization' => 'nullable|string',
+            'description' => 'nullable|string|max:255',
+            'source' => 'nullable|string',
+            'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
+        ]);
+
+        $inflection = LemmaInflection::firstOrCreate([
+            'lemma_id' => $lemmaId,
+            'form' => trim($validated['form']),
+        ], [
+            'romanization' => $this->nullableTrimmed($validated['romanization'] ?? null),
+            'description' => $this->nullableTrimmed($validated['description'] ?? null),
+            'source' => $this->nullableTrimmed($validated['source'] ?? null),
+            'review_status' => $validated['review_status'] ?? 'unreviewed',
+        ]);
+
+        return response()->json($inflection->fresh(), $inflection->wasRecentlyCreated ? 201 : 200);
+    }
+
+    public function destroyInflection($id)
+    {
+        $inflection = LemmaInflection::findOrFail($id);
+        $inflection->delete();
+
+        return response()->json(null, 204);
+    }
+
+    public function storeIdiomaticExpression(Request $request, $lemmaId)
+    {
+        Lemma::findOrFail($lemmaId);
+
+        $validated = $request->validate([
+            'phrase' => 'required|string',
+            'romanization' => 'nullable|string',
+            'english_gloss' => 'nullable|string|max:255',
+            'example_sindhi' => 'nullable|string',
+            'example_english' => 'nullable|string',
+            'source' => 'nullable|string',
+            'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
+        ]);
+
+        $expression = LemmaIdiomaticExpression::firstOrCreate([
+            'lemma_id' => $lemmaId,
+            'phrase' => trim($validated['phrase']),
+        ], [
+            'romanization' => $this->nullableTrimmed($validated['romanization'] ?? null),
+            'english_gloss' => $this->nullableTrimmed($validated['english_gloss'] ?? null),
+            'example_sindhi' => $this->nullableTrimmed($validated['example_sindhi'] ?? null),
+            'example_english' => $this->nullableTrimmed($validated['example_english'] ?? null),
+            'source' => $this->nullableTrimmed($validated['source'] ?? null),
+            'review_status' => $validated['review_status'] ?? 'unreviewed',
+        ]);
+
+        return response()->json($expression->fresh(), $expression->wasRecentlyCreated ? 201 : 200);
+    }
+
+    public function destroyIdiomaticExpression($id)
+    {
+        $expression = LemmaIdiomaticExpression::findOrFail($id);
+        $expression->delete();
+
+        return response()->json(null, 204);
+    }
+
     private function defaultNormalizedLemma(string $lemma): string
     {
         return DictionaryText::normalizeForLookup($lemma);
+    }
+
+    private function cleanStringArray(array $values): array
+    {
+        return collect($values)
+            ->map(fn ($value) => $this->nullableTrimmed($value))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function nullableTrimmed(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     private function normalizedSql(string $column): string

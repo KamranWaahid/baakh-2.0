@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lemma;
+use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
 
 class WordLookupController extends Controller
@@ -15,7 +16,7 @@ class WordLookupController extends Controller
     public function lookup(string $word)
     {
         $word = trim($word);
-        $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations'];
+        $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations', 'inflections', 'idiomaticExpressions'];
 
         $lemma = $this->findLemma($word, $with);
 
@@ -27,7 +28,11 @@ class WordLookupController extends Controller
                     $query->whereRaw($this->normalizedSql('lemma') . ' = ?', [$normalized])
                         ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalized])
                         ->orWhereHas('variants', function ($query) use ($normalized) {
-                            $query->whereRaw($this->normalizedSql('variant') . ' = ?', [$normalized]);
+                            $query->whereRaw($this->normalizedSql('variant') . ' = ?', [$normalized])
+                                ->orWhereRaw($this->normalizedSql('normalized_variant') . ' = ?', [$normalized]);
+                        })
+                        ->orWhereHas('inflections', function ($query) use ($normalized) {
+                            $query->whereRaw($this->normalizedSql('form') . ' = ?', [$normalized]);
                         })
                         ->orWhereHas('senses', function ($query) use ($normalized) {
                             $query->whereRaw($this->normalizedSql('word_variant') . ' LIKE ?', ['%' . $normalized . '%']);
@@ -104,6 +109,7 @@ class WordLookupController extends Controller
             'pronunciation' => [
                 'ipa' => $lemma->ipa,
                 'phonetic' => $lemma->phonetic,
+                'simple' => $lemma->pronunciation_simple ?? $lemma->phonetic,
                 'audio_url' => $lemma->audio_url,
                 'syllabification' => $lemma->syllabification,
             ],
@@ -117,7 +123,10 @@ class WordLookupController extends Controller
                 'id' => $variant->id,
                 'public_id' => $variant->public_id,
                 'variant' => $variant->variant,
+                'form' => $variant->variant,
                 'type' => $variant->type,
+                'romanization' => $variant->romanization,
+                'note' => $variant->note,
                 'dialect' => $variant->dialect,
             ])->values(),
             'senses' => $senses,
@@ -127,6 +136,7 @@ class WordLookupController extends Controller
             'synonyms' => $synonyms,
             'antonyms' => $antonyms,
             'hypernyms' => $hypernyms,
+            'structured_entry' => app(StructuredDictionaryEntryService::class)->build($lemma),
         ]);
     }
 
@@ -138,13 +148,21 @@ class WordLookupController extends Controller
                 $query->where('lemma', $word)
                     ->orWhere('normalized_lemma', $word)
                     ->orWhere('transliteration', $word)
+                    ->orWhere('search_keywords_json', 'like', '%' . $word . '%')
                     ->orWhereHas('variants', function ($query) use ($word) {
-                        $query->where('variant', $word);
+                        $query->where('variant', $word)
+                            ->orWhere('normalized_variant', $word)
+                            ->orWhere('romanization', $word);
+                    })
+                    ->orWhereHas('inflections', function ($query) use ($word) {
+                        $query->where('form', $word)
+                            ->orWhere('romanization', $word);
                     })
                     ->orWhereHas('senses', function ($query) use ($word) {
                         $query->where('word_variant', 'like', '%' . $word . '%')
                             ->orWhere('definition', 'like', '%' . $word . '%')
                             ->orWhere('definition_en', 'like', '%' . $word . '%')
+                            ->orWhere('english_equivalents', 'like', '%' . $word . '%')
                             ->orWhere('definition_sd', 'like', '%' . $word . '%')
                             ->orWhere('normalized_definition', 'like', '%' . $word . '%')
                             ->orWhere('source', 'like', '%' . $word . '%')

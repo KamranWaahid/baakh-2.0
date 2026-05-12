@@ -15,6 +15,7 @@ class SenseExample extends Model
         'public_id',
         'sense_id',
         'sentence',
+        'romanization',
         'translation',
         'source',
         'citation',

@@ -294,6 +294,10 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
         Route::post('dictionary/lemmas/{id}/relations', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeRelation']);
         Route::delete('dictionary/relations/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyRelation']);
+        Route::post('dictionary/lemmas/{id}/inflections', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeInflection']);
+        Route::delete('dictionary/inflections/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyInflection']);
+        Route::post('dictionary/lemmas/{id}/idiomatic-expressions', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeIdiomaticExpression']);
+        Route::delete('dictionary/idiomatic-expressions/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyIdiomaticExpression']);
     });
 
 // Public Sync Endpoints (Read-only, protected by token)

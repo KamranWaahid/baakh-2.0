@@ -445,6 +445,130 @@ class DictionaryLemmaDetailTest extends TestCase
             ->assertJsonPath('meanings.0', 'primary definition');
     }
 
+    public function test_public_lookup_exposes_modern_structured_entry_without_urdu_fields(): void
+    {
+        DB::table('lemmas')->insert([
+            'id' => 1,
+            'public_id' => 'lem_hik',
+            'lemma' => 'ھڪ',
+            'normalized_lemma' => 'ھڪ',
+            'transliteration' => 'hik',
+            'ipa' => '/hɪk/',
+            'pronunciation_simple' => 'hik',
+            'pos' => 'pronoun',
+            'etymology' => 'Native Sindhi form.',
+            'notes' => 'Editorial note.',
+            'source_confidence' => 98,
+            'search_keywords_json' => json_encode([
+                'sindhi' => ['ھڪَ'],
+                'english' => ['one', 'single'],
+                'romanized' => ['hik'],
+            ], JSON_UNESCAPED_UNICODE),
+            'metadata_json' => json_encode([
+                'region' => 'Sindh',
+                'dialect_notes' => 'Common usage',
+                'version' => '1.0',
+            ], JSON_UNESCAPED_UNICODE),
+            'frequency' => 0,
+            'status' => 'approved',
+            'completion_status' => 'complete',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('morphologies')->insert([
+            'lemma_id' => 1,
+            'root' => 'ھڪ',
+            'gender' => 'common',
+            'number' => 'singular',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('lemma_variants')->insert([
+            'lemma_id' => 1,
+            'variant' => 'ھِڪَ',
+            'normalized_variant' => 'ھڪ',
+            'type' => 'fatha_variant',
+            'romanization' => 'hika',
+            'note' => 'Fully marked with final vowel.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('senses')->insert([
+            'id' => 10,
+            'public_id' => 'sen_hik_1',
+            'lemma_id' => 1,
+            'sense_order' => 1,
+            'definition' => 'ھڪ عدد يا اڪيلو',
+            'definition_en' => 'one; a single item',
+            'english_equivalents' => json_encode(['one', 'single']),
+            'usage_label' => 'common',
+            'part_of_speech' => 'pronoun',
+            'status' => 'approved',
+            'review_status' => 'curated',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('sense_examples')->insert([
+            'sense_id' => 10,
+            'sentence' => 'مون وٽ ھڪ ڪتاب آھي.',
+            'romanization' => 'moon wat hik kitab aahe.',
+            'translation' => 'I have one book.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('lemma_relations')->insert([
+            ['lemma_id' => 1, 'relation_type' => 'synonym', 'related_word' => 'اڪيلو', 'romanization' => 'akelo', 'note' => 'near synonym', 'gloss' => null, 'part_of_speech' => null, 'created_at' => now(), 'updated_at' => now()],
+            ['lemma_id' => 1, 'relation_type' => 'antonym', 'related_word' => 'گهڻا', 'romanization' => 'ghanaa', 'note' => 'plural contrast', 'gloss' => null, 'part_of_speech' => null, 'created_at' => now(), 'updated_at' => now()],
+            ['lemma_id' => 1, 'relation_type' => 'related', 'related_word' => 'پهريون', 'romanization' => 'pahriyun', 'note' => null, 'gloss' => 'first', 'part_of_speech' => 'adjective', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        DB::table('lemma_inflections')->insert([
+            'lemma_id' => 1,
+            'form' => 'ھڪڙو',
+            'romanization' => 'hikro',
+            'description' => 'masculine singular form',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('lemma_idiomatic_expressions')->insert([
+            'lemma_id' => 1,
+            'phrase' => 'ھڪ ئي وقت',
+            'romanization' => 'hik ii waqt',
+            'english_gloss' => 'at the same time',
+            'example_sindhi' => 'هو ھڪ ئي وقت آيو.',
+            'example_english' => 'He came at the same time.',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->getJson('/api/v1/word/' . rawurlencode('ھِڪَ'));
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('found', true)
+            ->assertJsonPath('structured_entry.id', 'lem_hik')
+            ->assertJsonPath('structured_entry.sindhi_entry.headword', 'ھڪ')
+            ->assertJsonPath('structured_entry.sindhi_entry.variants.0.type', 'fatha_variant')
+            ->assertJsonPath('structured_entry.sindhi_entry.pronunciation.simple', 'hik')
+            ->assertJsonPath('structured_entry.sindhi_entry.meanings.0.english_equivalents.0', 'one')
+            ->assertJsonPath('structured_entry.sindhi_entry.meanings.0.examples.0.english_translation', 'I have one book.')
+            ->assertJsonPath('structured_entry.sindhi_entry.synonyms_sindhi.0.word', 'اڪيلو')
+            ->assertJsonPath('structured_entry.sindhi_entry.antonyms_sindhi.0.word', 'گهڻا')
+            ->assertJsonPath('structured_entry.sindhi_entry.related_words_sindhi.0.gloss', 'first')
+            ->assertJsonPath('structured_entry.sindhi_entry.inflections.0.form', 'ھڪڙو')
+            ->assertJsonPath('structured_entry.sindhi_entry.idiomatic_expressions.0.english_gloss', 'at the same time')
+            ->assertJsonPath('structured_entry.english_index.0.english_word', 'one')
+            ->assertJsonPath('structured_entry.search_keywords.english.0', 'one')
+            ->assertJsonMissingPath('structured_entry.urdu_entry')
+            ->assertJsonMissingPath('structured_entry.metadata.urdu');
+    }
+
     private function createDictionarySchema(): void
     {
         Schema::dropAllTables();
@@ -457,9 +581,15 @@ class DictionaryLemmaDetailTest extends TestCase
             $table->string('transliteration')->nullable();
             $table->string('ipa')->nullable();
             $table->string('phonetic')->nullable();
+            $table->string('pronunciation_simple')->nullable();
             $table->string('audio_url')->nullable();
             $table->string('syllabification')->nullable();
             $table->string('pos')->nullable()->index();
+            $table->text('etymology')->nullable();
+            $table->text('notes')->nullable();
+            $table->decimal('source_confidence', 5, 2)->nullable();
+            $table->json('search_keywords_json')->nullable();
+            $table->json('metadata_json')->nullable();
             $table->decimal('frequency', 8, 4)->default(0);
             $table->string('status')->default('pending')->index();
             $table->string('completion_status')->default('pending')->index();
@@ -487,7 +617,9 @@ class DictionaryLemmaDetailTest extends TestCase
             $table->text('full_definition')->nullable();
             $table->text('usage_notes')->nullable();
             $table->text('definition_en')->nullable();
+            $table->json('english_equivalents')->nullable();
             $table->text('definition_sd')->nullable();
+            $table->string('usage_label')->nullable();
             $table->string('part_of_speech')->nullable()->index();
             $table->text('word_variant')->nullable();
             $table->string('domain')->nullable()->index();
@@ -513,6 +645,7 @@ class DictionaryLemmaDetailTest extends TestCase
             $table->string('public_id')->nullable()->unique();
             $table->foreignId('sense_id')->constrained()->onDelete('cascade');
             $table->text('sentence');
+            $table->string('romanization')->nullable();
             $table->text('translation')->nullable();
             $table->string('source')->nullable();
             $table->string('citation')->nullable();
@@ -542,8 +675,11 @@ class DictionaryLemmaDetailTest extends TestCase
             $table->string('public_id')->nullable()->unique();
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
             $table->string('variant')->index();
+            $table->string('normalized_variant')->nullable()->index();
             $table->string('type')->default('dialectal');
+            $table->string('romanization')->nullable();
             $table->string('dialect')->nullable();
+            $table->text('note')->nullable();
             $table->string('source')->nullable();
             $table->string('source_entry_id', 100)->nullable()->index();
             $table->string('review_status')->default('unreviewed')->index();
@@ -556,8 +692,38 @@ class DictionaryLemmaDetailTest extends TestCase
             $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
             $table->string('relation_type');
             $table->string('related_word');
+            $table->string('romanization')->nullable();
+            $table->text('note')->nullable();
+            $table->string('gloss')->nullable();
+            $table->string('part_of_speech')->nullable();
             $table->foreignId('related_lemma_id')->nullable()->constrained('lemmas')->nullOnDelete();
             $table->string('source')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('lemma_inflections', function ($table) {
+            $table->id();
+            $table->string('public_id')->nullable()->unique();
+            $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
+            $table->string('form')->index();
+            $table->string('romanization')->nullable();
+            $table->string('description')->nullable();
+            $table->string('source')->nullable();
+            $table->string('review_status')->default('unreviewed')->index();
+            $table->timestamps();
+        });
+
+        Schema::create('lemma_idiomatic_expressions', function ($table) {
+            $table->id();
+            $table->string('public_id')->nullable()->unique();
+            $table->foreignId('lemma_id')->constrained()->onDelete('cascade');
+            $table->string('phrase')->index();
+            $table->string('romanization')->nullable();
+            $table->string('english_gloss')->nullable();
+            $table->text('example_sindhi')->nullable();
+            $table->text('example_english')->nullable();
+            $table->string('source')->nullable();
+            $table->string('review_status')->default('unreviewed')->index();
             $table->timestamps();
         });
 

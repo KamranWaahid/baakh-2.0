@@ -11,7 +11,18 @@ class LemmaRelation extends Model
 
     protected $table = 'lemma_relations';
     protected string $publicIdPrefix = 'rel';
-    protected $fillable = ['public_id', 'lemma_id', 'relation_type', 'related_word', 'related_lemma_id', 'source'];
+    protected $fillable = [
+        'public_id',
+        'lemma_id',
+        'relation_type',
+        'related_word',
+        'romanization',
+        'note',
+        'gloss',
+        'part_of_speech',
+        'related_lemma_id',
+        'source',
+    ];
 
     public function lemma()
     {

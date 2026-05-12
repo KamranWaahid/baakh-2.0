@@ -19,10 +19,12 @@ class Sense extends Model
         'sense_order',
         'definition',
         'definition_en',
+        'english_equivalents',
         'definition_sd',
         'short_gloss',
         'full_definition',
         'usage_notes',
+        'usage_label',
         'part_of_speech',
         'word_variant',
         'domain',
@@ -45,6 +47,7 @@ class Sense extends Model
     protected $casts = [
         'confidence' => 'integer',
         'sense_order' => 'integer',
+        'english_equivalents' => 'array',
     ];
 
     public function lemma()

@@ -24,9 +24,15 @@ class Lemma extends Model
         'transliteration',
         'ipa',
         'phonetic',
+        'pronunciation_simple',
         'audio_url',
         'syllabification',
         'pos',
+        'etymology',
+        'notes',
+        'source_confidence',
+        'search_keywords_json',
+        'metadata_json',
         'frequency',
         'status',
         'completion_status',
@@ -49,6 +55,9 @@ class Lemma extends Model
         'morphology_reviewed' => 'boolean',
         'pronunciation_reviewed' => 'boolean',
         'completion_score' => 'integer',
+        'source_confidence' => 'float',
+        'search_keywords_json' => 'array',
+        'metadata_json' => 'array',
     ];
 
     public function senses()
@@ -69,6 +78,16 @@ class Lemma extends Model
     public function lemmaRelations()
     {
         return $this->hasMany(LemmaRelation::class, 'lemma_id');
+    }
+
+    public function inflections()
+    {
+        return $this->hasMany(LemmaInflection::class)->orderBy('id');
+    }
+
+    public function idiomaticExpressions()
+    {
+        return $this->hasMany(LemmaIdiomaticExpression::class)->orderBy('id');
     }
 
     public function completedBy()
@@ -109,6 +128,7 @@ class Lemma extends Model
             return [
                 'definition' => $sense->definition,
                 'definition_en' => $sense->definition_en,
+                'english_equivalents' => $sense->english_equivalents,
                 'definition_sd' => $sense->definition_sd,
                 'domain' => $sense->domain,
             ];
@@ -124,6 +144,7 @@ class Lemma extends Model
             ->toArray();
         $array['completion_status'] = $this->completion_status;
         $array['completion_score'] = $this->completion_score;
+        $array['search_keywords'] = $this->search_keywords_json;
 
         return $array;
     }
