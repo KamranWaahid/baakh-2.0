@@ -22,13 +22,13 @@ class ExploreTopicController extends Controller
 
     /**
      * Get all topic categories and their associated tags, localized.
-     * Only shows tags and categories that are attached to at least one visible poetry.
+     * Only shows categories attached to at least one visible poetry/couplet.
      */
     public function index(Request $request)
     {
         $lang = $this->resolveLang($request->header('Accept-Language', 'sd'));
 
-        $cached = $this->cache->get("explore_topics_{$lang}");
+        $cached = $this->cache->get("explore_topics_with_content_{$lang}");
         if ($cached) {
             return response()->json($cached);
         }
@@ -55,6 +55,21 @@ class ExploreTopicController extends Controller
                 $q->where('lang', $lang);
             }
         ])
+            ->where(function ($query) use ($usedTagIds) {
+                $query->whereHas('poetry', function ($q) {
+                    $q->where('visibility', 1);
+                })
+                    ->orWhereHas('couplets', function ($q) {
+                        $q->where('visibility', 1);
+                    })
+                    ->orWhereHas('tags', function ($q) use ($usedTagIds) {
+                        if ($usedTagIds->isNotEmpty()) {
+                            $q->whereIn('id', $usedTagIds->all());
+                        } else {
+                            $q->whereRaw('1 = 0');
+                        }
+                    });
+            })
             ->get()
             ->map(function ($category) use ($lang) {
                 // Map to response structure
@@ -74,10 +89,6 @@ class ExploreTopicController extends Controller
                         ];
                     })
                 ];
-            })
-            // Filter out categories that have no tags
-            ->filter(function ($category) {
-                return $category['tags']->isNotEmpty();
             })
             ->values(); // Reset array keys
 
@@ -112,7 +123,7 @@ class ExploreTopicController extends Controller
         ];
 
         // Cache the result
-        $this->cache->set("explore_topics_{$lang}", $responseData);
+        $this->cache->set("explore_topics_with_content_{$lang}", $responseData);
 
         return response()->json($responseData);
     }
