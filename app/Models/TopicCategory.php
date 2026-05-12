@@ -25,4 +25,9 @@ class TopicCategory extends Model
     {
         return $this->hasMany(Poetry::class);
     }
+
+    public function couplets()
+    {
+        return $this->hasMany(Couplets::class, 'topic_category_id');
+    }
 }

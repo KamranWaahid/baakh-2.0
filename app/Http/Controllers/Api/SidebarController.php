@@ -95,13 +95,8 @@ class SidebarController extends Controller
         $lang = $request->header('Accept-Language', 'en');
 
         // Fetch top topic categories with their details
-        // Filter to only include topics that have at least one visible poetry attached
-        // We assume 'topic_category_id' in Poetry table links to TopicCategory
-        // OR we can check if any tags under this category are used.
-        // Let's use the safer "tags used" approach or "direct link" approach depending on schema.
-        // Based on ExploreTopicController, we linked categories -> tags -> poetry usage
-        // But here we just show Categories.
-        // Let's assume a Category is "used" if it has tags that are used in poetry_tags OR if poetry links to it directly.
+        // Filter to topics that have at least one visible poetry/couplet attached,
+        // either directly through topic_category_id or through a used poetry tag.
 
         // 1. Get all unique tag IDs used in visible poetry
         // Logic copied from ExploreTopicController to ensure consistency
@@ -121,9 +116,20 @@ class SidebarController extends Controller
                 $query->where('lang', $lang);
             }
         ])
-            // Filter Categories that have ANY tags which are used in poetry
-            ->whereHas('tags', function ($q) use ($usedTagIds) {
-                $q->whereIn('id', $usedTagIds);
+            ->where(function ($query) use ($usedTagIds) {
+                $query->whereHas('poetry', function ($q) {
+                    $q->where('visibility', 1);
+                })
+                    ->orWhereHas('couplets', function ($q) {
+                        $q->where('visibility', 1);
+                    })
+                    ->orWhereHas('tags', function ($q) use ($usedTagIds) {
+                        if (!empty($usedTagIds)) {
+                            $q->whereIn('id', $usedTagIds);
+                        } else {
+                            $q->whereRaw('1 = 0');
+                        }
+                    });
             })
             ->inRandomOrder()
             ->take(12)
