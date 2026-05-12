@@ -38,11 +38,31 @@ const initialNewSenseForm = {
     review_status: 'unreviewed',
 };
 
+const initialNewRelationForm = {
+    relation_type: 'synonym',
+    related_word: '',
+    related_lemma_id: null,
+    romanization: '',
+    note: '',
+    gloss: '',
+    part_of_speech: '',
+};
+
 const trimValue = (value) => {
     if (typeof value !== 'string') return value;
     const trimmed = value.trim();
     return trimmed === '' ? null : trimmed;
 };
+
+const normalizeLookupText = (value) => (value || '')
+    .normalize('NFC')
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+    .trim()
+    .toLowerCase();
+
+const relationDisplayWord = (relation) => relation.related_lemma?.lemma || relation.related_word;
+const relationDisplayRomanization = (relation) => relation.romanization || relation.related_lemma?.transliteration;
+const relationDisplayPos = (relation) => relation.part_of_speech || relation.related_lemma?.pos;
 
 const cleanSensePayload = (data) => {
     const payload = {};
@@ -152,7 +172,7 @@ const SenseEditor = () => {
     // ── Local state for editable fields ──
     const [lemmaForm, setLemmaForm] = useState({});
     const [morphForm, setMorphForm] = useState({});
-    const [newRelation, setNewRelation] = useState({ relation_type: 'synonym', related_word: '', romanization: '', note: '', gloss: '', part_of_speech: '' });
+    const [newRelation, setNewRelation] = useState(initialNewRelationForm);
     const [newVariant, setNewVariant] = useState({ variant: '', type: 'short_vowel_variant', romanization: '', dialect: '', note: '', source: '' });
     const [newInflection, setNewInflection] = useState({ form: '', romanization: '', description: '' });
     const [newIdiom, setNewIdiom] = useState({ phrase: '', romanization: '', english_gloss: '', example_sindhi: '', example_english: '' });
@@ -257,7 +277,7 @@ const SenseEditor = () => {
         mutationFn: (data) => api.post(`/api/admin/dictionary/lemmas/${id}/relations`, data),
         onSuccess: () => {
             queryClient.invalidateQueries(['lemma', id]);
-            setNewRelation({ relation_type: 'synonym', related_word: '', romanization: '', note: '', gloss: '', part_of_speech: '' });
+            setNewRelation(initialNewRelationForm);
             toast.success('Relation added.');
         },
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to add relation.')),
@@ -350,6 +370,23 @@ const SenseEditor = () => {
         onError: (error) => toast.error(apiErrorMessage(error, 'Failed to update completion status.')),
     });
 
+    const relationSearchTerm = newRelation.related_word.trim();
+    const { data: relationSearchResults = [], isFetching: isSearchingRelations } = useQuery({
+        queryKey: ['dictionary-relation-lemma-search', relationSearchTerm, id],
+        queryFn: async () => {
+            const res = await api.get('/api/admin/dictionary/lemma-search', {
+                params: {
+                    search: relationSearchTerm,
+                    limit: 8,
+                    exclude_lemma_id: id,
+                },
+            });
+            return res.data || [];
+        },
+        enabled: !!id && relationSearchTerm.length >= 2 && !newRelation.related_lemma_id,
+        staleTime: 30_000,
+    });
+
     const handleScrape = async () => {
         setIsScraping(true);
         setScrapeError(null);
@@ -420,6 +457,60 @@ const SenseEditor = () => {
             english_equivalents_text: undefined,
             language_direction: newSenseForm.language_direction || sourceSummary.language_directions?.[0] || '',
         });
+    };
+
+    const relationHasExactMatch = relationSearchResults.some((result) => {
+        const term = normalizeLookupText(relationSearchTerm);
+        const candidates = [
+            result.lemma,
+            result.normalized_lemma,
+            result.transliteration,
+            ...(result.variants || []).flatMap((variant) => [
+                variant.variant,
+                variant.normalized_variant,
+                variant.romanization,
+            ]),
+        ];
+
+        return candidates.some((candidate) => normalizeLookupText(candidate) === term);
+    });
+
+    const handleRelationWordChange = (value) => {
+        setNewRelation({
+            ...newRelation,
+            related_word: value,
+            related_lemma_id: null,
+        });
+    };
+
+    const handleSelectRelationLemma = (result) => {
+        setNewRelation({
+            ...newRelation,
+            related_word: result.lemma,
+            related_lemma_id: result.id,
+            romanization: newRelation.romanization || result.transliteration || '',
+            part_of_speech: newRelation.part_of_speech || result.pos || '',
+        });
+    };
+
+    const handleAddRelation = () => {
+        if (!relationSearchTerm) return;
+
+        const payload = {
+            relation_type: newRelation.relation_type,
+            related_word: relationSearchTerm,
+            romanization: trimValue(newRelation.romanization),
+            note: trimValue(newRelation.note),
+            gloss: trimValue(newRelation.gloss),
+            part_of_speech: trimValue(newRelation.part_of_speech),
+            related_lemma_id: newRelation.related_lemma_id || undefined,
+        };
+
+        if (!payload.related_lemma_id) {
+            payload.create_if_missing = true;
+        }
+
+        addRelation.mutate(payload);
     };
 
     return (
@@ -819,8 +910,9 @@ const SenseEditor = () => {
                                 <Label className="text-muted-foreground mb-2 block">Synonyms ({synonyms.length})</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {synonyms.map(r => (
-                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1">
-                                            {r.related_word}
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1" title={relationDisplayRomanization(r) || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
                                             <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
                                         </Badge>
                                     ))}
@@ -833,8 +925,9 @@ const SenseEditor = () => {
                                 <Label className="text-muted-foreground mb-2 block">Antonyms ({antonyms.length})</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {antonyms.map(r => (
-                                        <Badge key={r.id} variant="outline" className="font-arabic text-sm gap-1 pr-1 border-red-200 text-red-700">
-                                            {r.related_word}
+                                        <Badge key={r.id} variant="outline" className="font-arabic text-sm gap-1 pr-1 border-red-200 text-red-700" title={relationDisplayRomanization(r) || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
                                             <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
                                         </Badge>
                                     ))}
@@ -847,8 +940,9 @@ const SenseEditor = () => {
                                 <Label className="text-muted-foreground mb-2 block">Hypernyms ({hypernyms.length})</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {hypernyms.map(r => (
-                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-blue-50 text-blue-700">
-                                            {r.related_word}
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-blue-50 text-blue-700" title={relationDisplayRomanization(r) || relationDisplayPos(r) || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
                                             <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
                                         </Badge>
                                     ))}
@@ -860,8 +954,9 @@ const SenseEditor = () => {
                                 <Label className="text-muted-foreground mb-2 block">Related Words ({relatedWords.length})</Label>
                                 <div className="flex flex-wrap gap-2">
                                     {relatedWords.map(r => (
-                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-purple-50 text-purple-700">
-                                            {r.related_word}
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-purple-50 text-purple-700" title={relationDisplayRomanization(r) || relationDisplayPos(r) || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
                                             <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
                                         </Badge>
                                     ))}
@@ -872,7 +967,7 @@ const SenseEditor = () => {
                             {/* Add Relation */}
                             <div className="border-t pt-4">
                                 <Label className="text-sm mb-2 block">Add Relation</Label>
-                                <div className="flex gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-[140px_minmax(220px,1fr)_180px_1fr_auto] gap-2">
                                     <Select value={newRelation.relation_type} onValueChange={(v) => setNewRelation({ ...newRelation, relation_type: v })}>
                                         <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
                                         <SelectContent>
@@ -882,13 +977,58 @@ const SenseEditor = () => {
                                             <SelectItem value="related">Related</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    <Input
-                                        value={newRelation.related_word}
-                                        onChange={(e) => setNewRelation({ ...newRelation, related_word: e.target.value })}
-                                        placeholder="Enter word..."
-                                        className="font-arabic"
-                                        dir="rtl"
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            value={newRelation.related_word}
+                                            onChange={(e) => handleRelationWordChange(e.target.value)}
+                                            placeholder="Enter word..."
+                                            className="font-arabic"
+                                            dir="rtl"
+                                            autoComplete="off"
+                                        />
+                                        {newRelation.related_lemma_id && (
+                                            <div className="mt-1 text-xs text-green-700">
+                                                Linked to existing lemma #{newRelation.related_lemma_id}
+                                            </div>
+                                        )}
+                                        {!newRelation.related_lemma_id && relationSearchTerm.length >= 2 && (
+                                            <div className="absolute z-20 mt-1 w-full rounded-md border bg-background shadow-lg">
+                                                {isSearchingRelations ? (
+                                                    <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Searching dictionary...
+                                                    </div>
+                                                ) : relationSearchResults.length > 0 ? (
+                                                    <div className="max-h-64 overflow-auto py-1">
+                                                        {relationSearchResults.map((result) => (
+                                                            <button
+                                                                key={result.id}
+                                                                type="button"
+                                                                className="w-full px-3 py-2 text-left hover:bg-muted"
+                                                                onClick={() => handleSelectRelationLemma(result)}
+                                                            >
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <span className="font-arabic text-base" dir="auto">{result.lemma}</span>
+                                                                    <span className="text-xs text-muted-foreground">#{result.id}</span>
+                                                                </div>
+                                                                <div className="text-xs text-muted-foreground">
+                                                                    {[result.transliteration, result.pos, result.match_type !== 'headword' ? `matched ${result.match_type}: ${result.match_label}` : null].filter(Boolean).join(' · ')}
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                        {!relationHasExactMatch && (
+                                                            <div className="border-t px-3 py-2 text-xs text-muted-foreground">
+                                                                No exact match. Adding will create "{relationSearchTerm}" as a new lemma.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                        No dictionary match. Adding will create "{relationSearchTerm}" as a new lemma.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                     <Input
                                         value={newRelation.romanization}
                                         onChange={(e) => setNewRelation({ ...newRelation, romanization: e.target.value })}
@@ -899,8 +1039,8 @@ const SenseEditor = () => {
                                         onChange={(e) => setNewRelation({ ...newRelation, note: e.target.value })}
                                         placeholder="Note / gloss"
                                     />
-                                    <Button onClick={() => { if (newRelation.related_word.trim()) addRelation.mutate(newRelation); }} disabled={addRelation.isPending}>
-                                        <Plus className="h-4 w-4" />
+                                    <Button onClick={handleAddRelation} disabled={addRelation.isPending || !relationSearchTerm}>
+                                        {addRelation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </div>

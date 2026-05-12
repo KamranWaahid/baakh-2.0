@@ -278,6 +278,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('dictionary/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'morphology']);
         Route::get('dictionary/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'variants']);
         Route::get('dictionary/qa', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'qa']);
+        Route::get('dictionary/lemma-search', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'lemmaSearch']);
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::get('dictionary/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'completion']);

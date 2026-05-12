@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lemma;
+use App\Models\LemmaRelation;
 use App\Models\Sense;
 use App\Models\SenseExample;
 use App\Models\Morphology;
@@ -340,6 +341,68 @@ class DictionaryController extends Controller
         return response()->json($page);
     }
 
+    public function lemmaSearch(Request $request)
+    {
+        $search = trim((string) $request->query('search', ''));
+
+        if ($search === '') {
+            return response()->json([]);
+        }
+
+        $normalizedSearch = DictionaryText::normalizeForLookup($search);
+        $limit = min(20, max(1, (int) $request->query('limit', 10)));
+        $excludeLemmaId = $request->integer('exclude_lemma_id') ?: null;
+
+        $lemmas = Lemma::query()
+            ->select([
+                'id',
+                'public_id',
+                'lemma',
+                'normalized_lemma',
+                'transliteration',
+                'pos',
+                'status',
+                'completion_status',
+            ])
+            ->with([
+                'variants' => function ($query) use ($search, $normalizedSearch) {
+                    $query->select(['id', 'lemma_id', 'variant', 'normalized_variant', 'romanization', 'type'])
+                        ->where(function ($query) use ($search, $normalizedSearch) {
+                            $query->where('variant', 'like', '%' . $search . '%')
+                                ->orWhere('normalized_variant', 'like', '%' . $search . '%')
+                                ->orWhere('romanization', 'like', '%' . $search . '%')
+                                ->orWhereRaw($this->normalizedSql('variant') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                                ->orWhereRaw($this->normalizedSql('normalized_variant') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
+                        })
+                        ->orderBy('variant');
+                },
+            ])
+            ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
+            ->where(function ($query) use ($search, $normalizedSearch) {
+                $query->where('lemma', 'like', '%' . $search . '%')
+                    ->orWhere('normalized_lemma', 'like', '%' . $search . '%')
+                    ->orWhere('transliteration', 'like', '%' . $search . '%')
+                    ->orWhereRaw($this->normalizedSql('lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                    ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                    ->orWhereHas('variants', function ($query) use ($search, $normalizedSearch) {
+                        $query->where('variant', 'like', '%' . $search . '%')
+                            ->orWhere('normalized_variant', 'like', '%' . $search . '%')
+                            ->orWhere('romanization', 'like', '%' . $search . '%')
+                            ->orWhereRaw($this->normalizedSql('variant') . ' LIKE ?', ['%' . $normalizedSearch . '%'])
+                            ->orWhereRaw($this->normalizedSql('normalized_variant') . ' LIKE ?', ['%' . $normalizedSearch . '%']);
+                    });
+            })
+            ->orderByRaw(
+                'CASE WHEN lemma = ? THEN 0 WHEN normalized_lemma = ? THEN 1 WHEN transliteration = ? THEN 2 ELSE 3 END',
+                [$search, $normalizedSearch, $search]
+            )
+            ->orderBy('lemma')
+            ->limit($limit)
+            ->get();
+
+        return response()->json($lemmas->map(fn (Lemma $lemma) => $this->lemmaSearchResult($lemma, $search, $normalizedSearch))->values());
+    }
+
     public function qa(DictionaryCompletionService $completion)
     {
         $missingSenses = Lemma::query()
@@ -523,7 +586,7 @@ class DictionaryController extends Controller
             'senses.examples',
             'morphology',
             'variants',
-            'lemmaRelations',
+            'lemmaRelations.relatedLemma',
             'inflections',
             'idiomaticExpressions',
         ])->findOrFail($id);
@@ -1163,6 +1226,14 @@ class DictionaryController extends Controller
     // Relation Methods
     public function storeRelation(Request $request, $lemmaId)
     {
+        Lemma::findOrFail($lemmaId);
+
+        foreach (['related_word', 'romanization', 'note', 'gloss', 'part_of_speech', 'source'] as $field) {
+            if ($request->has($field) && is_string($request->input($field))) {
+                $request->merge([$field => trim($request->input($field))]);
+            }
+        }
+
         $validated = $request->validate([
             'relation_type' => 'required|in:synonym,antonym,hypernym,related',
             'related_word' => 'required|string',
@@ -1171,25 +1242,53 @@ class DictionaryController extends Controller
             'gloss' => 'nullable|string|max:255',
             'part_of_speech' => 'nullable|string|max:255',
             'source' => 'nullable|string',
+            'related_lemma_id' => 'nullable|integer|exists:lemmas,id',
+            'create_if_missing' => 'nullable|boolean',
         ]);
 
-        $relation = \App\Models\LemmaRelation::create([
+        foreach (['romanization', 'note', 'gloss', 'part_of_speech', 'source'] as $field) {
+            if (($validated[$field] ?? null) === '') {
+                $validated[$field] = null;
+            }
+        }
+
+        $relatedLemma = null;
+        $relatedWord = trim($validated['related_word']);
+
+        if (!empty($validated['related_lemma_id'])) {
+            $relatedLemma = Lemma::findOrFail($validated['related_lemma_id']);
+        } elseif ($request->boolean('create_if_missing')) {
+            $relatedLemma = $this->findOrCreateRelationLemma(
+                $relatedWord,
+                $validated['romanization'] ?? null,
+                $validated['part_of_speech'] ?? null
+            );
+        }
+
+        if ($relatedLemma) {
+            $relatedWord = $relatedLemma->lemma;
+            $validated['romanization'] = $validated['romanization'] ?? $relatedLemma->transliteration;
+            $validated['part_of_speech'] = $validated['part_of_speech'] ?? $relatedLemma->pos;
+        }
+
+        $relation = LemmaRelation::create([
             'lemma_id' => $lemmaId,
             'relation_type' => $validated['relation_type'],
-            'related_word' => $validated['related_word'],
+            'related_word' => $relatedWord,
             'romanization' => $validated['romanization'] ?? null,
             'note' => $validated['note'] ?? null,
             'gloss' => $validated['gloss'] ?? null,
             'part_of_speech' => $validated['part_of_speech'] ?? null,
+            'related_lemma_id' => $relatedLemma?->id,
             'source' => $validated['source'] ?? null,
         ]);
 
-        return response()->json($relation, 201);
+        return response()->json($relation->fresh(['relatedLemma']), 201);
     }
 
     public function destroyRelation($id)
     {
-        $relation = \App\Models\LemmaRelation::findOrFail($id);
+        $relation = LemmaRelation::findOrFail($id);
         $relation->delete();
         return response()->json(null, 204);
     }
@@ -1288,6 +1387,132 @@ class DictionaryController extends Controller
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function lemmaSearchResult(Lemma $lemma, string $search, string $normalizedSearch): array
+    {
+        $matchType = 'headword';
+        $matchLabel = $lemma->lemma;
+
+        if ($this->sameSearchValue($lemma->transliteration, $search)) {
+            $matchType = 'romanization';
+            $matchLabel = $lemma->transliteration;
+        } elseif ($this->sameSearchValue($lemma->normalized_lemma, $normalizedSearch)) {
+            $matchType = 'normalized';
+            $matchLabel = $lemma->normalized_lemma;
+        } else {
+            $variant = $lemma->variants->first(function (Variant $variant) use ($search, $normalizedSearch) {
+                return $this->containsSearchValue($variant->variant, $search)
+                    || $this->containsSearchValue($variant->normalized_variant, $normalizedSearch)
+                    || $this->containsSearchValue($variant->romanization, $search);
+            });
+
+            if ($variant) {
+                $matchType = 'variant';
+                $matchLabel = $variant->variant;
+            }
+        }
+
+        return [
+            'id' => $lemma->id,
+            'public_id' => $lemma->public_id,
+            'lemma' => $lemma->lemma,
+            'normalized_lemma' => $lemma->normalized_lemma,
+            'transliteration' => $lemma->transliteration,
+            'pos' => $lemma->pos,
+            'status' => $lemma->status,
+            'completion_status' => $lemma->completion_status,
+            'match_type' => $matchType,
+            'match_label' => $matchLabel,
+            'variants' => $lemma->variants
+                ->take(3)
+                ->map(fn (Variant $variant) => [
+                    'id' => $variant->id,
+                    'variant' => $variant->variant,
+                    'normalized_variant' => $variant->normalized_variant,
+                    'romanization' => $variant->romanization,
+                    'type' => $variant->type,
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    private function findOrCreateRelationLemma(string $word, ?string $romanization, ?string $partOfSpeech, ?int $excludeLemmaId = null): Lemma
+    {
+        $existing = $this->findLemmaByDictionaryWord($word, $excludeLemmaId);
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $lemma = Lemma::create([
+            'lemma' => $word,
+            'normalized_lemma' => $this->defaultNormalizedLemma($word),
+            'transliteration' => $romanization,
+            'pos' => $partOfSpeech,
+            'status' => 'pending',
+            'completion_status' => Lemma::COMPLETION_PENDING,
+        ]);
+
+        if (filled($romanization)) {
+            \App\Models\Romanizer::updateOrCreate(
+                ['word_sd' => $lemma->lemma],
+                [
+                    'word_roman' => $romanization,
+                    'user_id' => auth()->id() ?? 1,
+                ]
+            );
+        }
+
+        return $lemma;
+    }
+
+    private function findLemmaByDictionaryWord(string $word, ?int $excludeLemmaId = null): ?Lemma
+    {
+        $normalizedWord = $this->defaultNormalizedLemma($word);
+
+        $lemma = Lemma::query()
+            ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
+            ->where(function ($query) use ($word, $normalizedWord) {
+                $query->where('lemma', $word)
+                    ->orWhere('normalized_lemma', $normalizedWord)
+                    ->orWhereRaw($this->normalizedSql('lemma') . ' = ?', [$normalizedWord])
+                    ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalizedWord]);
+            })
+            ->orderByRaw('CASE WHEN lemma = ? THEN 0 ELSE 1 END', [$word])
+            ->first();
+
+        if ($lemma) {
+            return $lemma;
+        }
+
+        return Lemma::query()
+            ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
+            ->whereHas('variants', function ($query) use ($word, $normalizedWord) {
+                $query->where('variant', $word)
+                    ->orWhere('normalized_variant', $normalizedWord)
+                    ->orWhereRaw($this->normalizedSql('variant') . ' = ?', [$normalizedWord])
+                    ->orWhereRaw($this->normalizedSql('normalized_variant') . ' = ?', [$normalizedWord]);
+            })
+            ->first();
+    }
+
+    private function sameSearchValue(mixed $value, string $search): bool
+    {
+        return filled($value) && DictionaryText::normalizeForLookup((string) $value) === DictionaryText::normalizeForLookup($search);
+    }
+
+    private function containsSearchValue(mixed $value, string $search): bool
+    {
+        if (!filled($value) || $search === '') {
+            return false;
+        }
+
+        return str_contains(
+            DictionaryText::normalizeForLookup((string) $value),
+            DictionaryText::normalizeForLookup($search)
+        );
     }
 
     private function normalizedSql(string $column): string

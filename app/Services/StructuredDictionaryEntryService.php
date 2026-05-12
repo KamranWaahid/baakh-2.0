@@ -15,7 +15,7 @@ class StructuredDictionaryEntryService
             'senses.examples',
             'morphology',
             'variants',
-            'lemmaRelations',
+            'lemmaRelations.relatedLemma',
             'inflections',
             'idiomaticExpressions',
         ]);
@@ -102,9 +102,10 @@ class StructuredDictionaryEntryService
         return $relations
             ->where('relation_type', $type)
             ->map(fn (LemmaRelation $relation) => [
-                'word' => $relation->related_word,
-                'romanization' => $relation->romanization,
+                'word' => $this->relationWord($relation),
+                'romanization' => $relation->romanization ?? $relation->relatedLemma?->transliteration,
                 'note' => $relation->note ?? $relation->source,
+                'lemma_id' => $relation->relatedLemma?->public_id,
             ])
             ->values()
             ->all();
@@ -115,13 +116,19 @@ class StructuredDictionaryEntryService
         return $relations
             ->filter(fn (LemmaRelation $relation) => in_array($relation->relation_type, ['related', 'hypernym'], true))
             ->map(fn (LemmaRelation $relation) => [
-                'word' => $relation->related_word,
-                'romanization' => $relation->romanization,
+                'word' => $this->relationWord($relation),
+                'romanization' => $relation->romanization ?? $relation->relatedLemma?->transliteration,
                 'gloss' => $relation->gloss ?? $relation->note,
-                'part_of_speech' => $relation->part_of_speech,
+                'part_of_speech' => $relation->part_of_speech ?? $relation->relatedLemma?->pos,
+                'lemma_id' => $relation->relatedLemma?->public_id,
             ])
             ->values()
             ->all();
+    }
+
+    private function relationWord(LemmaRelation $relation): string
+    {
+        return $relation->relatedLemma?->lemma ?? $relation->related_word;
     }
 
     private function englishIndex(Lemma $lemma, Collection $senses): array

@@ -569,6 +569,165 @@ class DictionaryLemmaDetailTest extends TestCase
             ->assertJsonMissingPath('structured_entry.metadata.urdu');
     }
 
+    public function test_admin_relation_lemma_search_matches_headword_transliteration_and_variants(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            [
+                'id' => 1,
+                'lemma' => 'base-word',
+                'normalized_lemma' => 'base-word',
+                'transliteration' => null,
+                'pos' => 'noun',
+                'frequency' => 0,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'lemma' => 'friend-headword',
+                'normalized_lemma' => 'friend-headword',
+                'transliteration' => 'dost',
+                'pos' => 'noun',
+                'frequency' => 0,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 3,
+                'lemma' => 'canonical-variant-entry',
+                'normalized_lemma' => 'canonical-variant-entry',
+                'transliteration' => null,
+                'pos' => 'adjective',
+                'frequency' => 0,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        DB::table('lemma_variants')->insert([
+            'lemma_id' => 3,
+            'variant' => 'variant-match',
+            'normalized_variant' => 'variant-match',
+            'type' => 'spelling',
+            'romanization' => 'wariyant',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->getJson('/api/admin/dictionary/lemma-search?search=dost&exclude_lemma_id=1')
+            ->assertOk()
+            ->assertJsonPath('0.id', 2)
+            ->assertJsonPath('0.match_type', 'romanization');
+
+        $this->getJson('/api/admin/dictionary/lemma-search?search=variant-match&exclude_lemma_id=1')
+            ->assertOk()
+            ->assertJsonPath('0.id', 3)
+            ->assertJsonPath('0.match_type', 'variant')
+            ->assertJsonPath('0.variants.0.variant', 'variant-match');
+    }
+
+    public function test_admin_can_link_relation_to_existing_lemma(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            [
+                'id' => 1,
+                'lemma' => 'base-word',
+                'normalized_lemma' => 'base-word',
+                'transliteration' => null,
+                'pos' => 'noun',
+                'frequency' => 0,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'lemma' => 'existing-related-word',
+                'normalized_lemma' => 'existing-related-word',
+                'transliteration' => 'existing',
+                'pos' => 'noun',
+                'frequency' => 0,
+                'status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $this->postJson('/api/admin/dictionary/lemmas/1/relations', [
+            'relation_type' => 'synonym',
+            'related_word' => 'typed fallback',
+            'related_lemma_id' => 2,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('related_word', 'existing-related-word')
+            ->assertJsonPath('related_lemma_id', 2)
+            ->assertJsonPath('related_lemma.lemma', 'existing-related-word');
+
+        $this->assertDatabaseHas('lemma_relations', [
+            'lemma_id' => 1,
+            'relation_type' => 'synonym',
+            'related_word' => 'existing-related-word',
+            'related_lemma_id' => 2,
+        ]);
+
+        $this->getJson('/api/admin/dictionary/lemmas/1')
+            ->assertOk()
+            ->assertJsonPath('lemma_relations.0.related_lemma.lemma', 'existing-related-word');
+    }
+
+    public function test_admin_can_create_missing_relation_lemma_once_and_link_it(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            'id' => 1,
+            'lemma' => 'base-word',
+            'normalized_lemma' => 'base-word',
+            'transliteration' => null,
+            'pos' => 'noun',
+            'frequency' => 0,
+            'status' => 'approved',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $first = $this->postJson('/api/admin/dictionary/lemmas/1/relations', [
+            'relation_type' => 'related',
+            'related_word' => 'new-related-word',
+            'romanization' => 'new related',
+            'create_if_missing' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('related_word', 'new-related-word')
+            ->assertJsonPath('related_lemma.lemma', 'new-related-word');
+
+        $createdLemmaId = $first->json('related_lemma_id');
+
+        $this->postJson('/api/admin/dictionary/lemmas/1/relations', [
+            'relation_type' => 'antonym',
+            'related_word' => 'new-related-word',
+            'create_if_missing' => true,
+        ])
+            ->assertCreated()
+            ->assertJsonPath('related_lemma_id', $createdLemmaId);
+
+        $this->assertSame(2, DB::table('lemmas')->count());
+        $this->assertDatabaseHas('lemmas', [
+            'id' => $createdLemmaId,
+            'lemma' => 'new-related-word',
+            'normalized_lemma' => 'new-related-word',
+            'transliteration' => 'new related',
+            'status' => 'pending',
+        ]);
+    }
+
     private function createDictionarySchema(): void
     {
         Schema::dropAllTables();
