@@ -341,17 +341,15 @@ class DictionaryController extends Controller
                 'source' => 'Manual',
                 'is_imported' => false,
             ]))
-            ->values();
+            ->values()
+            ->all();
         $importedVariants = $this->importedVariantsForLemma($lemma);
 
         $payload['source_summary'] = $this->lemmaSourceSummary($lemma, $payload['senses']);
-        $payload['manual_variants_count'] = $manualVariants->count();
+        $payload['manual_variants_count'] = count($manualVariants);
         $payload['imported_variants_count'] = count($importedVariants);
         $payload['imported_variants'] = $importedVariants;
-        $payload['variants'] = $manualVariants
-            ->merge($importedVariants)
-            ->values()
-            ->all();
+        $payload['variants'] = array_values(array_merge($manualVariants, $importedVariants));
         $payload['has_real_morphology'] = $this->hasRealMorphology($lemma);
 
         return $payload;
@@ -364,18 +362,18 @@ class DictionaryController extends Controller
         return [
             'lexical_id' => $sense->lexical_id,
             'entry_id' => $sense->entry_id,
-            'source_word' => $extra['original_word'] ?? $lemma->lemma,
+            'source_word' => $this->metadataString($extra['original_word'] ?? null) ?? $lemma->lemma,
             'source_variant' => $sense->word_variant,
-            'normalized_word' => $extra['original_normalized_word'] ?? $lemma->normalized_lemma,
+            'normalized_word' => $this->metadataString($extra['original_normalized_word'] ?? null) ?? $lemma->normalized_lemma,
             'normalized_definition' => $sense->normalized_definition,
             'part_of_speech' => $sense->part_of_speech,
             'domain' => $sense->domain,
             'language_direction' => $sense->language_direction,
             'language_label' => $this->languageLabel($sense->language_direction),
             'source_dictionary' => $sense->source_dictionary,
-            'publisher' => $extra['publisher'] ?? null,
-            'publisher_url' => $extra['publisher_url'] ?? null,
-            'prepared_by' => $extra['prepared_by'] ?? null,
+            'publisher' => $this->metadataString($extra['publisher'] ?? null),
+            'publisher_url' => $this->metadataString($extra['publisher_url'] ?? null),
+            'prepared_by' => $this->metadataString($extra['prepared_by'] ?? null),
             'source_extra' => $extra['extra'] ?? null,
             'extra' => $extra,
         ];
@@ -471,9 +469,14 @@ class DictionaryController extends Controller
         return $variants;
     }
 
-    private function variantCandidates(?string $value): array
+    private function variantCandidates(mixed $value): array
     {
-        if (!filled($value)) {
+        if (is_array($value)) {
+            return [];
+        }
+
+        $value = $this->metadataString($value);
+        if ($value === null) {
             return [];
         }
 
@@ -500,6 +503,21 @@ class DictionaryController extends Controller
         $decoded = json_decode((string) $extra, true);
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    private function metadataString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_scalar($value) && !$value instanceof \Stringable) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     private function uniqueFilled(array $values): array

@@ -138,6 +138,70 @@ class DictionaryLemmaDetailTest extends TestCase
             ->assertJsonPath('variants.3.variant', 'variant-three');
     }
 
+    public function test_lemma_detail_handles_malformed_imported_metadata_without_500(): void
+    {
+        $this->withoutMiddleware();
+
+        DB::table('lemmas')->insert([
+            'id' => 2974,
+            'lemma' => 'اڙٻنگ-عربي-درآمد',
+            'normalized_lemma' => null,
+            'transliteration' => null,
+            'pos' => null,
+            'frequency' => 0,
+            'status' => 'approved',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('senses')->insert([
+            'id' => 29740,
+            'lexical_id' => 'slx_malformed_2974',
+            'entry_id' => '2974',
+            'lemma_id' => 2974,
+            'definition' => 'عجيب ۽ ڊگهي تعريف جيڪا درآمد ٿيل ماخذ مان آئي.',
+            'definition_en' => null,
+            'definition_sd' => null,
+            'part_of_speech' => null,
+            'word_variant' => 'اڙٻنگ-عربي-درآمد، اڙٻنگ variant يا عربي source',
+            'domain' => 'Arabic → Sindhi',
+            'language_direction' => 'arabic',
+            'source_dictionary' => 'Arabic → Sindhi',
+            'normalized_definition' => null,
+            'extra' => json_encode([
+                'original_word' => [
+                    'raw' => 'اڙٻنگ-عربي-درآمد، خراب شڪل',
+                    'notes' => ['nested metadata should not be treated as a scalar'],
+                ],
+                'original_normalized_word' => ['not', 'a', 'string'],
+                'publisher' => ['unexpected' => 'array'],
+                'extra' => [
+                    'source' => ['nested' => 'object'],
+                    'raw' => 'retained for diagnostics',
+                ],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'status' => 'approved',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->getJson('/api/admin/dictionary/lemmas/2974?lang=sd');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('id', 2974)
+            ->assertJsonPath('source_summary.is_open_lexicon', true)
+            ->assertJsonPath('source_summary.is_source_term', true)
+            ->assertJsonPath('source_summary.primary_language', 'Arabic')
+            ->assertJsonPath('senses.0.source_metadata.source_word', 'اڙٻنگ-عربي-درآمد')
+            ->assertJsonPath('senses.0.source_metadata.publisher', null)
+            ->assertJsonPath('senses.0.source_metadata.source_extra.raw', 'retained for diagnostics')
+            ->assertJsonPath('imported_variants_count', 2)
+            ->assertJsonPath('variants.0.variant', 'اڙٻنگ variant')
+            ->assertJsonPath('variants.1.variant', 'عربي source')
+            ->assertJsonPath('has_real_morphology', false);
+    }
+
     public function test_admin_can_create_sense_for_lemma_route_without_body_lemma_id(): void
     {
         $this->withoutMiddleware();
