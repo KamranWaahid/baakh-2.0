@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,20 +16,32 @@ import {
     Edit2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const LemmaInbox = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [completionStatus, setCompletionStatus] = useState('pending');
+    const queryClient = useQueryClient();
 
     const { data: response, isLoading } = useQuery({
-        queryKey: ['lemmas', search, page],
+        queryKey: ['lemmas', search, page, completionStatus],
         queryFn: async () => {
             const res = await api.get('/api/admin/dictionary/lemmas', {
-                params: { search, page, limit: 10, status: 'pending' }
+                params: { search, page, limit: 10, status: 'all', completion_status: completionStatus }
             });
             return res.data;
         },
         placeholderData: (previousData) => previousData
+    });
+
+    const approveLemma = useMutation({
+        mutationFn: (id) => api.patch(`/api/admin/dictionary/lemmas/${id}/approve`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['lemmas'] });
+            toast.success('Lemma approved.');
+        },
+        onError: () => toast.error('Failed to approve lemma.'),
     });
 
     const lemmas = response?.data || [];
@@ -64,6 +76,23 @@ const LemmaInbox = () => {
                                 }}
                             />
                         </div>
+                        <div className="flex items-center gap-1 rounded-md border p-1">
+                            {['pending', 'complete', 'all'].map((status) => (
+                                <Button
+                                    key={status}
+                                    type="button"
+                                    size="sm"
+                                    variant={completionStatus === status ? 'default' : 'ghost'}
+                                    onClick={() => {
+                                        setCompletionStatus(status);
+                                        setPage(1);
+                                    }}
+                                    className="capitalize"
+                                >
+                                    {status}
+                                </Button>
+                            ))}
+                        </div>
                         {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                     </div>
                 </CardHeader>
@@ -77,6 +106,7 @@ const LemmaInbox = () => {
                                     <TableHead>Senses</TableHead>
                                     <TableHead>Frequency</TableHead>
                                     <TableHead>Status</TableHead>
+                                    <TableHead>Completion</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -98,6 +128,14 @@ const LemmaInbox = () => {
                                                     {lemma.status}
                                                 </Badge>
                                             </TableCell>
+                                            <TableCell>
+                                                <Badge
+                                                    variant={lemma.completion_status === 'complete' ? 'default' : 'outline'}
+                                                    className={lemma.completion_status === 'complete' ? 'bg-green-600 hover:bg-green-600' : 'text-amber-700 border-amber-200 bg-amber-50'}
+                                                >
+                                                    {lemma.completion_status === 'complete' ? 'Complete' : `Pending${lemma.completion_score ? ` · ${lemma.completion_score}%` : ''}`}
+                                                </Badge>
+                                            </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <Button size="sm" variant="outline" asChild>
@@ -105,14 +143,20 @@ const LemmaInbox = () => {
                                                             <Edit2 className="mr-2 h-3 w-3" /> Edit
                                                         </Link>
                                                     </Button>
-                                                    <Button size="sm">Approve</Button>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => approveLemma.mutate(lemma.id)}
+                                                        disabled={approveLemma.isPending}
+                                                    >
+                                                        Approve
+                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : !isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                                             No lemmas found. Start by importing from corpus or adding manually.
                                         </TableCell>
                                     </TableRow>

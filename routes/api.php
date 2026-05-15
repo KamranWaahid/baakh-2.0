@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\MobileGoogleController;
 use App\Http\Controllers\LoginWithGoogleController;
+use App\Support\SafeUserData;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,7 +83,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user()->load('roles');
+    return response()->json(SafeUserData::withRoles($request->user(), '/api/user'));
 });
 
 Route::prefix('v1')->group(function () {
@@ -268,12 +269,21 @@ Route::middleware(['auth:sanctum', 'user_role'])
 
         // Analytics Routes
         Route::get('analytics/frequency', [AnalyticsController::class, 'frequency']);
+        Route::get('analytics/dialect', [AnalyticsController::class, 'dialect']);
+        Route::get('analytics/trends', [AnalyticsController::class, 'trends']);
 
         // Dictionary Routes
     
         Route::get('dictionary/stats', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'stats']);
+        Route::get('dictionary/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'senses']);
+        Route::get('dictionary/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'morphology']);
+        Route::get('dictionary/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'variants']);
+        Route::get('dictionary/qa', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'qa']);
+        Route::get('dictionary/lemma-search', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'lemmaSearch']);
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
+        Route::get('dictionary/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'completion']);
+        Route::patch('dictionary/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateCompletion']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
         Route::put('dictionary/senses/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'updateSense']);
         Route::post('dictionary/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);
@@ -286,6 +296,10 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::delete('dictionary/variants/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyVariant']);
         Route::post('dictionary/lemmas/{id}/relations', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeRelation']);
         Route::delete('dictionary/relations/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyRelation']);
+        Route::post('dictionary/lemmas/{id}/inflections', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeInflection']);
+        Route::delete('dictionary/inflections/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyInflection']);
+        Route::post('dictionary/lemmas/{id}/idiomatic-expressions', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeIdiomaticExpression']);
+        Route::delete('dictionary/idiomatic-expressions/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyIdiomaticExpression']);
     });
 
 // Public Sync Endpoints (Read-only, protected by token)

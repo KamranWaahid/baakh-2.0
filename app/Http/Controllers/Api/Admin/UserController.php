@@ -40,8 +40,7 @@ class UserController extends Controller
         $users = $query->with(['roles', 'teams'])
             ->latest()
             ->paginate(30);
-
-        $users->getCollection()->transform(fn (User $user) => $this->serializeUser($user));
+        $users->getCollection()->transform(fn(User $user) => $this->serializeUser($user));
 
         return response()->json($users);
     }
@@ -98,6 +97,7 @@ class UserController extends Controller
     {
         $payload = SafeUserData::basic($user, '/api/admin/users') ?? [];
 
+        $payload['name_sd'] = $user->name_sd;
         $payload['phone'] = SafeUserData::attribute($user, 'phone', '/api/admin/users');
         $payload['whatsapp'] = SafeUserData::attribute($user, 'whatsapp', '/api/admin/users');
         $payload['roles'] = $user->relationLoaded('roles') ? $user->roles : collect();

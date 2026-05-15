@@ -10,11 +10,12 @@ For cPanel shared hosting, deploy app code outside `public_html` and publish onl
 - `.cpanel.yml` now runs `scripts/cpanel-post-deploy.sh` on every cPanel Git deploy.
 - Deploy script:
   - syncs repository into `APP_PATH` (default: `/home/<user>/baakh_app`),
-  - runs `composer install --no-dev`,
+  - runs `composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader`,
   - runs `npm ci && npm run build` (if npm is available),
   - verifies `public/build/manifest.json` references files that actually exist,
   - caches Laravel config/views/events and creates storage symlink,
-  - syncs `public/` into `PUBLIC_PATH` (default: `/home/<user>/public_html`),
+  - publishes Vite assets with delete limited to `public_html/build`,
+  - publishes other `public/` files without deleting the rest of `public_html`,
   - rewrites `public_html/index.php` so it boots Laravel from `APP_PATH`.
 
 ## One-time cPanel setup
@@ -94,6 +95,69 @@ export PUBLIC_PATH="$HOME/public_html"
 cd /path/to/your/repo/checkout
 bash scripts/cpanel-post-deploy.sh
 ```
+
+### Deploy modes
+
+Use these from the cPanel repository checkout, for example `cd "$HOME/repositories/baakh-2.0"`:
+
+```bash
+export APP_PATH="$HOME/baakh_app"
+export PUBLIC_PATH="$HOME/public_html"
+
+# Full deploy: sync app, run Composer, build assets, publish public files.
+bash scripts/cpanel-post-deploy.sh
+
+# Full deploy without Composer: use only when APP_PATH/vendor is already complete.
+DEPLOY_MODE=no-composer bash scripts/cpanel-post-deploy.sh
+
+# Publish only built Vite assets from the repo checkout; does not touch public_html/index.php.
+DEPLOY_MODE=assets-only bash scripts/cpanel-post-deploy.sh
+
+# Publish public files from APP_PATH/public and rewrite public_html/index.php.
+DEPLOY_MODE=public-only bash scripts/cpanel-post-deploy.sh
+```
+
+Do not run `rsync -a --delete public/ "$HOME/public_html/"` manually. It can overwrite the cPanel-adjusted `public_html/index.php` with the raw repo version and delete unrelated files in `public_html`.
+
+## Recovering a production 500 after a raw public sync
+
+If assets return `200` but `/` returns `500` after copying raw `public/`, first restore `public_html/index.php` so it points at a bootable Laravel app. The raw repo `public/index.php` expects `../vendor/autoload.php` relative to `public_html`, which is wrong on cPanel when the app lives elsewhere.
+
+### Quick recovery: boot from the cPanel repo checkout
+
+Use this if `php artisan` works in `$HOME/repositories/baakh-2.0` and that checkout has a usable `vendor/` directory:
+
+```bash
+export APP_PATH="$HOME/repositories/baakh-2.0"
+export PUBLIC_PATH="$HOME/public_html"
+cd "$APP_PATH"
+DEPLOY_MODE=public-only bash scripts/cpanel-post-deploy.sh
+```
+
+After this, `public_html/index.php` should contain absolute paths like:
+
+```php
+require '/home/YOUR_CPANEL_USER/repositories/baakh-2.0/vendor/autoload.php';
+$app = require_once '/home/YOUR_CPANEL_USER/repositories/baakh-2.0/bootstrap/app.php';
+```
+
+### Preferred repair: restore APP_PATH vendor and boot from baakh_app
+
+Use this when Composer OOM left `$HOME/baakh_app/vendor` incomplete, but the repository checkout has working dependencies:
+
+```bash
+export REPO_PATH="$HOME/repositories/baakh-2.0"
+export APP_PATH="$HOME/baakh_app"
+export PUBLIC_PATH="$HOME/public_html"
+
+mkdir -p "$APP_PATH/vendor"
+rsync -a "$REPO_PATH/vendor/" "$APP_PATH/vendor/"
+
+cd "$REPO_PATH"
+DEPLOY_MODE=no-composer bash scripts/cpanel-post-deploy.sh
+```
+
+If you must retry Composer on cPanel, the deploy script already uses low-noise production flags and sets `COMPOSER_MEMORY_LIMIT=-1`. That bypasses PHP's memory limit, but it cannot bypass the hosting account's OS memory cap; if `mmap() failed: [12] Cannot allocate memory` continues, copy a complete `vendor/` from a machine or checkout where Composer succeeds and use `DEPLOY_MODE=no-composer`.
 
 ## If npm is unavailable on host
 

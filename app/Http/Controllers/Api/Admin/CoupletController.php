@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Couplets;
+use App\Support\SafeUserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -21,9 +22,13 @@ class CoupletController extends Controller
         $query->where('lang', 'sd')
             ->addSelect([
                 'has_roman' => function ($q) {
+                    $romanSlugExpression = DB::connection()->getDriverName() === 'sqlite'
+                        ? "poetry_couplets.couplet_slug || '-roman'"
+                        : "CONCAT(poetry_couplets.couplet_slug, '-roman')";
+
                     $q->selectRaw('count(*)')
                         ->from('poetry_couplets as pc')
-                        ->whereColumn('pc.couplet_slug', DB::raw("CONCAT(poetry_couplets.couplet_slug, '-roman')"))
+                        ->whereColumn('pc.couplet_slug', DB::raw($romanSlugExpression))
                         ->where('pc.lang', 'en')
                         ->limit(1);
                 }
@@ -61,7 +66,30 @@ class CoupletController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $couplets = $query->orderBy('id', 'desc')->paginate($perPage);
+        $couplets->getCollection()->transform(function (Couplets $item) {
+            return $this->serializeIndexItem($item);
+        });
+
         return response()->json($couplets);
+    }
+
+    private function serializeIndexItem(Couplets $couplet): array
+    {
+        $poetryUser = null;
+
+        if ($couplet->relationLoaded('poetry') && $couplet->poetry) {
+            $poetry = $couplet->poetry;
+            $poetryUser = $poetry->relationLoaded('user') ? $poetry->getRelation('user') : null;
+            $poetry->unsetRelation('user');
+        }
+
+        $data = $couplet->toArray();
+
+        if (isset($data['poetry'])) {
+            $data['poetry']['user'] = SafeUserData::basic($poetryUser, '/api/admin/couplets');
+        }
+
+        return $data;
     }
 
     public function show($id)

@@ -2,11 +2,27 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 
 class SenseExample extends Model
 {
-    protected $fillable = ['sense_id', 'sentence', 'source', 'corpus_sentence_id'];
+    use HasPublicId;
+
+    protected string $publicIdPrefix = 'ex';
+
+    protected $fillable = [
+        'public_id',
+        'sense_id',
+        'sentence',
+        'romanization',
+        'translation',
+        'source',
+        'citation',
+        'quality_flag',
+        'review_status',
+        'corpus_sentence_id',
+    ];
 
     public function sense()
     {

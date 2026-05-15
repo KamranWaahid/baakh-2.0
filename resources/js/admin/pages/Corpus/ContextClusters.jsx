@@ -4,7 +4,7 @@ import api from '@/admin/api/axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Layers, Search, Filter, Share2, Info, Loader2 } from 'lucide-react';
+import { Share2, Info, Loader2 } from 'lucide-react';
 
 const ContextClusters = () => {
     const { data: clusters, isLoading } = useQuery({
@@ -35,21 +35,28 @@ const ContextClusters = () => {
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm font-medium flex justify-between items-center">
                                     {cluster.name} Context
-                                    <Badge variant="secondary">{cluster.weight}% weight</Badge>
+                                    <Badge variant="secondary">{cluster.weight}% · {cluster.count?.toLocaleString()} rows</Badge>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="text-xs text-muted-foreground flex flex-wrap gap-2">
-                                    {cluster.keywords.map((kw) => (
+                                    {(cluster.keywords || []).map((kw) => (
                                         <Badge key={kw} variant="outline" className="group-hover:bg-primary/5">{kw}</Badge>
                                     ))}
                                 </div>
-                                <div className={`h-24 bg-${cluster.color}-50/50 rounded flex items-center justify-center text-xs italic border border-${cluster.color}-100`}>
-                                    Vector visualization for {cluster.name}
+                                <div className="h-24 bg-muted/40 rounded flex items-center justify-center text-xs italic border text-center px-4">
+                                    Derived from {cluster.source === 'corpus_sentences' ? 'corpus sentences' : 'lexicon senses'}
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
+                    {(!clusters || clusters.length === 0) && (
+                        <Card className="lg:col-span-3">
+                            <CardContent className="py-16 text-center text-muted-foreground">
+                                No corpus or lexicon context data is available yet.
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             )}
 
@@ -59,8 +66,8 @@ const ContextClusters = () => {
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">
-                        Context clusters are automatically generated using word embedding models (Word2Vec/FastText) trained on the Baakh corpus.
-                        They help editors understand how a lemma is used across different domains and identify sense disambiguation patterns.
+                        These clusters are aggregate editorial groupings. When corpus sentences exist, they use corpus category/source counts;
+                        otherwise they fall back to Open Lexicon domains and source dictionaries.
                     </p>
                 </CardContent>
             </Card>

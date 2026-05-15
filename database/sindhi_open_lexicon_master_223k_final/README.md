@@ -20,6 +20,7 @@ It contains lexical entries from multiple Sindhi dictionary and terminology sour
 ```text
 data/sindhi_open_lexicon_master_223342.csv
 data/sindhi_open_lexicon_master_223342.jsonl
+data/sindhi_open_lexicon_master_223342.jsonl.gz
 sqlite/sindhi_open_lexicon_master_223342.sqlite
 metadata/stats.json
 metadata/sources.json
@@ -27,6 +28,11 @@ LICENSE.txt
 README.md
 ```
 
+This repository stores the full JSONL dataset compressed as `.jsonl.gz` so it stays below GitHub file-size limits. The Laravel importer reads this file directly. If you keep an uncompressed JSONL elsewhere, pass it explicitly:
+
+```bash
+php artisan dictionary:import-open-lexicon --path=/absolute/path/to/sindhi_open_lexicon_master_223342.jsonl
+```
 ## Main Fields
 
 - `lexical_id` — stable generated ID

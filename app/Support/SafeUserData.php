@@ -39,6 +39,7 @@ class SafeUserData
             return $raw;
         }
 
+        // Never return an encrypted blob when the app key cannot decrypt it.
         if (Str::startsWith($raw, 'eyJpdiI6')) {
             return null;
         }
@@ -83,6 +84,48 @@ class SafeUserData
                 'error' => $e->getMessage(),
             ]);
             $payload['roles'] = collect();
+        }
+
+        return $payload;
+    }
+    public static function fullAuth(?User $user, ?string $context = null): ?array
+    {
+        $payload = self::withRoles($user, $context);
+        if (!$payload || !$user) {
+            return $payload;
+        }
+
+        try {
+            $payload['permissions'] = $user->getAllPermissions()->pluck('name');
+        } catch (\Throwable $e) {
+            Log::warning('Failed loading user permissions for API response', [
+                'user_id' => $user->id ?? null,
+                'context' => $context,
+                'error' => $e->getMessage(),
+            ]);
+            $payload['permissions'] = collect();
+        }
+
+        try {
+            $payload['teams'] = $user->teams;
+        } catch (\Throwable $e) {
+            Log::warning('Failed loading user teams for API response', [
+                'user_id' => $user->id ?? null,
+                'context' => $context,
+                'error' => $e->getMessage(),
+            ]);
+            $payload['teams'] = [];
+        }
+
+        try {
+            $payload['owned_teams'] = $user->ownedTeams;
+        } catch (\Throwable $e) {
+            Log::warning('Failed loading owned teams for API response', [
+                'user_id' => $user->id ?? null,
+                'context' => $context,
+                'error' => $e->getMessage(),
+            ]);
+            $payload['owned_teams'] = [];
         }
 
         return $payload;
