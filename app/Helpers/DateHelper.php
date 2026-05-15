@@ -19,6 +19,9 @@ function sindhi_date($format, $timestamp = null) {
     return $formattedDate;
 }
 
- 
+function format_iso8601(?\DateTimeInterface $date): ?string
+{
+    return $date?->format(\DateTimeInterface::ATOM);
+}
 
 ?>

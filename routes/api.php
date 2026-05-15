@@ -270,6 +270,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
 
         // Dictionary Routes
     
+        Route::get('dictionary/stats', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'stats']);
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::post('dictionary/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeSense']);

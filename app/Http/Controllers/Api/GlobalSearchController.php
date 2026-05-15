@@ -41,7 +41,7 @@ class GlobalSearchController extends Controller
             ]);
         }
 
-        $lang = $request->header('Accept-Language', 'en');
+        $lang = resolve_request_locale($request->header('Accept-Language'), 'en');
         $driver = config('scout.driver');
         Log::info("GlobalSearch: query='{$query}', lang='{$lang}', driver='{$driver}'");
 

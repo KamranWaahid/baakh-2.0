@@ -20,3 +20,7 @@ yarn-error.log
 
 # macOS
 .DS_Store
+
+# Open Lexicon full dumps (use import command locally)
+/database/sindhi_open_lexicon_master_223k_final/data/sindhi_open_lexicon_master_223342.csv
+/database/sindhi_open_lexicon_master_223k_final/data/sindhi_open_lexicon_master_223342.jsonl

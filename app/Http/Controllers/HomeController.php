@@ -571,8 +571,8 @@ class HomeController extends UserController
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
                 'author_avatar' => $this->resolvePoetAvatar($p->poet?->poet_pic),
                 'cover' => $p->media->first()?->media_url,
-                'date' => $p->created_at->toIso8601String(),
-                'date_human' => $p->created_at->diffForHumans(),
+                'date' => format_iso8601($p->created_at),
+                'date_human' => $p->created_at?->diffForHumans(),
                 'readTime' => '5 min read', // Mock for now
                 'category' => $p->category_detail?->cat_name ?? $p->category?->slug ?? 'General',
                 'cat_slug' => $p->category?->slug,

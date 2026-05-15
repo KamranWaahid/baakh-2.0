@@ -26,7 +26,7 @@ class ExploreTopicController extends Controller
      */
     public function index(Request $request)
     {
-        $lang = $this->resolveLang($request->header('Accept-Language', 'sd'));
+        $lang = resolve_request_locale($request->header('Accept-Language'), 'sd');
 
         $cached = $this->cache->get("explore_topics_with_content_{$lang}");
         if ($cached) {
@@ -155,9 +155,4 @@ class ExploreTopicController extends Controller
             ->values();
     }
 
-    private function resolveLang(?string $rawLang): string
-    {
-        $lang = strtolower((string) $rawLang);
-        return str_starts_with($lang, 'en') ? 'en' : 'sd';
-    }
 }

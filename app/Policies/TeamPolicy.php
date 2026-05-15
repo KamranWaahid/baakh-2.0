@@ -4,49 +4,33 @@ namespace App\Policies;
 
 use App\Models\Team;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 
 class TeamPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('view_team');
+        return $this->userCan($user, 'assign_roles')
+            || $this->userCan($user, 'view_team');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Team $team): bool
     {
-        if ($user->hasPermissionTo('view_team')) {
+        if ($this->userCan($user, 'view_team')) {
             return true;
         }
 
-        return $team->members()
-            ->where('user_id', $user->id)
-            ->exists();
+        return $this->isTeamMember($user, $team);
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return true;
+        return $this->userCan($user, 'assign_roles');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Team $team): bool
     {
-        if ($user->hasPermissionTo('manage_settings')) {
+        if ($this->userCan($user, 'manage_settings') || $this->userCan($user, 'view_team')) {
             return true;
         }
 
@@ -56,40 +40,28 @@ class TeamPolicy
             ->exists();
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Team $team): bool
     {
-        if ($user->hasPermissionTo('manage_settings')) {
+        if ($this->userCan($user, 'manage_settings') || $this->userCan($user, 'view_team')) {
             return true;
         }
 
-        return $team->owner_id === $user->id; // Only owner can delete team
+        return (int) $team->owner_id === (int) $user->id;
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Team $team): bool
     {
-        return $user->hasPermissionTo('manage_settings');
+        return $this->userCan($user, 'manage_settings');
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Team $team): bool
     {
-        return $user->hasPermissionTo('manage_settings');
+        return $this->userCan($user, 'manage_settings');
     }
 
-    /**
-     * Determine whether the user can add members to the team.
-     */
     public function addMember(User $user, Team $team): bool
     {
-        if ($user->hasPermissionTo('manage_team_members')) {
+        if ($this->userCan($user, 'manage_team_members') || $this->userCan($user, 'view_team')) {
             return true;
         }
 
@@ -99,18 +71,24 @@ class TeamPolicy
             ->exists();
     }
 
-    /**
-     * Determine whether the user can remove members from the team.
-     */
     public function removeMember(User $user, Team $team): bool
     {
-        if ($user->hasPermissionTo('manage_team_members')) {
-            return true;
-        }
+        return $this->addMember($user, $team);
+    }
 
+    private function isTeamMember(User $user, Team $team): bool
+    {
         return $team->members()
             ->where('user_id', $user->id)
-            ->whereIn('role', ['owner', 'admin'])
             ->exists();
+    }
+
+    private function userCan(User $user, string $permission): bool
+    {
+        try {
+            return $user->hasPermissionTo($permission);
+        } catch (PermissionDoesNotExist) {
+            return false;
+        }
     }
 }

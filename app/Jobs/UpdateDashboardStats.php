@@ -209,7 +209,7 @@ class UpdateDashboardStats implements ShouldQueue
             'missing_en_couplets' => $missingEnCouplets,
             'missing_tags_couplets' => $missingTagsCouplets,
             'orthography_issues' => array_slice($orthographyIssues, 0, 10),
-            'last_updated' => now()->toIso8601String()
+            'last_updated' => format_iso8601(now())
         ];
 
         Cache::put('admin_dashboard_stats', $data, now()->addHours(2));

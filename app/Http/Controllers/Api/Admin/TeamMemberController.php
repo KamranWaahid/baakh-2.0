@@ -6,51 +6,52 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\SafeUserData;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class TeamMemberController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Team $team)
     {
         $this->authorize('view', $team);
 
         $members = $team->members()->with('user')->get();
 
-        return response()->json($members);
+        return response()->json(
+            $members->map(fn ($member) => $this->serializeMember($member))
+        );
     }
 
-    /**
-     * Add a member to the team.
-     */
     public function store(Request $request, Team $team)
     {
         $this->authorize('addMember', $team);
 
         $request->validate([
             'email' => 'required|email',
-            'role' => 'required|string|in:member,admin,owner', // Team Role
-            // Conditional validation for new users
+            'role' => 'required|string|in:member,admin,owner',
             'name' => 'nullable|string|max:255',
             'name_sd' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255|unique:users,username',
             'phone' => 'nullable|string|max:20',
             'whatsapp' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8',
-            'system_role' => 'nullable|string|exists:roles,name', // System Role
+            'system_role' => 'nullable|string|exists:roles,name',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::findByEmail($request->email);
 
         if (!$user) {
-            // Create new user if not found
             if (!$request->name || !$request->password || !$request->username) {
                 throw ValidationException::withMessages([
                     'email' => 'User not found. Please provide Name, Username, and Password to create a new account.',
+                ]);
+            }
+
+            if (User::findByEmail($request->email)) {
+                throw ValidationException::withMessages([
+                    'email' => ['The email is already in use.'],
                 ]);
             }
 
@@ -61,7 +62,7 @@ class TeamMemberController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'whatsapp' => $request->whatsapp,
-                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'password' => Hash::make($request->password),
                 'status' => 'active',
             ]);
 
@@ -69,7 +70,12 @@ class TeamMemberController extends Controller
                 $user->assignRole($request->system_role);
             }
 
-            ActivityLog::log('created_user', $request->user(), null, 'Created new user ' . $user->email . ' while adding to team');
+            ActivityLog::log(
+                'created_user',
+                $request->user(),
+                null,
+                'Created new user ' . $request->email . ' while adding to team'
+            );
         }
 
         if ($team->members()->where('user_id', $user->id)->exists()) {
@@ -78,50 +84,59 @@ class TeamMemberController extends Controller
             ]);
         }
 
-        $team->members()->create([
+        $member = $team->members()->create([
             'user_id' => $user->id,
             'role' => $request->role,
         ]);
 
-        ActivityLog::log('added_team_member', $request->user(), $team, "Added member {$user->name} as {$request->role}");
+        ActivityLog::log(
+            'added_team_member',
+            $request->user(),
+            $team,
+            'Added member ' . (SafeUserData::attribute($user, 'name', '/api/admin/teams/members') ?? $request->email) . ' as ' . $request->role
+        );
 
         return response()->json([
             'message' => 'Member added successfully',
-            'member' => $team->members()->where('user_id', $user->id)->with('user')->first(),
+            'member' => $this->serializeMember($member->load('user')),
         ]);
     }
 
-    /**
-     * Update member role.
-     */
     public function update(Request $request, Team $team, $userId)
     {
-        $this->authorize('update', $team); // Or specific permission
+        $this->authorize('addMember', $team);
 
         $request->validate([
-            'role' => 'required|string',
+            'role' => 'required|string|in:member,admin,owner',
         ]);
 
         $member = $team->members()->where('user_id', $userId)->firstOrFail();
+
+        if ((int) $team->owner_id === (int) $userId && $request->role !== 'owner') {
+            return response()->json(['message' => 'Cannot change the team owner role.'], 403);
+        }
+
         $member->update(['role' => $request->role]);
 
         $targetUser = User::find($userId);
-        ActivityLog::log('updated_team_member_role', $request->user(), $team, "Updated role for {$targetUser->name} to {$request->role}");
+        ActivityLog::log(
+            'updated_team_member_role',
+            $request->user(),
+            $team,
+            'Updated role for ' . (SafeUserData::attribute($targetUser, 'name', '/api/admin/teams/members') ?? 'user #' . $userId) . ' to ' . $request->role
+        );
 
         return response()->json([
             'message' => 'Member role updated successfully',
-            'member' => $member->load('user'),
+            'member' => $this->serializeMember($member->load('user')),
         ]);
     }
 
-    /**
-     * Remove member from team.
-     */
     public function destroy(Team $team, $userId)
     {
         $this->authorize('removeMember', $team);
 
-        if ($team->owner_id == $userId) {
+        if ((int) $team->owner_id === (int) $userId) {
             return response()->json(['message' => 'Cannot remove team owner'], 403);
         }
 
@@ -129,10 +144,29 @@ class TeamMemberController extends Controller
         $member->delete();
 
         $targetUser = User::find($userId);
-        ActivityLog::log('removed_team_member', request()->user(), $team, "Removed member {$targetUser->name}");
+        ActivityLog::log(
+            'removed_team_member',
+            request()->user(),
+            $team,
+            'Removed member ' . (SafeUserData::attribute($targetUser, 'name', '/api/admin/teams/members') ?? 'user #' . $userId)
+        );
 
         return response()->json([
             'message' => 'Member removed successfully',
         ]);
+    }
+
+    private function serializeMember($member): array
+    {
+        return [
+            'id' => $member->id,
+            'team_id' => $member->team_id,
+            'user_id' => $member->user_id,
+            'role' => $member->role,
+            'joined_at' => $member->joined_at,
+            'created_at' => $member->created_at,
+            'updated_at' => $member->updated_at,
+            'user' => SafeUserData::basic($member->user, '/api/admin/teams/members'),
+        ];
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Casts\GracefulEncrypted;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
@@ -80,10 +81,10 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'password' => 'hashed',
-        'phone' => 'encrypted',
-        'whatsapp' => 'encrypted',
-        'name' => 'encrypted',
-        'email' => 'encrypted',
+        'phone' => GracefulEncrypted::class,
+        'whatsapp' => GracefulEncrypted::class,
+        'name' => GracefulEncrypted::class,
+        'email' => GracefulEncrypted::class,
     ];
 
     public function likesDislikes()

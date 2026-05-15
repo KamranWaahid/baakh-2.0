@@ -36,8 +36,8 @@ const DictionaryHome = () => {
     const { data: stats } = useQuery({
         queryKey: ['dictionary-stats'],
         queryFn: async () => {
-            const res = await api.get('/api/admin/dictionary/lemmas', { params: { limit: 1 } });
-            return { total: res.data.total };
+            const res = await api.get('/api/admin/dictionary/stats');
+            return res.data;
         }
     });
 
@@ -73,6 +73,7 @@ const DictionaryHome = () => {
 
     const lemmas = response?.data || [];
     const meta = response || {};
+    const topSource = stats?.sources?.[0];
 
     return (
         <div className="space-y-6">
@@ -81,7 +82,7 @@ const DictionaryHome = () => {
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Dictionary</h2>
                     <p className="text-muted-foreground mt-1">
-                        Sindhi WordNet — {stats?.total?.toLocaleString() || '—'} words
+                        Sindhi Open Lexicon — {stats?.open_lexicon_entries?.toLocaleString() || '—'} entries
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -96,10 +97,10 @@ const DictionaryHome = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={Book} label="Total Words" value={stats?.total?.toLocaleString() || '—'} />
-                <StatCard icon={Layers} label="With Meanings" value="—" sub="Senses" />
-                <StatCard icon={ArrowRightLeft} label="Relations" value="48,914" sub="Syn/Ant/Hyp" />
-                <StatCard icon={Type} label="Morphologies" value={stats?.total?.toLocaleString() || '—'} />
+                <StatCard icon={Book} label="Open Lexicon Entries" value={stats?.open_lexicon_entries?.toLocaleString() || '—'} />
+                <StatCard icon={Layers} label="Approved Lemmas" value={stats?.approved_lemmas?.toLocaleString() || '—'} />
+                <StatCard icon={ArrowRightLeft} label="Definitions" value={stats?.total_senses?.toLocaleString() || '—'} sub="Senses" />
+                <StatCard icon={Type} label="Top Source" value={topSource?.total?.toLocaleString() || '—'} sub={topSource?.source_dictionary || 'Source'} />
             </div>
 
             {/* Tabs */}
@@ -117,7 +118,7 @@ const DictionaryHome = () => {
                                 <div className="relative flex-1 max-w-md">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search words..."
+                                        placeholder="Search words, definitions, sources, lexical IDs..."
                                         className="pl-8"
                                         value={search}
                                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -134,64 +135,79 @@ const DictionaryHome = () => {
                                             <TableHead className="w-[60px]">ID</TableHead>
                                             <TableHead>Word</TableHead>
                                             <TableHead>POS</TableHead>
-                                            <TableHead>Gender</TableHead>
-                                            <TableHead>Number</TableHead>
-                                            <TableHead>Relations</TableHead>
+                                            <TableHead>Definition</TableHead>
+                                            <TableHead>Source</TableHead>
+                                            <TableHead>Senses</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {lemmas.length > 0 ? (
-                                            lemmas.map((lemma) => (
-                                                <TableRow key={lemma.id}>
-                                                    <TableCell className="text-muted-foreground text-xs">{lemma.id}</TableCell>
-                                                    <TableCell className="font-arabic text-lg font-semibold">{lemma.lemma}</TableCell>
-                                                    <TableCell>
-                                                        {lemma.pos ? <Badge variant="secondary">{lemma.pos}</Badge> : <span className="text-muted-foreground">—</span>}
-                                                    </TableCell>
-                                                    <TableCell className="text-sm text-muted-foreground">
-                                                        {lemma.morphology?.gender || '—'}
-                                                    </TableCell>
-                                                    <TableCell className="text-sm text-muted-foreground">
-                                                        {lemma.morphology?.number || '—'}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex gap-1">
-                                                            {lemma.lemma_relations_count > 0 && (
-                                                                <Badge variant="outline" className="text-xs">
-                                                                    {lemma.lemma_relations_count} rel
-                                                                </Badge>
+                                            lemmas.map((lemma) => {
+                                                const firstSense = lemma.senses?.[0];
+                                                const pos = lemma.pos || firstSense?.part_of_speech;
+
+                                                return (
+                                                    <TableRow key={lemma.id}>
+                                                        <TableCell className="text-muted-foreground text-xs">{lemma.id}</TableCell>
+                                                        <TableCell>
+                                                            <div className="font-arabic text-lg font-semibold" dir="rtl">{lemma.lemma}</div>
+                                                            {firstSense?.word_variant && (
+                                                                <div className="text-xs text-muted-foreground font-arabic" dir="rtl">{firstSense.word_variant}</div>
                                                             )}
-                                                            {lemma.senses_count > 0 && (
-                                                                <Badge variant="outline" className="text-xs">
-                                                                    {lemma.senses_count} def
-                                                                </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {pos ? <Badge variant="secondary">{pos}</Badge> : <span className="text-muted-foreground">—</span>}
+                                                        </TableCell>
+                                                        <TableCell className="max-w-lg">
+                                                            <p className="line-clamp-2 text-sm font-arabic" dir="auto">
+                                                                {firstSense?.definition || '—'}
+                                                            </p>
+                                                            {firstSense?.lexical_id && (
+                                                                <p className="mt-1 text-xs text-muted-foreground">{firstSense.lexical_id}</p>
                                                             )}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={
-                                                            lemma.status === 'approved' ? 'default' :
-                                                                lemma.status === 'rejected' ? 'destructive' : 'outline'
-                                                        }>
-                                                            {lemma.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-right">
-                                                        <div className="flex justify-end gap-1">
-                                                            <Button size="sm" variant="ghost" onClick={() => setViewingLemmaId(lemma.id)}>
-                                                                <Eye className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                            <Button size="sm" variant="ghost" asChild>
-                                                                <Link to={`/admin/dictionary/lemmas/${lemma.id}`}>
-                                                                    <Edit2 className="h-3.5 w-3.5" />
-                                                                </Link>
-                                                            </Button>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
+                                                        </TableCell>
+                                                        <TableCell className="text-sm text-muted-foreground">
+                                                            {firstSense?.source_dictionary || firstSense?.domain || '—'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex gap-1">
+                                                                {lemma.senses_count > 0 && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        {lemma.senses_count} def
+                                                                    </Badge>
+                                                                )}
+                                                                {lemma.lemma_relations_count > 0 && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        {lemma.lemma_relations_count} rel
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={
+                                                                lemma.status === 'approved' ? 'default' :
+                                                                    lemma.status === 'rejected' ? 'destructive' : 'outline'
+                                                            }>
+                                                                {lemma.status}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <div className="flex justify-end gap-1">
+                                                                <Button size="sm" variant="ghost" onClick={() => setViewingLemmaId(lemma.id)}>
+                                                                    <Eye className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                                <Button size="sm" variant="ghost" asChild>
+                                                                    <Link to={`/admin/dictionary/lemmas/${lemma.id}`}>
+                                                                        <Edit2 className="h-3.5 w-3.5" />
+                                                                    </Link>
+                                                                </Button>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })
                                         ) : !isLoading ? (
                                             <TableRow>
                                                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">

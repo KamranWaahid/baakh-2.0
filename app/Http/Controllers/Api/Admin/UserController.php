@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\SafeUserData;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
@@ -38,7 +39,9 @@ class UserController extends Controller
 
         $users = $query->with(['roles', 'teams'])
             ->latest()
-            ->paginate(30); // Increased pagination for better management
+            ->paginate(30);
+
+        $users->getCollection()->transform(fn (User $user) => $this->serializeUser($user));
 
         return response()->json($users);
     }
@@ -48,7 +51,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return response()->json($user->load('roles'));
+        return response()->json($this->serializeUser($user->load(['roles', 'teams'])));
     }
 
     /**
@@ -87,8 +90,20 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user->load('roles'),
+            'user' => $this->serializeUser($user->load(['roles', 'teams'])),
         ]);
+    }
+
+    private function serializeUser(User $user): array
+    {
+        $payload = SafeUserData::basic($user, '/api/admin/users') ?? [];
+
+        $payload['phone'] = SafeUserData::attribute($user, 'phone', '/api/admin/users');
+        $payload['whatsapp'] = SafeUserData::attribute($user, 'whatsapp', '/api/admin/users');
+        $payload['roles'] = $user->relationLoaded('roles') ? $user->roles : collect();
+        $payload['teams'] = $user->relationLoaded('teams') ? $user->teams : collect();
+
+        return $payload;
     }
 
     /**

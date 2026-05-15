@@ -1,0 +1,24 @@
+{
+  "dataset_name": "Sindhi Open Lexicon Master Dataset",
+  "version": "1.0",
+  "generated_on": "2026-05-05 22:56:15 PKT",
+  "total_entries": 223342,
+  "pure_sindhi_words": 80588,
+  "mewaram_entries": 29514,
+  "source_counts": {
+    "جامع سنڌي لغات": 80588,
+    "Official Terms": 37599,
+    "Mewaram لغت": 29514,
+    "English → Sindhi": 21726,
+    "Devanagari/Sindhi → English": 16519,
+    "Hindi → Sindhi": 15300,
+    "Trade & Commerce": 7998,
+    "Haematology": 5158,
+    "Arabic → Sindhi": 4566,
+    "Print Technology": 4374
+  },
+  "publisher": "SindhiLanguage.org",
+  "publisher_url": "https://sindhilanguage.org/",
+  "prepared_by": "Amar Fayaz Buriro (امر فياض ٻرڙو)",
+  "recommended_citation": "Sindhi Open Lexicon Master Dataset, published at SindhiLanguage.org, prepared and curated by Amar Fayaz Buriro (امر فياض ٻرڙو)."
+}

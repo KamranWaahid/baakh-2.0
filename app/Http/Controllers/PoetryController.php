@@ -132,7 +132,7 @@ class PoetryController extends UserController
      */
     public function apiShow(Request $request, $slug)
     {
-        $locale = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        $locale = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
 
         $cache = app(StaticCacheService::class);
         $cacheKey = "poetry_detail_{$slug}_{$locale}";
