@@ -8,6 +8,7 @@ use App\Models\PoetBookPage;
 use App\Models\Poetry;
 use App\Models\Couplets;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PoetBookPageController extends Controller
 {
@@ -73,6 +74,37 @@ class PoetBookPageController extends Controller
         }
 
         return response()->json(['message' => 'Pages updated successfully']);
+    }
+
+    /**
+     * Save multiple pages with per-row field values (modal Save action).
+     */
+    public function bulkSave(Request $request, $bookId)
+    {
+        $validated = $request->validate([
+            'pages' => 'required|array|min:1',
+            'pages.*.id' => 'required|integer|exists:poet_book_pages,id',
+            'pages.*.title' => 'nullable|string|max:255',
+            'pages.*.type' => 'required|string|in:poetry,information,cover,preface,blank',
+            'pages.*.is_completed' => 'required|boolean',
+        ]);
+
+        DB::transaction(function () use ($validated, $bookId) {
+            foreach ($validated['pages'] as $pageData) {
+                PoetBookPage::where('book_id', $bookId)
+                    ->where('id', $pageData['id'])
+                    ->update([
+                        'title' => $pageData['title'],
+                        'type' => $pageData['type'],
+                        'is_completed' => $pageData['is_completed'],
+                    ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'Pages saved successfully',
+            'count' => count($validated['pages']),
+        ]);
     }
 
     /**

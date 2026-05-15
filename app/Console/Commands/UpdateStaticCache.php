@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\PoetImageUrl;
 use Illuminate\Console\Command;
 use App\Services\StaticCacheService;
 use App\Models\Poetry;
@@ -144,7 +145,7 @@ class UpdateStaticCache extends Command
                 'title' => $p->info?->title ?? $p->poetry_title,
                 'slug' => $p->poetry_slug,
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
-                'author_avatar' => $p->poet?->poet_pic,
+                'author_avatar' => PoetImageUrl::resolve($p->poet?->poet_pic),
                 'cover' => $p->media->first()?->media_url,
                 'date' => format_iso8601($p->created_at),
                 'date_human' => $p->created_at?->diffForHumans(),
@@ -175,7 +176,7 @@ class UpdateStaticCache extends Command
             return [
                 'id' => $poet->id,
                 'slug' => $poet->poet_slug,
-                'avatar' => $poet->poet_pic ?: null,
+                'avatar' => PoetImageUrl::resolve($poet->poet_pic),
                 'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
                 'bio_en' => \Illuminate\Support\Str::limit(strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''), 150),
                 'name_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
@@ -192,7 +193,7 @@ class UpdateStaticCache extends Command
 
     protected function updateCoupletsListCache($locale)
     {
-        $query = \App\Models\Couplets::whereHas('poet', function ($q) {
+        $query = Couplets::whereHas('poet', function ($q) {
             $q->where('visibility', 1);
         })
             ->with([
@@ -216,7 +217,7 @@ class UpdateStaticCache extends Command
                 'poet_slug' => $c->poet->poet_slug,
                 'cat_slug' => 'couplets',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => $c->poet->poet_pic,
+                'author_avatar' => PoetImageUrl::resolve($c->poet->poet_pic),
                 'date' => format_iso8601($c->created_at),
                 'date_human' => $c->created_at?->diffForHumans(),
                 'is_couplet' => true,
@@ -443,7 +444,7 @@ class UpdateStaticCache extends Command
                 'tagline' => $p->poet_details->tagline ?? '',
                 'bio' => strip_tags($p->poet_details->poet_bio ?? ''),
                 'slug' => $p->poet->poet_slug ?? '',
-                'avatar' => ($p->poet->poet_pic) ? (str_starts_with($p->poet->poet_pic, 'http') ? $p->poet->poet_pic : '/' . $p->poet->poet_pic) : null,
+                'avatar' => PoetImageUrl::resolve($p->poet->poet_pic ?? null),
                 'followers' => '2.3K',
             ],
 
@@ -490,14 +491,14 @@ class UpdateStaticCache extends Command
                 'name_en' => $dEn->poet_laqab ?? $dEn->poet_name ?? $dSd->poet_laqab ?? $dSd->poet_name ?? 'N/A',
                 'name_sd' => $dSd->poet_laqab ?? $dSd->poet_name ?? $dEn->poet_laqab ?? $dEn->poet_name ?? 'N/A',
                 'slug' => $p->poet_slug,
-                'avatar' => $p->poet_pic ?: null,
+                'avatar' => PoetImageUrl::resolve($p->poet_pic),
             ];
         });
 
         $data = [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
-            'avatar' => $poet->poet_pic ?: null,
+            'avatar' => PoetImageUrl::resolve($poet->poet_pic),
             'dob' => $poet->date_of_birth,
             'dod' => $poet->date_of_death,
             'name_en' => $detailEn->poet_name ?? $detailSd->poet_name ?? 'N/A',
@@ -731,8 +732,7 @@ class UpdateStaticCache extends Command
                 $tagline = $poet->details?->tagline ?? 'Poet';
                 $initials = collect(explode(' ', $name))->map(fn($s) => \Illuminate\Support\Str::substr($s, 0, 1))->take(2)->join('');
 
-                $pic = $poet->poet_pic;
-                $img = $pic ? (str_starts_with($pic, 'http') ? $pic : '/' . $pic) : null;
+                $img = PoetImageUrl::resolve($poet->poet_pic);
 
                 return [
                     'name' => $name,
@@ -756,7 +756,7 @@ class UpdateStaticCache extends Command
             'cat_slug' => $p->category->slug ?? 'ghazal',
             'category' => $catDetail->cat_name ?? $p->category?->slug ?? 'General',
             'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-            'avatar' => ($p->poet?->poet_pic) ? (str_starts_with($p->poet->poet_pic, 'http') ? $p->poet->poet_pic : '/' . $p->poet->poet_pic) : null,
+            'avatar' => PoetImageUrl::resolve($p->poet?->poet_pic),
             'date' => $p->created_at ? $p->created_at->format('M d') : '',
             'claps' => $p->likes_count ?? 0,
             'comments' => 0
@@ -776,7 +776,7 @@ class UpdateStaticCache extends Command
             'cat_slug' => $p->category->slug ?? '',
             'category' => $catDetail->cat_name ?? 'Uncategorized',
             'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-            'author_avatar' => $p->poet->poet_pic ?: null,
+            'author_avatar' => PoetImageUrl::resolve($p->poet->poet_pic ?? null),
             'date' => $p->created_at->format('d M Y'),
             'readTime' => '2 min read',
             'likes' => $p->likes_count ?? 0,
@@ -795,7 +795,7 @@ class UpdateStaticCache extends Command
         return [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
-            'avatar' => $poet->poet_pic ?: null,
+            'avatar' => PoetImageUrl::resolve($poet->poet_pic),
             'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
             'name_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
             'bio_en' => strip_tags($detailEn->poet_bio ?? ''),

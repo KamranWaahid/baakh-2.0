@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poets;
+use App\Support\PoetImageUrl;
 use App\Models\Tags;
 use App\Models\Categories;
 use Illuminate\Http\Request;
 use App\Services\StaticCacheService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class PoetController extends Controller
@@ -92,7 +92,7 @@ class PoetController extends Controller
                 return [
                     'id' => $poet->id,
                     'slug' => $poet->poet_slug,
-                    'avatar' => $this->resolvePoetAvatar($poet->poet_pic),
+                    'avatar' => PoetImageUrl::resolve($poet->poet_pic),
                     // English Data
                     'name_en' => $nameEn,
                     'name_sd' => $nameSd,
@@ -119,6 +119,7 @@ class PoetController extends Controller
             $perPage = (int) $request->get('per_page', 20);
             try {
                 // Safety fallback: return minimal poet cards instead of empty dataset.
+                /** @var \Illuminate\Pagination\LengthAwarePaginator $fallback */
                 $fallback = Poets::query()
                     ->where('visibility', 1)
                     ->orderBy('created_at', 'desc')
@@ -129,7 +130,7 @@ class PoetController extends Controller
                     return [
                         'id' => $poet->id,
                         'slug' => $poet->poet_slug,
-                        'avatar' => $this->resolvePoetAvatar($poet->poet_pic),
+                        'avatar' => PoetImageUrl::resolve($poet->poet_pic),
                         'name_en' => ucfirst($name),
                         'name_sd' => ucfirst($name),
                         'laqab_en' => ucfirst($name),
@@ -166,57 +167,17 @@ class PoetController extends Controller
     {
         $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
         try {
-            // Prefer canonical poet tags table, but be resilient to schema/data drift.
-            $baseTags = Tags::query()
-                ->when(
-                    \Illuminate\Support\Facades\Schema::hasColumn('baakh_tags', 'type'),
-                    fn($q) => $q->where('type', 'poets')
-                )
-                ->with([
-                    'details' => function ($q) use ($lang) {
-                        $q->where('lang', $lang);
-                    }
-                ])
-                ->get();
-
-            $usedTagSlugs = Poets::query()
-                ->where('visibility', 1)
-                ->whereNotNull('poet_tags')
-                ->pluck('poet_tags')
-                ->flatMap(function ($value) {
-                    $decoded = json_decode((string) $value, true);
-                    return is_array($decoded) ? $decoded : [];
-                })
-                ->map(fn($slug) => trim((string) $slug))
-                ->filter()
-                ->unique()
-                ->values();
+            $usedTagSlugs = $this->getUsedPoetTagSlugs();
+            $baseTags = $this->getBasePoetTags($lang);
 
             $selected = $usedTagSlugs->isNotEmpty()
                 ? $baseTags->whereIn('slug', $usedTagSlugs->all())->values()
                 : $baseTags;
 
             // If canonical tags are missing/incomplete, fall back to used slugs from poets.
-            if ($selected->isEmpty() && $usedTagSlugs->isNotEmpty()) {
-                $tags = $usedTagSlugs->map(function ($slug) {
-                    return [
-                        'tag' => Str::of($slug)->replace('-', ' ')->title()->value(),
-                        'slug' => $slug,
-                    ];
-                })->values();
-            } else {
-                $tags = $selected->map(function ($tag) {
-                    $label = $tag->details->first()?->name
-                        ?? $tag->details()->where('lang', 'en')->value('name')
-                        ?? $tag->details()->value('name')
-                        ?? Str::of($tag->slug)->replace('-', ' ')->title()->value();
-
-                    return [
-                        'tag' => $label,
-                        'slug' => $tag->slug
-                    ];
-                })->values();
-            }
+            $tags = ($selected->isEmpty() && $usedTagSlugs->isNotEmpty())
+                ? $this->mapSlugsToTags($usedTagSlugs)
+                : $this->mapTagsToResponse($selected, $lang);
 
             return response()->json($tags);
         } catch (\Throwable $e) {
@@ -305,7 +266,7 @@ class PoetController extends Controller
                     'name_en' => $dEn?->poet_laqab ?? $dEn?->poet_name ?? $dSd?->poet_laqab ?? $dSd?->poet_name ?? $dAny?->poet_laqab ?? $dAny?->poet_name ?? 'N/A',
                     'name_sd' => $dSd?->poet_laqab ?? $dSd?->poet_name ?? $dEn?->poet_laqab ?? $dEn?->poet_name ?? $dAny?->poet_laqab ?? $dAny?->poet_name ?? 'N/A',
                     'slug' => $p->poet_slug,
-                    'avatar' => $this->resolvePoetAvatar($p->poet_pic),
+                    'avatar' => PoetImageUrl::resolve($p->poet_pic),
                 ];
             });
 
@@ -319,7 +280,7 @@ class PoetController extends Controller
         $data = [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
-            'avatar' => $this->resolvePoetAvatar($poet->poet_pic),
+            'avatar' => PoetImageUrl::resolve($poet->poet_pic),
             'dob' => $poet->date_of_birth,
             'dod' => $poet->date_of_death,
 
@@ -381,7 +342,7 @@ class PoetController extends Controller
             return response()->json([
                 'id' => $fallbackPoet->id,
                 'slug' => $fallbackPoet->poet_slug,
-                'avatar' => $this->resolvePoetAvatar($fallbackPoet->poet_pic),
+                'avatar' => PoetImageUrl::resolve($fallbackPoet->poet_pic),
                 'dob' => $fallbackPoet->date_of_birth,
                 'dod' => $fallbackPoet->date_of_death,
                 'name_en' => $dEn?->poet_name ?? $dSd?->poet_name ?? $dAny?->poet_name ?? 'N/A',
@@ -459,7 +420,7 @@ class PoetController extends Controller
                 'cat_slug' => $p->category->slug ?? '',
                 'category' => $catDetail->cat_name ?? 'Uncategorized',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => $this->resolvePoetAvatar($poet->poet_pic),
+                'author_avatar' => PoetImageUrl::resolve($poet->poet_pic),
                 'date' => $p->created_at->format('d M Y'),
                 'readTime' => '2 min read', // Placeholder logic
                 'likes' => $p->likes_count ?? 0,
@@ -513,7 +474,7 @@ class PoetController extends Controller
                 'cat_slug' => 'couplets', // Dummy
                 'category' => 'Couplet',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                'author_avatar' => $this->resolvePoetAvatar($poet->poet_pic),
+                'author_avatar' => PoetImageUrl::resolve($poet->poet_pic),
                 'date' => $c->created_at->format('d M Y'),
                 'readTime' => '',
                 'likes' => $c->likes_count ?? 0,
@@ -553,91 +514,71 @@ class PoetController extends Controller
         return response()->json($categories);
     }
 
-    private function resolvePoetAvatar(?string $avatar): ?string
+    /**
+     * Get unique tag slugs currently used by visible poets.
+     */
+    private function getUsedPoetTagSlugs()
     {
-        if (!$avatar) {
-            return null;
-        }
-        if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
-            return $avatar;
-        }
-
-        $relative = ltrim($avatar, '/');
-        if ($relative === '') {
-            return null;
-        }
-
-        $publicPath = public_path($relative);
-        if (File::exists($publicPath)) {
-            return '/' . $relative;
-        }
-
-        $candidates = $this->avatarPathCandidates($relative);
-        $resolvedCloudUrl = $this->resolveFirstReachableCloudUrl($relative, $candidates);
-        if ($resolvedCloudUrl) {
-            return $resolvedCloudUrl;
-        }
-
-        return null;
+        return Poets::query()
+            ->where('visibility', 1)
+            ->whereNotNull('poet_tags')
+            ->pluck('poet_tags')
+            ->flatMap(function ($value) {
+                $decoded = json_decode((string) $value, true);
+                return is_array($decoded) ? $decoded : [];
+            })
+            ->map(fn($slug) => trim((string) $slug))
+            ->filter()
+            ->unique()
+            ->values();
     }
 
-    private function resolveFirstReachableCloudUrl(string $relative, array $candidates): ?string
+    /**
+     * Fetch canonical poet tags with localized details.
+     */
+    private function getBasePoetTags(string $lang)
     {
-        $cloudBaseUrl = rtrim((string) config('filesystems.disks.s3.url', ''), '/');
-        if ($cloudBaseUrl === '') {
-            return null;
-        }
-        // Avoid external network checks in request path; choose the best
-        // deterministic candidate and return immediately.
-        $orderedCandidates = array_values(array_unique(array_filter([
-            $relative,
-            ...$candidates,
-        ])));
-        if (empty($orderedCandidates)) {
-            return null;
-        }
-
-        return $cloudBaseUrl . '/' . ltrim($orderedCandidates[0], '/');
+        return Tags::query()
+            ->when(
+                \Illuminate\Support\Facades\Schema::hasColumn('baakh_tags', 'type'),
+                fn($q) => $q->where('type', 'poets')
+            )
+            ->with([
+                'details' => function ($q) use ($lang) {
+                    $q->where('lang', $lang);
+                }
+            ])
+            ->get();
     }
 
-    private function avatarPathCandidates(string $relative): array
+    /**
+     * Map raw slugs to a consistent tag response structure.
+     */
+    private function mapSlugsToTags($slugs)
     {
-        $relative = ltrim($relative, '/');
-        $fileName = basename($relative);
-        $dir = trim(dirname($relative), '.');
-        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+        return $slugs->map(function ($slug) {
+            return [
+                'tag' => Str::of($slug)->replace('-', ' ')->title()->value(),
+                'slug' => $slug,
+            ];
+        })->values();
+    }
 
-        $legacyBase = preg_replace('/_[a-f0-9]{8,}_opt$/i', '', $baseName) ?? $baseName;
-        $legacyBase = preg_replace('/_opt$/i', '', $legacyBase) ?? $legacyBase;
+    /**
+     * Map Tag models to a consistent response structure with localized labels.
+     */
+    private function mapTagsToResponse($tags, string $lang)
+    {
+        return $tags->map(function ($tag) {
+            $label = $tag->details->first()?->name
+                ?? $tag->details()->where('lang', 'en')->value('name')
+                ?? $tag->details()->value('name')
+                ?? Str::of($tag->slug)->replace('-', ' ')->title()->value();
 
-        $isOptimizedVariant = str_contains(strtolower($baseName), '_opt');
-
-        $nameCandidates = array_values(array_unique([
-            $isOptimizedVariant ? ($legacyBase . '_small.jpg') : $fileName,
-            $fileName,
-            $legacyBase . '_small.jpg',
-            $legacyBase . '.jpg',
-            $legacyBase . '.jpeg',
-            $legacyBase . '.png',
-            $legacyBase . '.webp',
-        ]));
-
-        $dirCandidates = array_values(array_unique(array_filter([
-            $isOptimizedVariant ? 'Images' : null,
-            $dir !== '' ? $dir : null,
-            'assets/images/poets',
-            'assets/Images/poets',
-            'Images',
-            'images',
-        ])));
-
-        $paths = [$relative];
-        foreach ($dirCandidates as $dirCandidate) {
-            foreach ($nameCandidates as $nameCandidate) {
-                $paths[] = trim($dirCandidate, '/') . '/' . $nameCandidate;
-            }
-        }
-
-        return array_values(array_unique($paths));
+            return [
+                'tag' => $label,
+                'slug' => $tag->slug
+            ];
+        })->values();
     }
 }

@@ -192,7 +192,8 @@ trait HasMedia
                     'visibility' => 'public',
                     'ContentType' => 'image/webp',
                 ]);
-                $fullPath = Storage::disk($disk)->url($relativePath);
+                // Store relative path in DB; URLs are resolved at read time via PoetImageUrl.
+                $fullPath = $relativePath;
             } else {
                 $destination = public_path(dirname($relativePath));
                 if (!file_exists($destination)) {
@@ -252,7 +253,7 @@ trait HasMedia
                         'visibility' => 'public',
                         'ContentType' => 'image/webp',
                     ]);
-                    $resizedImages[] = Storage::disk($disk)->url($thumbRelativePath);
+                    $resizedImages[] = $thumbRelativePath;
                 } else {
                     file_put_contents(public_path($thumbRelativePath), $thumbEncoded);
                     $resizedImages[] = $thumbRelativePath;

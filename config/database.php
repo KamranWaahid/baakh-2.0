@@ -71,7 +71,7 @@ return [
                 if ($connectTimeout > 0) {
                     $opts[PDO::ATTR_TIMEOUT] = $connectTimeout;
                     if (defined('PDO::MYSQL_ATTR_READ_TIMEOUT')) {
-                        $opts[PDO::MYSQL_ATTR_READ_TIMEOUT] = $connectTimeout;
+                        $opts[constant('PDO::MYSQL_ATTR_READ_TIMEOUT')] = $connectTimeout;
                     }
                 }
 

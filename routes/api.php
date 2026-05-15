@@ -228,6 +228,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::post('poet-books/{id}/pages/sync', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'sync']);
         Route::put('poet-books/{id}/pages/{pageId}', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'update']);
         Route::post('poet-books/{id}/pages/batch-update', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'batchUpdate']);
+        Route::post('poet-books/{id}/pages/bulk-save', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'bulkSave']);
         Route::apiResource('poet-books', \App\Http\Controllers\Api\Admin\PoetBookController::class);
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poets;
+use App\Support\PoetImageUrl;
 use App\Traits\HasMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +60,7 @@ class PoetController extends Controller
             return [
                 'id' => $poet->id,
                 'poet_slug' => $poet->poet_slug,
-                'poet_pic' => $this->resolvePoetPicUrl($poet->poet_pic),
+                'poet_pic' => PoetImageUrl::resolve($poet->poet_pic),
                 'poet_pic_raw' => $poet->poet_pic,
                 'poet_name' => $detail->poet_name ?? 'N/A',
                 'poet_laqab' => $detail->poet_laqab ?? 'N/A',
@@ -82,9 +83,9 @@ class PoetController extends Controller
             $payload = [
                 'id' => $poet->id,
                 'poet_slug' => $poet->poet_slug,
-                'poet_pic' => $this->resolvePoetPicUrl($poet->poet_pic),
+                'poet_pic' => PoetImageUrl::resolve($poet->poet_pic),
                 'poet_pic_raw' => $poet->poet_pic,
-                'poet_pic_url' => $this->resolvePoetPicUrl($poet->poet_pic),
+                'poet_pic_url' => PoetImageUrl::resolve($poet->poet_pic),
                 'date_of_birth' => $poet->date_of_birth,
                 'date_of_death' => $poet->date_of_death,
                 'visibility' => $poet->visibility,
@@ -303,36 +304,6 @@ class PoetController extends Controller
                 'message' => $e->getMessage(),
             ]);
             return response()->json(['message' => 'Failed to update poet: ' . $e->getMessage()], 500);
-        }
-    }
-
-    private function resolvePoetPicUrl(?string $value): ?string
-    {
-        try {
-            if (!$value) {
-                return null;
-            }
-            if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
-                return $value;
-            }
-
-            $relative = ltrim($value, '/');
-            if ($relative === '') {
-                return null;
-            }
-
-            $cloudBaseUrl = rtrim((string) config('filesystems.disks.s3.url', ''), '/');
-            if ($cloudBaseUrl !== '') {
-                return $cloudBaseUrl . '/' . $relative;
-            }
-
-            return '/' . $relative;
-        } catch (\Throwable $e) {
-            Log::warning('Failed to resolve poet image URL in admin', [
-                'value' => $value,
-                'message' => $e->getMessage(),
-            ]);
-            return $value;
         }
     }
 

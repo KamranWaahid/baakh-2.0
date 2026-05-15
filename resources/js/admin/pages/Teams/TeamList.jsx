@@ -43,6 +43,11 @@ import {
 } from "@/components/ui/tabs";
 import { format } from 'date-fns';
 
+const userInitial = (user) => {
+    const label = (user?.name || user?.email || user?.username || '?').trim();
+    return label ? label.charAt(0).toUpperCase() : '?';
+};
+
 const TeamList = () => {
     const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState('teams');
@@ -271,7 +276,7 @@ const TeamList = () => {
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                            {admin.name.charAt(0).toUpperCase()}
+                                            {userInitial(admin)}
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-gray-900 leading-none">{admin.name}</h3>
@@ -441,7 +446,7 @@ const TeamList = () => {
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold">
-                                            {viewer.name.charAt(0).toUpperCase()}
+                                            {userInitial(viewer)}
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-gray-900 leading-none">{viewer.name}</h3>

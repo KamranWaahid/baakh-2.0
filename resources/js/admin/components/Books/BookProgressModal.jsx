@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -30,12 +30,24 @@ import { Loader2, RefreshCw, Check, Circle, BookOpen, Save } from 'lucide-react'
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+const pageSnapshot = (page) => ({
+    id: page.id,
+    page_number: page.page_number,
+    title: page.title ?? '',
+    type: page.type,
+    is_completed: Boolean(page.is_completed),
+});
+
+const pagesEqual = (a, b) =>
+    a.title === b.title && a.type === b.type && a.is_completed === b.is_completed;
+
 const BookProgressModal = ({ bookId, open, onOpenChange }) => {
     const queryClient = useQueryClient();
     const [selectedPages, setSelectedPages] = useState([]);
-    const [editingPages, setEditingPages] = useState({}); // Localy track changes before save
+    const [localPages, setLocalPages] = useState([]);
+    const [savedPages, setSavedPages] = useState([]);
 
-    const { data: pageData, isLoading, refetch } = useQuery({
+    const { data: pageData, isLoading } = useQuery({
         queryKey: ['book-pages', bookId],
         queryFn: async () => {
             const response = await api.get(`/api/admin/poet-books/${bookId}/pages`);
@@ -44,26 +56,39 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
         enabled: !!bookId && open,
     });
 
-    const updatePageMutation = useMutation({
-        mutationFn: async ({ pageId, data }) => {
-            return await api.put(`/api/admin/poet-books/${bookId}/pages/${pageId}`, data);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries(['book-pages', bookId]);
-            queryClient.invalidateQueries(['poet-books']);
-        }
-    });
-
-    const batchUpdateMutation = useMutation({
-        mutationFn: async (data) => {
-            return await api.post(`/api/admin/poet-books/${bookId}/pages/batch-update`, data);
-        },
-        onSuccess: () => {
-            toast.success('Batch update successful');
+    useEffect(() => {
+        if (pageData?.pages) {
+            const snapshot = pageData.pages.map(pageSnapshot);
+            setLocalPages(snapshot);
+            setSavedPages(snapshot);
             setSelectedPages([]);
+        }
+    }, [pageData]);
+
+    const isDirty = useMemo(() => {
+        if (localPages.length !== savedPages.length) return false;
+        return localPages.some((page, index) => !pagesEqual(page, savedPages[index]));
+    }, [localPages, savedPages]);
+
+    const saveMutation = useMutation({
+        mutationFn: async (pages) => {
+            return await api.post(`/api/admin/poet-books/${bookId}/pages/bulk-save`, { pages });
+        },
+        onSuccess: (_, dirtyPages) => {
+            toast.success(`Saved ${dirtyPages.length} page${dirtyPages.length === 1 ? '' : 's'}`);
+            setSavedPages((prev) =>
+                prev.map((page) => {
+                    const updated = dirtyPages.find((p) => p.id === page.id);
+                    return updated ? { ...updated } : page;
+                })
+            );
             queryClient.invalidateQueries(['book-pages', bookId]);
             queryClient.invalidateQueries(['poet-books']);
-        }
+        },
+        onError: (error) => {
+            const message = error.response?.data?.message || 'Failed to save pages';
+            toast.error(message);
+        },
     });
 
     const syncMutation = useMutation({
@@ -74,45 +99,76 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
             toast.success('Synced with poetry content');
             queryClient.invalidateQueries(['book-pages', bookId]);
             queryClient.invalidateQueries(['poet-books']);
-        }
+        },
     });
 
-    const handlePageUpdate = (page, field, value) => {
-        updatePageMutation.mutate({
-            pageId: page.id,
-            data: {
-                ...page,
-                [field]: value
-            }
-        });
+    const updateLocalPage = (pageId, field, value) => {
+        setLocalPages((prev) =>
+            prev.map((page) =>
+                page.id === pageId ? { ...page, [field]: value } : page
+            )
+        );
     };
 
     const togglePageSelection = (id) => {
-        setSelectedPages(prev =>
-            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        setSelectedPages((prev) =>
+            prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
         );
     };
 
     const handleBatchStatus = (completed) => {
         if (selectedPages.length === 0) return;
-        batchUpdateMutation.mutate({
-            page_ids: selectedPages,
-            is_completed: completed
-        });
+        setLocalPages((prev) =>
+            prev.map((page) =>
+                selectedPages.includes(page.id)
+                    ? { ...page, is_completed: completed }
+                    : page
+            )
+        );
     };
 
     const handleBatchType = (type) => {
         if (selectedPages.length === 0) return;
-        batchUpdateMutation.mutate({
-            page_ids: selectedPages,
-            type: type
-        });
+        setLocalPages((prev) =>
+            prev.map((page) =>
+                selectedPages.includes(page.id) ? { ...page, type } : page
+            )
+        );
+    };
+
+    const getDirtyPages = () =>
+        localPages.filter((page, index) => !pagesEqual(page, savedPages[index]));
+
+    const handleSave = () => {
+        const dirtyPages = getDirtyPages();
+        if (dirtyPages.length === 0) {
+            toast.info('No changes to save');
+            return;
+        }
+        saveMutation.mutate(dirtyPages);
+    };
+
+    const handleClose = () => {
+        if (isDirty && !window.confirm('You have unsaved changes. Discard them?')) {
+            return;
+        }
+        onOpenChange(false);
+    };
+
+    const handleOpenChange = (newOpen) => {
+        if (!newOpen) {
+            handleClose();
+            return;
+        }
+        onOpenChange(newOpen);
     };
 
     if (!bookId) return null;
 
+    const displayPages = localPages.length > 0 ? localPages : [];
+
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-white">
                 <DialogHeader className="p-6 border-b bg-gray-50/50">
                     <div className="flex items-center justify-between">
@@ -133,8 +189,11 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => syncMutation.mutate()}
-                                disabled={syncMutation.isPending}
+                                onClick={() => {
+                                    if (isDirty && !window.confirm('You have unsaved changes. Sync anyway?')) return;
+                                    syncMutation.mutate();
+                                }}
+                                disabled={syncMutation.isPending || saveMutation.isPending}
                             >
                                 {syncMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                                 Sync Poetry
@@ -151,7 +210,6 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                         </div>
                     ) : (
                         <div className="relative">
-                            {/* Sticky Batch Actions Bar */}
                             {selectedPages.length > 0 && (
                                 <div className="sticky top-0 z-10 bg-primary text-primary-foreground px-6 py-2 flex items-center justify-between shadow-md">
                                     <span className="text-sm font-medium">{selectedPages.length} pages selected</span>
@@ -183,9 +241,9 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                                     <TableRow>
                                         <TableHead className="w-[50px]">
                                             <Checkbox
-                                                checked={selectedPages.length === pageData?.pages?.length}
+                                                checked={displayPages.length > 0 && selectedPages.length === displayPages.length}
                                                 onCheckedChange={(checked) => {
-                                                    if (checked) setSelectedPages(pageData.pages.map(p => p.id));
+                                                    if (checked) setSelectedPages(displayPages.map((p) => p.id));
                                                     else setSelectedPages([]);
                                                 }}
                                             />
@@ -197,7 +255,7 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {pageData?.pages?.map((page) => (
+                                    {displayPages.map((page) => (
                                         <TableRow key={page.id} className={cn(page.is_completed && "bg-green-50/30")}>
                                             <TableCell>
                                                 <Checkbox
@@ -207,24 +265,18 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                                             </TableCell>
                                             <TableCell className="font-bold">{page.page_number}</TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2 group">
-                                                    <Input
-                                                        defaultValue={page.title}
-                                                        placeholder="e.g. Introduction"
-                                                        dir="rtl"
-                                                        className="h-8 border-transparent hover:border-gray-200 focus:border-primary transition-all bg-transparent focus:bg-white font-arabic text-sm"
-                                                        onBlur={(e) => {
-                                                            if (e.target.value !== page.title) {
-                                                                handlePageUpdate(page, 'title', e.target.value);
-                                                            }
-                                                        }}
-                                                    />
-                                                </div>
+                                                <Input
+                                                    value={page.title}
+                                                    placeholder="e.g. Introduction"
+                                                    dir="rtl"
+                                                    className="h-8 border-transparent hover:border-gray-200 focus:border-primary transition-all bg-transparent focus:bg-white font-arabic text-sm"
+                                                    onChange={(e) => updateLocalPage(page.id, 'title', e.target.value)}
+                                                />
                                             </TableCell>
                                             <TableCell>
                                                 <Select
                                                     value={page.type}
-                                                    onValueChange={(val) => handlePageUpdate(page, 'type', val)}
+                                                    onValueChange={(val) => updateLocalPage(page.id, 'type', val)}
                                                 >
                                                     <SelectTrigger className="h-8 border-none bg-transparent hover:bg-gray-100 focus:ring-0">
                                                         <SelectValue />
@@ -240,7 +292,8 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <button
-                                                    onClick={() => handlePageUpdate(page, 'is_completed', !page.is_completed)}
+                                                    type="button"
+                                                    onClick={() => updateLocalPage(page.id, 'is_completed', !page.is_completed)}
                                                     className="transition-transform active:scale-90"
                                                 >
                                                     {page.is_completed ? (
@@ -266,16 +319,33 @@ const BookProgressModal = ({ bookId, open, onOpenChange }) => {
                     <div className="text-xs text-muted-foreground flex items-center gap-4">
                         <div className="flex items-center gap-1">
                             <div className="h-2 w-2 rounded-full bg-green-600"></div>
-                            <span>Completed Pages: {pageData?.pages?.filter(p => p.is_completed).length}</span>
+                            <span>Completed Pages: {displayPages.filter((p) => p.is_completed).length}</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <div className="h-2 w-2 rounded-full bg-gray-300"></div>
                             <span>Total Pages: {pageData?.book?.total_pages}</span>
                         </div>
+                        {isDirty && (
+                            <span className="text-amber-600 font-medium">Unsaved changes</span>
+                        )}
                     </div>
-                    <Button variant="default" onClick={() => onOpenChange(false)}>
-                        Close
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={handleClose} disabled={saveMutation.isPending}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="default"
+                            onClick={handleSave}
+                            disabled={!isDirty || saveMutation.isPending}
+                        >
+                            {saveMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                                <Save className="h-4 w-4 mr-2" />
+                            )}
+                            Save
+                        </Button>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

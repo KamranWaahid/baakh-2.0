@@ -13,10 +13,10 @@ use App\Models\Tags;
 use App\Models\TodaysModule;
 use App\Traits\BaakhSeoTrait;
 use App\Services\StaticCacheService;
+use App\Support\PoetImageUrl;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Collection;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -569,7 +569,7 @@ class HomeController extends UserController
                 'title' => $p->info?->title ?? $p->poetry_title,
                 'slug' => $p->poetry_slug,
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
-                'author_avatar' => $this->resolvePoetAvatar($p->poet?->poet_pic),
+                'author_avatar' => PoetImageUrl::resolve($p->poet?->poet_pic),
                 'cover' => $p->media->first()?->media_url,
                 'date' => format_iso8601($p->created_at),
                 'date_human' => $p->created_at?->diffForHumans(),
@@ -584,92 +584,5 @@ class HomeController extends UserController
         });
 
         return response()->json($poetry);
-    }
-
-    private function resolvePoetAvatar(?string $avatar): ?string
-    {
-        if (!$avatar) {
-            return null;
-        }
-        if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
-            return $avatar;
-        }
-
-        $relative = ltrim($avatar, '/');
-        if ($relative === '') {
-            return null;
-        }
-        if (File::exists(public_path($relative))) {
-            return '/' . $relative;
-        }
-
-        $candidates = $this->avatarPathCandidates($relative);
-        $resolvedCloudUrl = $this->resolveFirstReachableCloudUrl($relative, $candidates);
-        if ($resolvedCloudUrl) {
-            return $resolvedCloudUrl;
-        }
-
-        return null;
-    }
-
-    private function resolveFirstReachableCloudUrl(string $relative, array $candidates): ?string
-    {
-        $cloudBaseUrl = rtrim((string) config('filesystems.disks.s3.url', ''), '/');
-        if ($cloudBaseUrl === '') {
-            return null;
-        }
-        // Never block API responses on remote avatar existence checks.
-        // Build a deterministic URL from prioritized candidates and let the
-        // client/image layer handle missing assets gracefully.
-        $orderedCandidates = array_values(array_unique(array_filter([
-            $relative,
-            ...$candidates,
-        ])));
-        if (empty($orderedCandidates)) {
-            return null;
-        }
-
-        return $cloudBaseUrl . '/' . ltrim($orderedCandidates[0], '/');
-    }
-
-    private function avatarPathCandidates(string $relative): array
-    {
-        $relative = ltrim($relative, '/');
-        $fileName = basename($relative);
-        $dir = trim(dirname($relative), '.');
-        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
-
-        $legacyBase = preg_replace('/_[a-f0-9]{8,}_opt$/i', '', $baseName) ?? $baseName;
-        $legacyBase = preg_replace('/_opt$/i', '', $legacyBase) ?? $legacyBase;
-
-        $isOptimizedVariant = str_contains(strtolower($baseName), '_opt');
-
-        $nameCandidates = array_values(array_unique([
-            $isOptimizedVariant ? ($legacyBase . '_small.jpg') : $fileName,
-            $fileName,
-            $legacyBase . '_small.jpg',
-            $legacyBase . '.jpg',
-            $legacyBase . '.jpeg',
-            $legacyBase . '.png',
-            $legacyBase . '.webp',
-        ]));
-
-        $dirCandidates = array_values(array_unique(array_filter([
-            $isOptimizedVariant ? 'Images' : null,
-            $dir !== '' ? $dir : null,
-            'assets/images/poets',
-            'assets/Images/poets',
-            'Images',
-            'images',
-        ])));
-
-        $paths = [$relative];
-        foreach ($dirCandidates as $dirCandidate) {
-            foreach ($nameCandidates as $nameCandidate) {
-                $paths[] = trim($dirCandidate, '/') . '/' . $nameCandidate;
-            }
-        }
-
-        return array_values(array_unique($paths));
     }
 }
