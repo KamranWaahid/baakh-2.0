@@ -23,7 +23,7 @@ class TopicController extends Controller
     // Formerly 'show' - now specifically for Tags
     public function showTag(Request $request, $slug)
     {
-        $lang = $this->resolveLang($request->get('lang', $request->header('Accept-Language', 'sd')));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
 
         $cached = $this->cache->get("tag_detail_{$slug}_{$lang}");
         if ($cached) {
@@ -109,7 +109,7 @@ class TopicController extends Controller
 
     public function showCategory(Request $request, $slug)
     {
-        $lang = $this->resolveLang($request->get('lang', $request->header('Accept-Language', 'sd')));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
 
         $cached = $this->cache->get("category_detail_{$slug}_{$lang}");
         if ($cached) {
@@ -251,9 +251,4 @@ class TopicController extends Controller
         ];
     }
 
-    private function resolveLang(?string $rawLang): string
-    {
-        $lang = strtolower((string) $rawLang);
-        return str_starts_with($lang, 'en') ? 'en' : 'sd';
-    }
 }

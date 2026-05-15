@@ -13,7 +13,6 @@ use App\Models\CorpusSentence;
 use App\Models\Categories;
 use App\Models\Tags;
 use App\Models\Poets;
-use App\Support\DictionaryText;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -42,7 +41,7 @@ class GlobalSearchController extends Controller
             ]);
         }
 
-        $lang = $request->header('Accept-Language', 'en');
+        $lang = resolve_request_locale($request->header('Accept-Language'), 'en');
         $driver = config('scout.driver');
         Log::info("GlobalSearch: query='{$query}', lang='{$lang}', driver='{$driver}'");
 
@@ -169,28 +168,10 @@ class GlobalSearchController extends Controller
      */
     private function searchDictionary(string $query): Collection
     {
-        $normalized = DictionaryText::normalizeForLookup($query);
-
         if (config('scout.driver') === 'database') {
-            return Lemma::where(function ($q) use ($query, $normalized) {
+            return Lemma::where(function ($q) use ($query) {
                 $q->where('lemma', 'LIKE', "%{$query}%")
-                    ->orWhere('normalized_lemma', 'LIKE', "%{$query}%")
-                    ->orWhere('transliteration', 'LIKE', "%{$query}%")
-                    ->orWhere('search_keywords_json', 'LIKE', "%{$query}%")
-                    ->orWhereHas('variants', function ($variantQuery) use ($query, $normalized) {
-                        $variantQuery->where('variant', 'LIKE', "%{$query}%")
-                            ->orWhere('romanization', 'LIKE', "%{$query}%")
-                            ->orWhere('normalized_variant', 'LIKE', "%{$normalized}%");
-                    })
-                    ->orWhereHas('inflections', function ($inflectionQuery) use ($query) {
-                        $inflectionQuery->where('form', 'LIKE', "%{$query}%")
-                            ->orWhere('romanization', 'LIKE', "%{$query}%");
-                    })
-                    ->orWhereHas('senses', function ($senseQuery) use ($query) {
-                        $senseQuery->where('definition_en', 'LIKE', "%{$query}%")
-                            ->orWhere('english_equivalents', 'LIKE', "%{$query}%")
-                            ->orWhere('definition', 'LIKE', "%{$query}%");
-                    });
+                    ->orWhere('transliteration', 'LIKE', "%{$query}%");
             })->take(5)->get()->map(function ($lemma) {
                 return [
                     'id' => $lemma->id,

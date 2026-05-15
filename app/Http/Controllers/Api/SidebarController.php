@@ -14,7 +14,7 @@ class SidebarController extends Controller
 {
     public function staffPicks(Request $request)
     {
-        $lang = $request->header('Accept-Language', 'en');
+        $lang = resolve_request_locale($request->header('Accept-Language'), 'en');
         App::setLocale($lang);
 
         $monthMap = [
@@ -92,7 +92,7 @@ class SidebarController extends Controller
 
     public function topics(Request $request)
     {
-        $lang = $request->header('Accept-Language', 'en');
+        $lang = resolve_request_locale($request->header('Accept-Language'), 'en');
 
         // Fetch top topic categories with their details
         // Filter to topics that have at least one visible poetry/couplet attached,

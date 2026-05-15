@@ -37,7 +37,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (getenv('VERCEL') || str_starts_with((string) config('app.url'), 'https://')) {
+        $appUrl = rtrim((string) config('app.url'), '/');
+        $usesConfiguredHttpsOrigin = str_starts_with($appUrl, 'https://');
+
+        if ($appUrl && (getenv('VERCEL') || $usesConfiguredHttpsOrigin)) {
+            URL::forceRootUrl($appUrl);
+        }
+
+        if (getenv('VERCEL') || $usesConfiguredHttpsOrigin) {
             URL::forceScheme('https');
         }
 

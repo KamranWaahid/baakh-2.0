@@ -56,6 +56,7 @@ class SafeUserData
         return [
             'id' => $user->id,
             'name' => self::attribute($user, 'name', $context),
+            'name_sd' => self::attribute($user, 'name_sd', $context),
             'email' => self::attribute($user, 'email', $context),
             'username' => $user->username,
             'avatar' => $user->avatar,

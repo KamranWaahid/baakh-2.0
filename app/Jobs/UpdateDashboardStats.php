@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Cache;
 use App\Models\Poetry;
 use App\Models\Couplets;
 use App\Helpers\SindhiNormalizer;
-use App\Support\SafeUserData;
 use Illuminate\Support\Facades\DB;
 
 class UpdateDashboardStats implements ShouldQueue
@@ -159,10 +158,7 @@ class UpdateDashboardStats implements ShouldQueue
             ->get()
             ->map(fn($log) => [
                 'id' => $log->id,
-                'user' => $log->user ? [
-                    'name' => SafeUserData::attribute($log->user, 'name', 'admin_dashboard_stats.activity'),
-                    'avatar' => $log->user->avatar,
-                ] : null,
+                'user' => $log->user ? ['name' => $log->user->name, 'avatar' => $log->user->avatar] : null,
                 'action' => $log->action,
                 'description' => $log->description,
                 'time' => $log->created_at->diffForHumans(),
@@ -184,7 +180,7 @@ class UpdateDashboardStats implements ShouldQueue
 
                 return [
                     'id' => $report->id,
-                    'reporter' => SafeUserData::attribute($report->user, 'name', 'admin_dashboard_stats.reports') ?? 'Guest',
+                    'reporter' => $report->user->name ?? 'Guest',
                     'target' => $target,
                     'reason' => $report->reason,
                     'date' => $report->created_at->format('M d, Y'),
@@ -203,10 +199,7 @@ class UpdateDashboardStats implements ShouldQueue
             'recent_activity' => $recentActivity,
             'recent_feedback' => \App\Models\Feedback::with('user')->latest()->take(5)->get()->map(fn($f) => [
                 'id' => $f->id,
-                'user' => $f->user ? [
-                    'name' => SafeUserData::attribute($f->user, 'name', 'admin_dashboard_stats.feedback'),
-                    'avatar' => $f->user->avatar,
-                ] : ['name' => 'Anonymous'],
+                'user' => $f->user ? ['name' => $f->user->name, 'avatar' => $f->user->avatar] : ['name' => 'Anonymous'],
                 'message' => $f->message,
                 'rating' => $f->rating,
                 'time' => $f->created_at->diffForHumans()
@@ -216,7 +209,7 @@ class UpdateDashboardStats implements ShouldQueue
             'missing_en_couplets' => $missingEnCouplets,
             'missing_tags_couplets' => $missingTagsCouplets,
             'orthography_issues' => array_slice($orthographyIssues, 0, 10),
-            'last_updated' => now()->toIso8601String()
+            'last_updated' => format_iso8601(now())
         ];
 
         Cache::put('admin_dashboard_stats', $data, now()->addHours(2));

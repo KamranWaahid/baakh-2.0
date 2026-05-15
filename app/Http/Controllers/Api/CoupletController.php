@@ -70,8 +70,8 @@ class CoupletController extends Controller
                 'cat_slug' => 'couplets',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
                 'author_avatar' => $c->poet->poet_pic,
-                'date' => $c->created_at->toIso8601String(),
-                'date_human' => $c->created_at->diffForHumans(),
+                'date' => format_iso8601($c->created_at),
+                'date_human' => $c->created_at?->diffForHumans(),
                 'is_couplet' => true,
                 'likes' => 0,
             ];

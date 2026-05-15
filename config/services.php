@@ -29,7 +29,7 @@ return [
             env('GOOGLE_EXPO_CLIENT_ID'),
             ...$googleMobileClientIds,
         ]))),
-        // Prefer explicit GOOGLE_REDIRECT_URI in production; otherwise follow APP_URL (e.g. https://www.baakh.com/auth/google-callback).
+        // Prefer explicit GOOGLE_REDIRECT_URI in production; otherwise follow APP_URL (e.g. https://baakh.com/auth/google-callback).
         'redirect' => env('GOOGLE_REDIRECT_URI') ?: rtrim((string) config('app.url'), '/') . '/auth/google-callback',
     ],
 

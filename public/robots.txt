@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://baakh-2-0-one.vercel.app/sitemap.xml
+Sitemap: https://baakh.com/sitemap.xml

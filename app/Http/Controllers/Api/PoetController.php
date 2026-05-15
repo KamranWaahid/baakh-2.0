@@ -23,7 +23,7 @@ class PoetController extends Controller
 
     public function index(Request $request)
     {
-        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
         try {
             // Prefer static cache if no search/tag filtering
             if (!$request->has('search') && (!$request->has('tag') || $request->tag === 'all')) {
@@ -164,7 +164,7 @@ class PoetController extends Controller
 
     public function tags(Request $request)
     {
-        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
         try {
             // Prefer canonical poet tags table, but be resilient to schema/data drift.
             $baseTags = Tags::query()
@@ -405,7 +405,7 @@ class PoetController extends Controller
     }
     public function getPoetry(Request $request, $slug)
     {
-        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
         $catSlug = $request->get('category');
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
@@ -475,7 +475,7 @@ class PoetController extends Controller
 
     public function getCouplets(Request $request, $slug)
     {
-        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
         // Couplets are where poetry_id is null? Or a specific category?
@@ -529,7 +529,7 @@ class PoetController extends Controller
 
     public function getCategories(Request $request, $slug)
     {
-        $lang = $request->get('lang', $request->header('Accept-Language', 'sd'));
+        $lang = resolve_request_locale($request->get('lang', $request->header('Accept-Language')), 'sd');
         $poet = Poets::where('poet_slug', $slug)->firstOrFail();
 
         $categories = Categories::whereHas('poetry', function ($q) use ($poet) {
