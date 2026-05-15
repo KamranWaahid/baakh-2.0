@@ -12,6 +12,21 @@ import { getImageUrl } from '../utils/url';
 
 const PoetsFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
+
+    const TAG_TRANSLATIONS = {
+        'Revolutionary Poet': 'انقلابي شاعر',
+        'Classical Poet': 'ڪلاسيڪل شاعر',
+        'Young Poets': 'نوجوان شاعر',
+        'Sufi Shair': 'صوفي شاعر',
+        'Naujwan Shair': 'نوجوان شاعر',
+        'Modern Poet': 'جديد شاعر',
+        'Romantic Poet': 'رومانوي شاعر'
+    };
+
+    const getLocalizedTag = (tag) => {
+        if (!isRtl) return tag;
+        return TAG_TRANSLATIONS[tag] || tag;
+    };
     const [search, setSearch] = useState('');
     const [selectedTag, setSelectedTag] = useState('all');
     const slugToTitle = (slug = '') =>
@@ -156,9 +171,14 @@ const PoetsFeed = ({ lang }) => {
                 <div className="flex items-center gap-2 mb-1">
                     <Link to={`/${lang}/poet/${poet.slug}`} className="hover:underline">
                         <h3 className={`text-lg md:text-xl font-bold text-gray-900 truncate ${isRtl ? 'font-arabic' : ''}`}>
-                            {isRtl ? poet.name_sd : poet.name_en}
+                            {isRtl ? poet.laqab_sd : poet.laqab_en}
                         </h3>
                     </Link>
+                    {(isRtl ? poet.name_sd !== poet.laqab_sd : poet.name_en !== poet.laqab_en) && (
+                        <p className={`text-xs md:text-sm font-bold uppercase tracking-wider text-gray-400 truncate ${isRtl ? 'font-arabic' : ''}`}>
+                            {isRtl ? poet.name_sd : poet.name_en}
+                        </p>
+                    )}
                 </div>
 
                 <p className="text-gray-500 text-sm md:text-base line-clamp-2 mb-2 font-arabic">
@@ -218,7 +238,7 @@ const PoetsFeed = ({ lang }) => {
                                     : 'text-gray-400 hover:text-gray-600'
                                 }`}
                         >
-                            {tag.tag}
+                            {getLocalizedTag(tag.tag)}
                             {selectedTag === tag.slug && (
                                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-black rounded-full" />
                             )}
