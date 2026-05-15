@@ -9,7 +9,7 @@
     {!! $seo->generate() !!}
 
     @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/web/main.jsx'])
+    @vite(['resources/css/app.css', 'resources/js/web/main.jsx'], 'build')
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 </head>
 
