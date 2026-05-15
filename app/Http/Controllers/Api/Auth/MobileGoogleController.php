@@ -165,12 +165,14 @@ class MobileGoogleController extends Controller
             }
         } else {
             $user = new User();
-            $user->email = $googleProfile['email'];
-            $user->name = 'Anonymous User';
-            $user->password = bcrypt(Str::random(32));
-            $user->status = 'active';
-            $user->role = 'user';
-            $user->username = 'User-' . strtoupper(Str::random(5));
+            $user->fill([
+                'email' => $googleProfile['email'],
+                'name' => $googleProfile['name'] ?? 'Anonymous User',
+                'password' => bcrypt(Str::random(32)),
+                'status' => 'active',
+                'role' => 'user',
+                'username' => 'User-' . strtoupper(Str::random(5)),
+            ]);
             $isNewUser = true;
         }
 

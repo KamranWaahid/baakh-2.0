@@ -58,7 +58,8 @@ class CoupletController extends Controller
 
         $couplets = $query->latest()->paginate($perPage);
 
-        $couplets->getCollection()->transform(function ($c) use ($lang) {
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $couplets */
+        $couplets->through(function ($c) use ($lang) {
             $poetDetail = $c->poet->all_details->where('lang', $lang)->first() ?? $c->poet->all_details->first();
 
             return [
@@ -85,7 +86,7 @@ class CoupletController extends Controller
         $lang = $request->get('lang', app()->getLocale());
 
         // Fetch unique tags from poetry_couplets table
-        $tagSlugs = \App\Models\Couplets::where('lang', $lang)
+        $tagSlugs = Couplets::where('lang', $lang)
             ->whereNotNull('couplet_tags')
             ->where('couplet_tags', '!=', '[]')
             ->pluck('couplet_tags')

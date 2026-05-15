@@ -28,7 +28,7 @@ class TeamController extends Controller
             $teams = $user->teams()->with('owner')->latest()->paginate(10);
         }
 
-        $teams->getCollection()->transform(fn (Team $team) => $this->serializeTeam($team));
+        $teams->through(fn (Team $team) => $this->serializeTeam($team));
 
         return response()->json($teams);
     }

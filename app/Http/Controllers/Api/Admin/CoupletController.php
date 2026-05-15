@@ -66,7 +66,9 @@ class CoupletController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $couplets = $query->orderBy('id', 'desc')->paginate($perPage);
-        $couplets->getCollection()->transform(function (Couplets $item) {
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $couplets */
+        $couplets->through(function (Couplets $item) {
             return $this->serializeIndexItem($item);
         });
 

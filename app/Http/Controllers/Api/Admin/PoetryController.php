@@ -69,7 +69,9 @@ class PoetryController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $poetry = $query->orderBy('created_at', 'desc')->paginate($perPage);
-        $poetry->getCollection()->transform(function (Poetry $item) {
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $poetry */
+        $poetry->through(function (Poetry $item) {
             return $this->serializeIndexItem($item);
         });
 

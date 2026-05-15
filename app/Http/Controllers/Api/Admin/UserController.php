@@ -40,7 +40,9 @@ class UserController extends Controller
         $users = $query->with(['roles', 'teams'])
             ->latest()
             ->paginate(30);
-        $users->getCollection()->transform(fn(User $user) => $this->serializeUser($user));
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $users */
+        $users->through(fn(User $user) => $this->serializeUser($user));
 
         return response()->json($users);
     }

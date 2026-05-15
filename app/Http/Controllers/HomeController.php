@@ -562,8 +562,9 @@ class HomeController extends UserController
         }
 
         $poetry = $query->latest()->paginate($perPage);
-
-        $poetry->getCollection()->transform(function ($p) use ($userId) {
+        
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $poetry */
+        $poetry->through(function ($p) use ($userId) {
             return [
                 'id' => $p->id,
                 'title' => $p->info?->title ?? $p->poetry_title,

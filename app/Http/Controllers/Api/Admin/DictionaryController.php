@@ -322,7 +322,8 @@ class DictionaryController extends Controller
         $limit = min(100, max(1, (int) $request->get('limit', 20)));
         $page = $query->orderByDesc('id')->paginate($limit);
 
-        $page->getCollection()->transform(function (Sense $sense) {
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $page */
+        $page->through(function (Sense $sense) {
             return [
                 'id' => $sense->id,
                 'lemma_id' => $sense->lemma_id,
