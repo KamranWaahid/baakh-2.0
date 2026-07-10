@@ -101,8 +101,13 @@ class SafeUserData
 
         try {
             $permissions = $user->getAllPermissions()->pluck('name');
-            if ($permissions->isEmpty() && in_array(strtolower((string)$user->role), ['admin', 'admins', 'super_admin'])) {
-                $permissions = collect(['view_dashboard', 'manage_users']);
+            if (in_array(strtolower((string)$user->role), ['admin', 'admins', 'super_admin'])) {
+                if (!$permissions->contains('view_dashboard')) {
+                    $permissions->push('view_dashboard');
+                }
+                if (!$permissions->contains('manage_users')) {
+                    $permissions->push('manage_users');
+                }
             }
             $payload['permissions'] = $permissions;
         } catch (\Throwable $e) {
