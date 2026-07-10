@@ -97,6 +97,12 @@ trait BaakhSeoTrait
         JsonLd::setTitle($title);
         JsonLd::setDescription($desc);
         JsonLd::setType($additionalData['json_ld_type'] ?? 'WebPage');
+
+        return [
+            'title' => $title,
+            'description' => $desc,
+            'html' => $additionalData['fallback_html'] ?? ''
+        ];
     }
 
 
@@ -284,7 +290,37 @@ trait BaakhSeoTrait
 
         JsonLd::addValues($jsonLdData);
 
-        // return SEOTools::generate();
+        $jsonLdBreadcrumb = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => 'Home',
+                    'item' => url("{$currentLang}/")
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 2,
+                    'name' => 'Poets',
+                    'item' => url("{$currentLang}/poets")
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 3,
+                    'name' => $poetLaqab,
+                    'item' => $url
+                ]
+            ]
+        ];
+        JsonLd::addValues($jsonLdBreadcrumb);
+
+        return [
+            'title' => $title,
+            'description' => $shortBio,
+            'html' => '<h2>' . e($poetLaqab) . '</h2><p>' . nl2br(e($bio)) . '</p>'
+        ];
     }
 
     /**
@@ -318,17 +354,22 @@ trait BaakhSeoTrait
 
         $title = trans('labels.seo_custom_bio_poetry', ['category' => $p_category->category_name, 'poetName' => $poetName, 'title' => $poetryInfo->title]);
         $stanzas = [];
+        $fallbackHtml = '<h2>' . e($title) . '</h2>';
         // if there is no info then make it from couplets
         if ($poetryInfo->info != null || $poetryInfo->info != '') {
             $shortBio = $poetryInfo->info . ' ' . $poetryInfo->source ?? '';
+            $fallbackHtml .= '<p>' . nl2br(e($shortBio)) . '</p>';
         } else {
             if (count($couplets) > 0) {
+                $fallbackHtml .= '<ul>';
                 foreach ($couplets as $couplet) {
                     $stanzas[] = [
                         '@type' => 'CreativeWork',
                         'text' => $couplet->couplet_text
                     ];
+                    $fallbackHtml .= '<li>' . strip_tags($couplet->couplet_text) . '</li>';
                 }
+                $fallbackHtml .= '</ul>';
                 $shortBio = Str::limit(preg_replace('/\s+/', ' ', strip_tags($couplets[0]->couplet_text)), 160, '...');
             } else {
                 $shortBio = $title;
@@ -443,6 +484,49 @@ trait BaakhSeoTrait
         ];
         JsonLd::addValues($jsonLdPoetryWork);
 
+        $jsonLdBreadcrumb = [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => 'Home',
+                    'item' => url("{$currentLang}/")
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 2,
+                    'name' => 'Poets',
+                    'item' => url("{$currentLang}/poets")
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 3,
+                    'name' => $poetLaqab,
+                    'item' => url("{$currentLang}/poet/{$poetModel->poet_slug}")
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 4,
+                    'name' => $p_category->category_name,
+                    'item' => url("{$currentLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}")
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 5,
+                    'name' => $title,
+                    'item' => $url
+                ]
+            ]
+        ];
+        JsonLd::addValues($jsonLdBreadcrumb);
+
+        return [
+            'title' => $title,
+            'description' => $shortBio,
+            'html' => $fallbackHtml
+        ];
     }
 
 

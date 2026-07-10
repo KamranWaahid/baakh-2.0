@@ -60,26 +60,26 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                 <span className="text-gray-500">{formatDate(safeDate, lang)}</span>
                                 <span className="text-gray-300">·</span>
                                 <span className="text-gray-500">{isRtl ? safeReadTime.replace('min read', 'منٽ پڙهڻ') : safeReadTime}</span>
-                                {showStar && <Sparkles className={`h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ${isRtl ? 'mr-1' : 'ml-1'}`} />}
+                                {showStar && <Sparkles className={`h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ms-1`} />}
                             </>
                         )}
                     </div>
 
                     {is_couplet ? (
-                        <div className="flex justify-center items-start gap-4">
-                            <div className="flex-1">
+                        <div className="flex justify-center items-start gap-4 w-full">
+                            <div className="flex-1 w-full max-w-full">
                                 {excerpt && (
-                                    <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} whitespace-pre-wrap text-center text-xl md:text-2xl font-medium py-6`}>
+                                    <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} whitespace-pre-wrap break-words break-all md:break-normal text-center text-xl md:text-2xl font-medium py-6`}>
                                         {excerpt}
                                     </p>
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}>
-                            <div className="flex justify-between items-start gap-4">
-                                <div className="flex-1">
-                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-[1.3] group-hover:underline group-hover:opacity-80 transition-all ${isRtl ? 'font-arabic' : ''}`}>
+                        <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'} className="block w-full">
+                            <div className="flex justify-between items-start gap-4 w-full">
+                                <div className="flex-1 min-w-0">
+                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-[1.3] group-hover:underline group-hover:opacity-80 transition-all break-words break-all md:break-normal ${isRtl ? 'font-arabic' : ''}`}>
                                         {title || 'Untitled'}
                                     </h2>
                                 </div>
@@ -111,7 +111,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                         className={is_couplet ? 'justify-center gap-10' : ''}
                         leftContent={is_couplet ? (
                             <div className="flex items-center gap-3 text-sm">
-                                {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ml-1`} />}
+                                {showStar && <Sparkles className={`h-4 w-4 text-yellow-500 fill-yellow-500 ms-1`} />}
                                 <span>{formatDate(safeDate, lang)}</span>
                                 <span className="text-gray-300">·</span>
                             </div>
