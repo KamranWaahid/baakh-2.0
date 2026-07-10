@@ -161,7 +161,7 @@ class UpdateDashboardStats implements ShouldQueue
                 'user' => $log->user ? ['name' => $log->user->name, 'avatar' => $log->user->avatar] : null,
                 'action' => $log->action,
                 'description' => $log->description,
-                'time' => $log->created_at->diffForHumans(),
+                'time' => $log->created_at ? $log->created_at->diffForHumans() : 'Unknown',
             ]);
 
         // 8. Recent Reports
@@ -183,7 +183,7 @@ class UpdateDashboardStats implements ShouldQueue
                     'reporter' => $report->user->name ?? 'Guest',
                     'target' => $target,
                     'reason' => $report->reason,
-                    'date' => $report->created_at->format('M d, Y'),
+                    'date' => $report->created_at ? $report->created_at->format('M d, Y') : 'Unknown',
                 ];
             });
 
@@ -202,7 +202,7 @@ class UpdateDashboardStats implements ShouldQueue
                 'user' => $f->user ? ['name' => $f->user->name, 'avatar' => $f->user->avatar] : ['name' => 'Anonymous'],
                 'message' => $f->message,
                 'rating' => $f->rating,
-                'time' => $f->created_at->diffForHumans()
+                'time' => $f->created_at ? $f->created_at->diffForHumans() : 'Unknown'
             ]),
             'recent_reports' => $recentReports,
             'missing_en_poetry' => $missingEnPoetry,

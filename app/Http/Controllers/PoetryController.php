@@ -243,7 +243,7 @@ class PoetryController extends UserController
             'source' => $poetry->info?->source,
             'views' => $poetry->views,
             'likes' => $poetry->likes_count ?? 0,
-            'date' => $poetry->created_at->format('M d, Y'),
+            'date' => $poetry->created_at ? $poetry->created_at->format('M d, Y') : '',
             'date_diff' => $poetry->created_at->diffForHumans(),
 
             'poet' => [
@@ -305,7 +305,7 @@ class PoetryController extends UserController
                             ? ($locale === 'en' ? ucfirst($p->category->details->first()->cat_name) : $p->category->details->first()->cat_name)
                             : ($p->category?->slug ? ucfirst($p->category->slug) : 'General'),
                         'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
-                        'date' => $p->created_at->format('M d'),
+                        'date' => $p->created_at ? $p->created_at->format('M d') : '',
                         'claps' => $p->likes_count ?? 0,
                         'comments' => 0
                     ];
