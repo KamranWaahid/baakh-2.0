@@ -16,16 +16,11 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Disable foreign key checks to allow truncation
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-        $this->command->info('Truncating users, teams, and team_members tables...');
-        DB::table('users')->truncate();
-        DB::table('teams')->truncate();
-        DB::table('team_members')->truncate();
-        DB::table('activity_logs')->truncate();
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $this->command->info('Cleaning users, teams, and team_members tables...');
+        User::query()->delete();
+        Team::query()->delete();
+        DB::table('team_members')->delete();
+        DB::table('activity_logs')->delete();
 
         // Create Super Admin
         $this->command->info('Creating Super Admin user...');

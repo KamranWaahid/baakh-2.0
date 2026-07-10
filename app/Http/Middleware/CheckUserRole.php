@@ -17,12 +17,14 @@ class CheckUserRole
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-
+        $user = $request->user();
+        if ($user) {
             // Check if user is active
             if (!$user->isActive()) {
-                Auth::logout();
+                // If they logged in via session, log them out. For token users, just return 403.
+                if (Auth::guard('web')->check()) {
+                    Auth::guard('web')->logout();
+                }
                 return response()->json(['message' => 'Account is disabled.'], 403);
             }
 
@@ -34,7 +36,7 @@ class CheckUserRole
         }
 
         // Unauthorized access
-        if ($request->isMethod('GET')) {
+        if ($request->isMethod('GET') && !$request->expectsJson() && !$request->ajax() && !$request->bearerToken()) {
             return redirect('/');
         }
 

@@ -76,14 +76,18 @@ class SafeUserData
         }
 
         try {
-            $payload['roles'] = $user->getRoleNames();
+            $roles = $user->getRoleNames();
+            if ($roles->isEmpty() && $user->role) {
+                $roles = collect([$user->role]);
+            }
+            $payload['roles'] = $roles;
         } catch (\Throwable $e) {
             Log::warning('Failed loading user roles for API response', [
                 'user_id' => $user->id ?? null,
                 'context' => $context,
                 'error' => $e->getMessage(),
             ]);
-            $payload['roles'] = collect();
+            $payload['roles'] = collect([$user->role]);
         }
 
         return $payload;
@@ -96,7 +100,11 @@ class SafeUserData
         }
 
         try {
-            $payload['permissions'] = $user->getAllPermissions()->pluck('name');
+            $permissions = $user->getAllPermissions()->pluck('name');
+            if ($permissions->isEmpty() && in_array(strtolower((string)$user->role), ['admin', 'admins', 'super_admin'])) {
+                $permissions = collect(['view_dashboard', 'manage_users']);
+            }
+            $payload['permissions'] = $permissions;
         } catch (\Throwable $e) {
             Log::warning('Failed loading user permissions for API response', [
                 'user_id' => $user->id ?? null,
@@ -104,6 +112,9 @@ class SafeUserData
                 'error' => $e->getMessage(),
             ]);
             $payload['permissions'] = collect();
+            if (in_array(strtolower((string)$user->role), ['admin', 'admins', 'super_admin'])) {
+                $payload['permissions'] = collect(['view_dashboard', 'manage_users']);
+            }
         }
 
         try {
