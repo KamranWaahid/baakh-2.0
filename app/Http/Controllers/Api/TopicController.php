@@ -223,7 +223,7 @@ class TopicController extends Controller
             'category' => $catDetail->cat_name ?? 'Uncategorized',
             'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
             'author_avatar' => $p->poet->poet_pic ?: null,
-            'date' => $p->created_at->format('d M Y'),
+            'date' => $p->created_at ? $p->created_at->format('d M Y') : '',
             'readTime' => '2 min read',
             'likes' => $p->likes_count ?? 0,
             'is_liked' => $userId ? $p->likes()->where('user_id', $userId)->exists() : false,

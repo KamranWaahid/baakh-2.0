@@ -421,7 +421,7 @@ class PoetController extends Controller
                 'category' => $catDetail->cat_name ?? 'Uncategorized',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
                 'author_avatar' => PoetImageUrl::resolve($poet->poet_pic),
-                'date' => $p->created_at->format('d M Y'),
+                'date' => $p->created_at ? $p->created_at->format('d M Y') : '',
                 'readTime' => '2 min read', // Placeholder logic
                 'likes' => $p->likes_count ?? 0,
                 'is_liked' => $userId ? $p->likes()->where('user_id', $userId)->exists() : false,
@@ -475,7 +475,7 @@ class PoetController extends Controller
                 'category' => 'Couplet',
                 'author' => $poetDetail->poet_laqab ?? $poetDetail->poet_name ?? 'Unknown',
                 'author_avatar' => PoetImageUrl::resolve($poet->poet_pic),
-                'date' => $c->created_at->format('d M Y'),
+                'date' => $c->created_at ? $c->created_at->format('d M Y') : '',
                 'readTime' => '',
                 'likes' => $c->likes_count ?? 0,
                 'is_liked' => $userId ? $c->likes()->where('user_id', $userId)->exists() : false,

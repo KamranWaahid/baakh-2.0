@@ -30,7 +30,14 @@ class LoginWithGoogleController extends Controller
         // Retrieve user data from Google
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver('google');
-        $googleUser = $driver->stateless()->user();
+
+        try {
+            $googleUser = $driver->stateless()->user();
+        } catch (\Exception $e) {
+            Log::error("Google OAuth error: " . $e->getMessage());
+            $lang = app()->getLocale();
+            return redirect("/{$lang}/login?error=google_auth_failed");
+        }
 
         Log::info("Google Login Attempt: " . $googleUser->getEmail() . " (ID: " . $googleUser->getId() . ")");
 

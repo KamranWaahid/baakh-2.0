@@ -66,7 +66,7 @@ class SidebarController extends Controller
                     $poetPic = null;
                 }
 
-                $date = $poetry->created_at->format('M d');
+                $date = $poetry->created_at ? $poetry->created_at->format('M d') : '';
                 if ($lang === 'sd') {
                     foreach ($monthMap as $en => $sd) {
                         if (str_contains($date, $en)) {
