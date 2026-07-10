@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
 import '../../css/app.css';
 
 // Components
@@ -148,8 +147,6 @@ const Explore = () => {
 import { AuthProvider } from './contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const enableVercelAnalytics = import.meta.env.VITE_ENABLE_VERCEL_ANALYTICS === 'true';
-
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -174,7 +171,6 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                    {enableVercelAnalytics && <Analytics />}
                     <ScrollToTop />
                     <MobileMenuProvider>
                         <React.Suspense fallback={<PageLoader />}>

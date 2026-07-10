@@ -11,6 +11,7 @@
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/web/main.jsx'], 'build')
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preload" href="/api/v1/feed" as="fetch" crossorigin="anonymous">
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-0GPQC53GE1"></script>
@@ -24,6 +25,13 @@
 </head>
 
 <body class="antialiased font-sans">
+    <noscript>
+        @if(isset($fallback))
+            <h1>{{ $fallback['title'] ?? '' }}</h1>
+            <p>{{ $fallback['description'] ?? '' }}</p>
+            {!! $fallback['html'] ?? '' !!}
+        @endif
+    </noscript>
     <div id="root"></div>
 </body>
 

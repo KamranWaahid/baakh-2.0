@@ -54,7 +54,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent hideClose className="w-full h-full sm:h-auto sm:max-w-[520px] p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-none sm:rounded-2xl">
+            <DialogContent hideClose className="w-full h-[100dvh] sm:h-auto sm:max-w-[520px] p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-none sm:rounded-2xl">
                 {/* Search Input - Clean & Borderless */}
                 <div className="flex items-center gap-3 px-5 py-4" dir={isRtl ? 'rtl' : 'ltr'}>
                     <Search className="h-5 w-5 text-gray-400 shrink-0" />

@@ -131,10 +131,10 @@ const PoemDetail = ({ lang }) => {
 
                 {/* Body */}
                 {/* Body */}
-                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-[1.7] text-[18px] md:text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line antialiased`}>
+                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-[1.7] text-[18px] md:text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line break-words break-all md:break-normal antialiased overflow-hidden`}>
                     {Array.isArray(poem.content) ? (
                         poem.content.map((couplet, index) => (
-                            <p key={index} className="mb-6 w-full"><CoupletWithWords text={couplet} isRtl={isRtl} /></p>
+                            <p key={index} className="mb-6 w-full max-w-full"><CoupletWithWords text={couplet} isRtl={isRtl} /></p>
                         ))
                     ) : (
                         <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }} />

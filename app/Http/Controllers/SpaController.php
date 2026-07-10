@@ -53,26 +53,26 @@ class SpaController extends Controller
                     $poet = $poetry ? $poetry->poet : null;
                     if ($poetry && $poet) {
                         $ogImageUrl = route('og.poetry', ['slug' => $poemSlug]);
-                        $this->SEO_Poetry($poetry, $categorySlug, $poet, $ogImageUrl);
-                        return view('app');
+                        $fallback = $this->SEO_Poetry($poetry, $categorySlug, $poet, $ogImageUrl);
+                        return view('app', compact('fallback'));
                     }
                 }
 
                 // Case 2: /:lang/poet/:slug (Poet Profile Page)
                 $poet = Poets::where('poet_slug', $poetSlug)->first();
                 if ($poet) {
-                    $this->SEO_Poet($poet, '');
-                    return view('app');
+                    $fallback = $this->SEO_Poet($poet, '');
+                    return view('app', compact('fallback'));
                 }
             }
         }
 
         // Default SEO for other pages
-        $this->SEO_General($title, $description, null, null, [
+        $fallback = $this->SEO_General($title, $description, null, null, [
             'og_description' => $ogDescription,
             'og_image_alt' => $ogImageAlt
         ]);
 
-        return view('app');
+        return view('app', compact('fallback'));
     }
 }
