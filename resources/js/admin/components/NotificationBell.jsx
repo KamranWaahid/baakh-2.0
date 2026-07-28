@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
     DropdownMenu,
@@ -28,7 +27,6 @@ import {
     Rocket,
     MessageSquare,
     Check,
-    X,
     BellOff,
 } from 'lucide-react';
 
@@ -38,22 +36,52 @@ const ICONS = {
     MessageSquare, Bell,
 };
 
-const COLOR_MAP = {
-    red: 'bg-red-100 text-red-700',
-    blue: 'bg-blue-100 text-blue-700',
-    sky: 'bg-sky-100 text-sky-700',
-    green: 'bg-green-100 text-green-700',
-    emerald: 'bg-emerald-100 text-emerald-700',
-    purple: 'bg-purple-100 text-purple-700',
-    violet: 'bg-violet-100 text-violet-700',
-    amber: 'bg-amber-100 text-amber-700',
-    orange: 'bg-orange-100 text-orange-700',
-    gray: 'bg-gray-100 text-gray-600',
-    teal: 'bg-teal-100 text-teal-700',
-    indigo: 'bg-indigo-100 text-indigo-700',
-    cyan: 'bg-cyan-100 text-cyan-700',
-    fuchsia: 'bg-fuchsia-100 text-fuchsia-700',
-    pink: 'bg-pink-100 text-pink-700',
+const looksLikeSlug = (value) => {
+    if (!value || typeof value !== 'string') return false;
+    const text = value.trim();
+    return /^[a-z0-9]+(?:-[a-z0-9]+)+$/i.test(text);
+};
+
+const humanizeSlug = (value) => {
+    if (!value) return '';
+    return String(value).replace(/[-_]+/g, ' ').trim();
+};
+
+const hasArabicScript = (value) => /[\u0600-\u06FF]/.test(value || '');
+
+const getNotificationCopy = (n) => {
+    const data = n.data || {};
+    let entityName = (data.entity_name || '').trim();
+    let poetName = (data.poet_name || '').trim();
+    let message = (n.message || '').trim();
+
+    // Prefer structured fields; fall back to parsing older "title" by poet messages.
+    if ((!entityName || looksLikeSlug(entityName)) && message) {
+        const quoted = message.match(/"([^"]+)"/);
+        if (quoted?.[1]) {
+            entityName = quoted[1];
+        }
+        const byMatch = message.match(/\bby\s+(.+?)(?:\s+has\b|$)/i);
+        if (!poetName && byMatch?.[1]) {
+            poetName = byMatch[1].replace(/[.“”"]/g, '').trim();
+        }
+    }
+
+    if (looksLikeSlug(entityName)) {
+        entityName = humanizeSlug(entityName);
+    }
+
+    // Keep message short when we already show entity/poet separately.
+    if (entityName && message && (message.includes(entityName) || message.includes('"'))) {
+        message = '';
+    }
+
+    return {
+        headline: n.title || 'Update',
+        entityName,
+        poetName,
+        message,
+    };
 };
 
 const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
@@ -62,7 +90,6 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
     const location = useLocation();
     const [open, setOpen] = useState(false);
 
-    // Fetch notifications
     const { data } = useQuery({
         queryKey: ['notifications', variant],
         queryFn: async () => {
@@ -70,7 +97,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
             const res = await api.get(endpoint);
             return res.data;
         },
-        refetchInterval: 10000,
+        refetchInterval: 15000,
     });
 
     const unreadCount = data?.unread_count || 0;
@@ -142,14 +169,10 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
         const d = new Date(date);
         const diff = Math.floor((now - d) / 1000);
         if (diff < 60) return 'just now';
-        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-        return `${Math.floor(diff / 86400)}d ago`;
-    };
-
-    const getIcon = (iconName) => {
-        const IconComp = ICONS[iconName] || Bell;
-        return IconComp;
+        if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     };
 
     return (
@@ -165,7 +188,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
                         variant === 'web' ? (
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
                         ) : (
-                            <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1 animate-pulse">
+                            <span className="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white px-1">
                                 {unreadCount > 99 ? '99+' : unreadCount}
                             </span>
                         )
@@ -173,78 +196,120 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
                 </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-[min(380px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-0 overflow-hidden">
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20">
-                    <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-sm">Notifications</h3>
-                        {unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-[10px] h-5 px-1.5 leading-none">{unreadCount} new</Badge>
-                        )}
-                    </div>
-                    <div className="flex gap-1">
+            <DropdownMenuContent
+                align="end"
+                className="w-[min(22rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] p-0 overflow-hidden rounded-xl"
+            >
+                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 border-b">
+                    <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
+                    <div className="flex items-center gap-1 shrink-0">
                         {unreadCount > 0 && (
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-transparent"
-                                onClick={() => markAllReadMutation.mutate()}
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    markAllReadMutation.mutate();
+                                }}
                                 disabled={markAllReadMutation.isPending}
                             >
-                                <Check className="h-3 w-3 mr-1" /> Read all
+                                <Check className="h-3.5 w-3.5 mr-1" />
+                                Read all
                             </Button>
                         )}
                         {notifications.length > 0 && (
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs h-7 px-2 text-muted-foreground hover:text-destructive hover:bg-transparent"
-                                onClick={() => clearMutation.mutate()}
+                                className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    clearMutation.mutate();
+                                }}
                                 disabled={clearMutation.isPending}
                             >
-                                <X className="h-3 w-3" />
+                                Clear
                             </Button>
                         )}
                     </div>
                 </div>
 
-                {/* Notification List */}
-                <ScrollArea className="h-[min(420px,60dvh)]">
+                <ScrollArea className="h-[min(28rem,65dvh)]">
                     {notifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                            <BellOff className="h-10 w-10 mb-3 opacity-20" />
-                            <p className="text-sm font-medium">No notifications yet</p>
-                            <p className="text-xs mt-1">Activity will appear here</p>
+                        <div className="flex flex-col items-center justify-center py-10 px-4 text-muted-foreground">
+                            <BellOff className="h-8 w-8 mb-2 opacity-30" />
+                            <p className="text-sm">No notifications</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-border/50">
+                        <div className="divide-y">
                             {notifications.map((n) => {
-                                const IconComp = getIcon(n.icon);
-                                const colorClasses = COLOR_MAP[n.color] || COLOR_MAP.gray;
+                                const IconComp = ICONS[n.icon] || Bell;
                                 const isUnread = !n.read_at;
+                                const copy = getNotificationCopy(n);
+                                const entityRtl = hasArabicScript(copy.entityName);
+                                const poetRtl = hasArabicScript(copy.poetName);
 
                                 return (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={n.id}
-                                        className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 ${isUnread ? 'bg-primary/5' : ''}`}
+                                        className={`w-full text-left px-3.5 py-3 transition-colors hover:bg-muted/40 ${isUnread ? 'bg-muted/20' : ''}`}
                                         onClick={() => handleNotificationClick(n)}
                                     >
-                                        <div className={`shrink-0 mt-0.5 h-8 w-8 rounded-full flex items-center justify-center ${colorClasses}`}>
-                                            <IconComp className="h-4 w-4" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <p className={`text-sm truncate ${isUnread ? 'font-semibold text-foreground' : 'text-foreground/70'}`}>
-                                                    {n.title || 'New Update'}
-                                                </p>
-                                                {isUnread && (
-                                                    <span className="shrink-0 h-2 w-2 rounded-full bg-primary" />
-                                                )}
+                                        <div className="flex gap-3 min-w-0">
+                                            <div className={`mt-0.5 h-8 w-8 shrink-0 rounded-full flex items-center justify-center ${isUnread ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                                <IconComp className="h-3.5 w-3.5" />
                                             </div>
-                                            <p className="text-xs text-muted-foreground truncate mt-0.5">{n.message || n.data?.entity_name || 'View details'}</p>
-                                            <p className="text-[10px] text-muted-foreground/60 mt-1">{getTimeAgo(n.created_at)}</p>
+
+                                            <div className="min-w-0 flex-1 space-y-1">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <p className={`text-[11px] uppercase tracking-wide ${isUnread ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
+                                                        {copy.headline}
+                                                    </p>
+                                                    <span className="shrink-0 text-[11px] text-muted-foreground/70 tabular-nums">
+                                                        {getTimeAgo(n.created_at)}
+                                                    </span>
+                                                </div>
+
+                                                {copy.entityName ? (
+                                                    <p
+                                                        className={`text-sm leading-snug text-foreground break-words ${entityRtl ? 'font-arabic' : ''}`}
+                                                        dir={entityRtl ? 'rtl' : 'auto'}
+                                                    >
+                                                        {copy.entityName}
+                                                    </p>
+                                                ) : null}
+
+                                                {copy.poetName ? (
+                                                    <p
+                                                        className={`text-xs text-muted-foreground leading-snug break-words ${poetRtl ? 'font-arabic' : ''}`}
+                                                        dir={poetRtl ? 'rtl' : 'auto'}
+                                                    >
+                                                        {copy.poetName}
+                                                    </p>
+                                                ) : null}
+
+                                                {!copy.entityName && copy.message ? (
+                                                    <p className="text-sm text-muted-foreground leading-snug break-words whitespace-normal" dir="auto">
+                                                        {copy.message}
+                                                    </p>
+                                                ) : null}
+
+                                                {copy.entityName && copy.message ? (
+                                                    <p className="text-xs text-muted-foreground leading-snug break-words whitespace-normal line-clamp-2" dir="auto">
+                                                        {copy.message}
+                                                    </p>
+                                                ) : null}
+                                            </div>
+
+                                            {isUnread ? (
+                                                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                                            ) : (
+                                                <span className="w-1.5 shrink-0" />
+                                            )}
                                         </div>
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </div>

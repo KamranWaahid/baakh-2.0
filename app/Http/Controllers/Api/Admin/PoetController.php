@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poets;
+use App\Services\PoetEditorJsonService;
 use App\Support\PoetImageUrl;
 use App\Traits\HasMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class PoetController extends Controller
 {
@@ -16,9 +18,9 @@ class PoetController extends Controller
 
     public function __construct()
     {
-        $this->middleware('can:view_poets')->only(['index', 'show']);
+        $this->middleware('can:view_poets')->only(['index', 'show', 'editorJson']);
         $this->middleware('can:create_poets')->only(['create', 'store']);
-        $this->middleware('can:edit_poets')->only(['update']);
+        $this->middleware('can:edit_poets')->only(['update', 'importJson']);
         $this->middleware('can:delete_poets')->only(['destroy']);
     }
     public function index(Request $request)
@@ -78,7 +80,23 @@ class PoetController extends Controller
     public function show($id)
     {
         try {
-            $poet = Poets::with('all_details')->findOrFail($id);
+            $poet = Poets::with([
+                'all_details.birthCity.details',
+                'all_details.deathCity.details',
+            ])->findOrFail($id);
+
+            $cityLabel = static function ($city): ?string {
+                if (!$city) {
+                    return null;
+                }
+                $details = $city->details ?? collect();
+                $sdName = $details->firstWhere('lang', 'sd')?->city_name;
+                $enName = $details->firstWhere('lang', 'en')?->city_name;
+                $anyName = $details->first()?->city_name;
+
+                $label = $sdName ?: $enName ?: $anyName;
+                return $label !== null && $label !== '' ? $label : null;
+            };
 
             $payload = [
                 'id' => $poet->id,
@@ -91,7 +109,7 @@ class PoetController extends Controller
                 'visibility' => $poet->visibility,
                 'is_featured' => $poet->is_featured,
                 'poet_tags' => $poet->poet_tags,
-                'all_details' => $poet->all_details->map(function ($detail) {
+                'all_details' => $poet->all_details->map(function ($detail) use ($cityLabel) {
                     return [
                         'id' => $detail->id,
                         'poet_id' => $detail->poet_id,
@@ -100,8 +118,14 @@ class PoetController extends Controller
                         'pen_name' => $detail->pen_name,
                         'tagline' => $detail->tagline,
                         'poet_bio' => $detail->poet_bio,
-                        'birth_place' => $detail->birth_place,
-                        'death_place' => $detail->death_place,
+                        'birth_place' => $detail->birth_place !== null && $detail->birth_place !== ''
+                            ? (string) $detail->birth_place
+                            : null,
+                        'birth_place_name' => $cityLabel($detail->birthCity),
+                        'death_place' => $detail->death_place !== null && $detail->death_place !== ''
+                            ? (string) $detail->death_place
+                            : null,
+                        'death_place_name' => $cityLabel($detail->deathCity),
                         'lang' => $detail->lang,
                     ];
                 })->values(),
@@ -240,6 +264,8 @@ class PoetController extends Controller
         DB::beginTransaction();
         try {
             $imagePath = $poet->poet_pic;
+            $removeImage = $request->boolean('remove_image');
+
             if ($request->hasFile('image')) {
                 $slugForImage = $request->input('poet_slug', $poet->poet_slug);
                 $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $slugForImage, true);
@@ -248,6 +274,12 @@ class PoetController extends Controller
                     return response()->json(['message' => $uploadImage['message']], 422);
                 }
                 $imagePath = $uploadImage['full_path'];
+                $removeImage = false;
+            } elseif ($removeImage) {
+                if ($poet->poet_pic) {
+                    $this->deleteImageFiles($poet->poet_pic, true);
+                }
+                $imagePath = null;
             } elseif ($request->has('image') && !$request->hasFile('image')) {
                 DB::rollBack();
                 return response()->json([
@@ -271,7 +303,7 @@ class PoetController extends Controller
             if ($request->has('is_featured')) {
                 $updates['is_featured'] = $request->is_featured;
             }
-            if ($request->hasFile('image')) {
+            if ($request->hasFile('image') || $removeImage) {
                 $updates['poet_pic'] = $imagePath;
             }
 
@@ -370,6 +402,51 @@ class PoetController extends Controller
             DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete poet: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function editorJson($id, PoetEditorJsonService $editorJson)
+    {
+        $poet = Poets::findOrFail($id);
+
+        return response()->json(
+            $editorJson->build($poet),
+            200,
+            [],
+            JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+    }
+
+    public function importJson(Request $request, $id, PoetEditorJsonService $editorJson)
+    {
+        $poet = Poets::findOrFail($id);
+
+        $payload = $request->json()->all();
+        if (!is_array($payload) || $payload === []) {
+            return response()->json([
+                'message' => 'Provide a JSON object for this poet.',
+            ], 422);
+        }
+
+        try {
+            $updated = $editorJson->import($poet, $payload);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'message' => $exception->getMessage() ?: 'Failed to import poet JSON.',
+            ], 500);
+        }
+
+        return response()->json(
+            $editorJson->build($updated),
+            200,
+            [],
+            JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+        );
     }
 
 }

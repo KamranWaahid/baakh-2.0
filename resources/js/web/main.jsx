@@ -61,17 +61,17 @@ const MainLayout = ({ lang }) => {
     useSwipeGesture({ isMenuOpen, openMenu, closeMenu, isRtl });
 
     return (
-        <div className="min-h-screen bg-white overflow-x-clip">
+        <div className="min-h-screen bg-white">
             <MobileMenu lang={lang} />
             <div className="min-h-screen bg-white">
                 <header role="banner">
                     <Navbar lang={lang} />
                 </header>
-                <div className="max-w-[1504px] mx-auto flex justify-center min-h-[calc(100dvh-var(--baakh-header-h,57px))] pb-[60px] lg:pb-0">
+                <div className="max-w-[1504px] mx-auto flex justify-center items-start min-h-[calc(100dvh-var(--baakh-header-h,57px))] pb-[60px] lg:pb-0">
                     <React.Suspense fallback={null}>
                         <SidebarLeft lang={lang} />
                     </React.Suspense>
-                    <div className="flex-1 flex flex-col min-w-0">
+                    <div className="flex-1 flex flex-col min-w-0 overflow-x-clip">
                         <FeedbackBanner lang={lang} />
                         {showCategoryNav && <CategoryNav lang={lang} />}
                         <div className="flex flex-1">

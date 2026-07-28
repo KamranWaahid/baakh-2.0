@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../../api/axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-// Simple Error Boundary to catch render crashes
+const formatRoleLabel = (name = '') => {
+    const label = name.replace(/_/g, ' ');
+    return label ? label.charAt(0).toUpperCase() + label.slice(1) : 'Unknown Role';
+};
+
 class UserFormErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -49,38 +53,48 @@ class UserFormErrorBoundary extends React.Component {
 
 const UserFormContent = () => {
     const { id } = useParams();
+    const [searchParams] = useSearchParams();
+    const isEditMode = !!id;
+    const defaultRole = searchParams.get('role') || 'admin';
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: {
             status: 'active',
-            role: 'admin'
+            role: defaultRole
         }
     });
 
     const { data: user, isLoading: isLoadingUser, isError: isUserError, error: userError } = useQuery({
         queryKey: ['user', id],
         queryFn: async () => {
-            console.log("Fetching user details for ID:", id);
             const response = await api.get(`/api/admin/users/${id}`);
             return response.data;
         },
+        enabled: isEditMode,
         retry: 1
     });
 
     const { data: roles, isLoading: isLoadingRoles } = useQuery({
         queryKey: ['roles'],
         queryFn: async () => {
-            console.log("Fetching roles list");
             const response = await api.get('/api/admin/roles');
             return response.data;
         }
     });
 
+    const { data: teams } = useQuery({
+        queryKey: ['teams'],
+        queryFn: async () => {
+            const response = await api.get('/api/admin/teams');
+            return response.data;
+        },
+        enabled: !isEditMode
+    });
+
     useEffect(() => {
         if (user) {
-            console.log("User data loaded, resetting form", user);
             reset({
                 name: user.name || '',
                 name_sd: user.name_sd || '',
@@ -89,41 +103,57 @@ const UserFormContent = () => {
                 phone: user.phone || '',
                 whatsapp: user.whatsapp || '',
                 status: user.status || 'active',
-                role: (user.roles && user.roles.length > 0) ? user.roles[0].name : 'admin'
+                role: (user.roles && user.roles.length > 0) ? user.roles[0].name : 'admin',
+                password: ''
             });
         }
     }, [user, reset]);
 
-    // Register these manually since they are handled by Select components
     useEffect(() => {
         register('status');
         register('role');
+        register('team_id');
+        register('team_role');
     }, [register]);
 
     const currentStatus = watch('status');
     const currentRole = watch('role');
+    const currentTeamId = watch('team_id');
+    const currentTeamRole = watch('team_role') || 'member';
 
     const mutation = useMutation({
         mutationFn: async (data) => {
-            return api.put(`/api/admin/users/${id}`, data);
+            const payload = { ...data };
+            if (!payload.password) {
+                delete payload.password;
+            }
+            if (!payload.team_id) {
+                delete payload.team_id;
+                delete payload.team_role;
+            }
+            if (isEditMode) {
+                return api.put(`/api/admin/users/${id}`, payload);
+            }
+            return api.post('/api/admin/users', payload);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['admins']);
+            queryClient.invalidateQueries(['editors']);
             queryClient.invalidateQueries(['viewers']);
+            queryClient.invalidateQueries(['teams']);
             navigate('/admin/teams');
         }
     });
 
     const onSubmit = (data) => {
-        console.log("Submitting form data:", data);
         mutation.mutate(data);
     };
 
-    if (isLoadingUser || isLoadingRoles) {
+    if ((isEditMode && isLoadingUser) || isLoadingRoles) {
         return <div className="p-8 text-center text-gray-500 animate-pulse">Loading user details and roles...</div>;
     }
 
-    if (isUserError || !user) {
+    if (isEditMode && (isUserError || !user)) {
         return (
             <div className="p-8 text-center space-y-4 max-w-2xl mx-auto">
                 <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
@@ -136,6 +166,8 @@ const UserFormContent = () => {
         );
     }
 
+    const teamList = teams?.data || [];
+
     return (
         <div className="max-w-2xl mx-auto p-4 md:p-8 fade-in">
             <Button variant="ghost" onClick={() => navigate('/admin/teams')} className="mb-4 md:mb-6 pl-0 hover:pl-2 transition-all flex items-center">
@@ -145,7 +177,7 @@ const UserFormContent = () => {
             <div className="grid gap-6">
                 <Card className="shadow-sm">
                     <CardHeader>
-                        <CardTitle>Edit Admin User</CardTitle>
+                        <CardTitle>{isEditMode ? 'Edit User' : 'Create User'}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -207,6 +239,20 @@ const UserFormContent = () => {
 
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
+                                    <label className="text-sm font-medium">
+                                        {isEditMode ? 'New Password (optional)' : 'Password'}
+                                    </label>
+                                    <Input
+                                        type="password"
+                                        {...register('password', {
+                                            required: !isEditMode ? 'Password is required' : false,
+                                            minLength: { value: 8, message: 'Min 8 characters' }
+                                        })}
+                                        placeholder="••••••••"
+                                    />
+                                    {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
+                                </div>
+                                <div className="space-y-2">
                                     <label className="text-sm font-medium">System Role</label>
                                     <Select
                                         value={currentRole || ''}
@@ -216,22 +262,19 @@ const UserFormContent = () => {
                                             <SelectValue placeholder="Select role" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {Array.isArray(roles) && roles.length > 0 ? roles.map((role) => {
-                                                const roleName = role?.name || '';
-                                                const label = roleName.replace('_', ' ');
-                                                const formattedLabel = label ? (label.charAt(0).toUpperCase() + label.slice(1)) : 'Unknown Role';
-
-                                                return (
-                                                    <SelectItem key={role.id || roleName} value={roleName}>
-                                                        {formattedLabel}
-                                                    </SelectItem>
-                                                );
-                                            }) : (
+                                            {Array.isArray(roles) && roles.length > 0 ? roles.map((role) => (
+                                                <SelectItem key={role.id || role.name} value={role.name}>
+                                                    {formatRoleLabel(role.name)}
+                                                </SelectItem>
+                                            )) : (
                                                 <SelectItem value="admin">Admin (Default)</SelectItem>
                                             )}
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Account Status</label>
                                     <Select
@@ -248,11 +291,51 @@ const UserFormContent = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                {!isEditMode && (
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Assign to Team (optional)</label>
+                                        <Select
+                                            value={currentTeamId ? String(currentTeamId) : 'none'}
+                                            onValueChange={(val) => setValue('team_id', val === 'none' ? null : Number(val), { shouldDirty: true })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="No team" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">No team</SelectItem>
+                                                {teamList.map((team) => (
+                                                    <SelectItem key={team.id} value={String(team.id)}>
+                                                        {team.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                             </div>
+
+                            {!isEditMode && currentTeamId && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Team Role</label>
+                                    <Select
+                                        value={currentTeamRole}
+                                        onValueChange={(val) => setValue('team_role', val, { shouldDirty: true })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="member">Member</SelectItem>
+                                            <SelectItem value="admin">Admin</SelectItem>
+                                            <SelectItem value="owner">Owner</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
 
                             {mutation.isError && (
                                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
-                                    <p className="font-bold">Error updating user:</p>
+                                    <p className="font-bold">{isEditMode ? 'Error updating user:' : 'Error creating user:'}</p>
                                     {mutation.error.response?.data?.errors ? (
                                         <ul className="list-disc list-inside mt-1">
                                             {Object.values(mutation.error.response.data.errors).flat().map((err, i) => (
@@ -270,7 +353,9 @@ const UserFormContent = () => {
                                     Cancel
                                 </Button>
                                 <Button type="submit" disabled={mutation.isPending} className="w-full">
-                                    {mutation.isPending ? 'Saving...' : 'Update Admin User'}
+                                    {mutation.isPending
+                                        ? 'Saving...'
+                                        : (isEditMode ? 'Update User' : 'Create User')}
                                 </Button>
                             </div>
                         </form>

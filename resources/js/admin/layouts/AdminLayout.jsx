@@ -65,7 +65,7 @@ const AdminLayout = ({ children }) => {
                 <Sidebar />
             </div>
             <div className="flex min-w-0 flex-col max-w-full">
-                <header className="sticky top-0 z-40 flex h-14 items-center gap-2 sm:gap-4 border-b bg-muted/40 px-3 sm:px-4 lg:h-[60px] lg:px-6 backdrop-blur supports-[backdrop-filter]:bg-muted/80">
+                <header className="sticky top-0 z-40 flex h-14 items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-4 lg:h-[60px] lg:px-6">
                     <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                         <SheetTrigger asChild>
                             <Button

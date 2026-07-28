@@ -17,7 +17,7 @@ class TeamMemberController extends Controller
     {
         $this->authorize('view', $team);
 
-        $members = $team->members()->with('user')->get();
+        $members = $team->members()->with(['user.roles'])->get();
 
         return response()->json(
             $members->map(fn ($member) => $this->serializeMember($member))
@@ -40,18 +40,16 @@ class TeamMemberController extends Controller
             'system_role' => 'nullable|string|exists:roles,name',
         ]);
 
+        if ($request->system_role === 'super_admin' && !$request->user()->hasRole('super_admin')) {
+            return response()->json(['message' => 'You do not have permission to assign the Super Admin role.'], 403);
+        }
+
         $user = User::findByEmail($request->email);
 
         if (!$user) {
             if (!$request->name || !$request->password || !$request->username) {
                 throw ValidationException::withMessages([
-                    'email' => 'User not found. Please provide Name, Username, and Password to create a new account.',
-                ]);
-            }
-
-            if (User::findByEmail($request->email)) {
-                throw ValidationException::withMessages([
-                    'email' => ['The email is already in use.'],
+                    'email' => ['User not found. Please provide Name, Username, and Password to create a new account.'],
                 ]);
             }
 
@@ -66,9 +64,8 @@ class TeamMemberController extends Controller
                 'status' => 'active',
             ]);
 
-            if ($request->system_role) {
-                $user->assignRole($request->system_role);
-            }
+            $systemRole = $request->input('system_role', 'viewer');
+            $user->assignRole($systemRole);
 
             ActivityLog::log(
                 'created_user',
@@ -76,6 +73,8 @@ class TeamMemberController extends Controller
                 null,
                 'Created new user ' . $request->email . ' while adding to team'
             );
+        } elseif ($request->filled('system_role')) {
+            $user->syncRoles([$request->system_role]);
         }
 
         if ($team->members()->where('user_id', $user->id)->exists()) {
@@ -98,7 +97,7 @@ class TeamMemberController extends Controller
 
         return response()->json([
             'message' => 'Member added successfully',
-            'member' => $this->serializeMember($member->load('user')),
+            'member' => $this->serializeMember($member->load('user.roles')),
         ]);
     }
 
@@ -128,7 +127,7 @@ class TeamMemberController extends Controller
 
         return response()->json([
             'message' => 'Member role updated successfully',
-            'member' => $this->serializeMember($member->load('user')),
+            'member' => $this->serializeMember($member->load('user.roles')),
         ]);
     }
 
@@ -158,6 +157,16 @@ class TeamMemberController extends Controller
 
     private function serializeMember($member): array
     {
+        $userPayload = SafeUserData::basic($member->user, '/api/admin/teams/members');
+        if ($userPayload && $member->user) {
+            $userPayload['roles'] = $member->user->relationLoaded('roles')
+                ? $member->user->roles->map(fn ($role) => [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                ])->values()
+                : [];
+        }
+
         return [
             'id' => $member->id,
             'team_id' => $member->team_id,
@@ -166,7 +175,7 @@ class TeamMemberController extends Controller
             'joined_at' => $member->joined_at,
             'created_at' => $member->created_at,
             'updated_at' => $member->updated_at,
-            'user' => SafeUserData::basic($member->user, '/api/admin/teams/members'),
+            'user' => $userPayload,
         ];
     }
 }

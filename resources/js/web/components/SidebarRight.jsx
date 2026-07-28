@@ -54,8 +54,7 @@ const SidebarRight = ({ lang }) => {
 
     return (
         <aside
-            className="w-[368px] hidden xl:block shrink-0 border-s border-gray-100 p-8 sticky flex flex-col"
-            style={{ top: 85 }}
+            className="w-[368px] hidden xl:block shrink-0 self-start border-s border-gray-100 p-8 sticky top-[var(--baakh-header-h,57px)] z-20 flex flex-col max-h-[calc(100dvh-var(--baakh-header-h,57px))] overflow-y-auto overscroll-contain"
         >
             <section className="mb-10">
                 <h3 className="font-bold text-black mb-4">{isRtl ? 'اسٽاف جا چونڊيل' : 'Staff Picks'}</h3>

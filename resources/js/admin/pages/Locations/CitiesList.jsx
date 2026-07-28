@@ -63,7 +63,10 @@ const CitiesList = () => {
     const mutation = useMutation({
         mutationFn: async (data) => {
             if (selectedCity) {
-                return api.put(`/api/admin/cities/${selectedCity.id}`, data);
+                return api.put(`/api/admin/cities/${selectedCity.id}`, {
+                    ...data,
+                    partner_ids: selectedCity.partner_ids || [],
+                });
             }
             return api.post('/api/admin/cities', data);
         },
@@ -130,6 +133,11 @@ const CitiesList = () => {
         return province.name || `Province #${province.id}`;
     }
 
+    const getLangName = (city, lang) => {
+        if (city?.names?.[lang]) return city.names[lang];
+        return city?.details?.find((d) => d.lang === lang)?.city_name || null;
+    };
+
     if (isLoading) return <div>Loading...</div>;
 
     return (
@@ -162,7 +170,7 @@ const CitiesList = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="min-w-[150px]">City Name</TableHead>
+                            <TableHead className="min-w-[220px]">City Name</TableHead>
                             <TableHead>Province</TableHead>
                             <TableHead className="hidden md:table-cell">Coordinates</TableHead>
                             <TableHead className="hidden sm:table-cell">Languages</TableHead>
@@ -174,24 +182,40 @@ const CitiesList = () => {
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-4 text-gray-500">No cities found.</TableCell>
                             </TableRow>
-                        ) : cities?.map((city) => (
+                        ) : cities?.map((city) => {
+                            const sdName = getLangName(city, 'sd');
+                            const enName = getLangName(city, 'en');
+                            const hasSd = Boolean(sdName);
+                            const hasEn = Boolean(enName);
+
+                            return (
                             <TableRow key={city.id}>
-                                <TableCell className="font-medium whitespace-nowrap">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-gray-400" />
-                                        {getDisplayName(city)}
+                                <TableCell className="font-medium">
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                                        <div className="space-y-1 min-w-0">
+                                            {hasEn && (
+                                                <div className="truncate">{enName}</div>
+                                            )}
+                                            {hasSd && (
+                                                <div className="truncate font-arabic" dir="rtl">{sdName}</div>
+                                            )}
+                                            {!hasEn && !hasSd && (
+                                                <span>{getDisplayName(city)}</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </TableCell>
                                 <TableCell className="whitespace-nowrap">
-                                    <Badge variant="secondary">{city.province?.name || '-'}</Badge>
+                                    <Badge variant="secondary">{getProvinceName(city.province)}</Badge>
                                 </TableCell>
                                 <TableCell className="text-[10px] text-gray-400 hidden md:table-cell whitespace-nowrap">
                                     {city.geo_lat && city.geo_long ? `${city.geo_lat}, ${city.geo_long}` : '-'}
                                 </TableCell>
                                 <TableCell className="hidden sm:table-cell">
                                     <div className="flex gap-1">
-                                        {city.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
-                                        {city.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
+                                        {hasEn && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
+                                        {hasSd && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right whitespace-nowrap">
@@ -213,7 +237,8 @@ const CitiesList = () => {
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ))}
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>

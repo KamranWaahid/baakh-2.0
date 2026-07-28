@@ -56,7 +56,7 @@ class SpaController extends Controller
                     if ($poetry && $poet) {
                         // Link previews (WhatsApp, etc.) use brand logo on white —
                         // not the designed poetry share card (that is only for in-app share/download).
-                        $ogImageUrl = asset('assets/og/baakh-1200x630.png');
+                        $ogImageUrl = asset('assets/og/baakh-og-v2-1200x630.png');
                         $fallback = $this->SEO_Poetry($poetry, $categorySlug, $poet, $ogImageUrl);
                         return view('app', compact('fallback'));
                     }

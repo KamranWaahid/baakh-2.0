@@ -63,7 +63,10 @@ const ProvincesList = () => {
     const mutation = useMutation({
         mutationFn: async (data) => {
             if (selectedProvince) {
-                return api.put(`/api/admin/provinces/${selectedProvince.id}`, data);
+                return api.put(`/api/admin/provinces/${selectedProvince.id}`, {
+                    ...data,
+                    partner_ids: selectedProvince.partner_ids || [],
+                });
             }
             return api.post('/api/admin/provinces', data);
         },
@@ -126,7 +129,12 @@ const ProvincesList = () => {
     const getCountryName = (country) => {
         if (!country) return '-';
         return country.name || country.Abbreviation || `Country #${country.id}`;
-    }
+    };
+
+    const getLangName = (province, lang) => {
+        if (province?.names?.[lang]) return province.names[lang];
+        return province?.details?.find((d) => d.lang === lang)?.province_name || null;
+    };
 
     if (isLoading) return <div>Loading...</div>;
 
@@ -160,7 +168,7 @@ const ProvincesList = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="min-w-[150px]">Province Name</TableHead>
+                            <TableHead className="min-w-[220px]">Province Name</TableHead>
                             <TableHead>Country</TableHead>
                             <TableHead className="hidden sm:table-cell">Languages</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
@@ -171,43 +179,72 @@ const ProvincesList = () => {
                             <TableRow>
                                 <TableCell colSpan={4} className="text-center py-4 text-gray-500">No provinces found.</TableCell>
                             </TableRow>
-                        ) : provinces?.map((province) => (
-                            <TableRow key={province.id}>
-                                <TableCell className="font-medium whitespace-nowrap">
-                                    <div className="flex items-center gap-2">
-                                        <Map className="h-4 w-4 text-gray-400" />
-                                        {getDisplayName(province)}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="whitespace-nowrap">
-                                    <Badge variant="secondary">{province.country?.name || '-'}</Badge>
-                                </TableCell>
-                                <TableCell className="hidden sm:table-cell">
-                                    <div className="flex gap-1">
-                                        {province.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
-                                        {province.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right whitespace-nowrap">
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(province)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            onClick={() => {
-                                                if (confirm('Delete this province?')) deleteMutation.mutate(province.id);
-                                            }}
-                                            disabled={deleteMutation.isPending}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        ) : provinces?.map((province) => {
+                            const sdName = getLangName(province, 'sd');
+                            const enName = getLangName(province, 'en');
+                            const otherNames = Object.entries(province.names || {}).filter(
+                                ([lang]) => lang !== 'sd' && lang !== 'en'
+                            );
+                            const hasSd = Boolean(sdName);
+                            const hasEn = Boolean(enName);
+                            const langs = [
+                                ...(hasEn ? ['en'] : []),
+                                ...(hasSd ? ['sd'] : []),
+                                ...otherNames.map(([lang]) => lang),
+                            ];
+
+                            return (
+                                <TableRow key={province.id}>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-start gap-2">
+                                            <Map className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                                            <div className="space-y-1 min-w-0">
+                                                {hasEn && (
+                                                    <div className="truncate">{enName}</div>
+                                                )}
+                                                {hasSd && (
+                                                    <div className="truncate font-arabic" dir="rtl">{sdName}</div>
+                                                )}
+                                                {otherNames.map(([lang, name]) => (
+                                                    <div key={lang} className="truncate">{name}</div>
+                                                ))}
+                                                {!hasEn && !hasSd && otherNames.length === 0 && (
+                                                    <span>{getDisplayName(province)}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        <Badge variant="secondary">{getCountryName(province.country)}</Badge>
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <div className="flex gap-1 flex-wrap">
+                                            {langs.map((lang) => (
+                                                <Badge key={lang} variant="secondary" className="text-[10px] uppercase">{lang}</Badge>
+                                            ))}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right whitespace-nowrap">
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(province)}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                onClick={() => {
+                                                    if (confirm('Delete this province?')) deleteMutation.mutate(province.id);
+                                                }}
+                                                disabled={deleteMutation.isPending}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>

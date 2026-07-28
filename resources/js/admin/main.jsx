@@ -318,6 +318,14 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/admin/users/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <UserForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/admin/users/:id/edit" element={
                         <ProtectedRoute>
                             <AdminLayout>

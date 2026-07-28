@@ -9,8 +9,8 @@ const FitVerseBlock = ({
     text,
     isRtl = false,
     align = 'right',
-    baseFontSize = 18,
-    minFontSize = 11,
+    baseFontSize = 24,
+    minFontSize = 15,
     className = '',
     interactive = true,
     lineClassName = '',
@@ -152,7 +152,7 @@ const FitVerseBlock = ({
                     style={{
                         fontSize: `${fontSize}px`,
                         letterSpacing,
-                        lineHeight: 1.75,
+                        lineHeight: 2,
                         transform: scale < 0.999 ? `scale(${scale})` : undefined,
                         marginBottom: index === lines.length - 1 ? 0 : undefined,
                     }}

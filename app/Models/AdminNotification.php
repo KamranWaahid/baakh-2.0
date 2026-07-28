@@ -62,12 +62,12 @@ class AdminNotification extends Model
     {
         return [
             // Content
-            'created_poetry' => ['title' => 'New Poetry Added', 'icon' => 'BookOpen', 'color' => 'blue', 'link' => '/admin/poetry'],
+            'created_poetry' => ['title' => 'New Poetry', 'icon' => 'BookOpen', 'color' => 'blue', 'link' => '/admin/poetry'],
             'updated_poetry' => ['title' => 'Poetry Updated', 'icon' => 'BookOpen', 'color' => 'sky', 'link' => '/admin/poetry'],
             'deleted_poetry' => ['title' => 'Poetry Deleted', 'icon' => 'Trash2', 'color' => 'red', 'link' => '/admin/poetry'],
 
             // Poets
-            'created_poet' => ['title' => 'New Poet Added', 'icon' => 'Feather', 'color' => 'purple', 'link' => '/admin/poets'],
+            'created_poet' => ['title' => 'New Poet', 'icon' => 'Feather', 'color' => 'purple', 'link' => '/admin/poets'],
             'updated_poet' => ['title' => 'Poet Updated', 'icon' => 'Feather', 'color' => 'violet', 'link' => '/admin/poets'],
             'deleted_poet' => ['title' => 'Poet Deleted', 'icon' => 'Trash2', 'color' => 'red', 'link' => '/admin/poets'],
 

@@ -45,7 +45,10 @@ const CountriesList = () => {
     const mutation = useMutation({
         mutationFn: async (data) => {
             if (selectedCountry) {
-                return api.put(`/api/admin/countries/${selectedCountry.id}`, data);
+                return api.put(`/api/admin/countries/${selectedCountry.id}`, {
+                    ...data,
+                    partner_ids: selectedCountry.partner_ids || [],
+                });
             }
             return api.post('/api/admin/countries', data);
         },
@@ -103,6 +106,11 @@ const CountriesList = () => {
 
     if (isLoading) return <div>Loading...</div>;
 
+    const getLangName = (country, lang) => {
+        if (country?.names?.[lang]) return country.names[lang];
+        return country?.details?.find((d) => d.lang === lang)?.countryName || null;
+    };
+
     const getDisplayName = (country) => {
         return country.name || country.Abbreviation || `Country #${country.id}`;
     };
@@ -123,7 +131,7 @@ const CountriesList = () => {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="min-w-[150px]">Name</TableHead>
+                            <TableHead className="min-w-[220px]">Name</TableHead>
                             <TableHead>Abbreviation</TableHead>
                             <TableHead className="hidden md:table-cell">Continent</TableHead>
                             <TableHead className="hidden sm:table-cell">Languages</TableHead>
@@ -131,44 +139,77 @@ const CountriesList = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {countries?.map((country) => (
-                            <TableRow key={country.id}>
-                                <TableCell className="font-medium whitespace-nowrap">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-gray-400" />
-                                        {getDisplayName(country)}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant="outline">{country.Abbreviation}</Badge>
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell whitespace-nowrap">{country.Continent}</TableCell>
-                                <TableCell className="hidden sm:table-cell">
-                                    <div className="flex gap-1">
-                                        {country.details?.some(d => d.lang === 'en') && <Badge variant="secondary" className="text-[10px]">EN</Badge>}
-                                        {country.details?.some(d => d.lang === 'sd') && <Badge variant="secondary" className="text-[10px]">SD</Badge>}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right whitespace-nowrap">
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(country)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                            onClick={() => {
-                                                if (confirm('Delete this country?')) deleteMutation.mutate(country.id);
-                                            }}
-                                            disabled={deleteMutation.isPending}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
+                        {countries?.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-4 text-gray-500">No countries found.</TableCell>
                             </TableRow>
-                        ))}
+                        ) : countries?.map((country) => {
+                            const sdName = getLangName(country, 'sd');
+                            const enName = getLangName(country, 'en');
+                            const otherNames = Object.entries(country.names || {}).filter(
+                                ([lang]) => lang !== 'sd' && lang !== 'en'
+                            );
+                            const hasSd = Boolean(sdName);
+                            const hasEn = Boolean(enName);
+                            const langs = [
+                                ...(hasEn ? ['en'] : []),
+                                ...(hasSd ? ['sd'] : []),
+                                ...otherNames.map(([lang]) => lang),
+                            ];
+
+                            return (
+                                <TableRow key={country.id}>
+                                    <TableCell className="font-medium">
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                                            <div className="space-y-1 min-w-0">
+                                                {hasEn && (
+                                                    <div className="truncate">{enName}</div>
+                                                )}
+                                                {hasSd && (
+                                                    <div className="truncate font-arabic" dir="rtl">{sdName}</div>
+                                                )}
+                                                {otherNames.map(([lang, name]) => (
+                                                    <div key={lang} className="truncate">{name}</div>
+                                                ))}
+                                                {!hasEn && !hasSd && otherNames.length === 0 && (
+                                                    <span>{getDisplayName(country)}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{country.Abbreviation || '-'}</Badge>
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell whitespace-nowrap">{country.Continent || '-'}</TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <div className="flex gap-1 flex-wrap">
+                                            {langs.map((lang) => (
+                                                <Badge key={lang} variant="secondary" className="text-[10px] uppercase">{lang}</Badge>
+                                            ))}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right whitespace-nowrap">
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(country)}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                onClick={() => {
+                                                    if (confirm('Delete this country?')) deleteMutation.mutate(country.id);
+                                                }}
+                                                disabled={deleteMutation.isPending}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </div>
