@@ -1,4 +1,4 @@
-import{b as c,j as e}from"./radix-ui-937a0db1.js";import{b as L,h as w,G as P,W as N,_ as C}from"./dialog-0d85b6ff.js";import{F as M,P as R}from"./FitVerseBlock-2bbc808a.js";/**
+import{b as c,j as e}from"./radix-ui-937a0db1.js";import{b as L,h as w,G as P,W as N,_ as C}from"./dialog-0d85b6ff.js";import{F as M,P as R}from"./FitVerseBlock-f5a4701b.js";/**
  * @license lucide-react v0.563.0 - ISC
  *
  * This source code is licensed under the ISC license.
