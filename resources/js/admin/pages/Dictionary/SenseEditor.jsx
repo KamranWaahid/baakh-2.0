@@ -22,9 +22,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Trash2, Plus, Check, Save, Loader2, ArrowLeft,
     BookOpen, Type, Languages, ArrowRightLeft, Layers, X, Globe,
-    Copy, CheckCircle2, Search, ChevronLeft, ChevronRight
+    Copy, CheckCircle2, Search, ChevronLeft, ChevronRight, Braces
 } from 'lucide-react';
 import { toast } from 'sonner';
+import LemmaEditorJsonModal from './LemmaEditorJsonModal';
 
 const initialNewSenseForm = {
     definition: '',
@@ -209,6 +210,7 @@ const SenseEditor = () => {
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeError, setScrapeError] = useState(null);
     const [isScrapeCopied, setIsScrapeCopied] = useState(false);
+    const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
 
 
     useEffect(() => {
@@ -568,6 +570,10 @@ const SenseEditor = () => {
                     <Button variant="outline" size="sm" onClick={handleScrape} disabled={isScraping}>
                         {isScraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
                         Scrape Sindhila
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setIsJsonModalOpen(true)}>
+                        <Braces className="mr-2 h-4 w-4" />
+                        Word JSON
                     </Button>
                     {lemma.status !== 'approved' && (
                         <Button size="sm" onClick={() => approveLemma.mutate()} disabled={approveLemma.isPending}>
@@ -1223,6 +1229,11 @@ const SenseEditor = () => {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            <LemmaEditorJsonModal
+                lemmaId={isJsonModalOpen ? lemma.id : null}
+                onClose={() => setIsJsonModalOpen(false)}
+            />
 
             {/* Scrape Results Modal */}
             <Dialog open={isScrapeModalOpen} onOpenChange={setIsScrapeModalOpen}>

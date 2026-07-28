@@ -12,11 +12,14 @@ use App\Models\Variant;
 use App\Models\LemmaIdiomaticExpression;
 use App\Models\LemmaInflection;
 use App\Services\DictionaryCompletionService;
+use App\Services\DictionaryLemmaEditorJsonService;
+use App\Services\DictionaryLemmaJsonImportService;
 use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 class DictionaryController extends Controller
 {
@@ -1181,6 +1184,41 @@ class DictionaryController extends Controller
         $lemma = Lemma::findOrFail($id);
         $lemma->update(['status' => 'approved']);
         return response()->json(['message' => 'Lemma approved successfully']);
+    }
+
+    public function importJson(Request $request, $id, DictionaryLemmaJsonImportService $importer, DictionaryLemmaEditorJsonService $editorJson)
+    {
+        $lemma = Lemma::findOrFail($id);
+
+        $payload = $request->json()->all();
+        if (!is_array($payload) || $payload === []) {
+            return response()->json([
+                'message' => 'Provide a JSON object for this lemma.',
+            ], 422);
+        }
+
+        try {
+            $updated = $importer->import($lemma, $payload);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'message' => $exception->getMessage() ?: 'Failed to import lemma JSON.',
+            ], 500);
+        }
+
+        return response()->json($editorJson->build($updated));
+    }
+
+    public function editorJson($id, DictionaryLemmaEditorJsonService $editorJson)
+    {
+        $lemma = Lemma::findOrFail($id);
+
+        return response()->json($editorJson->build($lemma));
     }
 
     public function completion($id, DictionaryCompletionService $completion)

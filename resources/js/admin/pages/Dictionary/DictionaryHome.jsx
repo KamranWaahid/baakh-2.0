@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '@/admin/api/axios';
@@ -23,6 +23,7 @@ import {
     ChevronLeft, ChevronRight, Loader2, Edit2, Eye, Copy, CheckCircle2,
     Plus
 } from 'lucide-react';
+import LemmaEditorJsonModal from './LemmaEditorJsonModal';
 
 const DictionaryHome = () => {
     const [search, setSearch] = useState('');
@@ -399,7 +400,7 @@ const DictionaryHome = () => {
             </div>
 
             {/* Modal for Viewing JSON Data */}
-            <LemmaViewModal lemmaId={viewingLemmaId} onClose={() => setViewingLemmaId(null)} />
+            <LemmaEditorJsonModal lemmaId={viewingLemmaId} onClose={() => setViewingLemmaId(null)} />
 
             {/* Modal for Adding New Word */}
             <AddLemmaModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
@@ -450,59 +451,6 @@ const QuickLink = ({ to, icon: Icon, label }) => (
         </Card>
     </Link>
 );
-
-const LemmaViewModal = ({ lemmaId, onClose }) => {
-    const { data: lemma, isLoading } = useQuery({
-        queryKey: ['lemma', lemmaId],
-        queryFn: async () => {
-            const res = await api.get(`/api/admin/dictionary/lemmas/${lemmaId}`);
-            return res.data;
-        },
-        enabled: !!lemmaId,
-    });
-
-    const [copied, setCopied] = useState(false);
-
-    const handleCopyJson = () => {
-        if (!lemma) return;
-        navigator.clipboard.writeText(JSON.stringify(lemma, null, 2));
-        setCopied(true);
-        toast.success('JSON copied to clipboard!');
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    return (
-        <Dialog open={!!lemmaId} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-                <DialogHeader>
-                    <div className="flex items-center justify-between pr-6">
-                        <div>
-                            <DialogTitle>Word Data JSON</DialogTitle>
-                            <DialogDescription>
-                                Copy this data to use as context for AI assistants like Perplexity or ChatGPT.
-                            </DialogDescription>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={handleCopyJson} disabled={!lemma}>
-                            {copied ? <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> : <Copy className="h-4 w-4 mr-2" />}
-                            {copied ? 'Copied' : 'Copy JSON'}
-                        </Button>
-                    </div>
-                </DialogHeader>
-                {isLoading ? (
-                    <div className="flex h-40 items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                ) : (
-                    <ScrollArea className="flex-1 bg-muted/50 rounded-md border p-4">
-                        <pre className="text-xs font-mono whitespace-pre-wrap break-all" dir="ltr">
-                            {JSON.stringify(lemma, null, 2)}
-                        </pre>
-                    </ScrollArea>
-                )}
-            </DialogContent>
-        </Dialog>
-    );
-};
 
 const AddLemmaModal = ({ open, onClose }) => {
     const [word, setWord] = useState('');
