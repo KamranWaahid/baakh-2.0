@@ -60,10 +60,18 @@ class PoetryController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->whereHas('info', function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%");
-            })->orWhereHas('poet_details', function ($q) use ($search) {
-                $q->where('poet_laqab', 'like', "%{$search}%");
+            $like = '%' . addcslashes($search, '%_\\') . '%';
+            $query->where(function ($q) use ($like) {
+                $q->whereHas('info', function ($sq) use ($like) {
+                    $sq->where('title', 'like', $like)
+                        ->orWhere('info', 'like', $like);
+                })
+                    ->orWhereHas('couplets', function ($sq) use ($like) {
+                        $sq->where('couplet_text', 'like', $like);
+                    })
+                    ->orWhereHas('poet_details', function ($sq) use ($like) {
+                        $sq->where('poet_laqab', 'like', $like);
+                    });
             });
         }
 

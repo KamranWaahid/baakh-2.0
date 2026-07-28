@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
     const isRtl = lang === 'sd';
@@ -19,23 +20,29 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
         [poem]
     );
 
-    const imageUrl = poemSlug ? `/og-image/poetry/${poemSlug}` : null;
+    const imageUrl = poemSlug ? `/og-image/poetry/${poemSlug}?v=3` : null;
 
     const handleDownload = () => {
         if (!poemSlug) return;
-        const downloadUrl = `/og-image/poetry/${poemSlug}?download=1`;
+        const downloadUrl = `/og-image/poetry/${poemSlug}?download=1&v=3`;
         window.open(downloadUrl, '_blank');
     };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="w-[95vw] sm:max-w-4xl max-h-[95vh] overflow-y-auto p-0 bg-[#FFFAEC] border-none shadow-2xl rounded-2xl">
+            <DialogContent
+                dir={isRtl ? 'rtl' : 'ltr'}
+                className={cn(
+                    'w-[95vw] sm:max-w-4xl max-h-[95vh] overflow-y-auto p-0 bg-white border-none shadow-2xl rounded-2xl',
+                    isRtl ? 'font-arabic' : 'font-sans'
+                )}
+            >
                 <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between border-b border-gray-100 bg-white">
                     <div className={isRtl ? 'text-right' : 'text-left'}>
-                        <DialogTitle className="text-xl font-bold text-gray-900">
+                        <DialogTitle className={cn('text-xl font-bold text-gray-900', isRtl && 'font-arabic')}>
                             {isRtl ? 'شاعري شيئر ڪريو' : 'Share Poetry'}
                         </DialogTitle>
-                        <DialogDescription className="text-sm text-gray-500 mt-1">
+                        <DialogDescription className={cn('text-sm text-gray-500 mt-1', isRtl && 'font-arabic')}>
                             {isRtl ? 'هن خوبصورت ڪارڊ کي ڊائون لوڊ ڪريو يا شيئر ڪريو' : 'Download or share this beautiful card'}
                         </DialogDescription>
                     </div>
@@ -47,7 +54,7 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
                             <img
                                 src={imageUrl}
                                 alt={isRtl ? 'شيئر تصوير' : 'Share image'}
-                                className="w-full rounded-xl shadow-lg border border-gray-100"
+                                className="w-full rounded-xl shadow-lg border border-gray-100 bg-white"
                                 loading="eager"
                                 decoding="async"
                             />
@@ -61,7 +68,10 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
                     <div className="flex flex-wrap items-center justify-center gap-4 mt-10">
                         <Button
                             variant="default"
-                            className="bg-black text-white hover:bg-gray-800 h-12 px-8 rounded-full flex items-center gap-2 text-base font-medium transition-all transform active:scale-95 shadow-lg"
+                            className={cn(
+                                'bg-black text-white hover:bg-gray-800 h-12 px-8 rounded-full flex items-center gap-2 text-base font-medium transition-all transform active:scale-95 shadow-lg',
+                                isRtl && 'font-arabic'
+                            )}
                             onClick={handleDownload}
                             disabled={!poemSlug}
                         >
@@ -71,7 +81,10 @@ const ShareCardModal = ({ open, onOpenChange, poem, lang = 'sd' }) => {
 
                         <Button
                             variant="outline"
-                            className="h-12 px-8 rounded-full flex items-center gap-2 text-base font-medium border-gray-200 hover:border-black transition-all"
+                            className={cn(
+                                'h-12 px-8 rounded-full flex items-center gap-2 text-base font-medium border-gray-200 hover:border-black transition-all',
+                                isRtl && 'font-arabic'
+                            )}
                             onClick={() => onOpenChange(false)}
                         >
                             <span>{isRtl ? 'بند ڪريو' : 'Close'}</span>

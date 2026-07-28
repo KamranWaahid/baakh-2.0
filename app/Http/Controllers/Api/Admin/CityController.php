@@ -26,17 +26,20 @@ class CityController extends Controller
         $cities = $query->get()->map(function ($city) {
             $sdName = $city->details->where('lang', 'sd')->first()?->city_name;
             $enName = $city->details->where('lang', 'en')->first()?->city_name;
-            $city->name = $sdName ?? $enName ?? "City #{$city->id}";
+            $anyName = $city->details->first()?->city_name;
+            $city->name = $sdName ?? $enName ?? $anyName ?? "City #{$city->id}";
 
             if ($city->province) {
                 $p_sdName = $city->province->details->where('lang', 'sd')->first()?->province_name;
                 $p_enName = $city->province->details->where('lang', 'en')->first()?->province_name;
-                $city->province->name = $p_sdName ?? $p_enName ?? "Province #{$city->province->id}";
+                $p_anyName = $city->province->details->first()?->province_name;
+                $city->province->name = $p_sdName ?? $p_enName ?? $p_anyName ?? "Province #{$city->province->id}";
 
                 if ($city->province->country) {
                     $c_sdName = $city->province->country->details->where('lang', 'sd')->first()?->countryName;
                     $c_enName = $city->province->country->details->where('lang', 'en')->first()?->countryName;
-                    $city->province->country->name = $c_sdName ?? $c_enName ?? $city->province->country->Abbreviation ?? "Country #{$city->province->country->id}";
+                    $c_anyName = $city->province->country->details->first()?->countryName;
+                    $city->province->country->name = $c_sdName ?? $c_enName ?? $c_anyName ?? $city->province->country->Abbreviation ?? "Country #{$city->province->country->id}";
                 }
             }
 

@@ -302,8 +302,8 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
             )}
             <DialogContent className="w-[95vw] sm:max-w-md max-h-[85dvh] overflow-y-auto bg-white p-6 sm:p-12 shadow-xl border-0">
                 <DialogHeader className="mb-8">
-                    <DialogTitle className="text-center font-serif text-3xl font-medium tracking-tight">
-                        {mode === 'register' ? (isRtl ? 'گوگل سان جاري رکو.' : 'Continue with Google.') : (isRtl ? 'خوش آمديد.' : 'Welcome back.')}
+                    <DialogTitle className={`text-center text-3xl font-medium tracking-tight ${isRtl ? 'font-arabic' : 'font-serif'}`}>
+                        {mode === 'register' ? (isRtl ? 'گوگل سان جاري رکو.' : 'Continue with Google.') : (isRtl ? 'ڀلي ڪري آيا.' : 'Welcome back.')}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
                         {isRtl ? 'پنهنجي اڪائونٽ ۾ لاگ ان ٿيو يا نئون اڪائونٽ ٺاهيو.' : 'Login to your account or create a new one.'}

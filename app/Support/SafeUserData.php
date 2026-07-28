@@ -20,7 +20,7 @@ class SafeUserData
 
         try {
             $value = $user->{$attribute};
-            return is_string($value) ? $value : null;
+            return self::normalizePlaintext(is_string($value) ? $value : null);
         } catch (\Throwable $e) {
             Log::warning('Failed reading user attribute for API response', [
                 'user_id' => $user->id ?? null,
@@ -44,7 +44,21 @@ class SafeUserData
             return null;
         }
 
-        return $raw;
+        return self::normalizePlaintext($raw);
+    }
+
+    private static function normalizePlaintext(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        // Guard against legacy PHP-serialized encrypt()/decrypt() payloads.
+        if (preg_match('/^s:\d+:"(.*)";$/s', $value, $matches)) {
+            return $matches[1] !== '' ? $matches[1] : null;
+        }
+
+        return $value;
     }
 
     public static function basic(?User $user, ?string $context = null): ?array

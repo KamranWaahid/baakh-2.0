@@ -3,71 +3,95 @@
 namespace App\Helpers;
 
 /**
- * A basic Sindhi/Arabic text shaper to handle ligatures for GD rendering.
- * Maps isolated characters to their contextual forms (initial, medial, final, isolated).
+ * Sindhi/Arabic text shaper for GD (no OpenType).
+ * Converts letters to Arabic Presentation Forms and reverses for LTR canvas drawing.
+ *
+ * IMPORTANT: use PHP \u{XXXX} escapes (not \x{XXXX}, which is a literal string).
  */
 class SindhiShaper
 {
-    private static $mapping = [
-        // Format: [isolated, final, medial, initial]
-        "\x{0627}" => ["\x{0627}", "\x{FE8E}", "\x{0627}", "\x{0627}"], // Alef
-        "\x{0628}" => ["\x{0628}", "\x{FE90}", "\x{FE92}", "\x{FE91}"], // Be
-        "\x{067B}" => ["\x{067B}", "\x{FB53}", "\x{FB55}", "\x{FB54}"], // Sindhi Be
-        "\x{0680}" => ["\x{0680}", "\x{FB5B}", "\x{FB5D}", "\x{FB5C}"], // Sindhi Bbe
-        "\x{067E}" => ["\x{067E}", "\x{FB57}", "\x{FB59}", "\x{FB58}"], // Pe
-        "\x{062A}" => ["\x{062A}", "\x{FE96}", "\x{FE98}", "\x{FE97}"], // Te
-        "\x{067A}" => ["\x{067A}", "\x{FB5F}", "\x{FB61}", "\x{FB60}"], // Sindhi Te
-        "\x{067D}" => ["\x{067D}", "\x{FB63}", "\x{FB65}", "\x{FB64}"], // Sindhi Tte
-        "\x{062B}" => ["\x{062B}", "\x{FE9A}", "\x{FE9C}", "\x{FE9B}"], // The
-        "\x{062C}" => ["\x{062C}", "\x{FE9E}", "\x{FEA0}", "\x{FE9F}"], // Je
-        "\x{0684}" => ["\x{0684}", "\x{FB73}", "\x{FB75}", "\x{FB74}"], // Sindhi Je
-        "\x{0683}" => ["\x{0683}", "\x{FB6F}", "\x{FB71}", "\x{FB70}"], // Sindhi Nje
-        "\x{0686}" => ["\x{0686}", "\x{FB7B}", "\x{FB7D}", "\x{FB7C}"], // Che
-        "\x{0687}" => ["\x{0687}", "\x{FB7F}", "\x{FB81}", "\x{FB80}"], // Sindhi Che
-        "\x{062D}" => ["\x{062D}", "\x{FEA2}", "\x{FEA4}", "\x{FEA3}"], // Ha
-        "\x{062E}" => ["\x{062E}", "\x{FEA6}", "\x{FEA8}", "\x{FEA7}"], // Kha
-        "\x{062F}" => ["\x{062F}", "\x{FEAA}", "\x{062F}", "\x{062F}"], // Dal
-        "\x{068A}" => ["\x{068A}", "\x{FB83}", "\x{068A}", "\x{068A}"], // Sindhi Dal
-        "\x{0688}" => ["\x{0688}", "\x{FB7F}", "\x{0688}", "\x{0688}"], // Ddal
-        "\x{068C}" => ["\x{068C}", "\x{FB87}", "\x{068C}", "\x{068C}"], // Sindhi Ddal
-        "\x{0630}" => ["\x{0630}", "\x{FEAC}", "\x{0630}", "\x{0630}"], // Zal
-        "\x{0631}" => ["\x{0631}", "\x{FEAE}", "\x{0631}", "\x{0631}"], // Re
-        "\x{0691}" => ["\x{0691}", "\x{FB8D}", "\x{0691}", "\x{0691}"], // Sindhi Re (Rre)
-        "\x{0632}" => ["\x{0632}", "\x{FEB0}", "\x{0632}", "\x{0632}"], // Ze
-        "\x{0633}" => ["\x{0633}", "\x{FEB2}", "\x{FEB4}", "\x{FEB3}"], // Seen
-        "\x{0634}" => ["\x{0634}", "\x{FEB6}", "\x{FEB8}", "\x{FEB7}"], // Sheen
-        "\x{0635}" => ["\x{0635}", "\x{FEBA}", "\x{FEBC}", "\x{FEBB}"], // Sad
-        "\x{0636}" => ["\x{0636}", "\x{FEBE}", "\x{FEC0}", "\x{FEBF}"], // Zad
-        "\x{0637}" => ["\x{0637}", "\x{FEC2}", "\x{FEC4}", "\x{FEC3}"], // Toe
-        "\x{0638}" => ["\x{0638}", "\x{FEC6}", "\x{FEC8}", "\x{FEC7}"], // Zoe
-        "\x{0639}" => ["\x{0639}", "\x{FECA}", "\x{FECC}", "\x{FECB}"], // Ain
-        "\x{063A}" => ["\x{063A}", "\x{FECE}", "\x{FED0}", "\x{FECF}"], // Ghain
-        "\x{0641}" => ["\x{0641}", "\x{FED2}", "\x{FED4}", "\x{FED3}"], // Fe
-        "\x{0642}" => ["\x{0642}", "\x{FED6}", "\x{FED8}", "\x{FED7}"], // Qaf
-        "\x{06A9}" => ["\x{06A9}", "\x{FBA9}", "\x{FBAA}", "\x{FBAA}"], // Kaf
-        "\x{06AB}" => ["\x{06AB}", "\x{FBAD}", "\x{FBAF}", "\x{FBAE}"], // Sindhi Kaf
-        "\x{06AF}" => ["\x{06AF}", "\x{FB93}", "\x{FB95}", "\x{FB94}"], // Gaf
-        "\x{06B3}" => ["\x{06B3}", "\x{FB9B}", "\x{FB9D}", "\x{FB9C}"], // Sindhi Gaf
-        "\x{06B1}" => ["\x{06B1}", "\x{FB97}", "\x{FB99}", "\x{FB98}"], // Sindhi Ggaf
-        "\x{0644}" => ["\x{0644}", "\x{FEDE}", "\x{FEE0}", "\x{FEDF}"], // Lam
-        "\x{0645}" => ["\x{0645}", "\x{FEE2}", "\x{FEE4}", "\x{FEE3}"], // Meem
-        "\x{0646}" => ["\x{0646}", "\x{FEE6}", "\x{FEE8}", "\x{FEE7}"], // Noon
-        "\x{06BB}" => ["\x{06BB}", "\x{FBA1}", "\x{FBA3}", "\x{FBA2}"], // Sindhi Noon
-        "\x{0648}" => ["\x{0648}", "\x{FEEE}", "\x{0648}", "\x{0648}"], // Wao
-        "\x{0647}" => ["\x{0647}", "\x{FEEA}", "\x{FEEC}", "\x{FEEB}"], // He
-        "\x{064A}" => ["\x{064A}", "\x{FEF2}", "\x{FEF4}", "\x{FEF3}"], // Ye
-        "لآ" => ["\x{FEFB}", "\x{FEFC}", "\x{FEFC}", "\x{FEFB}"], // Lam-Alef ligature
+    /** @var array<string, list<string>> [isolated, final, medial, initial] */
+    private static array $mapping = [
+        "\u{0627}" => ["\u{0627}", "\u{FE8E}", "\u{0627}", "\u{0627}"], // Alef
+        "\u{0622}" => ["\u{0622}", "\u{FE82}", "\u{0622}", "\u{0622}"], // Alef Madda
+        "\u{0623}" => ["\u{0623}", "\u{FE84}", "\u{0623}", "\u{0623}"], // Alef Hamza above
+        "\u{0625}" => ["\u{0625}", "\u{FE88}", "\u{0625}", "\u{0625}"], // Alef Hamza below
+        "\u{0621}" => ["\u{0621}", "\u{0621}", "\u{0621}", "\u{0621}"], // Hamza
+        "\u{0628}" => ["\u{0628}", "\u{FE90}", "\u{FE92}", "\u{FE91}"], // Be
+        "\u{067B}" => ["\u{067B}", "\u{FB53}", "\u{FB55}", "\u{FB54}"], // ٻ
+        "\u{0680}" => ["\u{0680}", "\u{FB5B}", "\u{FB5D}", "\u{FB5C}"], // ڀ
+        "\u{067E}" => ["\u{067E}", "\u{FB57}", "\u{FB59}", "\u{FB58}"], // پ
+        "\u{062A}" => ["\u{062A}", "\u{FE96}", "\u{FE98}", "\u{FE97}"], // ت
+        "\u{067A}" => ["\u{067A}", "\u{FB5F}", "\u{FB61}", "\u{FB60}"], // ٺ
+        "\u{067D}" => ["\u{067D}", "\u{FB63}", "\u{FB65}", "\u{FB64}"], // ٽ
+        "\u{067F}" => ["\u{067F}", "\u{067F}", "\u{067F}", "\u{067F}"], // ٿ
+        "\u{062B}" => ["\u{062B}", "\u{FE9A}", "\u{FE9C}", "\u{FE9B}"], // ث
+        "\u{062C}" => ["\u{062C}", "\u{FE9E}", "\u{FEA0}", "\u{FE9F}"], // ج
+        "\u{0684}" => ["\u{0684}", "\u{FB73}", "\u{FB75}", "\u{FB74}"], // ڄ
+        "\u{0683}" => ["\u{0683}", "\u{FB6F}", "\u{FB71}", "\u{FB70}"], // ڃ
+        "\u{0686}" => ["\u{0686}", "\u{FB7B}", "\u{FB7D}", "\u{FB7C}"], // چ
+        "\u{0687}" => ["\u{0687}", "\u{FB7F}", "\u{FB81}", "\u{FB80}"], // ڇ
+        "\u{062D}" => ["\u{062D}", "\u{FEA2}", "\u{FEA4}", "\u{FEA3}"], // ح
+        "\u{062E}" => ["\u{062E}", "\u{FEA6}", "\u{FEA8}", "\u{FEA7}"], // خ
+        "\u{062F}" => ["\u{062F}", "\u{FEAA}", "\u{062F}", "\u{062F}"], // د
+        "\u{068A}" => ["\u{068A}", "\u{FB83}", "\u{068A}", "\u{068A}"], // ڊ
+        "\u{0688}" => ["\u{0688}", "\u{FB8B}", "\u{0688}", "\u{0688}"], // ڈ
+        "\u{068C}" => ["\u{068C}", "\u{FB87}", "\u{068C}", "\u{068C}"], // ڌ
+        "\u{068D}" => ["\u{068D}", "\u{FB89}", "\u{068D}", "\u{068D}"], // ڏ
+        "\u{0630}" => ["\u{0630}", "\u{FEAC}", "\u{0630}", "\u{0630}"], // ذ
+        "\u{0631}" => ["\u{0631}", "\u{FEAE}", "\u{0631}", "\u{0631}"], // ر
+        "\u{0691}" => ["\u{0691}", "\u{FB8D}", "\u{0691}", "\u{0691}"], // ڑ
+        "\u{0632}" => ["\u{0632}", "\u{FEB0}", "\u{0632}", "\u{0632}"], // ز
+        "\u{0633}" => ["\u{0633}", "\u{FEB2}", "\u{FEB4}", "\u{FEB3}"], // س
+        "\u{0634}" => ["\u{0634}", "\u{FEB6}", "\u{FEB8}", "\u{FEB7}"], // ش
+        "\u{0635}" => ["\u{0635}", "\u{FEBA}", "\u{FEBC}", "\u{FEBB}"], // ص
+        "\u{0636}" => ["\u{0636}", "\u{FEBE}", "\u{FEC0}", "\u{FEBF}"], // ض
+        "\u{0637}" => ["\u{0637}", "\u{FEC2}", "\u{FEC4}", "\u{FEC3}"], // ط
+        "\u{0638}" => ["\u{0638}", "\u{FEC6}", "\u{FEC8}", "\u{FEC7}"], // ظ
+        "\u{0639}" => ["\u{0639}", "\u{FECA}", "\u{FECC}", "\u{FECB}"], // ع
+        "\u{063A}" => ["\u{063A}", "\u{FECE}", "\u{FED0}", "\u{FECF}"], // غ
+        "\u{0641}" => ["\u{0641}", "\u{FED2}", "\u{FED4}", "\u{FED3}"], // ف
+        "\u{0642}" => ["\u{0642}", "\u{FED6}", "\u{FED8}", "\u{FED7}"], // ق
+        "\u{06A9}" => ["\u{06A9}", "\u{FB8F}", "\u{FB91}", "\u{FB90}"], // ک
+        "\u{06AA}" => ["\u{06A9}", "\u{FB8F}", "\u{FB91}", "\u{FB90}"], // ڪ → use ک forms for joining
+        "\u{06AF}" => ["\u{06AF}", "\u{FB93}", "\u{FB95}", "\u{FB94}"], // گ
+        "\u{06B1}" => ["\u{06B1}", "\u{FB97}", "\u{FB99}", "\u{FB98}"], // ڱ
+        "\u{06B3}" => ["\u{06B3}", "\u{FB9B}", "\u{FB9D}", "\u{FB9C}"], // ڳ
+        "\u{0644}" => ["\u{0644}", "\u{FEDE}", "\u{FEE0}", "\u{FEDF}"], // ل
+        "\u{0645}" => ["\u{0645}", "\u{FEE2}", "\u{FEE4}", "\u{FEE3}"], // م
+        "\u{0646}" => ["\u{0646}", "\u{FEE6}", "\u{FEE8}", "\u{FEE7}"], // ن
+        "\u{06BB}" => ["\u{06BB}", "\u{FBA1}", "\u{FBA3}", "\u{FBA2}"], // ڻ
+        "\u{0648}" => ["\u{0648}", "\u{FEEE}", "\u{0648}", "\u{0648}"], // و
+        "\u{0647}" => ["\u{0647}", "\u{FEEA}", "\u{FEEC}", "\u{FEEB}"], // ه
+        "\u{06BE}" => ["\u{06BE}", "\u{FBAB}", "\u{FBAD}", "\u{FBAC}"], // ھ
+        "\u{06C1}" => ["\u{06C1}", "\u{FBA7}", "\u{FBA9}", "\u{FBA8}"], // ہ
+        "\u{064A}" => ["\u{064A}", "\u{FEF2}", "\u{FEF4}", "\u{FEF3}"], // ي
+        "\u{06CC}" => ["\u{06CC}", "\u{FBFD}", "\u{FBFF}", "\u{FBFE}"], // ی
+        "\u{06D2}" => ["\u{06D2}", "\u{FBAF}", "\u{06D2}", "\u{06D2}"], // ے
     ];
 
-    private static $nonJoining = ["\x{0627}", "\x{062F}", "\x{068A}", "\x{0688}", "\x{068C}", "\x{0630}", "\x{0631}", "\x{0691}", "\x{0632}", "\x{0648}"];
+    /** Letters that do not connect to the following letter */
+    private static array $nonJoining = [
+        "\u{0627}", "\u{0622}", "\u{0623}", "\u{0625}", "\u{0621}",
+        "\u{062F}", "\u{068A}", "\u{0688}", "\u{068C}", "\u{068D}",
+        "\u{0630}", "\u{0631}", "\u{0691}", "\u{0632}", "\u{0648}",
+        "\u{06D2}",
+    ];
 
-    public static function shape($text)
+    public static function shape(?string $text): string
     {
-        // Split by spaces to handle words individually
+        if ($text === null || $text === '') {
+            return '';
+        }
+
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
         $words = explode(' ', $text);
         $shapedWords = [];
 
         foreach ($words as $word) {
+            if ($word === '') {
+                continue;
+            }
             if (self::isRtl($word)) {
                 $shapedWords[] = self::shapeWord($word);
             } else {
@@ -75,56 +99,132 @@ class SindhiShaper
             }
         }
 
-        // For RTL layout in GD, we need to reverse the order of words too
+        // Reverse word order for LTR GD canvas
         return implode(' ', array_reverse($shapedWords));
     }
 
-    private static function shapeWord($word)
+    /**
+     * Remove Arabic combining marks that GD cannot attach to presentation forms.
+     */
+    public static function stripHarakat(string $text): string
     {
-        // Handle Lam-Alef ligature
-        $word = str_replace("لا", "لآ", $word);
+        return preg_replace('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', '', $text) ?? $text;
+    }
 
-        $tokens = self::utf8ToUnicode($word);
-        $length = count($tokens);
+    private static function shapeWord(string $word): string
+    {
+        // Lam + Alef ligatures
+        $word = str_replace(
+            ["\u{0644}\u{0627}", "\u{0644}\u{0622}", "\u{0644}\u{0623}", "\u{0644}\u{0625}"],
+            ["\u{FEFB}", "\u{FEF5}", "\u{FEF7}", "\u{FEF9}"],
+            $word
+        );
+
+        $chars = self::utf8ToUnicode($word);
+        $length = count($chars);
         $result = [];
 
         for ($i = 0; $i < $length; $i++) {
-            $char = $tokens[$i];
+            $char = $chars[$i];
+
+            // Combining marks stay with the preceding base after reverse
+            if (self::isDiacritic($char)) {
+                $result[] = $char;
+                continue;
+            }
 
             if (!isset(self::$mapping[$char])) {
                 $result[] = $char;
                 continue;
             }
 
-            $prev = ($i > 0) ? $tokens[$i - 1] : null;
-            $next = ($i < $length - 1) ? $tokens[$i + 1] : null;
+            $prev = self::previousLetter($chars, $i);
+            $next = self::nextLetter($chars, $i);
 
-            $canJoinPrev = $prev && isset(self::$mapping[$prev]) && !in_array($prev, self::$nonJoining);
-            $canJoinNext = $next && isset(self::$mapping[$next]);
+            $canJoinPrev = $prev !== null
+                && isset(self::$mapping[$prev])
+                && !in_array($prev, self::$nonJoining, true);
+            $canJoinNext = $next !== null && isset(self::$mapping[$next]);
 
             if ($canJoinPrev && $canJoinNext) {
-                $result[] = self::$mapping[$char][2]; // Medial
+                $form = self::$mapping[$char][2];
             } elseif ($canJoinPrev) {
-                $result[] = self::$mapping[$char][1]; // Final
+                $form = self::$mapping[$char][1];
             } elseif ($canJoinNext) {
-                $result[] = self::$mapping[$char][3]; // Initial
+                $form = self::$mapping[$char][3];
             } else {
-                $result[] = self::$mapping[$char][0]; // Isolated
+                $form = self::$mapping[$char][0];
             }
+
+            $result[] = $form;
         }
 
-        // Reverse word characters for RTL
-        return implode('', array_reverse($result));
+        // Reverse as grapheme-like units: base (+ following diacritics)
+        $units = [];
+        $unit = '';
+        foreach ($result as $ch) {
+            if ($unit !== '' && self::isDiacritic($ch)) {
+                $unit .= $ch;
+                continue;
+            }
+            if ($unit !== '') {
+                $units[] = $unit;
+            }
+            $unit = $ch;
+        }
+        if ($unit !== '') {
+            $units[] = $unit;
+        }
+
+        return implode('', array_reverse($units));
     }
 
-    private static function isRtl($str)
+    private static function previousLetter(array $chars, int $index): ?string
     {
-        return preg_match('/[\x{0600}-\x{06FF}]/u', $str);
+        for ($i = $index - 1; $i >= 0; $i--) {
+            if (self::isDiacritic($chars[$i])) {
+                continue;
+            }
+            return $chars[$i];
+        }
+        return null;
     }
 
-    private static function utf8ToUnicode($str)
+    private static function nextLetter(array $chars, int $index): ?string
+    {
+        $len = count($chars);
+        for ($i = $index + 1; $i < $len; $i++) {
+            if (self::isDiacritic($chars[$i])) {
+                continue;
+            }
+            return $chars[$i];
+        }
+        return null;
+    }
+
+    private static function isDiacritic(string $char): bool
+    {
+        $ord = mb_ord($char, 'UTF-8');
+        if ($ord === false) {
+            return false;
+        }
+        // Harakat + Quranic marks commonly used in Sindhi/Arabic orthography
+        return ($ord >= 0x064B && $ord <= 0x065F)
+            || $ord === 0x0670
+            || ($ord >= 0x06D6 && $ord <= 0x06ED);
+    }
+
+    private static function isRtl(string $str): bool
+    {
+        return (bool) preg_match('/[\x{0600}-\x{06FF}]/u', $str);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function utf8ToUnicode(string $str): array
     {
         preg_match_all('/./u', $str, $matches);
-        return $matches[0];
+        return $matches[0] ?? [];
     }
 }

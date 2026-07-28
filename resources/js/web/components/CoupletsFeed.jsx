@@ -6,11 +6,13 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import api from '@/admin/api/axios';
 import { ScrollText } from 'lucide-react';
+import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
 
 const CoupletsFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [activeTab, setActiveTab] = useState('all');
     const { ref, inView } = useInView();
+    const { stickyTopClass } = useStickyBelowNavbar();
 
     // Fetch Couplet Tags
     const { data: tagsData } = useQuery({
@@ -75,7 +77,7 @@ const CoupletsFeed = ({ lang }) => {
             <h1 className="sr-only">
                 {isRtl ? 'ببيت' : 'Couplets'}
             </h1>
-            <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
+            <div className={`sticky ${stickyTopClass} bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar`}>
                 <div className="flex items-center gap-8 min-w-max pb-4">
                     {topics.map((topic) => (
                         <button

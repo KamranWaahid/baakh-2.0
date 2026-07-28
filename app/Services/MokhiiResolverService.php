@@ -160,13 +160,9 @@ class MokhiiResolverService
 
     private function fixCanonical(string $url): ?array
     {
-        // Canonical should always be the /sd/ version
-        $canonical = $url;
-        if (str_contains($url, '/en/')) {
-            $canonical = str_replace('/en/', '/sd/', $url);
-        }
-
-        return ['canonical' => $canonical];
+        // Self-canonical per locale. Forcing /en/ → /sd/ caused GSC
+        // "Alternate page with proper canonical tag" on English URLs.
+        return ['canonical' => $url];
     }
 
     private function fixHreflang(string $url): ?array

@@ -10,20 +10,19 @@ import {
 import { Button } from "@/components/ui/button";
 import api from '@/admin/api/axios';
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from '@/lib/utils';
 
 const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetId }) => {
     const [submitted, setSubmitted] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
 
-    // API Submit Logic
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         const reason = e.target.reason.value;
-        // const url = window.location.href; // This variable is no longer needed as it's directly used in the post call
 
         try {
-            const response = await api.post('/api/v1/report', {
+            await api.post('/api/v1/report', {
                 reason,
                 url: window.location.href,
                 poem_id: poemId || null,
@@ -32,7 +31,6 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetI
             setSubmitted(true);
         } catch (error) {
             console.error('Report failed:', error);
-            // Optionally show error state
         } finally {
             setLoading(false);
         }
@@ -50,28 +48,49 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetI
                     {trigger}
                 </DialogTrigger>
             )}
-            <DialogContent className="w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto bg-white p-6 md:p-12 shadow-xl border-0 font-sans">
+            <DialogContent
+                dir={isRtl ? 'rtl' : 'ltr'}
+                className={cn(
+                    'w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto bg-white p-6 md:p-12 shadow-xl border-0',
+                    isRtl ? 'font-arabic text-right' : 'font-sans text-left'
+                )}
+            >
                 <DialogHeader className="mb-6">
-                    <DialogTitle className={`text-center font-serif text-3xl font-medium tracking-tight ${isRtl ? 'font-arabic' : ''}`}>
-                        {submitted ? (isRtl ? 'رپورٽ ملي وئي!' : 'Report Received!') : (isRtl ? 'رپورٽ ڪريو' : 'Report Issue')}
+                    <DialogTitle
+                        className={cn(
+                            'text-center text-3xl font-medium tracking-tight',
+                            isRtl ? 'font-arabic' : 'font-serif'
+                        )}
+                    >
+                        {submitted
+                            ? (isRtl ? 'رپورٽ ملي وئي!' : 'Report Received!')
+                            : (isRtl ? 'رپورٽ ڪريو' : 'Report Issue')}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                        {isRtl ? 'هن فارم ذريعي توهان مواد جي رپورٽ ڪري سگهو ٿا.' : 'Report an issue with the current content.'}
+                        {isRtl
+                            ? 'هن فارم ذريعي توهان مواد جي رپورٽ ڪري سگهو ٿا.'
+                            : 'Report an issue with the current content.'}
                     </DialogDescription>
                 </DialogHeader>
 
                 {submitted ? (
                     <div className="text-center py-8">
-                        <p className="text-lg text-gray-600 mb-6">
-                            {isRtl ? 'اسان کي آگاهه ڪرڻ جي مھرباني. اسان جلد ان جو جائزو وٺنداسين.' : 'Thanks for letting us know. We will review this content shortly.'}
+                        <p className={cn('text-lg text-gray-600 mb-6 leading-relaxed', isRtl && 'font-arabic')}>
+                            {isRtl
+                                ? 'اسان کي آگاهه ڪرڻ جي مھرباني. اسان جلد ان جو جائزو وٺنداسين.'
+                                : 'Thanks for letting us know. We will review this content shortly.'}
                         </p>
-                        <Button onClick={handleClose} variant="outline" className="rounded-full px-8">
+                        <Button
+                            onClick={handleClose}
+                            variant="outline"
+                            className={cn('rounded-full px-8', isRtl && 'font-arabic')}
+                        >
                             {isRtl ? 'بند ڪريو' : 'Close'}
                         </Button>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                        <p className="text-sm text-gray-500 text-center">
+                    <form onSubmit={handleSubmit} className={cn('flex flex-col gap-6', isRtl && 'font-arabic')}>
+                        <p className="text-sm text-gray-500 text-center leading-relaxed">
                             {isRtl
                                 ? 'مهرباني ڪري ٻڌايو ته هن مواد ۾ ڇا مسئلو آهي؟'
                                 : 'Please describe the issue with this content.'}
@@ -80,15 +99,27 @@ const ReportModal = ({ trigger, isRtl = false, open, onOpenChange, poemId, poetI
                         <Textarea
                             name="reason"
                             placeholder={isRtl ? 'هتي تفصيل لکو...' : 'Tell us what is wrong...'}
-                            className={`min-h-[120px] resize-none bg-gray-50 border-gray-200 focus:border-black focus:ring-black rounded-xl p-4 text-base ${isRtl ? 'text-right font-arabic' : ''}`}
+                            className={cn(
+                                'min-h-[120px] resize-none bg-gray-50 border-gray-200 focus:border-black focus:ring-black rounded-xl p-4 text-base leading-relaxed',
+                                isRtl ? 'text-right font-arabic' : ''
+                            )}
                             required
                         />
 
-                        <Button type="submit" disabled={loading} className="rounded-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium text-base mt-2">
-                            {loading ? (isRtl ? '...موڪلي رهيو آهي' : 'Sending...') : (isRtl ? 'رپورٽ موڪليو' : 'Submit Report')}
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className={cn(
+                                'rounded-full h-12 bg-red-600 hover:bg-red-700 text-white font-medium text-base mt-2',
+                                isRtl && 'font-arabic'
+                            )}
+                        >
+                            {loading
+                                ? (isRtl ? '...موڪلي رهيو آهي' : 'Sending...')
+                                : (isRtl ? 'رپورٽ موڪليو' : 'Submit Report')}
                         </Button>
 
-                        <p className="text-center text-xs text-gray-400 mt-2">
+                        <p className="text-center text-xs text-gray-400 mt-2 leading-relaxed">
                             {isRtl ? 'توهان جي سڃاڻپ محفوظ رهندي.' : 'Your report is anonymous and safe.'}
                         </p>
                     </form>

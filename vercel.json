@@ -10,6 +10,75 @@
             "excludeFiles": "{node_modules/**,**/tests/**,**/Tests/**,storage/debugbar/**,database/backup/**,storage/app/sindhi_wordnet/**,sql/**,baakh_backup.sql,.phpunit.result.cache,public/vendor/datatables-plugins/**,public/vendor/summernote/**,public/vendor/fontawesome-free/**}"
         }
     },
+    "redirects": [
+        {
+            "source": "/:path*",
+            "has": [{ "type": "host", "value": "www.baakh.com" }],
+            "destination": "https://baakh.com/:path*",
+            "permanent": true
+        },
+        {
+            "source": "/:path*",
+            "has": [{ "type": "host", "value": "beta.baakh.com" }],
+            "destination": "https://baakh.com/:path*",
+            "permanent": true
+        },
+        {
+            "source": "/poetry",
+            "destination": "/sd/poetry",
+            "permanent": true
+        },
+        {
+            "source": "/couplets",
+            "destination": "/sd/couplets",
+            "permanent": true
+        },
+        {
+            "source": "/poets",
+            "destination": "/sd/poets",
+            "permanent": true
+        },
+        {
+            "source": "/poets/:slug",
+            "destination": "/sd/poet/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/poets/:slug/:rest*",
+            "destination": "/sd/poet/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/tags",
+            "destination": "/sd/explore",
+            "permanent": true
+        },
+        {
+            "source": "/tags/:slug",
+            "destination": "/sd/tag/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/tags/:slug/:rest*",
+            "destination": "/sd/tag/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/periods",
+            "destination": "/sd/periods",
+            "permanent": true
+        },
+        {
+            "source": "/privacy",
+            "destination": "/sd/privacy",
+            "permanent": true
+        },
+        {
+            "source": "/prosody",
+            "destination": "/sd/prosody",
+            "permanent": true
+        }
+    ],
     "routes": [
         {
             "src": "/favicon.ico",

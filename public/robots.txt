@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
+Disallow: /og-image/
 
 Sitemap: https://baakh.com/sitemap.xml

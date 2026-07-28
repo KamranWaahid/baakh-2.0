@@ -151,9 +151,42 @@ publish_public_files() {
   echo "Publishing public files..."
   rsync -a \
     --exclude "build" \
+    --exclude "assets/images" \
     "$app_public/" "$PUBLIC_PATH/"
 
+  ensure_media_images_symlink "$app_public"
   patch_public_index
+}
+
+ensure_media_images_symlink() {
+  local app_public="${1:?public root is required}"
+  local app_images="${app_public}/assets/images"
+  local public_assets="${PUBLIC_PATH}/assets"
+  local public_images="${PUBLIC_PATH}/assets/images"
+
+  mkdir -p "${app_public}/assets" "$app_images" "$public_assets"
+
+  # If public_html still has a real images tree, merge it into APP_PATH then replace with a symlink
+  # so runtime uploads to APP_PATH/public are immediately visible on the live site.
+  if [ -d "$public_images" ] && [ ! -L "$public_images" ]; then
+    echo "Merging existing public_html/assets/images into app public..."
+    rsync -a "$public_images/" "$app_images/"
+    rm -rf "$public_images"
+  fi
+
+  if [ -L "$public_images" ]; then
+    ln -sfn "$app_images" "$public_images"
+  elif [ ! -e "$public_images" ]; then
+    ln -sfn "$app_images" "$public_images"
+  fi
+
+  if [ -L "$public_images" ]; then
+    echo "Linked $public_images -> $app_images (runtime poet uploads stay live)."
+  else
+    echo "Warning: could not symlink media images; set MEDIA_WEB_ROOT=$PUBLIC_PATH in .env" >&2
+  fi
+
+  chmod -R u+rwX "$app_images" 2>/dev/null || true
 }
 
 verify_vite_build() {

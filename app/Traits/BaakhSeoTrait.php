@@ -54,13 +54,14 @@ trait BaakhSeoTrait
         // Add alternate languages for SEO
         SEOMeta::addAlternateLanguage('en', $enUrl);
         SEOMeta::addAlternateLanguage('sd', $sdUrl);
-        SEOMeta::addAlternateLanguage('x-default', $enUrl); // x-default usually points to the main/default version
+        // Primary language is Sindhi — align with sitemap and Mokhii
+        SEOMeta::addAlternateLanguage('x-default', $sdUrl);
 
         // Set OpenGraph data
         OpenGraph::setDescription($additionalData['og_description'] ?? $desc);
         OpenGraph::setTitle($title);
         OpenGraph::setUrl(url()->current());
-        OpenGraph::addImage($image);
+        OpenGraph::addImage($image, ['height' => 630, 'width' => 1200]);
         OpenGraph::addProperty('type', 'website');
         OpenGraph::setSiteName($isSd ? 'باک' : 'Baakh');
 
@@ -69,6 +70,13 @@ trait BaakhSeoTrait
         } else {
             OpenGraph::addProperty('image:alt', $title);
         }
+
+        TwitterCard::setType('summary_large_image');
+        TwitterCard::setTitle($title);
+        TwitterCard::setDescription($additionalData['og_description'] ?? $desc);
+        TwitterCard::setImage($image);
+        TwitterCard::setUrl(url()->current());
+        TwitterCard::setSite('@BaakhConnect');
 
         // You can allow additional OpenGraph properties from controller via $additionalData['opengraph']
         if (isset($additionalData['opengraph']) && is_array($additionalData['opengraph'])) {
@@ -206,12 +214,16 @@ trait BaakhSeoTrait
         // Keywords
         $keywords = $this->appendKeywords([$poet_name, $poetLaqab . '\'s Poetry']);
 
+        // Link previews (WhatsApp, etc.): Baakh logo on white
+        $ogImage = asset('assets/og/baakh-1200x630.png');
+
         // SEO metadata
-        SEOTools::addImages(asset($poetImage));
+        SEOTools::addImages($ogImage);
         SEOMeta::setTitle($title); // Set title in Sindhi
         SEOMeta::setDescription($shortBio);
         SEOMeta::setCanonical($url);
         SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
+        SEOMeta::addAlternateLanguage('x-default', url("sd/poet/{$poet->poet_slug}"));
         SEOMeta::addKeyword($keywords);
 
         // OpenGraph Metadata
@@ -219,7 +231,7 @@ trait BaakhSeoTrait
         OpenGraph::setDescription($shortBio);
         OpenGraph::setType('profile');
         OpenGraph::setUrl($url);
-        OpenGraph::addImage(asset($poetImage), ['height' => 600, 'width' => 400]);
+        OpenGraph::addImage($ogImage, ['height' => 630, 'width' => 1200]);
         OpenGraph::setArticle([
             'author' => $poetLaqab,
             'section' => 'Authors',
@@ -229,7 +241,7 @@ trait BaakhSeoTrait
         TwitterCard::setType('summary_large_image');
         TwitterCard::addValue('twitter:domain', 'baakh.com');
         TwitterCard::setTitle($poetLaqab);
-        TwitterCard::setImage($poetImage);
+        TwitterCard::setImage($ogImage);
         TwitterCard::setDescription($shortBio);
         TwitterCard::setUrl($url);
         TwitterCard::setSite('@BaakhConnect');
@@ -384,13 +396,18 @@ trait BaakhSeoTrait
         $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
         $alternateUrl = url("{$alternateLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}");
 
-        $image = $seo_image ? $seo_image : asset($poetImage);
+        // WhatsApp / social link previews: Baakh logo on white (not poetry card or poet photo).
+        $image = $seo_image ? $seo_image : asset('assets/og/baakh-1200x630.png');
 
         SEOTools::addImages($image);
         SEOMeta::setTitle($title); // Set title in Sindhi
         SEOMeta::setDescription($shortBio);
         SEOMeta::setCanonical($url);
         SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
+        SEOMeta::addAlternateLanguage(
+            'x-default',
+            url("sd/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
+        );
         SEOMeta::addKeyword($keywords);
 
         // OpenGraph Metadata

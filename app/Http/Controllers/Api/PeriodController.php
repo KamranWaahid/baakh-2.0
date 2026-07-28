@@ -25,6 +25,8 @@ class PeriodController extends Controller
         }
 
         $periods = Period::orderBy('order', 'asc')->get();
+        $this->cache->set("periods_list_{$lang}", $periods);
+
         return response()->json($periods);
     }
 

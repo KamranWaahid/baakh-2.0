@@ -171,17 +171,27 @@ class UpdateStaticCache extends Command
         $transformed = $query->map(function ($poet) use ($locale) {
             $detailSd = $poet->all_details->where('lang', 'sd')->first();
             $detailEn = $poet->all_details->where('lang', 'en')->first();
-            $detail = $poet->all_details->where('lang', $locale)->first() ?? $poet->all_details->first() ?? (object) [];
+            $defaultDetail = $poet->all_details->first();
+
+            $nameEn = $detailEn?->poet_name ?: $detailSd?->poet_name ?: $defaultDetail?->poet_name ?: 'N/A';
+            $nameSd = $detailSd?->poet_name ?: $detailEn?->poet_name ?: $defaultDetail?->poet_name ?: 'N/A';
+            $laqabEn = $detailEn?->poet_laqab ?: $detailEn?->poet_name ?: $detailSd?->poet_laqab ?: $detailSd?->poet_name ?: $defaultDetail?->poet_laqab ?: $defaultDetail?->poet_name ?: 'N/A';
+            $laqabSd = $detailSd?->poet_laqab ?: $detailSd?->poet_name ?: $detailEn?->poet_laqab ?: $detailEn?->poet_name ?: $defaultDetail?->poet_laqab ?: $defaultDetail?->poet_name ?: 'N/A';
+            $bioEn = \Illuminate\Support\Str::limit(strip_tags($detailEn?->poet_bio ?: $detailSd?->poet_bio ?: $defaultDetail?->poet_bio ?: ''), 150);
+            $bioSd = \Illuminate\Support\Str::limit(strip_tags($detailSd?->poet_bio ?: $detailEn?->poet_bio ?: $defaultDetail?->poet_bio ?: ''), 150);
 
             return [
                 'id' => $poet->id,
                 'slug' => $poet->poet_slug,
                 'avatar' => PoetImageUrl::resolve($poet->poet_pic),
-                'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
-                'bio_en' => \Illuminate\Support\Str::limit(strip_tags($detailEn->poet_bio ?? $detailSd->poet_bio ?? ''), 150),
-                'name_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
-                'bio_sd' => \Illuminate\Support\Str::limit(strip_tags($detailSd->poet_bio ?? $detailEn->poet_bio ?? ''), 150),
-                'name' => $detail->poet_laqab ?? $detail->poet_name ?? 'N/A',
+                'name_en' => $nameEn,
+                'name_sd' => $nameSd,
+                'laqab_en' => $laqabEn,
+                'laqab_sd' => $laqabSd,
+                // Locale convenience fields (prefer laqab for display cards)
+                'name' => $locale === 'sd' ? $laqabSd : $laqabEn,
+                'bio_en' => $bioEn,
+                'bio_sd' => $bioSd,
                 'entries_count' => $poet->poetry_count ?? 0,
                 'followers' => '0',
                 'category' => 'all',

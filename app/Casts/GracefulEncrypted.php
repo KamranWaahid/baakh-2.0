@@ -22,8 +22,24 @@ class GracefulEncrypted implements CastsAttributes
         try {
             $decrypted = Crypt::decryptString($value);
 
+            // Legacy encrypt()/decrypt() payloads serialize values, so decryptString
+            // can succeed but return PHP serialized strings like s:12:"Name";
+            if (is_string($decrypted) && preg_match('/^s:\d+:"/', $decrypted)) {
+                $unserialized = @unserialize($decrypted);
+                if (is_string($unserialized)) {
+                    return $unserialized;
+                }
+            }
+
             return is_string($decrypted) ? $decrypted : null;
         } catch (DecryptException) {
+            try {
+                $decrypted = decrypt($value);
+                return is_string($decrypted) ? $decrypted : null;
+            } catch (\Throwable) {
+                // fall through
+            }
+
             if ($this->looksLikePlaintext($key, $value)) {
                 return $value;
             }

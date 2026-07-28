@@ -184,7 +184,36 @@ If uploads or logs fail with permission errors:
 
 ```bash
 cd "$HOME/baakh_app"
-chmod -R u+rwX storage bootstrap/cache
+chmod -R u+rwX storage bootstrap/cache public/assets/images
+```
+
+### Poet / media image uploads on cPanel
+
+The app boots from `APP_PATH` while Apache serves `public_html`. The deploy script now
+symlinks `public_html/assets/images` → `APP_PATH/public/assets/images`, and the uploader
+also dual-writes using `DOCUMENT_ROOT` / `MEDIA_WEB_ROOT`.
+
+In `.env` (optional but recommended):
+
+```bash
+MEDIA_DISK=local
+MEDIA_WEB_ROOT=/home/YOUR_USER/public_html
+```
+
+Then clear config cache:
+
+```bash
+cd "$HOME/baakh_app"
+php artisan config:clear
+```
+
+If images still 404 after upload, re-run:
+
+```bash
+export APP_PATH="$HOME/baakh_app"
+export PUBLIC_PATH="$HOME/public_html"
+cd "$HOME/repositories/baakh-2.0"   # or your Git checkout path
+DEPLOY_MODE=public-only bash scripts/cpanel-post-deploy.sh
 ```
 
 Re-check PHP:

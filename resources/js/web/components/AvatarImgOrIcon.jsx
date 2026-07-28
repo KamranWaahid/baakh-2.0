@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getImageUrl } from '../utils/url';
@@ -14,9 +14,12 @@ export default function AvatarImgOrIcon({
     iconClassName,
     imgClassName = 'w-full h-full object-cover',
 }) {
-    const [broken, setBroken] = useState(() => !src);
-
     const url = src ? getImageUrl(src, imageType) : '';
+    const [broken, setBroken] = useState(() => !url);
+
+    useEffect(() => {
+        setBroken(!url);
+    }, [url]);
 
     if (broken || !url) {
         return (

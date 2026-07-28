@@ -57,7 +57,9 @@ const CreatePoet = () => {
         queryFn: async () => {
             const res = await api.get('/api/admin/poets/create');
             return res.data;
-        }
+        },
+        staleTime: 0,
+        refetchOnMount: 'always',
     });
 
     const form = useForm({
@@ -127,10 +129,10 @@ const CreatePoet = () => {
     };
 
     const handleImageChange = (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (file) {
             setPreview(URL.createObjectURL(file));
-            form.setValue('image', e.target.files);
+            form.setValue('image', e.target.files, { shouldDirty: true, shouldValidate: true });
         }
     };
 
@@ -243,7 +245,7 @@ const CreatePoet = () => {
                                             <Input
                                                 {...fieldProps}
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                                                 onChange={(event) => {
                                                     handleImageChange(event);
                                                     onChange(event.target.files);

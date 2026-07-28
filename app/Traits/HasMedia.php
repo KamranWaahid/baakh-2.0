@@ -76,9 +76,105 @@ trait HasMedia
 
     private function isPublicWebRootWritable(): bool
     {
-        $dir = public_path();
+        foreach ($this->localMediaRoots() as $root) {
+            if (is_dir($root) && is_writable($root)) {
+                return true;
+            }
+        }
 
-        return is_dir($dir) && is_writable($dir);
+        return false;
+    }
+
+    /**
+     * Local filesystem roots that must receive uploaded media.
+     *
+     * On cPanel, Laravel's public_path() is APP_PATH/public while Apache
+     * serves PUBLIC_PATH (public_html). Writing only to public_path() makes
+     * uploads "succeed" in the DB while the live site 404s the image.
+     *
+     * @return list<string>
+     */
+    private function localMediaRoots(): array
+    {
+        $roots = [];
+
+        $public = rtrim(str_replace('\\', '/', public_path()), '/');
+        if ($public !== '') {
+            $roots[] = $public;
+        }
+
+        $configured = trim((string) config('media.web_root', ''));
+        if ($configured !== '') {
+            $roots[] = rtrim(str_replace('\\', '/', $configured), '/');
+        }
+
+        $docRoot = trim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
+        if ($docRoot !== '') {
+            $roots[] = rtrim(str_replace('\\', '/', $docRoot), '/');
+        }
+
+        $unique = [];
+        foreach ($roots as $root) {
+            if ($root === '' || !is_dir($root)) {
+                continue;
+            }
+            $real = realpath($root) ?: $root;
+            $unique[$real] = $root;
+        }
+
+        return array_values($unique);
+    }
+
+    /**
+     * Write binary media content under every local web root that can receive it.
+     */
+    private function writeLocalMediaFile(string $relativePath, string $binary): void
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+        $roots = $this->localMediaRoots();
+        $written = 0;
+        $errors = [];
+
+        foreach ($roots as $root) {
+            $absolute = $root . '/' . $relativePath;
+            $destination = dirname($absolute);
+
+            try {
+                if (!is_dir($destination) && !@mkdir($destination, 0755, true) && !is_dir($destination)) {
+                    $errors[] = "cannot create {$destination}";
+                    continue;
+                }
+                if (!is_writable($destination)) {
+                    $errors[] = "not writable: {$destination}";
+                    continue;
+                }
+                if (file_put_contents($absolute, $binary) === false) {
+                    $errors[] = "write failed: {$absolute}";
+                    continue;
+                }
+                @chmod($absolute, 0644);
+                $written++;
+            } catch (\Throwable $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        if ($written === 0) {
+            $detail = $errors !== [] ? implode('; ', $errors) : 'no writable media roots';
+            throw new \RuntimeException('Local image write failed: ' . $detail);
+        }
+    }
+
+    private function deleteLocalMediaFile(string $relativePath): void
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        foreach ($this->localMediaRoots() as $root) {
+            $absolute = $root . '/' . $relativePath;
+            if (is_file($absolute)) {
+                @unlink($absolute);
+            }
+        }
     }
 
     private function buildRelativePath(string $folderPath, string $fileName, ?string $disk = null): string
@@ -132,7 +228,7 @@ trait HasMedia
 
     /**
      * Handle Uploading Images
-     * 
+     *
      * @param \Illuminate\Http\UploadedFile $file
      * @param string $folderPath
      * @param string|null $customName
@@ -145,6 +241,7 @@ trait HasMedia
         $maxSize = 10 * 1024 * 1024; // 10 MB in bytes
         $minWidth = 10;
         $minHeight = 10;
+        $maxEdge = (int) config('media.max_edge', 2000);
 
         $fileSize = $file->getSize();
         $mimeType = $file->getMimeType();
@@ -162,17 +259,29 @@ trait HasMedia
         if (!$this->isResolvedCloudDisk($disk) && !$this->isPublicWebRootWritable()) {
             return [
                 'error' => true,
-                'message' => 'Cannot save images on this server (deploy root is read-only). Add AWS S3 (or compatible) vars: MEDIA_DISK=s3 plus AWS_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION, or MEDIA_DISK-compatible cloud credentials.',
+                'message' => 'Cannot save images on this server (deploy root is read-only). Add AWS S3 (or compatible) vars: MEDIA_DISK=s3 plus AWS_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION, or MEDIA_DISK-compatible cloud credentials. On cPanel, also set MEDIA_WEB_ROOT to your public_html path.',
             ];
         }
 
-        $image = Image::read($file);
+        try {
+            $image = Image::read($file);
+        } catch (\Throwable $e) {
+            return [
+                'error' => true,
+                'message' => 'Could not read image. Use JPEG, PNG, or WebP. (' . $e->getMessage() . ')',
+            ];
+        }
+
         $width = $image->width();
         $height = $image->height();
 
-
         if ($width < $minWidth || $height < $minHeight) {
             return ['error' => true, 'message' => 'Image dimensions must be at least 10x10 pixels.'];
+        }
+
+        // Keep shared-hosting memory use predictable for phone photos.
+        if ($maxEdge > 0 && ($width > $maxEdge || $height > $maxEdge)) {
+            $image = $image->scaleDown($maxEdge, $maxEdge);
         }
 
         // check if there is custom name
@@ -188,18 +297,20 @@ trait HasMedia
 
         try {
             if ($this->isResolvedCloudDisk($disk)) {
-                Storage::disk($disk)->put($relativePath, $encoded, [
+                $stored = Storage::disk($disk)->put($relativePath, $encoded, [
                     'visibility' => 'public',
                     'ContentType' => 'image/webp',
                 ]);
+                if ($stored === false) {
+                    return [
+                        'error' => true,
+                        'message' => 'Image upload failed on ' . $disk . ': storage driver returned false (check bucket credentials and permissions).',
+                    ];
+                }
                 // Store relative path in DB; URLs are resolved at read time via PoetImageUrl.
                 $fullPath = $relativePath;
             } else {
-                $destination = public_path(dirname($relativePath));
-                if (!file_exists($destination)) {
-                    mkdir($destination, 0755, true);
-                }
-                file_put_contents(public_path($relativePath), $encoded);
+                $this->writeLocalMediaFile($relativePath, $encoded);
                 $fullPath = $relativePath;
             }
         } catch (\Throwable $e) {
@@ -219,44 +330,27 @@ trait HasMedia
             foreach ($cropSize as $key => $value) {
                 // Resize and Save as WebP
                 $resizedName = pathinfo($imageName, PATHINFO_FILENAME) . "_{$key}.webp";
-                // Note: calling scale() modifies the instance, so we should clone or re-read if doing multiple?
-                // Intervention v3 is immutable? No, modifiers usually return new instance or modify?
-                // Documentation says: $image->scale(...) returns the modified image.
-                // If we do $image->scale(..)->save(..), $image is now scaled.
-                // So subsequent iterations will try to scale the ALREADY SCALED image. 
-                // We must use the original image for each resize.
-                // Intervention Image v3 objects are mutable.
-                // We should clone the original image for each resize.
-
-                // However, the original code had:
-                // $image->scale(...)->save(...)
-                // And it was in a foreach loop! This was a BUG in the original code if v2/v3 is mutable!
-                // Or maybe they relied on the fact that they only had one size?
-                // Wait, previous code:
-                // foreach ($cropSize as $key => $value) { 
-                //    $image->scale(...)->save(...) 
-                // }
-                // If $cropSize has multiple sizes, the second iteration would scale the result of the first.
-                // PROBABLY A BUG. I should fix this by re-reading or cloning.
-
-                // Let's use $image (which is original resolution) and clone it?
-                // Image::read($file) creates new instance.
-                // Or I can re-read from $file inside loop? Or simpler: clone.
-                // Validation: does `clone $image` work in V3? Yes.
-
+                // Intervention Image v3 objects are mutable — clone for each size.
                 $thumb = clone $image;
                 $thumbEncoded = (string) $thumb->scale($value['width'], $value['height'])->toWebp(80);
                 $thumbRelativePath = $this->buildRelativePath($folderPath, $resizedName, $disk);
 
-                if ($this->isResolvedCloudDisk($disk)) {
-                    Storage::disk($disk)->put($thumbRelativePath, $thumbEncoded, [
-                        'visibility' => 'public',
-                        'ContentType' => 'image/webp',
-                    ]);
-                    $resizedImages[] = $thumbRelativePath;
-                } else {
-                    file_put_contents(public_path($thumbRelativePath), $thumbEncoded);
-                    $resizedImages[] = $thumbRelativePath;
+                try {
+                    if ($this->isResolvedCloudDisk($disk)) {
+                        $stored = Storage::disk($disk)->put($thumbRelativePath, $thumbEncoded, [
+                            'visibility' => 'public',
+                            'ContentType' => 'image/webp',
+                        ]);
+                        if ($stored === false) {
+                            continue;
+                        }
+                        $resizedImages[] = $thumbRelativePath;
+                    } else {
+                        $this->writeLocalMediaFile($thumbRelativePath, $thumbEncoded);
+                        $resizedImages[] = $thumbRelativePath;
+                    }
+                } catch (\Throwable $e) {
+                    // Thumbnails are best-effort; primary image already saved.
                 }
             }
         }
@@ -336,10 +430,7 @@ trait HasMedia
         }
 
         foreach ($paths as $path) {
-            $absolutePath = public_path($path);
-            if (file_exists($absolutePath)) {
-                @unlink($absolutePath);
-            }
+            $this->deleteLocalMediaFile($path);
         }
 
         return ['error' => false, 'message' => $this->isResolvedCloudDisk($disk)
@@ -349,7 +440,7 @@ trait HasMedia
 
 
     /**
-     * Delete Folders 
+     * Delete Folders
      *
      * @param string $path
      * @param string $folderName
