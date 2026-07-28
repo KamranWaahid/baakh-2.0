@@ -48,6 +48,7 @@ class Sense extends Model
         'confidence' => 'integer',
         'sense_order' => 'integer',
         'english_equivalents' => 'array',
+        'extra' => 'array',
     ];
 
     public function lemma()
