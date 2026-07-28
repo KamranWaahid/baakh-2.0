@@ -244,7 +244,7 @@ class PoetryController extends UserController
             'views' => $poetry->views,
             'likes' => $poetry->likes_count ?? 0,
             'date' => $poetry->created_at ? $poetry->created_at->format('M d, Y') : '',
-            'date_diff' => $poetry->created_at->diffForHumans(),
+            'date_diff' => $poetry->created_at ? $poetry->created_at->diffForHumans() : '',
 
             'poet' => [
                 'id' => $poet_info->id ?? 0,
@@ -365,7 +365,11 @@ class PoetryController extends UserController
                     }
 
                     $name = $detail?->poet_laqab ?? $poet->poet_slug ?? 'Unknown';
-                    $tagline = $detail->tagline ?? 'Poet';
+                    $defaultTagline = $locale === 'sd' ? 'شاعر' : 'Poet';
+                    $tagline = $detail?->tagline ?? $defaultTagline;
+                    if ($locale === 'sd' && $tagline === 'Poet') {
+                        $tagline = 'شاعر';
+                    }
                     $initials = collect(explode(' ', $name))->map(fn($s) => Str::substr($s, 0, 1))->take(2)->join('');
 
                     $pic = $poet->poet_pic;

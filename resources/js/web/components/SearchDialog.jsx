@@ -54,38 +54,51 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent hideClose className="w-full h-[100dvh] sm:h-auto sm:max-w-[520px] p-0 gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-none sm:rounded-2xl">
-                {/* Search Input - Clean & Borderless */}
-                <div className="flex items-center gap-3 px-5 py-4" dir={isRtl ? 'rtl' : 'ltr'}>
+            <DialogContent
+                hideClose
+                className="flex flex-col w-[calc(100%-1.25rem)] sm:w-full max-w-[520px] max-h-[min(85dvh,640px)] h-auto p-0 gap-0 overflow-hidden bg-white border border-gray-100 shadow-2xl rounded-2xl top-[max(0.75rem,env(safe-area-inset-top))] sm:top-[50%] translate-x-[-50%] translate-y-0 sm:translate-y-[-50%] data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 sm:data-[state=closed]:slide-out-to-top-[48%] sm:data-[state=open]:slide-in-from-top-[48%]"
+            >
+                {/* Search Input */}
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 shrink-0 border-b border-gray-100" dir={isRtl ? 'rtl' : 'ltr'}>
                     <Search className="h-5 w-5 text-gray-400 shrink-0" />
                     <input
-                        className="flex-1 bg-transparent text-lg outline-none border-none focus:border-none focus:ring-0 focus:outline-none placeholder:text-gray-400 font-normal"
-                        placeholder={isRtl ? "ڳوليو..." : "Search..."}
+                        className={`flex-1 min-w-0 bg-transparent text-base sm:text-lg outline-none border-none focus:border-none focus:ring-0 focus:outline-none placeholder:text-gray-400 font-normal ${isRtl ? 'font-arabic' : ''}`}
+                        placeholder={isRtl ? 'ڳوليو...' : 'Search...'}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         autoFocus
                     />
-                    {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                    {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-400 shrink-0" />}
                     {!loading && query && (
                         <button
+                            type="button"
                             onClick={() => setQuery('')}
-                            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors shrink-0"
+                            aria-label={isRtl ? 'صاف ڪريو' : 'Clear'}
                         >
                             <X className="h-4 w-4 text-gray-400" />
                         </button>
                     )}
+                    <button
+                        type="button"
+                        onClick={() => onOpenChange(false)}
+                        className="shrink-0 inline-flex items-center justify-center h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                        aria-label={isRtl ? 'بند ڪريو' : 'Close'}
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
                 </div>
 
                 {/* Results Area */}
-                <div className="flex-1 sm:h-[450px] overflow-y-auto scroll-smooth pb-20 sm:pb-0" dir={isRtl ? 'rtl' : 'ltr'}>
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth max-h-[min(55dvh,420px)] sm:max-h-[450px] pb-2" dir={isRtl ? 'rtl' : 'ltr'}>
                     {!query && (
-                        <div className="py-16 text-center text-sm text-gray-400">
+                        <div className={`py-12 sm:py-16 text-center text-sm text-gray-400 px-4 ${isRtl ? 'font-arabic' : ''}`}>
                             {isRtl ? 'شاعر، شاعري، يا دور ڳوليو...' : 'Search for poets, poetry, or periods...'}
                         </div>
                     )}
 
                     {query && !loading && !hasResults && (
-                        <div className="py-16 text-center text-sm text-gray-400">
+                        <div className={`py-12 sm:py-16 text-center text-sm text-gray-400 px-4 ${isRtl ? 'font-arabic' : ''}`}>
                             {isRtl ? 'ڪو به نتيجو نه مليو' : 'No results found'}
                         </div>
                     )}
@@ -261,9 +274,16 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                     )}
                 </div>
 
-                {/* Footer - Ultra Minimal */}
-                <div className="px-5 py-3 flex items-center justify-between text-[11px] text-gray-400">
-                    <div className="flex items-center gap-3">
+                {/* Footer */}
+                <div className="px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-3 flex items-center justify-between gap-3 text-[11px] text-gray-400 shrink-0 border-t border-gray-100">
+                    <button
+                        type="button"
+                        onClick={() => onOpenChange(false)}
+                        className={`sm:hidden inline-flex items-center justify-center h-10 px-4 rounded-full bg-gray-900 text-white text-sm font-medium ${isRtl ? 'font-arabic' : ''}`}
+                    >
+                        {isRtl ? 'بند ڪريو' : 'Close'}
+                    </button>
+                    <div className="hidden sm:flex items-center gap-3">
                         <span className="flex items-center gap-1">
                             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-medium">esc</kbd>
                             <span>close</span>
@@ -273,7 +293,7 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                             <span>select</span>
                         </span>
                     </div>
-                    <span className="text-gray-400">Baakh</span>
+                    <span className="text-gray-400 ms-auto">Baakh</span>
                 </div>
             </DialogContent>
         </Dialog>

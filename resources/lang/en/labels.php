@@ -52,7 +52,7 @@ return [
     
     'see-more' => 'See more',
     'poetry' => 'Poetry',
-    'footer-notice' => 'You are using the beta version of Baakh, so some features are disabled, they will be enabled soon.',
+    'footer-notice' => 'Baakh is an archive of Sindhi poetry — explore poets, genres, and themes.',
 
     'quiz_msg_correct_answer' => 'Congrats! You are correct!',
     'quiz_msg_wrong_answer' => 'Oops! maybe you don\'t know, but answer is :poetName',

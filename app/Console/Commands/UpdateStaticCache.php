@@ -737,9 +737,13 @@ class UpdateStaticCache extends Command
             ->inRandomOrder()
             ->take(8)
             ->get()
-            ->map(function ($poet) {
+            ->map(function ($poet) use ($locale) {
                 $name = $poet->details?->poet_laqab ?? $poet->poet_slug ?? 'Unknown';
-                $tagline = $poet->details?->tagline ?? 'Poet';
+                $defaultTagline = $locale === 'sd' ? 'شاعر' : 'Poet';
+                $tagline = $poet->details?->tagline ?? $defaultTagline;
+                if ($locale === 'sd' && $tagline === 'Poet') {
+                    $tagline = 'شاعر';
+                }
                 $initials = collect(explode(' ', $name))->map(fn($s) => \Illuminate\Support\Str::substr($s, 0, 1))->take(2)->join('');
 
                 $img = PoetImageUrl::resolve($poet->poet_pic);

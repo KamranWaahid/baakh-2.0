@@ -14,6 +14,7 @@ import api from '@/admin/api/axios';
 import { formatDate } from '@/lib/date-utils';
 import ReportModal from './ReportModal';
 import { getImageUrl } from '../utils/url';
+import { htmlToPlainText } from '../utils/html';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 import {
     DropdownMenu,
@@ -368,7 +369,7 @@ const PoetProfile = ({ lang }) => {
                         </p>
 
                         <p className="font-serif text-sm text-gray-600 leading-relaxed mb-6 font-arabic line-clamp-3">
-                            {isRtl ? poet.bio_sd : poet.bio_en}
+                            {htmlToPlainText(isRtl ? poet.bio_sd : poet.bio_en)}
                         </p>
 
                         <div className="flex gap-2 w-full mb-6">
@@ -532,7 +533,7 @@ const PoetProfile = ({ lang }) => {
                                     {isRtl ? 'بايو' : 'Biography'}
                                 </span>
                                 <p className="font-serif text-gray-600 leading-relaxed font-arabic whitespace-pre-line text-base">
-                                    {isRtl ? poet.bio_sd : poet.bio_en}
+                                    {htmlToPlainText(isRtl ? poet.bio_sd : poet.bio_en)}
                                 </p>
                             </div>
                         </div>

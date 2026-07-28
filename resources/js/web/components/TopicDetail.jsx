@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { BookOpen, ChevronRight, ChevronLeft } from 'lucide-react';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
+import { htmlToPlainText } from '../utils/html';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -91,7 +92,7 @@ const TopicDetail = () => {
                 </Link>
 
                 <p className="text-gray-500 text-sm line-clamp-1 mb-2 font-arabic">
-                    {isRtl ? poet.bio_sd : poet.bio_en}
+                    {htmlToPlainText(isRtl ? poet.bio_sd : poet.bio_en)}
                 </p>
 
                 <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">

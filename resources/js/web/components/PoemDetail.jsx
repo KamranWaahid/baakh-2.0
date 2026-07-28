@@ -166,9 +166,10 @@ const PoemDetail = ({ lang }) => {
                     )}
 
                     {poem.info && (
-                        <div className={`bg-gray-50 p-6 rounded-lg mt-8 text-base text-gray-600 italic border-l-4 border-gray-200 ${isRtl ? 'border-l-0 border-r-4' : ''}`}>
-                            {poem.info}
-                        </div>
+                        <div
+                            className={`bg-gray-50 p-6 rounded-lg mt-8 text-base text-gray-600 italic border-l-4 border-gray-200 prose prose-sm max-w-none ${isRtl ? 'border-l-0 border-r-4' : ''}`}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.info) }}
+                        />
                     )}
 
 
