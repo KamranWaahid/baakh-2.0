@@ -49,7 +49,8 @@ export function LocationCombobox({
                             {options.map((option) => (
                                 <CommandItem
                                     key={option.id}
-                                    value={option.name}
+                                    value={`${option.name ?? ''} ${option.id}`}
+                                    keywords={[String(option.name ?? ''), String(option.id)]}
                                     onSelect={() => {
                                         onChange(option.id.toString() === value?.toString() ? "" : option.id.toString())
                                         setOpen(false)
@@ -61,7 +62,7 @@ export function LocationCombobox({
                                             value?.toString() === option.id.toString() ? "opacity-100" : "opacity-0"
                                         )}
                                     />
-                                    {option.name}
+                                    {option.name || `City #${option.id}`}
                                 </CommandItem>
                             ))}
                         </CommandGroup>

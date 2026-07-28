@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lemma;
+use App\Services\BundledOpenLexiconLookup;
 use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
 
@@ -11,41 +12,69 @@ class WordLookupController extends Controller
 {
     /**
      * Look up a single word in the dictionary.
-     * Tries exact match first, then strips Arabic diacritics to find a match.
+     * Matches headwords / variants / inflections only — never definition text
+     * (definition LIKE caused false hits like روز → افطار via "روزو کولڻ").
+     * Falls back to the bundled Open Lexicon SQLite when app tables miss the word.
      */
     public function lookup(string $word)
     {
-        $word = trim($word);
-        $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations', 'inflections', 'idiomaticExpressions'];
-
-        $lemma = $this->findLemma($word, $with);
-
-        if (!$lemma) {
-            $normalized = DictionaryText::normalizeForLookup($word);
-            $lemma = Lemma::query()
-                ->with($with)
-                ->where(function ($query) use ($normalized) {
-                    $query->whereRaw($this->normalizedSql('lemma') . ' = ?', [$normalized])
-                        ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalized])
-                        ->orWhereHas('variants', function ($query) use ($normalized) {
-                            $query->whereRaw($this->normalizedSql('variant') . ' = ?', [$normalized])
-                                ->orWhereRaw($this->normalizedSql('normalized_variant') . ' = ?', [$normalized]);
-                        })
-                        ->orWhereHas('inflections', function ($query) use ($normalized) {
-                            $query->whereRaw($this->normalizedSql('form') . ' = ?', [$normalized]);
-                        })
-                        ->orWhereHas('senses', function ($query) use ($normalized) {
-                            $query->whereRaw($this->normalizedSql('word_variant') . ' LIKE ?', ['%' . $normalized . '%']);
-                        });
-                })
-                ->first();
+        $word = DictionaryText::stripPunctuation(urldecode(trim($word)));
+        if ($word === '') {
+            return response()->json(['found' => false], 200);
         }
+        $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations', 'inflections', 'idiomaticExpressions'];
+        $normalized = DictionaryText::normalizeForLookup($word);
+
+        $lemma = $this->findLemmaExact($word, $with)
+            ?? $this->findLemmaNormalized($normalized, $with);
 
         if (!$lemma) {
+            $fallback = app(BundledOpenLexiconLookup::class)->lookup($word);
+            if ($fallback) {
+                return response()->json($fallback);
+            }
+
             return response()->json(['found' => false], 200);
         }
 
-        // Build response
+        $payload = $this->buildLemmaPayload($lemma);
+
+        // If the DB entry only has Latin/English glosses (common for partial imports),
+        // enrich/replace with the fuller bundled Open Lexicon Sindhi senses.
+        if (!$this->hasArabicScriptDefinition($payload)) {
+            $fallback = app(BundledOpenLexiconLookup::class)->lookup($word);
+            if ($fallback && $this->hasArabicScriptDefinition($fallback)) {
+                $payload['senses'] = collect($fallback['senses'] ?? [])
+                    ->concat($payload['senses'] ?? [])
+                    ->values()
+                    ->all();
+                $payload['meanings'] = collect($fallback['meanings'] ?? [])
+                    ->merge($payload['meanings'] ?? [])
+                    ->unique()
+                    ->values()
+                    ->all();
+                $payload['meanings_sd'] = collect($fallback['meanings_sd'] ?? [])
+                    ->merge($payload['meanings_sd'] ?? [])
+                    ->unique()
+                    ->values()
+                    ->all();
+                $payload['meanings_en'] = collect($fallback['meanings_en'] ?? [])
+                    ->merge($payload['meanings_en'] ?? [])
+                    ->unique()
+                    ->values()
+                    ->all();
+                if (empty($payload['pos']) && !empty($fallback['pos'])) {
+                    $payload['pos'] = $fallback['pos'];
+                }
+                $payload['source'] = 'db+bundled_open_lexicon';
+            }
+        }
+
+        return response()->json($payload);
+    }
+
+    private function buildLemmaPayload(Lemma $lemma): array
+    {
         $synonyms = $lemma->lemmaRelations
             ->where('relation_type', 'synonym')
             ->pluck('related_word')
@@ -61,7 +90,35 @@ class WordLookupController extends Controller
             ->pluck('related_word')
             ->values();
 
-        $senses = $lemma->senses->map(function ($sense) {
+        $meanings = collect();
+        $meaningsEn = collect();
+        $meaningsSd = collect();
+
+        $senses = $lemma->senses->map(function ($sense) use (&$meanings, &$meaningsEn, &$meaningsSd) {
+            $definition = $sense->definition;
+            $definitionEn = $sense->definition_en;
+            $definitionSd = $sense->definition_sd;
+
+            // Partial imports often store English glosses in `definition` with dir=sindhi.
+            if ($this->isMostlyLatin((string) $definition) && !filled($definitionEn)) {
+                $definitionEn = $definition;
+            }
+            if ($this->hasArabicScript((string) $definition) && !filled($definitionSd)) {
+                $definitionSd = $definition;
+            }
+
+            foreach ([$definition, $sense->full_definition, $sense->short_gloss] as $text) {
+                if (filled($text)) {
+                    $meanings->push($text);
+                }
+            }
+            if (filled($definitionEn)) {
+                $meaningsEn->push($definitionEn);
+            }
+            if (filled($definitionSd)) {
+                $meaningsSd->push($definitionSd);
+            }
+
             return [
                 'id' => $sense->id,
                 'public_id' => $sense->public_id,
@@ -69,9 +126,9 @@ class WordLookupController extends Controller
                 'sense_order' => $sense->sense_order,
                 'part_of_speech' => $sense->part_of_speech,
                 'short_gloss' => $sense->short_gloss,
-                'definition' => $sense->definition,
-                'definition_en' => $sense->definition_en,
-                'definition_sd' => $sense->definition_sd,
+                'definition' => $definition,
+                'definition_en' => $definitionEn,
+                'definition_sd' => $definitionSd,
                 'full_definition' => $sense->full_definition,
                 'usage_notes' => $sense->usage_notes,
                 'register' => $sense->register,
@@ -95,11 +152,7 @@ class WordLookupController extends Controller
             ];
         })->values();
 
-        $meanings = $lemma->senses->pluck('definition')->filter()->values();
-        $meanings_en = $lemma->senses->pluck('definition_en')->filter()->values();
-        $meanings_sd = $lemma->senses->pluck('definition_sd')->filter()->values();
-
-        return response()->json([
+        return [
             'found' => true,
             'id' => $lemma->id,
             'public_id' => $lemma->public_id,
@@ -130,17 +183,55 @@ class WordLookupController extends Controller
                 'dialect' => $variant->dialect,
             ])->values(),
             'senses' => $senses,
-            'meanings' => $meanings,
-            'meanings_en' => $meanings_en,
-            'meanings_sd' => $meanings_sd,
+            'meanings' => $meanings->filter()->unique()->values(),
+            'meanings_en' => $meaningsEn->filter()->unique()->values(),
+            'meanings_sd' => $meaningsSd->filter()->unique()->values(),
             'synonyms' => $synonyms,
             'antonyms' => $antonyms,
             'hypernyms' => $hypernyms,
             'structured_entry' => app(StructuredDictionaryEntryService::class)->build($lemma),
-        ]);
+        ];
     }
 
-    private function findLemma(string $word, array $with): ?Lemma
+    private function hasArabicScriptDefinition(array $payload): bool
+    {
+        foreach ($payload['meanings_sd'] ?? [] as $text) {
+            if ($this->hasArabicScript((string) $text)) {
+                return true;
+            }
+        }
+        foreach ($payload['senses'] ?? [] as $sense) {
+            foreach (['definition_sd', 'definition', 'full_definition', 'short_gloss'] as $key) {
+                if ($this->hasArabicScript((string) ($sense[$key] ?? ''))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function hasArabicScript(string $text): bool
+    {
+        return (bool) preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}]/u', $text);
+    }
+
+    private function isMostlyLatin(string $text): bool
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return false;
+        }
+
+        $hasLatin = (bool) preg_match('/\p{Latin}/u', $text);
+
+        return $hasLatin && ! $this->hasArabicScript($text);
+    }
+
+    /**
+     * Exact headword / variant / inflection match only.
+     */
+    private function findLemmaExact(string $word, array $with): ?Lemma
     {
         return Lemma::query()
             ->with($with)
@@ -148,7 +239,6 @@ class WordLookupController extends Controller
                 $query->where('lemma', $word)
                     ->orWhere('normalized_lemma', $word)
                     ->orWhere('transliteration', $word)
-                    ->orWhere('search_keywords_json', 'like', '%' . $word . '%')
                     ->orWhereHas('variants', function ($query) use ($word) {
                         $query->where('variant', $word)
                             ->orWhere('normalized_variant', $word)
@@ -159,19 +249,48 @@ class WordLookupController extends Controller
                             ->orWhere('romanization', $word);
                     })
                     ->orWhereHas('senses', function ($query) use ($word) {
-                        $query->where('word_variant', 'like', '%' . $word . '%')
-                            ->orWhere('definition', 'like', '%' . $word . '%')
-                            ->orWhere('definition_en', 'like', '%' . $word . '%')
-                            ->orWhere('english_equivalents', 'like', '%' . $word . '%')
-                            ->orWhere('definition_sd', 'like', '%' . $word . '%')
-                            ->orWhere('normalized_definition', 'like', '%' . $word . '%')
-                            ->orWhere('source', 'like', '%' . $word . '%')
-                            ->orWhere('source_dictionary', 'like', '%' . $word . '%')
-                            ->orWhere('source_entry_id', $word)
-                            ->orWhere('lexical_id', $word);
+                        // Exact variant form only — never definition/source text.
+                        $query->where('word_variant', $word)
+                            ->orWhere('lexical_id', $word)
+                            ->orWhere('source_entry_id', $word);
                     });
             })
-            ->orderByRaw('CASE WHEN lemma = ? THEN 0 WHEN normalized_lemma = ? THEN 1 WHEN transliteration = ? THEN 2 ELSE 3 END', [$word, $word, $word])
+            ->orderByRaw(
+                'CASE WHEN lemma = ? THEN 0 WHEN normalized_lemma = ? THEN 1 WHEN transliteration = ? THEN 2 ELSE 3 END',
+                [$word, $word, $word]
+            )
+            ->first();
+    }
+
+    /**
+     * Diacritic-insensitive headword match.
+     */
+    private function findLemmaNormalized(string $normalized, array $with): ?Lemma
+    {
+        if ($normalized === '') {
+            return null;
+        }
+
+        return Lemma::query()
+            ->with($with)
+            ->where(function ($query) use ($normalized) {
+                $query->whereRaw($this->normalizedSql('lemma') . ' = ?', [$normalized])
+                    ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalized])
+                    ->orWhereHas('variants', function ($query) use ($normalized) {
+                        $query->whereRaw($this->normalizedSql('variant') . ' = ?', [$normalized])
+                            ->orWhereRaw($this->normalizedSql('normalized_variant') . ' = ?', [$normalized]);
+                    })
+                    ->orWhereHas('inflections', function ($query) use ($normalized) {
+                        $query->whereRaw($this->normalizedSql('form') . ' = ?', [$normalized]);
+                    })
+                    ->orWhereHas('senses', function ($query) use ($normalized) {
+                        $query->whereRaw($this->normalizedSql('word_variant') . ' = ?', [$normalized]);
+                    });
+            })
+            ->orderByRaw(
+                'CASE WHEN ' . $this->normalizedSql('lemma') . ' = ? THEN 0 WHEN ' . $this->normalizedSql('normalized_lemma') . ' = ? THEN 1 ELSE 2 END',
+                [$normalized, $normalized]
+            )
             ->first();
     }
 

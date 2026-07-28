@@ -308,18 +308,27 @@ class SitemapController extends Controller
             $baseUrl = rtrim(config('app.url'), '/');
             $offset = ($page - 1) * self::MAX_URLS_PER_SITEMAP;
 
+            // Individual couplet detail pages do not exist in the SPA.
+            // Point each couplet at its poet profile so Google doesn't soft-404.
             $items = Couplets::whereYear('created_at', $year)
                 ->whereMonth('created_at', $month)
-                ->select('couplet_slug', 'updated_at')
+                ->with('poet:id,poet_slug')
+                ->select('id', 'poet_id', 'couplet_slug', 'updated_at')
                 ->skip($offset)
                 ->take(self::MAX_URLS_PER_SITEMAP)
                 ->get();
 
             $urls = [];
+            $seenPoets = [];
             foreach ($items as $item) {
+                $poetSlug = $item->poet?->poet_slug;
+                if (!$poetSlug || isset($seenPoets[$poetSlug])) {
+                    continue;
+                }
+                $seenPoets[$poetSlug] = true;
                 $urls[] = $this->buildUrlEntry(
                     $baseUrl,
-                    '/couplets/' . $item->couplet_slug,
+                    '/poet/' . $poetSlug,
                     $item->updated_at ? $item->updated_at->toW3cString() : null,
                     'monthly',
                     '0.6'

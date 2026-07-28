@@ -68,9 +68,8 @@ const MobileMenu = ({ lang }) => {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 h-[56px] border-b border-gray-100 flex-shrink-0">
-                    <Link to={`/${lang}`} className="flex items-center gap-2.5" onClick={handleNavClick}>
+                    <Link to={`/${lang}`} className="flex items-center" onClick={handleNavClick} aria-label="Baakh">
                         <Logo className="h-7 w-7 text-black" />
-                        <span className="font-semibold text-lg tracking-tight">Baakh</span>
                     </Link>
                     <button
                         onClick={closeMenu}

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
-import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
 import { useAuth } from '../contexts/AuthContext';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
@@ -26,7 +26,21 @@ const FeedContent = ({ feedType, feeds, lang, isRtl, lastPostElementRef }) => {
     const feed = feeds[feedType];
     return (
         <div className="space-y-8 mt-0 animate-fade-in-up">
-            {feed.loading ? <LoadingState /> : (feed.posts && feed.posts.length > 0) ? (
+            {feed.loading ? <LoadingState /> : feed.error ? (
+                <div className="py-20 flex flex-col items-center justify-center text-center">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {isRtl ? 'فيڊ لوڊ نه ٿي سگهي' : 'Could not load feed'}
+                    </h3>
+                    <p className="text-gray-500 mb-6 max-w-sm">
+                        {feed.errorMessage || (isRtl ? 'مهرباني ڪري صفحو ريفريش ڪريو.' : 'Please refresh the page and try again.')}
+                    </p>
+                    {feed.onRetry && (
+                        <Button variant="outline" onClick={feed.onRetry}>
+                            {isRtl ? 'ٻيهر ڪوشش' : 'Retry'}
+                        </Button>
+                    )}
+                </div>
+            ) : (feed.posts && feed.posts.length > 0) ? (
                 <>
                     {feed.posts.map((post, i) => {
                         const isLastElement = feed.posts.length === i + 1;
@@ -69,25 +83,15 @@ const Feed = ({ lang }) => {
     const { category: urlCategory } = useParams();
     const { user } = useAuth();
     const [activeTab, setActiveTab] = React.useState('for-you');
-
-    const scrollDirection = useScrollDirection();
-    const [isMobile, setIsMobile] = React.useState(false);
-
-    React.useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 1024);
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    const isNavbarHidden = isMobile && scrollDirection === 'down';
+    const { stickyTopClass } = useStickyBelowNavbar();
 
     // Unified Infinite Query for all tabs
     const {
         data,
         isLoading,
+        isError,
+        error,
+        refetch,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
@@ -107,7 +111,8 @@ const Feed = ({ lang }) => {
         getNextPageParam: (lastPage) => {
             return lastPage.current_page < lastPage.last_page ? lastPage.current_page + 1 : undefined;
         },
-        enabled: activeTab !== 'bookmarked' || !!user
+        enabled: activeTab !== 'bookmarked' || !!user,
+        retry: 1,
     });
 
     const observer = React.useRef();
@@ -129,11 +134,21 @@ const Feed = ({ lang }) => {
         .flatMap((page) => Array.isArray(page?.data) ? page.data : [])
         .filter((post) => post && typeof post === 'object');
 
+    const feedState = {
+        posts,
+        loading: isLoading,
+        isFetchingMore: isFetchingNextPage,
+        hasMore: hasNextPage,
+        error: isError,
+        errorMessage: error?.response?.data?.message || error?.message,
+        onRetry: () => refetch(),
+    };
+
     // Construct feeds object with same shape as before for FeedContent
     const feeds = {
-        'for-you': activeTab === 'for-you' ? { posts: posts, loading: isLoading, isFetchingMore: isFetchingNextPage, hasMore: hasNextPage } : { posts: [], loading: false },
-        'featured': activeTab === 'featured' ? { posts: posts, loading: isLoading, isFetchingMore: isFetchingNextPage, hasMore: hasNextPage } : { posts: [], loading: false },
-        'bookmarked': activeTab === 'bookmarked' ? { posts: posts, loading: isLoading, isFetchingMore: isFetchingNextPage, hasMore: hasNextPage } : { posts: [], loading: false }
+        'for-you': activeTab === 'for-you' ? feedState : { posts: [], loading: false },
+        'featured': activeTab === 'featured' ? feedState : { posts: [], loading: false },
+        'bookmarked': activeTab === 'bookmarked' ? feedState : { posts: [], loading: false }
     };
 
     // Switch away from bookmarked if empty (only after load)
@@ -152,8 +167,7 @@ const Feed = ({ lang }) => {
             </h1>
             <Tabs defaultValue="for-you" className="w-full" onValueChange={setActiveTab} dir={isRtl ? 'rtl' : 'ltr'}>
                 <div
-                    className={`sticky bg-white pt-0 pb-0 z-40 border-b border-gray-100 mb-8 transition-[top] duration-300 ${isNavbarHidden ? 'top-0' : 'top-[56px] lg:top-[65px]'
-                        }`}
+                    className={`sticky ${stickyTopClass} bg-white pt-0 pb-0 z-40 border-b border-gray-100 mb-8`}
                 >
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
                         <TabsTrigger

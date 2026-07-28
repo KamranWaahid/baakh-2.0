@@ -29,7 +29,7 @@ class PoetImageUrl
             return null;
         }
 
-        if (File::exists(public_path($relative))) {
+        if (self::localFileExists($relative)) {
             return '/' . $relative;
         }
 
@@ -43,6 +43,55 @@ class PoetImageUrl
 
         // Match admin preview: expose web-root path when object is not on local disk.
         return '/' . $relative;
+    }
+
+    /**
+     * Check Laravel public/ and optional cPanel web root for a relative media file.
+     */
+    public static function localFileExists(string $relative): bool
+    {
+        $relative = ltrim(str_replace('\\', '/', $relative), '/');
+
+        foreach (self::localRoots() as $root) {
+            if (File::exists($root . '/' . $relative)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function localRoots(): array
+    {
+        $roots = [];
+        $public = rtrim(str_replace('\\', '/', public_path()), '/');
+        if ($public !== '') {
+            $roots[] = $public;
+        }
+
+        $configured = trim((string) config('media.web_root', ''));
+        if ($configured !== '') {
+            $roots[] = rtrim(str_replace('\\', '/', $configured), '/');
+        }
+
+        $docRoot = trim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''));
+        if ($docRoot !== '') {
+            $roots[] = rtrim(str_replace('\\', '/', $docRoot), '/');
+        }
+
+        $unique = [];
+        foreach ($roots as $root) {
+            if ($root === '' || !is_dir($root)) {
+                continue;
+            }
+            $real = realpath($root) ?: $root;
+            $unique[$real] = $root;
+        }
+
+        return array_values($unique);
     }
 
     /**

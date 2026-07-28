@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
 
 function BookCoverThumb({ src, alt, className, emptyClassName }) {
     const [broken, setBroken] = React.useState(() => !src);
@@ -53,6 +54,7 @@ const PoetProfile = ({ lang }) => {
     const [reportModalOpen, setReportModalOpen] = React.useState(false);
     const [aboutOpen, setAboutOpen] = React.useState(false);
     const [booksOpen, setBooksOpen] = React.useState(false);
+    const { stickyTopClass } = useStickyBelowNavbar();
 
     const { ref, inView } = useInView();
 
@@ -226,7 +228,7 @@ const PoetProfile = ({ lang }) => {
                         )}
 
                         {/* Tabs with scroll hint */}
-                        <div className="relative border-b border-gray-100 mb-6 sticky top-[56px] lg:top-[64px] bg-white/70 backdrop-blur-xl z-30 pt-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:p-0 md:m-0 transition-all duration-300">
+                        <div className={`relative border-b border-gray-100 mb-6 sticky ${stickyTopClass} bg-white/70 backdrop-blur-xl z-30 pt-4 -mx-4 px-4 md:static md:bg-transparent md:backdrop-blur-none md:p-0 md:m-0`}>
                             <div className="flex items-center gap-6 md:gap-8 overflow-x-auto no-scrollbar scroll-smooth">
                                 <button
                                     onClick={() => setActiveTab('poetry')}

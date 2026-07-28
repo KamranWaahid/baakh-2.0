@@ -496,7 +496,7 @@ class HomeController extends UserController
             }
         }
 
-        $query = Poetry::with([
+        $with = [
             'info' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
             },
@@ -507,10 +507,15 @@ class HomeController extends UserController
             'category_detail' => function ($query) use ($lang) {
                 $query->where('lang', $lang);
             },
-            'media' => function ($query) use ($lang) {
+        ];
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('baakh_media')) {
+            $with['media'] = function ($query) use ($lang) {
                 $query->where('media_type', 'image')->where('lang', $lang)->limit(1);
-            }
-        ])
+            };
+        }
+
+        $query = Poetry::with($with)
             ->withCount('likes')
             ->where('visibility', 1)
             ->whereHas('poet', function ($q) {
@@ -518,14 +523,20 @@ class HomeController extends UserController
             });
 
         if ($userId) {
-            $query->withExists([
-                'likes as is_liked' => function ($q) use ($userId) {
+            $exists = [];
+            if (\Illuminate\Support\Facades\Schema::hasTable('user_likes')) {
+                $exists['likes as is_liked'] = function ($q) use ($userId) {
                     $q->where('user_id', $userId);
-                },
-                'bookmarks as is_bookmarked' => function ($q) use ($userId) {
+                };
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('user_bookmarks')) {
+                $exists['bookmarks as is_bookmarked'] = function ($q) use ($userId) {
                     $q->where('user_id', $userId);
-                },
-            ]);
+                };
+            }
+            if ($exists !== []) {
+                $query->withExists($exists);
+            }
         }
 
         if ($filter === 'featured') {
@@ -533,12 +544,12 @@ class HomeController extends UserController
         }
 
         if ($filter === 'bookmarked') {
-            if ($userId) {
+            if ($userId && \Illuminate\Support\Facades\Schema::hasTable('user_bookmarks')) {
                 $query->whereHas('bookmarks', function ($q) use ($userId) {
                     $q->where('user_id', $userId);
                 });
             } else {
-                // If not logged in, return empty
+                // If not logged in, or bookmarks table unavailable, return empty
                 $query->whereRaw('1 = 0');
             }
         }
@@ -571,7 +582,7 @@ class HomeController extends UserController
                 'slug' => $p->poetry_slug,
                 'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
                 'author_avatar' => PoetImageUrl::resolve($p->poet?->poet_pic),
-                'cover' => $p->media->first()?->media_url,
+                'cover' => $p->relationLoaded('media') ? $p->media->first()?->media_url : null,
                 'date' => format_iso8601($p->created_at),
                 'date_human' => $p->created_at?->diffForHumans(),
                 'readTime' => '5 min read', // Mock for now

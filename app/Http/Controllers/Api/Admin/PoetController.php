@@ -128,10 +128,12 @@ class PoetController extends Controller
         $cities = \App\Models\Cities::with('details')->get()->map(function ($city) {
             $sdName = $city->details->where('lang', 'sd')->first()?->city_name;
             $enName = $city->details->where('lang', 'en')->first()?->city_name;
+            $anyName = $city->details->first()?->city_name;
+            $legacyName = $city->getAttributes()['city_name'] ?? null;
 
             return [
                 'id' => $city->id,
-                'name' => $sdName ?? $enName ?? "City #{$city->id}"
+                'name' => $sdName ?? $enName ?? $anyName ?? $legacyName ?? "City #{$city->id}"
             ];
         });
 
@@ -175,6 +177,7 @@ class PoetController extends Controller
             if ($request->hasFile('image')) {
                 $uploadImage = $this->uploadImage($request->image, 'poets', $request->poet_slug, true);
                 if (isset($uploadImage['error']) && $uploadImage['error'] === true) {
+                    DB::rollBack();
                     return response()->json(['message' => $uploadImage['message']], 422);
                 }
                 $imagePath = $uploadImage['full_path'];
@@ -241,9 +244,15 @@ class PoetController extends Controller
                 $slugForImage = $request->input('poet_slug', $poet->poet_slug);
                 $uploadImage = $this->updateImage($request->image, 'poets', $poet->poet_pic, $slugForImage, true);
                 if (isset($uploadImage['error']) && $uploadImage['error'] === true) {
+                    DB::rollBack();
                     return response()->json(['message' => $uploadImage['message']], 422);
                 }
                 $imagePath = $uploadImage['full_path'];
+            } elseif ($request->has('image') && !$request->hasFile('image')) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Image upload failed. The file may be too large for this server, or the request was blocked. Try a JPEG/PNG under 10 MB.',
+                ], 422);
             }
 
             $updates = [];

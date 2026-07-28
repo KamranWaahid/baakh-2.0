@@ -235,18 +235,25 @@ class TopicController extends Controller
 
     private function formatPoet($poet, $lang)
     {
-        $detail = $poet->all_details->where('lang', $lang)->first() ?? $poet->all_details->first();
-        $detailEn = $poet->all_details->where('lang', 'en')->first() ?? $detail;
-        $detailSd = $poet->all_details->where('lang', 'sd')->first() ?? $detail;
+        $detailEn = $poet->all_details->where('lang', 'en')->first();
+        $detailSd = $poet->all_details->where('lang', 'sd')->first();
+        $defaultDetail = $poet->all_details->first();
+
+        $nameEn = $detailEn?->poet_name ?: $detailSd?->poet_name ?: $defaultDetail?->poet_name ?: 'N/A';
+        $nameSd = $detailSd?->poet_name ?: $detailEn?->poet_name ?: $defaultDetail?->poet_name ?: 'N/A';
+        $laqabEn = $detailEn?->poet_laqab ?: $detailEn?->poet_name ?: $detailSd?->poet_laqab ?: $detailSd?->poet_name ?: $defaultDetail?->poet_laqab ?: $defaultDetail?->poet_name ?: 'N/A';
+        $laqabSd = $detailSd?->poet_laqab ?: $detailSd?->poet_name ?: $detailEn?->poet_laqab ?: $detailEn?->poet_name ?: $defaultDetail?->poet_laqab ?: $defaultDetail?->poet_name ?: 'N/A';
 
         return [
             'id' => $poet->id,
             'slug' => $poet->poet_slug,
             'avatar' => $poet->poet_pic ?: null,
-            'name_en' => $detailEn->poet_laqab ?? $detailEn->poet_name ?? 'N/A',
-            'name_sd' => $detailSd->poet_laqab ?? $detailSd->poet_name ?? 'N/A',
-            'bio_en' => strip_tags($detailEn->poet_bio ?? ''),
-            'bio_sd' => strip_tags($detailSd->poet_bio ?? ''),
+            'name_en' => $nameEn,
+            'name_sd' => $nameSd,
+            'laqab_en' => $laqabEn,
+            'laqab_sd' => $laqabSd,
+            'bio_en' => strip_tags($detailEn?->poet_bio ?: $detailSd?->poet_bio ?: $defaultDetail?->poet_bio ?: ''),
+            'bio_sd' => strip_tags($detailSd?->poet_bio ?: $detailEn?->poet_bio ?: $defaultDetail?->poet_bio ?: ''),
             'entries_count' => $poet->poetry_count ?? 0,
         ];
     }

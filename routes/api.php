@@ -275,6 +275,9 @@ Route::middleware(['auth:sanctum', 'user_role'])
         // Dictionary Routes
     
         Route::get('dictionary/stats', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'stats']);
+        Route::get('dictionary/word-of-the-day', [\App\Http\Controllers\Api\Admin\IncompleteWordOfTheDayController::class, 'show']);
+        Route::post('dictionary/word-of-the-day/skip', [\App\Http\Controllers\Api\Admin\IncompleteWordOfTheDayController::class, 'skip']);
+        Route::post('dictionary/word-of-the-day/save', [\App\Http\Controllers\Api\Admin\IncompleteWordOfTheDayController::class, 'save']);
         Route::get('dictionary/senses', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'senses']);
         Route::get('dictionary/morphology', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'morphology']);
         Route::get('dictionary/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'variants']);

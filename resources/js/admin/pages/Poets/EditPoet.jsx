@@ -84,13 +84,16 @@ const EditPoetContent = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [preview, setPreview] = useState(null);
+    const [submitError, setSubmitError] = useState(null);
 
     const { data: createData } = useQuery({
         queryKey: ['poets-create-data'],
         queryFn: async () => {
             const res = await api.get('/api/admin/poets/create');
             return res.data;
-        }
+        },
+        staleTime: 0,
+        refetchOnMount: 'always',
     });
 
     const { data: poet, isLoading, isError, error } = useQuery({
@@ -191,6 +194,7 @@ const EditPoetContent = () => {
         }
 
         try {
+            setSubmitError(null);
             await api.post(`/api/admin/poets/${id}`, formData);
             navigate('/admin/poets');
         } catch (error) {
@@ -200,15 +204,18 @@ const EditPoetContent = () => {
                 Object.keys(errors).forEach(key => {
                     form.setError(key, { message: errors[key][0] });
                 });
+                setSubmitError("Validation failed. Please check the form for errors.");
+            } else {
+                setSubmitError(error.response?.data?.message || error.message || "Failed to update poet. Please try again.");
             }
         }
     };
 
     const handleImageChange = (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (file) {
             setPreview(URL.createObjectURL(file));
-            form.setValue('image', e.target.files);
+            form.setValue('image', e.target.files, { shouldDirty: true, shouldValidate: true });
         }
     };
 
@@ -250,6 +257,15 @@ const EditPoetContent = () => {
     return (
         <div className="max-w-4xl mx-auto pb-10">
             <h2 className="text-2xl font-bold mb-4">Edit Poet</h2>
+
+            {submitError && (
+                <Alert variant="destructive" className="mb-6">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
+            )}
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <Card>
@@ -347,7 +363,7 @@ const EditPoetContent = () => {
                                             <Input
                                                 {...fieldProps}
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                                                 onChange={(event) => {
                                                     handleImageChange(event);
                                                     onChange(event.target.files);

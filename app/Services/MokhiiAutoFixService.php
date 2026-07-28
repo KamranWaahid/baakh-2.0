@@ -68,22 +68,12 @@ class MokhiiAutoFixService
     private function suggestCanonicals(): int
     {
         $count = 0;
-        $baseUrl = rtrim(config('app.url'), '/');
 
-        // For all pages, canonical should be the /sd version (primary language)
+        // Self-canonical per locale (en and sd are both indexable).
         $pages = MokhiiPageMeta::whereNull('canonical_url')->get();
 
         foreach ($pages as $page) {
-            $url = $page->url;
-
-            // If URL contains /en/, canonical should be /sd/ version
-            if (str_contains($url, '/en/')) {
-                $canonical = str_replace('/en/', '/sd/', $url);
-            } else {
-                $canonical = $url;
-            }
-
-            $page->update(['canonical_url' => $canonical]);
+            $page->update(['canonical_url' => $page->url]);
             $count++;
         }
 

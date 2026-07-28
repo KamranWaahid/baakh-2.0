@@ -47,6 +47,7 @@ import {
     Bar,
     Legend
 } from 'recharts';
+import IncompleteWordOfTheDay from './Dashboard/IncompleteWordOfTheDay';
 
 const Dashboard = () => {
     const [openDialog, setOpenDialog] = useState(null);
@@ -244,6 +245,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
+            <IncompleteWordOfTheDay />
+
             {/* Stats Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat, index) => {
@@ -278,7 +281,7 @@ const Dashboard = () => {
                 })}
             </div>
             {/* Quick Actions Grid */}
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                 {[
                     { label: 'Add Poet', target: 'Create Poet', link: '/admin/poets/create', icon: Feather },
                     { label: 'Add Poetry', target: 'Create Poetry', link: '/admin/poetry/create', icon: BookOpen },
@@ -287,16 +290,20 @@ const Dashboard = () => {
                     { label: 'Add Couplet', target: 'New Couplet', link: '/admin/couplet/create', icon: AlignCenter },
                 ].map((action, i) => (
                     <Card key={i} className="hover:bg-muted/50 cursor-pointer transition-colors group relative overflow-hidden">
-                        <Link to={action.link}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{action.label}</CardTitle>
-                                <Plus className="h-4 w-4 text-muted-foreground" />
+                        <Link to={action.link} className="block h-full">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-1 sm:p-6 sm:pb-2">
+                                <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider leading-tight">
+                                    {action.label}
+                                </CardTitle>
+                                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                             </CardHeader>
-                            <CardContent>
-                                <div className="text-xl font-bold">{action.target}</div>
-                                <div className="flex items-center mt-2">
-                                    <action.icon className="h-4 w-4 text-muted-foreground mr-2" />
-                                    <span className="text-xs text-muted-foreground">Jump to creator</span>
+                            <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+                                <div className="text-sm sm:text-lg md:text-xl font-bold leading-snug break-words">
+                                    {action.target}
+                                </div>
+                                <div className="flex items-center mt-1.5 sm:mt-2 min-w-0">
+                                    <action.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground mr-1.5 sm:mr-2 shrink-0" />
+                                    <span className="text-[10px] sm:text-xs text-muted-foreground truncate">Jump to creator</span>
                                 </div>
                             </CardContent>
                         </Link>

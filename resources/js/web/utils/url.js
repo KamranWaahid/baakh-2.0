@@ -1,14 +1,25 @@
 /**
  * Resolves an image path into a full URL.
- * Handles absolute URLs, assets paths, and storage paths with proper fallbacks.
- * 
+ * Returns empty string when missing so UI can show an icon fallback (not the site logo).
+ *
  * @param {string|null|undefined} path - The image path or URL
- * @param {'poet'|'user'|'post'|null} type - Type of image for fallback
- * @returns {string} - The resolved URL
+ * @param {'poet'|'user'|'post'|null} type - Type of image for path resolution
+ * @returns {string} - The resolved URL, or '' when unavailable
  */
+const isPlaceholderLogo = (path) => {
+    if (!path || typeof path !== 'string') return true;
+    const normalized = path.replace(/^\/+/, '').toLowerCase();
+    return (
+        normalized === 'assets/images/logo/logo.svg' ||
+        normalized === 'assets/images/logo/logo.png' ||
+        normalized.endsWith('/logo/logo.svg') ||
+        normalized.endsWith('/logo/logo.png')
+    );
+};
+
 export const getImageUrl = (path, type = null) => {
-    if (!path) {
-        return '/assets/images/logo/logo.svg';
+    if (!path || isPlaceholderLogo(path)) {
+        return '';
     }
 
     if (typeof path === 'string' && path.startsWith('blob:')) {
@@ -22,38 +33,36 @@ export const getImageUrl = (path, type = null) => {
 
     const trimmedPath = path.replace(/^\/+/, '');
 
-    // Keep known rooted asset/storage paths as-is
+    // Keep known rooted asset/storage paths as-is (encode spaces / unicode)
     if (
         trimmedPath.startsWith('assets/') ||
         trimmedPath.startsWith('storage/') ||
-        trimmedPath.startsWith('images/')
+        trimmedPath.startsWith('images/') ||
+        trimmedPath.startsWith('Images/')
     ) {
-        return `/${trimmedPath}`;
+        return `/${trimmedPath.split('/').map(encodeURIComponent).join('/')}`;
     }
 
     // Legacy poet/user values are often bare filenames in DB.
     if (type === 'poet' && !trimmedPath.includes('/')) {
-        return `/assets/images/poets/${trimmedPath}`;
+        return `/assets/images/poets/${encodeURIComponent(trimmedPath)}`;
     }
     if (type === 'user' && !trimmedPath.includes('/')) {
-        return `/assets/images/users/${trimmedPath}`;
+        return `/assets/images/users/${encodeURIComponent(trimmedPath)}`;
     }
 
-    return `/${trimmedPath}`;
+    return `/${trimmedPath.split('/').map(encodeURIComponent).join('/')}`;
 };
 
 export const getImageFallback = (type = null) => {
-    if (type === 'poet' || type === 'user') {
-        return '/assets/images/logo/logo.svg';
-    }
-
-    return '/assets/images/logo/logo.svg';
+    // Intentionally empty — consumers should render an icon, not the Baakh logo.
+    return '';
 };
 
 export const handleImageError = (event, type = null) => {
-    const fallback = getImageFallback(type);
-
-    // Prevent infinite loops when fallback itself fails.
-    event.currentTarget.onerror = null;
-    event.currentTarget.src = fallback;
+    const img = event.currentTarget;
+    img.onerror = null;
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    img.dataset.broken = '1';
 };

@@ -72,6 +72,8 @@ export function useSwipeGesture({ isMenuOpen, openMenu, closeMenu, isRtl, enable
 
             // Ignore if too much vertical movement (user is scrolling)
             if (deltaY > MAX_VERTICAL) return;
+            // Prefer scroll: ignore slow mostly-vertical gestures
+            if (deltaY > Math.abs(deltaX) * 0.75) return;
 
             const distance = Math.abs(deltaX);
             const velocity = distance / elapsed; // px/ms

@@ -1,25 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PostCard from './PostCard';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import api from '@/admin/api/axios';
 import { BookOpen } from 'lucide-react';
-
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
+import { cn } from '@/lib/utils';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 const PoetryFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { category } = useParams();
     const [searchParams] = useSearchParams();
     const tag = searchParams.get('tag');
+    const { stickyTopClass, stickyMotionClass } = useStickyBelowNavbar();
 
     const [activeTab, setActiveTab] = useState(category || 'all');
+    const [isStuck, setIsStuck] = useState(false);
+    const [pinAnim, setPinAnim] = useState(false);
+    const sentinelRef = useRef(null);
     const { ref, inView } = useInView();
 
-    // Fetch Categories
+    // Detect when the category bar pins to the viewport
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => setIsStuck(!entry.isIntersecting),
+            { threshold: [1], rootMargin: '0px' }
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, []);
+
+    // Replay a short settle animation each time the bar becomes stuck
+    useEffect(() => {
+        if (!isStuck) {
+            setPinAnim(false);
+            return;
+        }
+        setPinAnim(false);
+        const id = requestAnimationFrame(() => setPinAnim(true));
+        return () => cancelAnimationFrame(id);
+    }, [isStuck]);
+
     const { data: categoriesData } = useQuery({
         queryKey: ['categories', lang],
         queryFn: async () => {
@@ -33,14 +60,12 @@ const PoetryFeed = ({ lang }) => {
         ...(categoriesData || [])
     ];
 
-    // Fetch Poetry Feed
     const {
         data: poetryData,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-        isError
     } = useInfiniteQuery({
         queryKey: ['poetry-feed', activeTab, tag, lang],
         queryFn: async ({ pageParam = 1 }) => {
@@ -84,12 +109,25 @@ const PoetryFeed = ({ lang }) => {
             <h1 className="visually-hidden h-0 w-0 overflow-hidden absolute">
                 {isRtl ? 'شاعري' : 'Poetry'}
             </h1>
-            <div className="sticky top-[65px] bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 relative">
+
+            {/* Sentinel sits above the bar — when it leaves the viewport, the bar is stuck */}
+            <div ref={sentinelRef} className="h-px w-full pointer-events-none" aria-hidden />
+
+            <div
+                className={cn(
+                    'sticky bg-white pt-2 pb-0 z-40 border-b border-gray-100 mb-8 relative',
+                    stickyTopClass,
+                    stickyMotionClass,
+                    isStuck && 'shadow-[0_8px_20px_-14px_rgba(0,0,0,0.2)]',
+                    pinAnim && 'animate-sticky-pin'
+                )}
+            >
                 <div className="overflow-x-auto no-scrollbar scroll-smooth">
                     <div className="flex items-center gap-8 min-w-max pb-4">
                         {categories.map((cat) => (
                             <button
                                 key={cat.slug}
+                                type="button"
                                 onClick={() => setActiveTab(cat.slug)}
                                 className={`text-sm font-medium whitespace-nowrap transition-colors relative ${activeTab === cat.slug ? 'text-black' : 'text-gray-500 hover:text-gray-800'}`}
                             >
@@ -101,7 +139,6 @@ const PoetryFeed = ({ lang }) => {
                         ))}
                     </div>
                 </div>
-                {/* Visual indicator for more content */}
                 <div className={`absolute top-0 bottom-0 pointer-events-none w-12 bg-gradient-to-l from-white to-transparent transition-opacity duration-300 ${isRtl ? 'left-0' : 'right-0'}`} />
             </div>
 
@@ -125,7 +162,7 @@ const PoetryFeed = ({ lang }) => {
 
                         <div ref={ref} className="py-12 flex justify-center">
                             {isFetchingNextPage && (
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
                             )}
                         </div>
                     </>

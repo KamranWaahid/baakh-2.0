@@ -31,8 +31,8 @@ return new class extends Migration {
         if (!$user) {
             // Create Super Admin User via DB facade to avoid mass assignment/boot logic issues
             $userId = DB::table('users')->insertGetId([
-                'name' => encrypt('Super Admin'),
-                'email' => encrypt($email),
+                'name' => \Illuminate\Support\Facades\Crypt::encryptString('Super Admin'),
+                'email' => \Illuminate\Support\Facades\Crypt::encryptString($email),
                 'email_hash' => $emailHash,
                 'username' => 'superadmin',
                 'password' => Hash::make('password'),

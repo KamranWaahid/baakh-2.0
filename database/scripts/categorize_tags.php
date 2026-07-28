@@ -37,6 +37,7 @@ $map = [
     'separation' => 5,
     'longing' => 5,
     'betrayal' => 5,
+    'memory' => 9,
     'forgetting' => 5,
     'loss' => 5,
     'grief' => 5,

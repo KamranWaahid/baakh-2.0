@@ -5,6 +5,7 @@ import PoemActionBar from './PoemActionBar';
 import { formatDate } from '@/lib/date-utils';
 import { getImageUrl } from '../utils/url';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
+import FitVerseBlock from './FitVerseBlock';
 
 const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, cover, date = '', readTime = '', category, slug, poet_slug = '', cat_slug = '', showStar = true, likes = 0, is_liked = false, is_bookmarked = false, id, is_couplet = false }) => {
     const isRtl = lang === 'sd';
@@ -15,9 +16,20 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
 
     // Construct a pseudo-poem object for PoemActionBar
     const [coverBroken, setCoverBroken] = React.useState(false);
+    const [coupletBaseSize, setCoupletBaseSize] = React.useState(20);
     React.useEffect(() => {
         setCoverBroken(false);
     }, [cover]);
+    React.useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) {
+            return undefined;
+        }
+        const mq = window.matchMedia('(min-width: 768px)');
+        const sync = () => setCoupletBaseSize(mq.matches ? 24 : 20);
+        sync();
+        mq.addEventListener('change', sync);
+        return () => mq.removeEventListener('change', sync);
+    }, []);
 
     const postPoem = {
         id,
@@ -40,18 +52,20 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
     };
 
     return (
-        <article className={`py-5 md:py-8 first:pt-2 md:first:pt-4 border-b border-gray-100 group ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
+        <article className={`py-5 md:py-8 first:pt-2 md:first:pt-4 border-b border-gray-100 ${isRtl ? 'text-right' : 'text-left'} ${is_couplet ? 'text-center' : ''}`}>
             <div className="flex justify-between gap-8">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                     <div className={`flex flex-wrap items-center gap-2 mb-2 text-sm ${is_couplet ? 'justify-center' : ''}`}>
                         <Link
                             to={poet_slug ? `/${lang}/poet/${poet_slug}` : '#'}
-                            className={`flex items-center gap-2 transition-opacity w-fit hover:opacity-80`}
+                            className="relative z-10 flex items-center gap-2 transition-opacity w-fit hover:opacity-80 group/poet"
                         >
-                            <div className={`h-5 w-5 rounded-full bg-muted flex shrink-0 border border-gray-100 overflow-hidden`}>
+                            <div className="h-5 w-5 rounded-full bg-muted flex shrink-0 border border-gray-100 overflow-hidden">
                                 <AvatarImgOrIcon src={author_avatar} imageType="poet" alt="" />
                             </div>
-                            <span className="font-semibold text-gray-900 hover:underline">{safeAuthor}</span>
+                            <span className="font-semibold text-gray-900 underline-offset-2 group-hover/poet:underline">
+                                {safeAuthor}
+                            </span>
                         </Link>
 
                         {!is_couplet && (
@@ -67,24 +81,33 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
 
                     {is_couplet ? (
                         <div className="flex justify-center items-start gap-4 w-full">
-                            <div className="flex-1 w-full max-w-full">
+                            <div className="flex-1 w-full min-w-0 max-w-full py-4 mb-2">
                                 {excerpt && (
-                                    <p className={`text-gray-600 mb-4 leading-relaxed ${isRtl ? 'font-arabic' : ''} whitespace-pre-wrap break-words break-all md:break-normal text-center text-xl md:text-2xl font-medium py-6`}>
-                                        {excerpt}
-                                    </p>
+                                    <FitVerseBlock
+                                        text={excerpt}
+                                        isRtl={isRtl}
+                                        align="center"
+                                        baseFontSize={coupletBaseSize}
+                                        minFontSize={12}
+                                        interactive={false}
+                                        className={`text-gray-600 font-medium ${isRtl ? 'font-arabic' : ''}`}
+                                    />
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <Link to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'} className="block w-full">
+                        <Link
+                            to={slug ? `/${lang}/poet/${poet_slug}/${cat_slug}/${slug}` : '#'}
+                            className="group/title relative z-0 block w-full"
+                        >
                             <div className="flex justify-between items-start gap-4 w-full">
                                 <div className="flex-1 min-w-0">
-                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-[1.3] group-hover:underline group-hover:opacity-80 transition-all break-words break-all md:break-normal ${isRtl ? 'font-arabic' : ''}`}>
+                                    <h2 className={`text-xl md:text-2xl font-bold tracking-tight mb-2 leading-[1.3] underline-offset-2 transition-[text-decoration,opacity] group-hover/title:underline group-hover/title:opacity-80 break-words ${isRtl ? 'font-arabic' : ''}`}>
                                         {title || 'Untitled'}
                                     </h2>
                                 </div>
                                 {cover && (
-                                    <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm transition-transform duration-300 group-hover:shadow-md">
+                                    <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm transition-shadow duration-300 group-hover/title:shadow-md">
                                         {coverBroken ? (
                                             <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
                                                 <ImageIcon className="h-8 w-8 opacity-70" strokeWidth={1.25} aria-hidden />
@@ -94,7 +117,7 @@ const PostCard = ({ lang, title, excerpt, author = 'Anonymous', author_avatar, c
                                                 src={getImageUrl(cover, 'post')}
                                                 onError={() => setCoverBroken(true)}
                                                 alt={title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover/title:scale-105"
                                                 loading="lazy"
                                                 decoding="async"
                                             />

@@ -67,12 +67,20 @@
         @apply border-border;
     }
 
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        overscroll-behavior-y: none;
+    }
+
     body {
         @apply bg-background text-foreground antialiased selection:bg-black/10 selection:text-black;
         font-family: var(--font-sans);
         font-feature-settings: "rlig" 1, "calt" 1;
         -webkit-tap-highlight-color: transparent;
         text-rendering: optimizeLegibility;
+        overscroll-behavior-y: none;
+        touch-action: manipulation;
     }
 
     h1,
@@ -104,6 +112,102 @@
 
 .animate-fade-in-up {
     animation: fade-in-up 0.6s ease-out forwards;
+}
+
+@keyframes sticky-pin {
+    0% {
+        transform: translateY(-8px);
+        opacity: 0.88;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-sticky-pin {
+    animation: sticky-pin 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Word dictionary tooltip — pops from the clicked word */
+@keyframes word-tooltip-in {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, var(--wt-from-y, 10px), 0) scale(0.92);
+        filter: blur(3px);
+    }
+
+    55% {
+        opacity: 1;
+        filter: blur(0);
+    }
+
+    78% {
+        transform: translate3d(0, 0, 0) scale(1.015);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes word-tooltip-out {
+    0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: blur(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate3d(0, var(--wt-from-y, 10px), 0) scale(0.94);
+        filter: blur(2px);
+    }
+}
+
+@keyframes word-tooltip-body-in {
+    0% {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.word-tooltip {
+    transform-origin: var(--wt-origin-x, 50%) var(--wt-origin-y, 0%);
+    will-change: transform, opacity, filter;
+}
+
+.word-tooltip-enter {
+    animation: word-tooltip-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.word-tooltip-exit {
+    animation: word-tooltip-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+}
+
+.word-tooltip-body-enter {
+    animation: word-tooltip-body-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 0.06s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .word-tooltip-enter,
+    .word-tooltip-exit,
+    .word-tooltip-body-enter {
+        animation: none;
+        opacity: 1;
+        transform: none;
+        filter: none;
+    }
 }
 
 @layer utilities {

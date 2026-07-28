@@ -12,10 +12,10 @@ import api from '@/admin/api/axios';
 import PostCard from './PostCard';
 import { Separator } from '@/components/ui/separator';
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
-import { BookOpen, User } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getImageUrl } from '../utils/url';
+import { Avatar } from "@/components/ui/avatar";
+import AvatarImgOrIcon from './AvatarImgOrIcon';
 
 const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
     const isRtl = lang === 'sd';
@@ -97,8 +97,12 @@ const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
                                         className="flex flex-col items-center gap-2 min-w-[80px] group"
                                     >
                                         <Avatar className="h-14 w-14 border border-gray-100 group-hover:border-black transition-colors">
-                                            <AvatarImage src={getImageUrl(poet.image, 'poet')} />
-                                            <AvatarFallback><User className="h-6 w-6 text-gray-300" /></AvatarFallback>
+                                            <AvatarImgOrIcon
+                                                src={poet.image}
+                                                imageType="poet"
+                                                alt=""
+                                                iconClassName="h-6 w-6"
+                                            />
                                         </Avatar>
                                         <span className={`text-[10px] font-medium text-center line-clamp-1 group-hover:text-black ${isRtl ? 'font-arabic' : ''}`}>
                                             {poet.laqab || poet.name}

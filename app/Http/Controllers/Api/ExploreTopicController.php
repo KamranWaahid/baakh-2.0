@@ -42,12 +42,10 @@ class ExploreTopicController extends Controller
                 $q->where('lang', $lang);
             },
             'tags' => function ($q) use ($usedTagIds) {
-                // Return only tags that are linked to visible poetry
+                // Prefer tags used by visible poetry; if none match the taxonomy,
+                // fall back to all tags assigned to the category so Explore is not empty.
                 if ($usedTagIds->isNotEmpty()) {
                     $q->whereIn('id', $usedTagIds->all());
-                } else {
-                    // No visible-poetry tags available, force empty set
-                    $q->whereRaw('1 = 0');
                 }
                 $q->orderBy('slug', 'asc');
             },
@@ -55,20 +53,14 @@ class ExploreTopicController extends Controller
                 $q->where('lang', $lang);
             }
         ])
-            ->where(function ($query) use ($usedTagIds) {
+            ->where(function ($query) {
                 $query->whereHas('poetry', function ($q) {
                     $q->where('visibility', 1);
                 })
                     ->orWhereHas('couplets', function ($q) {
                         $q->where('visibility', 1);
                     })
-                    ->orWhereHas('tags', function ($q) use ($usedTagIds) {
-                        if ($usedTagIds->isNotEmpty()) {
-                            $q->whereIn('id', $usedTagIds->all());
-                        } else {
-                            $q->whereRaw('1 = 0');
-                        }
-                    });
+                    ->orWhereHas('tags');
             })
             ->get()
             ->map(function ($category) use ($lang) {
@@ -92,7 +84,7 @@ class ExploreTopicController extends Controller
             })
             ->values(); // Reset array keys
 
-        // Recommended Tags - random selection from tags linked to visible poetry
+        // Recommended Tags — prefer poetry-linked tags; otherwise any categorized tags
         $recommended = Tags::with([
             'details' => function ($q) use ($lang) {
                 $q->where('lang', $lang);
@@ -102,7 +94,7 @@ class ExploreTopicController extends Controller
             ->when($usedTagIds->isNotEmpty(), function ($q) use ($usedTagIds) {
                 $q->whereIn('id', $usedTagIds->all());
             }, function ($q) {
-                $q->whereRaw('1 = 0');
+                $q->whereNotNull('topic_category_id');
             })
             ->inRandomOrder()
             ->take(10)
@@ -130,10 +122,11 @@ class ExploreTopicController extends Controller
 
     /**
      * Build a unique set of tag IDs that are used by visible poetry.
+     * poetry_tags may store numeric IDs or slugs depending on content age.
      */
     private function getUsedVisiblePoetryTagIds(): Collection
     {
-        return Poetry::query()
+        $refs = Poetry::query()
             ->where('visibility', 1)
             ->whereNotNull('poetry_tags')
             ->pluck('poetry_tags')
@@ -145,14 +138,28 @@ class ExploreTopicController extends Controller
                 $decoded = json_decode((string) $rawTags, true);
                 return is_array($decoded) ? $decoded : [];
             })
-            ->filter(function ($id) {
-                return is_numeric($id);
-            })
-            ->map(function ($id) {
-                return (int) $id;
+            ->filter(function ($value) {
+                return $value !== null && $value !== '' && $value !== 'null';
             })
             ->unique()
             ->values();
+
+        $numericIds = $refs
+            ->filter(fn ($value) => is_numeric($value))
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        $slugs = $refs
+            ->filter(fn ($value) => ! is_numeric($value) && is_string($value))
+            ->map(fn ($slug) => strtolower(trim($slug)))
+            ->filter()
+            ->values();
+
+        $slugIds = $slugs->isEmpty()
+            ? collect()
+            : Tags::query()->whereIn('slug', $slugs->all())->pluck('id');
+
+        return $numericIds->merge($slugIds)->unique()->values();
     }
 
 }

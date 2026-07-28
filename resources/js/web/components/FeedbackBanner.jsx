@@ -10,9 +10,17 @@ const FeedbackBanner = ({ lang }) => {
     if (!isVisible) return null;
 
     return (
-        <div className="bg-white border-b border-gray-100 px-4 py-2 relative flex items-center justify-center min-h-[48px] font-sans">
-            <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500 shrink-0" />
+        <div
+            className="bg-white border-b border-gray-100 px-4 py-2 relative flex items-center justify-center min-h-[48px] font-sans"
+            dir={isRtl ? 'rtl' : 'ltr'}
+        >
+            {/*
+              Icon first in DOM + dir on this container places Sparkles at the
+              reading-start edge (left in LTR, right in RTL) without flex-row-reverse,
+              which double-flips when a parent is already RTL.
+            */}
+            <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-yellow-500 fill-yellow-500 shrink-0" aria-hidden />
                 <p className={`text-sm text-gray-900 leading-none ${isRtl ? 'font-arabic' : ''} text-center`}>
                     {isRtl ? 'باک جو ويبسائيٽ استعمال ڪندي توهان جو تجربو ڪھڙو رهيو؟ ' : 'How was your experience using Baakh’s UI? '}
 
@@ -30,7 +38,7 @@ const FeedbackBanner = ({ lang }) => {
             <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-black shrink-0"
+                className="absolute end-4 top-1/2 -translate-y-1/2 h-8 w-8 text-gray-400 hover:text-black shrink-0"
                 onClick={() => setIsVisible(false)}
                 aria-label={isRtl ? 'بند ڪريو' : 'Dismiss feedback banner'}
             >

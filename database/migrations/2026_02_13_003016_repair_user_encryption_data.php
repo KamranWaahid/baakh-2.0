@@ -20,13 +20,13 @@ return new class extends Migration {
 
             // Encrypt and Hash Email
             if ($rawEmail && !str_starts_with($rawEmail, 'eyJpdiI6')) {
-                $updateData['email'] = encrypt($rawEmail);
+                $updateData['email'] = \Illuminate\Support\Facades\Crypt::encryptString($rawEmail);
                 $updateData['email_hash'] = hash('sha256', strtolower($rawEmail));
             }
 
             // Encrypt Name
             if ($rawName && !str_starts_with($rawName, 'eyJpdiI6')) {
-                $updateData['name'] = encrypt($rawName);
+                $updateData['name'] = \Illuminate\Support\Facades\Crypt::encryptString($rawName);
             }
 
             if (!empty($updateData)) {

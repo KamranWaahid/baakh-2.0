@@ -106,7 +106,7 @@ class GlobalSearchController extends Controller
     }
 
     /**
-     * Search for poetry.
+     * Search for poetry by title, description/info, slug, or any verse line.
      *
      * @param string $query
      * @param string $lang
@@ -114,50 +114,91 @@ class GlobalSearchController extends Controller
      */
     private function searchPoetry(string $query, string $lang): Collection
     {
+        $like = '%' . addcslashes($query, '%_\\') . '%';
+
         if (config('scout.driver') === 'database') {
-            return Poetry::where(function ($q) use ($query) {
-                $q->whereHas('translations', function ($sq) use ($query) {
-                    $sq->where('title', 'LIKE', "%{$query}%")
-                        ->orWhere('info', 'LIKE', "%{$query}%");
-                })->orWhere('poetry_slug', 'LIKE', "%{$query}%");
-            })->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->loadCount('likes')->map(function ($poem) use ($lang) {
-                $userId = auth('sanctum')->id();
-                $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
-                $poetDetail = $poem->poet->all_details->where('lang', $lang)->first() ?? $poem->poet->all_details->first();
-                $poetName = $poetDetail->poet_name ?? 'Unknown';
-                return [
-                    'id' => $poem->id,
-                    'title' => $translation->title ?? 'Untitled',
-                    'slug' => $poem->poetry_slug ?? '',
-                    'poet_name' => $poetName,
-                    'cat_slug' => $poem->category->slug ?? 'ghazal',
-                    'poet_slug' => $poem->poet->poet_slug ?? '',
-                    'type' => 'poetry',
-                    'likes' => $poem->likes_count ?? 0,
-                    'is_liked' => $userId ? $poem->likes()->where('user_id', $userId)->exists() : false,
-                    'is_bookmarked' => $userId ? $poem->bookmarks()->where('user_id', $userId)->exists() : false,
-                ];
-            });
+            $poems = Poetry::where(function ($q) use ($like) {
+                $q->whereHas('translations', function ($sq) use ($like) {
+                    $sq->where('title', 'LIKE', $like)
+                        ->orWhere('info', 'LIKE', $like);
+                })
+                    ->orWhereHas('couplets', function ($sq) use ($like) {
+                        $sq->where('couplet_text', 'LIKE', $like);
+                    })
+                    ->orWhere('poetry_slug', 'LIKE', $like);
+            })
+                ->take(5)
+                ->get()
+                ->load(['translations', 'category', 'poet', 'poet.all_details', 'couplets'])
+                ->loadCount('likes');
+        } else {
+            $poems = Poetry::search($query)
+                ->take(5)
+                ->get()
+                ->load(['translations', 'category', 'poet', 'poet.all_details', 'couplets'])
+                ->loadCount('likes');
         }
 
-        return Poetry::search($query)->take(5)->get()->load(['translations', 'category', 'poet', 'poet.all_details'])->loadCount('likes')->map(function ($poem) use ($lang) {
-            $userId = auth('sanctum')->id();
-            $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
-            $poetDetail = $poem->poet->all_details->where('lang', $lang)->first() ?? $poem->poet->all_details->first();
-            $poetName = $poetDetail->poet_name ?? 'Unknown';
-            return [
-                'id' => $poem->id,
-                'title' => $translation->title ?? 'Untitled',
-                'slug' => $poem->poetry_slug ?? '',
-                'poet_name' => $poetName,
-                'cat_slug' => $poem->category->slug ?? 'ghazal',
-                'poet_slug' => $poem->poet->poet_slug ?? '',
-                'type' => 'poetry',
-                'likes' => $poem->likes_count ?? 0,
-                'is_liked' => $userId ? $poem->likes()->where('user_id', $userId)->exists() : false,
-                'is_bookmarked' => $userId ? $poem->bookmarks()->where('user_id', $userId)->exists() : false,
-            ];
+        return $poems->map(function ($poem) use ($lang, $query) {
+            return $this->formatPoetrySearchResult($poem, $lang, $query);
         });
+    }
+
+    /**
+     * @param  \App\Models\Poetry  $poem
+     * @return array<string, mixed>
+     */
+    private function formatPoetrySearchResult($poem, string $lang, string $query): array
+    {
+        $userId = auth('sanctum')->id();
+        $translation = $poem->translations->where('lang', $lang)->first() ?? $poem->translations->first();
+        $poetDetail = $poem->poet?->all_details?->where('lang', $lang)->first()
+            ?? $poem->poet?->all_details?->first();
+        $poetName = $poetDetail->poet_name ?? 'Unknown';
+
+        return [
+            'id' => $poem->id,
+            'title' => $translation->title ?? 'Untitled',
+            'slug' => $poem->poetry_slug ?? '',
+            'poet_name' => $poetName,
+            'cat_slug' => $poem->category->slug ?? 'ghazal',
+            'poet_slug' => $poem->poet->poet_slug ?? '',
+            'match_snippet' => $this->poetryMatchSnippet($poem, $query, $lang),
+            'type' => 'poetry',
+            'likes' => $poem->likes_count ?? 0,
+            'is_liked' => $userId ? $poem->likes()->where('user_id', $userId)->exists() : false,
+            'is_bookmarked' => $userId ? $poem->bookmarks()->where('user_id', $userId)->exists() : false,
+        ];
+    }
+
+    /**
+     * Prefer a matching verse line when the query is found in couplets;
+     * otherwise fall back to title/info when those matched.
+     */
+    private function poetryMatchSnippet($poem, string $query, string $lang): ?string
+    {
+        $needle = mb_strtolower($query);
+        $couplets = $poem->relationLoaded('couplets')
+            ? $poem->couplets
+            : $poem->couplets()->get(['id', 'poetry_id', 'couplet_text', 'lang']);
+
+        $preferred = $couplets->where('lang', $lang);
+        $pool = $preferred->isNotEmpty() ? $preferred : $couplets;
+
+        foreach ($pool as $couplet) {
+            $text = trim((string) ($couplet->couplet_text ?? ''));
+            if ($text === '') {
+                continue;
+            }
+            if (mb_stripos($text, $query) !== false || mb_strpos(mb_strtolower($text), $needle) !== false) {
+                $line = preg_split('/\R/u', $text)[0] ?? $text;
+                $line = trim($line);
+
+                return mb_strlen($line) > 120 ? mb_substr($line, 0, 117) . '…' : $line;
+            }
+        }
+
+        return null;
     }
 
     /**

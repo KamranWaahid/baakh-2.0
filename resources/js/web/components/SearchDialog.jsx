@@ -136,6 +136,11 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                         <div className={`font-medium text-gray-900 truncate ${isRtl ? 'font-arabic' : ''}`}>
                                             {poem.title}
                                         </div>
+                                        {poem.match_snippet ? (
+                                            <div className={`text-xs text-gray-500 truncate ${isRtl ? 'font-arabic' : ''}`}>
+                                                {poem.match_snippet}
+                                            </div>
+                                        ) : null}
                                         <div className={`text-xs text-gray-400 ${isRtl ? 'font-arabic' : ''}`}>
                                             {poem.poet_name}
                                         </div>

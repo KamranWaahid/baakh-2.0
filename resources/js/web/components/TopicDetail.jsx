@@ -3,10 +3,10 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import api from '@/admin/api/axios';
 import { Skeleton } from '@/components/ui/skeleton';
 import PostCard from './PostCard';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { User, BookOpen, ChevronRight, ChevronLeft } from 'lucide-react';
-import { getImageUrl } from '../utils/url';
+import { BookOpen, ChevronRight, ChevronLeft } from 'lucide-react';
+import AvatarImgOrIcon from './AvatarImgOrIcon';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -63,25 +63,30 @@ const TopicDetail = () => {
     const poets = data.poets || [];
 
     // Copied PoetCard from PoetsFeed.jsx
+    const poetDisplayLaqab = (poet) => {
+        if (isRtl) {
+            return poet.laqab_sd || poet.name_sd || poet.laqab_en || poet.name_en || poet.name || '';
+        }
+        return poet.laqab_en || poet.name_en || poet.laqab_sd || poet.name_sd || poet.name || '';
+    };
+
     const PoetCard = ({ poet }) => (
         <div className="flex items-center gap-4 md:gap-6 p-4 md:p-6 border border-gray-100 rounded-xl bg-white transition-all hover:shadow-sm group mb-4">
             <Link to={`/${lang}/poet/${poet.slug}`} className="shrink-0">
                 <Avatar className="h-14 w-14 md:h-16 md:w-16 border border-gray-100">
-                    <AvatarImage
-                        src={getImageUrl(poet.avatar, 'poet')}
-                        alt={isRtl ? poet.name_sd : poet.name_en}
-                        className="object-cover"
+                    <AvatarImgOrIcon
+                        src={poet.avatar}
+                        imageType="poet"
+                        alt={poetDisplayLaqab(poet)}
+                        iconClassName="h-7 w-7"
                     />
-                    <AvatarFallback className="bg-muted">
-                        <User className="h-7 w-7 text-muted-foreground" strokeWidth={1.75} />
-                    </AvatarFallback>
                 </Avatar>
             </Link>
 
             <div className="flex-1 min-w-0">
                 <Link to={`/${lang}/poet/${poet.slug}`} className="hover:underline block w-fit">
                     <h3 className={`text-lg font-bold text-gray-900 truncate mb-1 ${isRtl ? 'font-arabic' : ''}`}>
-                        {isRtl ? poet.name_sd : poet.name_en}
+                        {poetDisplayLaqab(poet)}
                     </h3>
                 </Link>
 

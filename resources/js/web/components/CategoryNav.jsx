@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Compass, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
 
 const CategoryNav = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -13,6 +14,7 @@ const CategoryNav = ({ lang }) => {
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(true);
     const location = useLocation();
+    const { stickyTopClass } = useStickyBelowNavbar();
 
     // Check if current page is specific category to highlight
     // Path format: /:lang/topic/:category
@@ -86,7 +88,7 @@ const CategoryNav = ({ lang }) => {
     }, [topics, loading]);
 
     return (
-        <div className="border-b border-gray-100 bg-white sticky top-[56px] lg:top-[65px] z-40">
+        <div className={`border-b border-gray-100 bg-white sticky ${stickyTopClass} z-40`}>
             <div
                 className="max-w-[1504px] mx-auto px-4 md:px-8 flex items-center gap-4 h-14 md:h-16"
                 dir={isRtl ? 'rtl' : 'ltr'}

@@ -146,6 +146,14 @@ class Poetry extends Model
 
         $array['translations'] = $translations;
 
+        // Index verse lines so Scout (Meilisearch/etc.) can match body text, not only titles.
+        $coupletText = $this->couplets
+            ->pluck('couplet_text')
+            ->filter(fn ($text) => filled($text))
+            ->implode("\n");
+        $array['couplet_text'] = $coupletText;
+        $array['poetry_body'] = $coupletText;
+
         // Add poet info
         $array['poet_name'] = $this->poet_details->poet_name ?? '';
         $array['poet_laqab'] = $this->poet_details->poet_laqab ?? '';

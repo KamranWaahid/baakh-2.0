@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
@@ -12,13 +12,25 @@ import PaywallCTA from './PaywallCTA';
 import { formatSindhiDate } from '../utils/dateUtils';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 import DOMPurify from 'dompurify';
-import { CoupletWithWords } from './WordTooltip';
+import FitVerseBlock from './FitVerseBlock';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
     const { poemSlug } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [verseBaseSize, setVerseBaseSize] = useState(18);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) {
+            return undefined;
+        }
+        const mq = window.matchMedia('(min-width: 768px)');
+        const sync = () => setVerseBaseSize(mq.matches ? 20 : 18);
+        sync();
+        mq.addEventListener('change', sync);
+        return () => mq.removeEventListener('change', sync);
+    }, []);
 
     const currentUrl = window.location.href;
 
@@ -87,7 +99,9 @@ const PoemDetail = ({ lang }) => {
 
     // Justification Logic
     const isGhazal = poem.category?.name && (poem.category.name.toLowerCase().includes('ghazal') || poem.category.name.includes('غزل'));
-    const alignmentClass = isGhazal ? 'text-justify [text-align-last:justify] w-fit mx-auto' : (poem.content_style === 'center' ? 'text-center' : 'text-right');
+    const verseAlign = isGhazal || poem.content_style === 'center'
+        ? 'center'
+        : (poem.content_style === 'left' ? 'left' : 'right');
 
 
     return (
@@ -129,15 +143,26 @@ const PoemDetail = ({ lang }) => {
                 </header>
 
 
-                {/* Body */}
-                {/* Body */}
-                <div className={`prose prose-lg max-w-none text-gray-900 font-serif leading-[1.7] text-[18px] md:text-[20px] ${isRtl ? 'font-arabic' : ''} ${alignmentClass} whitespace-pre-line break-words break-all md:break-normal antialiased overflow-hidden`}>
+                {/* Body — each original verse line stays on one row; font scales to fit width */}
+                <div className={`max-w-none text-gray-900 font-serif antialiased ${isRtl ? 'font-arabic' : ''}`}>
                     {Array.isArray(poem.content) ? (
                         poem.content.map((couplet, index) => (
-                            <p key={index} className="mb-6 w-full max-w-full"><CoupletWithWords text={couplet} isRtl={isRtl} /></p>
+                            <FitVerseBlock
+                                key={index}
+                                text={couplet}
+                                isRtl={isRtl}
+                                align={verseAlign}
+                                baseFontSize={verseBaseSize}
+                                minFontSize={11}
+                                className="mb-6"
+                                interactive
+                            />
                         ))
                     ) : (
-                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }} />
+                        <div
+                            className={`prose prose-lg max-w-none leading-[1.7] text-[18px] md:text-[20px] ${verseAlign === 'center' ? 'text-center' : verseAlign === 'left' ? 'text-left' : 'text-right'} whitespace-pre-line`}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }}
+                        />
                     )}
 
                     {poem.info && (

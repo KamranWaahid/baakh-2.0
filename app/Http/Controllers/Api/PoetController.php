@@ -176,7 +176,7 @@ class PoetController extends Controller
 
             // If canonical tags are missing/incomplete, fall back to used slugs from poets.
             $tags = ($selected->isEmpty() && $usedTagSlugs->isNotEmpty())
-                ? $this->mapSlugsToTags($usedTagSlugs)
+                ? $this->mapSlugsToTags($usedTagSlugs, $lang)
                 : $this->mapTagsToResponse($selected, $lang);
 
             return response()->json($tags);
@@ -554,12 +554,49 @@ class PoetController extends Controller
     /**
      * Map raw slugs to a consistent tag response structure.
      */
-    private function mapSlugsToTags($slugs)
+    private function mapSlugsToTags($slugs, string $lang = 'sd')
     {
-        return $slugs->map(function ($slug) {
+        $sdLabels = [
+            'naujwan-shair' => 'نوجوان شاعر',
+            'jadeed-shair' => 'جديد شاعر',
+            'sufi-shair' => 'صوفي شاعر',
+            'poetees' => 'شاعره',
+            'poetess' => 'شاعره',
+            'revolutionary-poet' => 'انقلابي شاعر',
+            'classical-poet' => 'ڪلاسيڪل شاعر',
+            'modern-poet' => 'جديد شاعر',
+            'romantic-poet' => 'رومانوي شاعر',
+            'young-poets' => 'نوجوان شاعر',
+            'انقلابي شاعر' => 'انقلابي شاعر',
+        ];
+
+        $enLabels = [
+            'naujwan-shair' => 'Naujwan Shair',
+            'jadeed-shair' => 'Jadeed Shair',
+            'sufi-shair' => 'Sufi Shair',
+            'poetees' => 'Poetees',
+            'poetess' => 'Poetess',
+            'revolutionary-poet' => 'Revolutionary Poet',
+            'classical-poet' => 'Classical Poet',
+            'modern-poet' => 'Modern Poet',
+            'romantic-poet' => 'Romantic Poet',
+            'young-poets' => 'Young Poets',
+            'انقلابي شاعر' => 'Revolutionary Poet',
+        ];
+
+        return $slugs->map(function ($slug) use ($lang, $sdLabels, $enLabels) {
+            $key = trim((string) $slug);
+            if ($lang === 'sd' && isset($sdLabels[$key])) {
+                $label = $sdLabels[$key];
+            } elseif ($lang !== 'sd' && isset($enLabels[$key])) {
+                $label = $enLabels[$key];
+            } else {
+                $label = Str::of($key)->replace('-', ' ')->title()->value();
+            }
+
             return [
-                'tag' => Str::of($slug)->replace('-', ' ')->title()->value(),
-                'slug' => $slug,
+                'tag' => $label,
+                'slug' => $key,
             ];
         })->values();
     }

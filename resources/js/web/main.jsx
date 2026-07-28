@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation, Outlet } from 'react-router-dom';
 import '../../css/app.css';
 
 // Components
@@ -39,6 +39,8 @@ const ExploreTopics = React.lazy(() => import('./components/ExploreTopics'));
 const TopicDetail = React.lazy(() => import('./components/TopicDetail'));
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { AuthProvider } from './contexts/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const PageLoader = () => (
     <div className="flex-1 space-y-8 p-8 animate-pulse">
@@ -49,7 +51,7 @@ const PageLoader = () => (
     </div>
 );
 
-const MainLayout = ({ children, lang }) => {
+const MainLayout = ({ lang }) => {
     const isRtl = lang === 'sd';
     const location = useLocation();
     const hideRightSidebar = location.pathname.includes('/poets') || location.pathname.includes('/poet/') || location.pathname.includes('/poetry') || location.pathname.includes('/couplets') || location.pathname.includes('/genre') || location.pathname.includes('/period') || location.pathname.includes('/prosody') || location.pathname.includes('/explore') || location.pathname.includes('/topic') || location.pathname.includes('/tag');
@@ -59,36 +61,36 @@ const MainLayout = ({ children, lang }) => {
     useSwipeGesture({ isMenuOpen, openMenu, closeMenu, isRtl });
 
     return (
-        <div className="min-h-screen bg-white overflow-x-hidden">
+        <div className="min-h-screen bg-white overflow-x-clip">
             <MobileMenu lang={lang} />
             <div className="min-h-screen bg-white">
                 <header role="banner">
                     <Navbar lang={lang} />
                 </header>
-                <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100vh-57px)] pb-[60px] lg:pb-0`}>
-                    <SidebarLeft lang={lang} />
+                <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100dvh-57px)] pb-[60px] lg:pb-0`}>
+                    <React.Suspense fallback={null}>
+                        <SidebarLeft lang={lang} />
+                    </React.Suspense>
                     <div className="flex-1 flex flex-col min-w-0">
                         <FeedbackBanner lang={lang} />
                         {showCategoryNav && <CategoryNav lang={lang} />}
                         <div className="flex flex-1">
                             <main id="main-content" role="main" className="flex-1 flex flex-col min-w-0">
-                                {children}
+                                <React.Suspense fallback={<PageLoader />}>
+                                    <Outlet />
+                                </React.Suspense>
                             </main>
-                            {!hideRightSidebar && <SidebarRight lang={lang} />}
+                            {!hideRightSidebar && (
+                                <React.Suspense fallback={null}>
+                                    <SidebarRight lang={lang} />
+                                </React.Suspense>
+                            )}
                         </div>
                     </div>
                 </div>
                 <footer role="contentinfo">
                     <BottomNav lang={lang} />
                 </footer>
-
-                {/* Overlay for content when menu is open (optional, but good for UX to indicate content is inactive) */}
-                {isMenuOpen && (
-                    <div
-                        className="absolute inset-0 z-40 bg-white/50"
-                        onClick={closeMenu}
-                    />
-                )}
             </div>
         </div>
     );
@@ -144,15 +146,12 @@ const Explore = () => {
     return <ExploreTopics lang={lang} />;
 };
 
-import { AuthProvider } from './contexts/AuthContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: Infinity, // Data remains fresh until page reload
-            gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
-            refetchOnWindowFocus: false, // Don't refetch when switching tabs
+            staleTime: Infinity,
+            gcTime: 1000 * 60 * 60 * 24,
+            refetchOnWindowFocus: false,
             retry: 1,
         },
     },
@@ -161,161 +160,24 @@ const queryClient = new QueryClient({
 const ScrollToTop = () => {
     const { pathname } = useLocation();
     useEffect(() => {
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }, [pathname]);
     return null;
 };
 
-const App = () => {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                    <ScrollToTop />
-                    <MobileMenuProvider>
-                        <React.Suspense fallback={<PageLoader />}>
-                            <Routes>
-                                <Route path="/:lang" element={
-                                    <LanguageWrapper>
-                                        <Home />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/poets" element={
-                                    <LanguageWrapper>
-                                        <Poets />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/poetry" element={
-                                    <LanguageWrapper>
-                                        <Poetry />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/couplets" element={
-                                    <LanguageWrapper>
-                                        <Couplets />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/genre" element={
-                                    <LanguageWrapper>
-                                        <Genre />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/period" element={
-                                    <LanguageWrapper>
-                                        <Period />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/poet/:slug" element={
-                                    <LanguageWrapper>
-                                        <Poet />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/poet/:slug/:category/:poemSlug" element={
-                                    <LanguageWrapper>
-                                        <SinglePoem />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/prosody" element={
-                                    <LanguageWrapper>
-                                        <Prosody />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/explore" element={
-                                    <LanguageWrapper>
-                                        <Explore />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/tag/:slug" element={
-                                    <LanguageWrapper>
-                                        <TopicDetail />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/topic/:slug" element={
-                                    <LanguageWrapper>
-                                        <TopicDetail />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/about" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <About />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/privacy" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <Privacy />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/terms" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <Terms />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/help" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <Help />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/status" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <Status />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/auth/social-callback" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <SocialCallback />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/auth/set-password" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <SetPassword />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/auth/forgot-password" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <ForgotPassword />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/password-reset/:token" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <ResetPassword />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/profile" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <Profile />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/settings" element={
-                                    <LanguageWrapper withLayout={false}>
-                                        <SettingsPage />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/:lang/:category" element={
-                                    <LanguageWrapper>
-                                        <Home />
-                                    </LanguageWrapper>
-                                } />
-                                <Route path="/" element={<Navigate to="/sd" replace />} />
-                                <Route path="*" element={<Navigate to="/sd" replace />} />
-                            </Routes>
-                        </React.Suspense>
-                    </MobileMenuProvider>
-                </BrowserRouter>
-            </AuthProvider>
-        </QueryClientProvider>
-    );
-};
+const BARE_ROUTE_RE = /^\/(en|sd)\/(about|privacy|terms|help|status|profile|settings|auth\/|password-reset\/)/;
 
-const LanguageWrapper = ({ children, withLayout = true }) => {
+const LanguageShell = () => {
     const { lang } = useParams();
+    const location = useLocation();
     const validLangs = ['en', 'sd'];
     const isRtl = lang === 'sd';
+    const isBare = BARE_ROUTE_RE.test(location.pathname);
 
     useEffect(() => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
         document.documentElement.lang = lang;
 
-        // Update tab title based on language
         document.title = isRtl
             ? 'باک - سنڌي شاعريءَ جو آرڪائيو'
             : 'Baakh - Archive of Sindhi Poetry';
@@ -331,11 +193,59 @@ const LanguageWrapper = ({ children, withLayout = true }) => {
         return <Navigate to="/sd" replace />;
     }
 
-    if (withLayout) {
-        return <MainLayout lang={lang}>{children}</MainLayout>;
+    if (isBare) {
+        return (
+            <React.Suspense fallback={<PageLoader />}>
+                <Outlet />
+            </React.Suspense>
+        );
     }
 
-    return children;
+    return <MainLayout lang={lang} />;
+};
+
+const App = () => {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <ScrollToTop />
+                    <MobileMenuProvider>
+                        <Routes>
+                            <Route path="/:lang" element={<LanguageShell />}>
+                                <Route index element={<Home />} />
+                                <Route path="poets" element={<Poets />} />
+                                <Route path="poetry" element={<Poetry />} />
+                                <Route path="couplets" element={<Couplets />} />
+                                <Route path="genre" element={<Genre />} />
+                                <Route path="period" element={<Period />} />
+                                <Route path="poet/:slug" element={<Poet />} />
+                                <Route path="poet/:slug/:category/:poemSlug" element={<SinglePoem />} />
+                                <Route path="prosody" element={<Prosody />} />
+                                <Route path="explore" element={<Explore />} />
+                                <Route path="tag/:slug" element={<TopicDetail />} />
+                                <Route path="topic/:slug" element={<TopicDetail />} />
+                                <Route path="about" element={<About />} />
+                                <Route path="privacy" element={<Privacy />} />
+                                <Route path="terms" element={<Terms />} />
+                                <Route path="help" element={<Help />} />
+                                <Route path="status" element={<Status />} />
+                                <Route path="auth/social-callback" element={<SocialCallback />} />
+                                <Route path="auth/set-password" element={<SetPassword />} />
+                                <Route path="auth/forgot-password" element={<ForgotPassword />} />
+                                <Route path="password-reset/:token" element={<ResetPassword />} />
+                                <Route path="profile" element={<Profile />} />
+                                <Route path="settings" element={<SettingsPage />} />
+                                <Route path=":category" element={<Home />} />
+                            </Route>
+                            <Route path="/" element={<Navigate to="/sd" replace />} />
+                            <Route path="*" element={<Navigate to="/sd" replace />} />
+                        </Routes>
+                    </MobileMenuProvider>
+                </BrowserRouter>
+            </AuthProvider>
+        </QueryClientProvider>
+    );
 };
 
 const root = createRoot(document.getElementById('root'));
