@@ -1,1 +1,0 @@
-import{r as e,j as l,ad as r}from"./radix-ui-a9e3077e.js";import{a as m}from"./AvatarImgOrIcon-cbed024e.js";const x=e.forwardRef(({className:o,orientation:a="horizontal",decorative:s=!0,...t},p)=>l.jsx(r,{ref:p,decorative:s,orientation:a,className:m("shrink-0 bg-border",a==="horizontal"?"h-[1px] w-full":"h-full w-[1px]",o),...t}));x.displayName=r.displayName;export{x as S};

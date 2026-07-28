@@ -21,7 +21,7 @@
 					</ul>
 				</div>
 				<!-- Info -->
-				<p class="small mb-2">{{ $comment->created_at->locale('sd')->diffForHumans() }}</p>
+				<p class="small mb-2">{{ optional($comment->created_at)?->locale('sd')->diffForHumans() }}</p>
 				<p class="mb-2">{{ $comment->comment }}</p>
 				<!-- Like and dislike button -->
 				{{-- <div class="btn-group" role="group" aria-label="Basic radio toggle button group">

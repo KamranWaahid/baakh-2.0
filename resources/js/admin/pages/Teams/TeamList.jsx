@@ -131,10 +131,10 @@ const TeamList = () => {
             </div>
 
             <Tabs defaultValue="teams" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
-                    <TabsTrigger value="teams">Teams ({teamList.length})</TabsTrigger>
-                    <TabsTrigger value="admins">Admins ({adminList.length})</TabsTrigger>
-                    <TabsTrigger value="viewers">Viewers ({viewerList.length})</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3 max-w-full sm:max-w-[500px] h-auto">
+                    <TabsTrigger value="teams" className="text-xs sm:text-sm px-1 sm:px-3">Teams ({teamList.length})</TabsTrigger>
+                    <TabsTrigger value="admins" className="text-xs sm:text-sm px-1 sm:px-3">Admins ({adminList.length})</TabsTrigger>
+                    <TabsTrigger value="viewers" className="text-xs sm:text-sm px-1 sm:px-3">Viewers ({viewerList.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="teams" className="mt-6">

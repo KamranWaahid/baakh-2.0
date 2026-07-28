@@ -516,15 +516,15 @@ const SenseEditor = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between min-w-0">
+                <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <Button variant="ghost" size="sm" onClick={() => navigate('/admin/dictionary')}>
                             <ArrowLeft className="h-4 w-4 mr-1" /> Back
                         </Button>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <h2 className={`text-3xl font-bold ${isSourceTerm ? '' : 'font-arabic'}`} dir={sourceWordDir}>{lemma.lemma}</h2>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h2 className={`text-2xl sm:text-3xl font-bold break-words ${isSourceTerm ? '' : 'font-arabic'}`} dir={sourceWordDir}>{lemma.lemma}</h2>
                         <Badge variant="outline">{lemma.pos || 'no POS'}</Badge>
                         {sourceSummary.primary_language && <Badge variant="secondary">{sourceSummary.primary_language}</Badge>}
                         {sourceSummary.source_dictionaries?.[0] && <Badge variant="outline">{sourceSummary.source_dictionaries[0]}</Badge>}
@@ -539,7 +539,7 @@ const SenseEditor = () => {
                         </Badge>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap shrink-0">
                     <Button variant="outline" size="sm" onClick={handleScrape} disabled={isScraping}>
                         {isScraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Globe className="mr-2 h-4 w-4" />}
                         Scrape Sindhila
@@ -562,7 +562,7 @@ const SenseEditor = () => {
             </div>
 
             <Tabs defaultValue="general">
-                <TabsList>
+                <TabsList className="flex h-auto w-full max-w-full flex-wrap justify-start gap-1">
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="completion">Completion</TabsTrigger>
                     <TabsTrigger value="morphology">Morphology</TabsTrigger>

@@ -173,7 +173,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
                 </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-[380px] p-0 overflow-hidden">
+            <DropdownMenuContent align="end" className="w-[min(380px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-0 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/20">
                     <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ const NotificationBell = ({ variant = 'admin', isAdmin = false }) => {
                 </div>
 
                 {/* Notification List */}
-                <ScrollArea className="h-[420px]">
+                <ScrollArea className="h-[min(420px,60dvh)]">
                     {notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                             <BellOff className="h-10 w-10 mb-3 opacity-20" />

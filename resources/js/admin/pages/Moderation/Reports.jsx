@@ -130,17 +130,17 @@ const ReportManagement = () => {
                         <DialogTitle>Handle Report #{selectedReport?.id}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
                             <span className="font-bold">Target:</span>
-                            <span className="col-span-3">{selectedReport?.poetry?.info?.title || selectedReport?.poet?.poet_name || 'N/A'}</span>
+                            <span className="sm:col-span-3 break-words">{selectedReport?.poetry?.info?.title || selectedReport?.poet?.poet_name || 'N/A'}</span>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
                             <span className="font-bold">Reason:</span>
-                            <span className="col-span-3">{selectedReport?.reason}</span>
+                            <span className="sm:col-span-3 break-words">{selectedReport?.reason}</span>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
                             <span className="font-bold">Reporter:</span>
-                            <span className="col-span-3">{selectedReport?.user?.name || 'Guest'}</span>
+                            <span className="sm:col-span-3 break-words">{selectedReport?.user?.name || 'Guest'}</span>
                         </div>
                     </div>
                     <DialogFooter className="gap-2">

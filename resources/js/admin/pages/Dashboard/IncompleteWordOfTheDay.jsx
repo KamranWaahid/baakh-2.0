@@ -176,8 +176,8 @@ const IncompleteWordOfTheDay = () => {
         return (
             <Card>
                 <CardHeader>
-                    <Skeleton className="h-7 w-64" />
-                    <Skeleton className="h-4 w-96 mt-2" />
+                    <Skeleton className="h-7 w-48 max-w-full" />
+                    <Skeleton className="h-4 w-full max-w-md mt-2" />
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <Skeleton className="h-24 w-full" />
@@ -205,10 +205,10 @@ const IncompleteWordOfTheDay = () => {
         return (
             <Card className="border-green-200 bg-green-50/40">
                 <CardHeader>
-                    <div className="flex items-center justify-between gap-3">
-                        <div>
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <div className="min-w-0">
                             <CardTitle className="flex items-center gap-2">
-                                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                                 Incomplete Word of the Day
                             </CardTitle>
                             <CardDescription className="mt-1">
@@ -262,18 +262,18 @@ const IncompleteWordOfTheDay = () => {
 
             <CardContent>
                 <form onSubmit={handleSave} className="space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 rounded-xl border bg-white p-4">
-                        <div>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 rounded-xl border bg-white p-3 sm:p-4 min-w-0">
+                        <div className="min-w-0">
                             <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Headword</p>
-                            <h3 className="text-3xl font-bold font-arabic text-gray-900" dir="rtl">
+                            <h3 className="text-2xl sm:text-3xl font-bold font-arabic text-gray-900 break-words" dir="rtl">
                                 {word?.lemma || '—'}
                             </h3>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-gray-500 mt-1 break-words">
                                 {word?.transliteration ? `/${word.transliteration}/` : 'No romanization yet'}
                                 {word?.pos ? ` · ${word.pos}` : ''}
                             </p>
                         </div>
-                        <Button type="button" variant="outline" asChild>
+                        <Button type="button" variant="outline" asChild className="w-full sm:w-auto shrink-0">
                             <Link to={`/admin/dictionary/lemmas/${word?.id}`}>
                                 <ExternalLink className="h-4 w-4 mr-2" />
                                 Open full editor
@@ -415,8 +415,8 @@ const IncompleteWordOfTheDay = () => {
                         ))}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                        <Button type="submit" disabled={busy} className="bg-black hover:bg-gray-800 text-white">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-1 px-1 sm:static sm:bg-transparent sm:backdrop-blur-none sm:mx-0 sm:px-0 sm:pb-0 border-t sm:border-0 pt-3 sm:pt-2">
+                        <Button type="submit" disabled={busy} className="bg-black hover:bg-gray-800 text-white w-full sm:w-auto">
                             {saveMutation.isPending ? (
                                 <>
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -434,6 +434,7 @@ const IncompleteWordOfTheDay = () => {
                             variant="outline"
                             disabled={busy}
                             onClick={() => skipMutation.mutate()}
+                            className="w-full sm:w-auto"
                         >
                             {skipMutation.isPending ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

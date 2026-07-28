@@ -74,7 +74,7 @@ const EmailTemplates = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[600px] h-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0 lg:min-h-[600px] h-auto">
                 {/* Navigation Sidebar */}
                 <Card className="col-span-1 flex flex-col overflow-hidden max-h-[600px]">
                     <CardHeader className="bg-slate-50/50 pb-4 border-b">
@@ -109,7 +109,7 @@ const EmailTemplates = () => {
                 </Card>
 
                 {/* Preview Area */}
-                <Card className="col-span-1 lg:col-span-3 flex flex-col shadow-sm overflow-hidden border-slate-200 min-h-[700px]">
+                <Card className="col-span-1 lg:col-span-3 flex flex-col shadow-sm overflow-hidden border-slate-200 min-h-[420px] md:min-h-[700px]">
                     <CardHeader className="bg-slate-50 py-3 border-b flex flex-row items-center justify-between shrink-0">
                         <div className="flex items-center gap-2">
                             <Eye className="h-5 w-5 text-slate-500" />

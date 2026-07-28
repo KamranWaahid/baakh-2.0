@@ -67,7 +67,7 @@ const MainLayout = ({ lang }) => {
                 <header role="banner">
                     <Navbar lang={lang} />
                 </header>
-                <div className={`max-w-[1504px] mx-auto flex justify-center min-h-[calc(100dvh-57px)] pb-[60px] lg:pb-0`}>
+                <div className="max-w-[1504px] mx-auto flex justify-center min-h-[calc(100dvh-var(--baakh-header-h,57px))] pb-[60px] lg:pb-0">
                     <React.Suspense fallback={null}>
                         <SidebarLeft lang={lang} />
                     </React.Suspense>
