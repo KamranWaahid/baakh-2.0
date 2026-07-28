@@ -48,10 +48,10 @@ const LemmaInbox = () => {
     const meta = response || {};
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Lemma Inbox</h2>
-                <div className="flex items-center gap-2">
+        <div className="space-y-6 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Lemma Inbox</h2>
+                <div className="flex items-center gap-2 flex-wrap">
                     <Button variant="outline" size="sm">
                         <Filter className="mr-2 h-4 w-4" /> Filters
                     </Button>
@@ -63,8 +63,8 @@ const LemmaInbox = () => {
 
             <Card>
                 <CardHeader>
-                    <div className="flex items-center gap-4">
-                        <div className="relative flex-1 max-w-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+                        <div className="relative flex-1 w-full sm:max-w-sm min-w-0">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search lemmas..."

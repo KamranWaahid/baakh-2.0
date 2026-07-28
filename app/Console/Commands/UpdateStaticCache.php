@@ -446,7 +446,7 @@ class UpdateStaticCache extends Command
             'views' => $p->views ?? 0,
             'likes' => $p->likes()->count(),
             'date' => $p->created_at ? $p->created_at->format('M d, Y') : '',
-            'date_diff' => $p->created_at ? $p->created_at->diffForHumans() : '',
+            'date_diff' => $p->created_at?->diffForHumans() ?? '',
 
             'poet' => [
                 'id' => $p->poet->id ?? 0,

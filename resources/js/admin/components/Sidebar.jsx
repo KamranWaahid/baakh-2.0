@@ -92,10 +92,10 @@ const Sidebar = ({ onLinkClick }) => {
 
     return (
         <SidebarContext.Provider value={{ onLinkClick }}>
-            <div className="h-full flex flex-col gap-4 py-4 overflow-y-auto">
-                <Link to="/" className="px-6 flex items-center gap-2 group">
-                    <Logo className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="font-bold text-xl">Baakh Admin</span>
+            <div className="h-full min-h-0 flex flex-col gap-4 py-4 overflow-y-auto overscroll-contain">
+                <Link to="/" className="px-6 pr-12 flex items-center gap-2 group min-w-0">
+                    <Logo className="h-8 w-8 text-primary group-hover:scale-110 transition-transform shrink-0" />
+                    <span className="font-bold text-xl truncate">Baakh Admin</span>
                 </Link>
                 <nav className="flex-1 px-4 flex flex-col gap-1">
                     <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>

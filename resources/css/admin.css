@@ -64,13 +64,53 @@
     @apply border-border;
   }
 
+  html {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-background text-foreground;
+    max-width: 100%;
+    overflow-x: clip;
+    overscroll-behavior-y: contain;
+  }
+
+  #admin-root {
+    min-height: 100dvh;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   [lang="sd"] {
     font-family: 'SF Arabic', sans-serif !important;
     direction: rtl;
     line-height: 1.6;
+  }
+}
+
+@layer utilities {
+  /* Contain wide tables/charts so they scroll locally, not the page */
+  .admin-page {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-page .recharts-responsive-container {
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Common page toolbars: allow wrap instead of horizontal overflow */
+  .admin-shell main .flex.items-center.justify-between {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .admin-shell main input,
+  .admin-shell main textarea,
+  .admin-shell main select {
+    max-width: 100%;
   }
 }

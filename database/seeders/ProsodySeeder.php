@@ -170,7 +170,10 @@ class ProsodySeeder extends Seeder
         ];
 
         foreach ($terms as $term) {
-            ProsodyTerm::create($term);
+            ProsodyTerm::updateOrCreate(
+                ['title_en' => $term['title_en']],
+                $term
+            );
         }
     }
 }

@@ -243,8 +243,8 @@ class PoetryController extends UserController
             'source' => $poetry->info?->source,
             'views' => $poetry->views,
             'likes' => $poetry->likes_count ?? 0,
-            'date' => $poetry->created_at ? $poetry->created_at->format('M d, Y') : '',
-            'date_diff' => $poetry->created_at ? $poetry->created_at->diffForHumans() : '',
+            'date' => $poetry->created_at?->format('M d, Y') ?? '',
+            'date_diff' => $poetry->created_at?->diffForHumans() ?? '',
 
             'poet' => [
                 'id' => $poet_info->id ?? 0,

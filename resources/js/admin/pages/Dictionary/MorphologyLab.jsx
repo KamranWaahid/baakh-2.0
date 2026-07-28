@@ -91,16 +91,16 @@ const MorphologyLab = () => {
     const hasRealMorphology = !!lemma?.has_real_morphology;
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Morphology Lab</h2>
-                    <div className="flex items-center gap-2 mt-1">
-                        <p className="text-muted-foreground font-arabic text-2xl">{currentLemma.lemma}</p>
+        <div className="space-y-6 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Morphology Lab</h2>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <p className="text-muted-foreground font-arabic text-xl sm:text-2xl break-words">{currentLemma.lemma}</p>
                         <Badge variant="outline">ID: {currentLemma.id}</Badge>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap shrink-0">
                     <Button variant="outline" size="sm" onClick={() => navigate('/admin/dictionary/lemma-inbox')}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
                     <Button variant="outline" size="sm"><Check className="mr-2 h-4 w-4" /> Approve All</Button>
                 </div>
@@ -125,7 +125,7 @@ const MorphologyLab = () => {
                 )}
                     <CardContent className="p-6">
                         <Tabs defaultValue="plurals" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+                            <TabsList className="grid w-full grid-cols-3 lg:w-[400px] h-auto">
                                 <TabsTrigger value="plurals">Plurals</TabsTrigger>
                                 <TabsTrigger value="cases">Case Forms</TabsTrigger>
                                 <TabsTrigger value="dialects">Dialects</TabsTrigger>

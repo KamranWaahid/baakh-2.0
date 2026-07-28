@@ -3,7 +3,7 @@ import { useScrollDirection } from './useScrollDirection';
 
 /**
  * Sticky top offset that collapses to 0 when the mobile navbar is hidden.
- * Matches navbar height: 56px mobile / 65px desktop.
+ * Uses --baakh-header-h from Navbar (notice + nav), with 56px fallback.
  */
 export function useStickyBelowNavbar() {
     const scrollDirection = useScrollDirection();
@@ -20,7 +20,7 @@ export function useStickyBelowNavbar() {
 
     return {
         isNavbarHidden,
-        stickyTopClass: isNavbarHidden ? 'top-0' : 'top-[56px] lg:top-[65px]',
+        stickyTopClass: isNavbarHidden ? 'top-0' : 'top-[var(--baakh-header-h,56px)]',
         // Match navbar hide/show timing so the bar eases into place
         stickyMotionClass: 'transition-[top,box-shadow] duration-300 ease-out will-change-[top]',
     };

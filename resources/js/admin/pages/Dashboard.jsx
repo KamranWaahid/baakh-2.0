@@ -215,7 +215,7 @@ const Dashboard = () => {
     );
 
     return (
-        <div className="flex flex-col gap-6 p-4 md:p-8 fade-in-bottom">
+        <div className="flex flex-col gap-6 fade-in-bottom min-w-0 w-full max-w-full">
             {/* Header Section */}
             {isError ? (
                 <Alert variant="destructive">
@@ -226,12 +226,12 @@ const Dashboard = () => {
                 </Alert>
             ) : null}
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+                <div className="min-w-0">
                     <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-gray-900">Dashboard</h1>
                     <p className="mt-1 md:mt-2 text-sm md:text-lg text-gray-500">Overview of your platform's performance and activity.</p>
                 </div>
-                <div className="flex flex-wrap gap-2 md:gap-4">
+                <div className="flex flex-wrap gap-2 md:gap-4 shrink-0">
                     <Button variant="outline" className="gap-2 text-xs md:text-sm">
                         <Search className="h-3 w-3 md:h-4 md:w-4" />
                         Search
@@ -318,8 +318,8 @@ const Dashboard = () => {
                         <CardTitle>Activity Overview</CardTitle>
                         <CardDescription>System activity over the last 30 days</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <CardContent className="h-[240px] sm:h-[300px] min-w-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <AreaChart data={data?.activity_graph || []}>
                                 <defs>
                                     <linearGradient id="colorActions" x1="0" y1="0" x2="0" y2="1">
@@ -341,8 +341,8 @@ const Dashboard = () => {
                         <CardTitle>Content Growth</CardTitle>
                         <CardDescription>New poets and poetry added</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <CardContent className="h-[240px] sm:h-[300px] min-w-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={data?.content_growth || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />

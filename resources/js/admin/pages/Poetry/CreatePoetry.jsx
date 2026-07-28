@@ -381,7 +381,7 @@ const CreatePoetry = () => {
                     )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[700px]">
+                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[420px] md:min-h-[700px]">
                             <Tabs value={script} onValueChange={setScript} className="w-full">
                                 <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/5 sticky top-0 z-10 w-full">
                                     <TabsList className="h-9 bg-muted/50">

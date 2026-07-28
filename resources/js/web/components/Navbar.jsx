@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Shield } from 'lucide-react';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
@@ -167,11 +167,53 @@ const Navbar = ({ lang }) => {
 
     const scrollDirection = useScrollDirection();
     const isHidden = scrollDirection === 'down' && isMobile;
+    const headerRef = useRef(null);
+
+    useLayoutEffect(() => {
+        const el = headerRef.current;
+        if (!el) return undefined;
+
+        const publishHeight = () => {
+            const h = isHidden ? 0 : el.offsetHeight;
+            document.documentElement.style.setProperty('--baakh-header-h', `${h}px`);
+        };
+
+        publishHeight();
+        const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publishHeight) : null;
+        ro?.observe(el);
+        window.addEventListener('resize', publishHeight);
+
+        return () => {
+            ro?.disconnect();
+            window.removeEventListener('resize', publishHeight);
+            document.documentElement.style.removeProperty('--baakh-header-h');
+        };
+    }, [isHidden, lang, isRtl]);
 
     return (
         <>
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
-            <nav className={`h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 bg-white z-[50] transition-[transform,opacity] duration-300 will-change-transform ${isHidden ? 'translate-y-[-110%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 shadow-sm'}`}>
+            <div
+                ref={headerRef}
+                className={`sticky top-0 z-[50] bg-white transition-[transform,opacity] duration-300 will-change-transform ${isHidden ? 'translate-y-[-110%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
+            >
+                <div
+                    role="status"
+                    className={`w-full border-b border-amber-200/80 bg-amber-50 px-3 py-1.5 sm:px-4 ${isRtl ? 'font-arabic' : ''}`}
+                    dir={isRtl ? 'rtl' : 'ltr'}
+                >
+                    <div className="mx-auto flex max-w-[1504px] items-start sm:items-center justify-center gap-2">
+                        <span className="shrink-0 mt-0.5 sm:mt-0 inline-flex items-center rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
+                            {isRtl ? 'نوٽيس' : 'Notice'}
+                        </span>
+                        <p className="text-[11px] sm:text-xs leading-snug text-amber-900 text-center sm:text-start">
+                            {isRtl
+                                ? 'فني مسئلن سبب گوگل لاگ اِن جو فيچر عارضي طور غير فعال آهي. اسان ان کي جلد بحال ڪري رهيا آهيون. توهان جي صبر جي مهرباني.'
+                                : 'Due to technical issues, Google login is temporarily disabled. We are restoring it soon. Thank you for your patience.'}
+                        </p>
+                    </div>
+                </div>
+                <nav className={`h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 bg-white ${isHidden ? '' : 'shadow-sm'}`}>
                 <div className="flex items-center gap-4 flex-1">
                     <Button
                         variant="ghost"
@@ -221,6 +263,7 @@ const Navbar = ({ lang }) => {
                     </Button>
                 </div>
             </nav>
+            </div>
         </>
     );
 };

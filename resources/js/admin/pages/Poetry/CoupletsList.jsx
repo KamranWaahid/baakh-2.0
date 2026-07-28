@@ -265,7 +265,7 @@ const CoupletsList = () => {
                             <TableHeader className="bg-gray-50/50">
                                 <TableRow>
                                     <TableHead className="w-[80px] hidden sm:table-cell">ID</TableHead>
-                                    <TableHead className="min-w-[300px]">Couplet</TableHead>
+                                    <TableHead className="min-w-[180px] md:min-w-[300px]">Couplet</TableHead>
                                     <TableHead>Poet</TableHead>
                                     <TableHead className="hidden md:table-cell">Type</TableHead>
                                     <TableHead className="hidden lg:table-cell">Languages</TableHead>

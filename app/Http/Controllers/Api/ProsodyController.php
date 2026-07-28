@@ -21,7 +21,7 @@ class ProsodyController extends Controller
         $lang = $request->get('lang', 'sd');
 
         $cached = $this->cache->get("prosody_list_{$lang}");
-        if ($cached) {
+        if (!empty($cached)) {
             return response()->json($cached);
         }
 
@@ -35,7 +35,11 @@ class ProsodyController extends Controller
                 'logic_type' => $term->logic_type,
                 'icon' => $term->icon,
             ];
-        });
+        })->values();
+
+        if ($terms->isNotEmpty()) {
+            $this->cache->set("prosody_list_{$lang}", $terms);
+        }
 
         return response()->json($terms);
     }

@@ -77,17 +77,17 @@ const DictionaryHome = () => {
     const topSource = stats?.sources?.[0];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0 w-full max-w-full">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Dictionary</h2>
-                    <p className="text-muted-foreground mt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+                <div className="min-w-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dictionary</h2>
+                    <p className="text-muted-foreground mt-1 break-words">
                         Sindhi Open Lexicon — {stats?.open_lexicon_entries?.toLocaleString() || '—'} entries
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button onClick={() => setIsAddModalOpen(true)}>
+                <div className="flex gap-2 shrink-0">
+                    <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" /> Add Word
                     </Button>
                 </div>
@@ -112,8 +112,8 @@ const DictionaryHome = () => {
                 <TabsContent value="browse" className="mt-4">
                     <Card>
                         <CardHeader className="pb-3">
-                            <div className="flex items-center gap-4">
-                                <div className="relative flex-1 max-w-md">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+                                <div className="relative flex-1 w-full sm:max-w-md min-w-0">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search words, definitions, sources, lexical IDs..."
@@ -122,7 +122,7 @@ const DictionaryHome = () => {
                                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                                     />
                                 </div>
-                                <div className="flex items-center gap-1 rounded-md border p-1">
+                                <div className="flex items-center gap-1 rounded-md border p-1 overflow-x-auto max-w-full shrink-0">
                                     {['all', 'pending', 'complete'].map((status) => (
                                         <Button
                                             key={status}
@@ -133,13 +133,13 @@ const DictionaryHome = () => {
                                                 setCompletionStatus(status);
                                                 setPage(1);
                                             }}
-                                            className="capitalize"
+                                            className="capitalize shrink-0"
                                         >
                                             {status === 'all' ? 'All' : status}
                                         </Button>
                                     ))}
                                 </div>
-                                {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                                {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />}
                             </div>
                         </CardHeader>
                         <CardContent>

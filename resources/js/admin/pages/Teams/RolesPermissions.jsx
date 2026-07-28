@@ -220,7 +220,7 @@ const RolesPermissions = () => {
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="w-[calc(100%-1.5rem)] max-w-4xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{selectedRole ? 'Edit Role' : 'Create New Role'}</DialogTitle>
                     </DialogHeader>
