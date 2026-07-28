@@ -4,6 +4,26 @@ import { Sparkles } from 'lucide-react';
 import { Avatar } from "@/components/ui/avatar";
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 
+const TITLE_TRANSLATIONS = {
+    Poet: 'شاعر',
+    'Revolutionary Poet': 'انقلابي شاعر',
+    'Classical Poet': 'ڪلاسيڪل شاعر',
+    'Young Poets': 'نوجوان شاعر',
+    'Sufi Shair': 'صوفي شاعر',
+    'Naujwan Shair': 'نوجوان شاعر',
+    'Jadeed Shair': 'جديد شاعر',
+    'Modern Poet': 'جديد شاعر',
+    'Romantic Poet': 'رومانوي شاعر',
+    Poetees: 'شاعره',
+    Poetess: 'شاعره',
+};
+
+const localizePoetTitle = (title, isRtl) => {
+    if (!title) return isRtl ? 'شاعر' : 'Poet';
+    if (!isRtl) return title;
+    return TITLE_TRANSLATIONS[title] || TITLE_TRANSLATIONS[title.trim()] || title;
+};
+
 const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
     const benefits = isRtl ? [
         "نون شاعرن جا بيت، غزل ۽ نظم بہ ساڳي ئي پيج تان رسائي حاصل ڪري سگھو ٿا.",
@@ -60,7 +80,7 @@ const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
                                 </Avatar>
                             </Link>
                             <span className="text-gray-900 text-[15px] leading-tight mb-1 font-bold">{poet.name}</span>
-                            <span className="text-[11px] text-gray-500 leading-tight max-w-[140px]">{poet.title}</span>
+                            <span className="text-[11px] text-gray-500 leading-tight max-w-[140px]">{localizePoetTitle(poet.title, isRtl)}</span>
                         </div>
                     ))}
                 </div>
@@ -69,7 +89,7 @@ const PaywallCTA = ({ authorName, categoryName, poets = [], isRtl }) => {
             {/* Button: Inter (Sans) for consistency */}
             {/* Button: Inter (Sans) for consistency */}
             <Link to={`/${isRtl ? 'sd' : 'en'}/poets`}>
-                <Button className="rounded-full bg-black hover:bg-gray-800 text-white font-medium text-lg h-12 px-10 min-w-[200px] font-sans">
+                <Button className={`rounded-full bg-black hover:bg-gray-800 text-white font-medium text-lg h-12 px-10 min-w-[200px] ${isRtl ? 'font-arabic' : 'font-sans'}`}>
                     {isRtl ? 'وڌيڪ ڏسو' : 'See More'}
                 </Button>
             </Link>

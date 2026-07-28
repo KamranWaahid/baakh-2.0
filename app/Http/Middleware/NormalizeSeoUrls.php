@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Normalize crawlable URLs so Google stops accumulating redirect / soft-404 / duplicate signals.
  *
- * Handles: www→apex, beta→production, trailing/double slashes, ?lang=, and legacy unprefixed routes.
+ * Handles: www→apex, legacy beta host→apex, trailing/double slashes, ?lang=, and legacy unprefixed routes.
  */
 class NormalizeSeoUrls
 {
@@ -40,8 +40,8 @@ class NormalizeSeoUrls
             return $this->redirectAway($scheme, $canonicalHost, $path, $request);
         }
 
-        // beta.baakh.com → baakh.com (stop indexing staging)
-        if (str_starts_with($host, 'beta.')) {
+        // Legacy staging host → canonical apex (baakh.com)
+        if ($host === 'beta.baakh.com' || str_starts_with($host, 'beta.')) {
             return $this->redirectAway($scheme, $canonicalHost, $path, $request);
         }
 

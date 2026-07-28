@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
+import { htmlToPlainText } from '../utils/html';
 
 const TAG_TRANSLATIONS = {
     'Revolutionary Poet': 'انقلابي شاعر',
@@ -84,7 +85,7 @@ const PoetCard = ({ poet, lang, isRtl }) => {
                 </div>
 
                 <p className="text-gray-500 text-sm md:text-base line-clamp-2 mb-2 font-arabic">
-                    {isRtl ? poet.bio_sd : poet.bio_en}
+                    {htmlToPlainText(isRtl ? poet.bio_sd : poet.bio_en)}
                 </p>
 
                 <div className="flex items-center gap-4 text-xs text-gray-400 font-medium">

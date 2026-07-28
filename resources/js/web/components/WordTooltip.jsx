@@ -19,6 +19,25 @@ function cleanLookupWord(token = '') {
         .trim();
 }
 
+/** True when text is primarily Arabic/Sindhi script (should render RTL). */
+function isRtlScript(text = '') {
+    return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(String(text));
+}
+
+function MeaningLine({ text, index, total }) {
+    const rtl = isRtlScript(text);
+    const prefix = total > 1 ? `${index + 1}. ` : '• ';
+    return (
+        <p
+            className={`text-sm text-gray-800 leading-snug ${rtl ? 'font-arabic' : ''}`}
+            dir={rtl ? 'rtl' : 'ltr'}
+            lang={rtl ? 'sd' : 'en'}
+        >
+            {prefix}{text}
+        </p>
+    );
+}
+
 /**
  * Place a fixed tooltip near an anchor rect (viewport coords), flipping above
  * when there isn't enough room below. Safe with CSS-transformed ancestors
@@ -265,15 +284,31 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                         <span className="text-[11px] text-gray-400 block">
                             {isRtl ? 'Sense details' : 'Sense Details'}
                         </span>
-                        {structuredSenses.slice(0, 2).map((sense, i) => (
+                        {structuredSenses.slice(0, 2).map((sense, i) => {
+                            const def = sense.definition || sense.full_definition || '';
+                            const defRtl = isRtlScript(def);
+                            const glossRtl = isRtlScript(sense.short_gloss);
+                            return (
                             <div key={sense.public_id || sense.id || i} className="rounded-md bg-gray-50 px-2 py-1.5">
-                                {sense.short_gloss && <p className="text-xs font-medium text-gray-600">{sense.short_gloss}</p>}
-                                <p className="text-sm text-gray-800 font-arabic leading-snug" dir="auto">
-                                    {sense.definition || sense.full_definition}
+                                {sense.short_gloss && (
+                                    <p
+                                        className={`text-xs font-medium text-gray-600 ${glossRtl ? 'font-arabic' : ''}`}
+                                        dir={glossRtl ? 'rtl' : 'ltr'}
+                                    >
+                                        {sense.short_gloss}
+                                    </p>
+                                )}
+                                <p
+                                    className={`text-sm text-gray-800 leading-snug ${defRtl ? 'font-arabic' : ''}`}
+                                    dir={defRtl ? 'rtl' : 'ltr'}
+                                    lang={defRtl ? 'sd' : 'en'}
+                                >
+                                    {def}
                                 </p>
-                                {sense.source && <p className="text-[10px] text-gray-400 mt-0.5">{sense.source}</p>}
+                                {sense.source && <p className="text-[10px] text-gray-400 mt-0.5" dir="ltr">{sense.source}</p>}
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </>
             )}
@@ -289,35 +324,29 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                                 </span>
                                 <div className="space-y-0.5">
                                     {shownMeanings.map((m, i) => (
-                                        <p key={i} className="text-sm text-gray-800 font-arabic leading-snug">
-                                            {shownMeanings.length > 1 ? `${i + 1}. ` : '• '}{m}
-                                        </p>
+                                        <MeaningLine key={i} text={m} index={i} total={shownMeanings.length} />
                                     ))}
                                 </div>
                             </div>
                         )}
                         {shownMeaningsSd.length > 0 && (
-                            <div>
+                            <div dir="rtl">
                                 <span className="text-[11px] text-gray-400 block mb-1">
                                     {isRtl ? 'سنڌي معنى' : 'Sindhi Meaning'}
                                 </span>
                                 <div className="space-y-0.5">
                                     {shownMeaningsSd.map((m, i) => (
-                                        <p key={`sd-${i}`} className="text-sm text-gray-800 font-arabic leading-snug">
-                                            {shownMeaningsSd.length > 1 ? `${i + 1}. ` : '• '}{m}
-                                        </p>
+                                        <MeaningLine key={`sd-${i}`} text={m} index={i} total={shownMeaningsSd.length} />
                                     ))}
                                 </div>
                             </div>
                         )}
                         {shownMeaningsEn.length > 0 && (
-                            <div dir="ltr" className={isRtl ? 'text-right' : 'text-left'}>
+                            <div dir="ltr" className="text-left">
                                 <span className="text-[11px] text-gray-400 block mb-1">English Meaning</span>
                                 <div className="space-y-0.5">
                                     {shownMeaningsEn.map((m, i) => (
-                                        <p key={`en-${i}`} className="text-sm text-gray-800 leading-snug">
-                                            {shownMeaningsEn.length > 1 ? `${i + 1}. ` : '• '}{m}
-                                        </p>
+                                        <MeaningLine key={`en-${i}`} text={m} index={i} total={shownMeaningsEn.length} />
                                     ))}
                                 </div>
                             </div>
