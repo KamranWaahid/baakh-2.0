@@ -30,7 +30,8 @@ const Navbar = ({ lang }) => {
 
     useEffect(() => {
         const checkMobile = () => {
-            setIsMobile(window.innerWidth < 1024);
+            // Hide-on-scroll only on true phone widths; keep sticky visible from md/desktop up.
+            setIsMobile(window.innerWidth < 768);
         };
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -166,7 +167,7 @@ const Navbar = ({ lang }) => {
     };
 
     const scrollDirection = useScrollDirection();
-    // Hide-on-scroll only on mobile; keep header sticky and visible on desktop.
+    // Hide-on-scroll only on mobile; desktop keeps a sticky, always-visible header.
     const isHidden = isMobile && scrollDirection === 'down';
     const headerRef = useRef(null);
 
@@ -196,7 +197,7 @@ const Navbar = ({ lang }) => {
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
             <div
                 ref={headerRef}
-                className={`sticky top-0 z-[50] bg-white transition-[transform,opacity] duration-300 will-change-transform ${isHidden ? 'translate-y-[-110%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
+                className={`sticky top-0 z-[50] bg-white transition-[transform,opacity] duration-300 will-change-transform md:translate-y-0 md:opacity-100 md:pointer-events-auto ${isHidden ? 'translate-y-[-110%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
             >
                 <div
                     role="status"
