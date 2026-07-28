@@ -127,6 +127,29 @@ const variantTypeOptions = [
     { value: 'historical', label: 'Historical' },
 ];
 
+const languageDirectionOptions = [
+    { value: 'sindhi', label: 'Sindhi' },
+    { value: 'english', label: 'English' },
+    { value: 'arabic', label: 'Arabic' },
+    { value: 'hindi', label: 'Hindi' },
+    { value: 'urdu', label: 'Urdu' },
+    { value: 'sindhi-english', label: 'Sindhi → English' },
+    { value: 'english-sindhi', label: 'English → Sindhi' },
+    { value: 'arabic-sindhi', label: 'Arabic → Sindhi' },
+    { value: 'sindhi-arabic', label: 'Sindhi → Arabic' },
+    { value: 'hindi-sindhi', label: 'Hindi → Sindhi' },
+    { value: 'urdu-sindhi', label: 'Urdu → Sindhi' },
+];
+
+const languageDirectionSelectOptions = (currentValue) => {
+    const options = [...languageDirectionOptions];
+    const current = (currentValue || '').trim();
+    if (current && !options.some((option) => option.value === current)) {
+        options.unshift({ value: current, label: current });
+    }
+    return options;
+};
+
 const apiErrorMessage = (error, fallback) => {
     const errors = error?.response?.data?.errors;
     if (errors) {
@@ -138,6 +161,7 @@ const apiErrorMessage = (error, fallback) => {
 
     return error?.response?.data?.message || fallback;
 };
+
 
 const SenseEditor = () => {
     const { id } = useParams();
@@ -185,6 +209,7 @@ const SenseEditor = () => {
     const [isScraping, setIsScraping] = useState(false);
     const [scrapeError, setScrapeError] = useState(null);
     const [isScrapeCopied, setIsScrapeCopied] = useState(false);
+
 
     useEffect(() => {
         if (lemma) {
@@ -837,11 +862,17 @@ const SenseEditor = () => {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Language direction</Label>
-                                        <Input
-                                            value={newSenseForm.language_direction}
-                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, language_direction: e.target.value })}
-                                            placeholder={sourceSummary.language_labels?.[0] || 'Optional'}
-                                        />
+                                        <Select
+                                            value={newSenseForm.language_direction || undefined}
+                                            onValueChange={(v) => setNewSenseForm({ ...newSenseForm, language_direction: v })}
+                                        >
+                                            <SelectTrigger><SelectValue placeholder="Select language direction" /></SelectTrigger>
+                                            <SelectContent>
+                                                {languageDirectionSelectOptions(newSenseForm.language_direction).map((option) => (
+                                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Source / Provenance</Label>
@@ -1249,6 +1280,7 @@ const SenseEditor = () => {
                     )}
                 </DialogContent>
             </Dialog>
+
         </div>
     );
 };
@@ -1322,6 +1354,32 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
     const [sourceDictionary, setSourceDictionary] = useState(sense.source_dictionary || sense.source || '');
     const [reviewStatus, setReviewStatus] = useState(sense.review_status || 'unreviewed');
 
+    useEffect(() => {
+        setDefinition(sense.definition || '');
+        setDefinitionEn(sense.definition_en || '');
+        setDefinitionSd(sense.definition_sd || '');
+        setEnglishEquivalents((sense.english_equivalents || []).join(', '));
+        setUsageLabel(sense.usage_label || '');
+        setDomain(sense.domain || '');
+        setShortGloss(sense.short_gloss || '');
+        setLanguageDirection(sense.language_direction || '');
+        setSourceDictionary(sense.source_dictionary || sense.source || '');
+        setReviewStatus(sense.review_status || 'unreviewed');
+    }, [
+        sense?.id,
+        sense?.definition,
+        sense?.definition_en,
+        sense?.definition_sd,
+        sense?.english_equivalents,
+        sense?.usage_label,
+        sense?.domain,
+        sense?.short_gloss,
+        sense?.language_direction,
+        sense?.source_dictionary,
+        sense?.source,
+        sense?.review_status,
+    ]);
+
     return (
         <Card>
             <CardHeader className="pb-3 border-b bg-muted/20">
@@ -1369,7 +1427,17 @@ const SenseCard = ({ sense, index, onUpdate, onDelete, saving }) => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                         <Label>Language Direction</Label>
-                        <Input value={languageDirection} onChange={(e) => setLanguageDirection(e.target.value)} placeholder="sindhi, english, English → Sindhi..." />
+                        <Select
+                            value={languageDirection || undefined}
+                            onValueChange={setLanguageDirection}
+                        >
+                            <SelectTrigger><SelectValue placeholder="Select language direction" /></SelectTrigger>
+                            <SelectContent>
+                                {languageDirectionSelectOptions(languageDirection).map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label>Source / Provenance</Label>

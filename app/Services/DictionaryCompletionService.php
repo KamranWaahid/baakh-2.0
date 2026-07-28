@@ -106,11 +106,24 @@ class DictionaryCompletionService
         }
 
         $normalized = strtolower(trim($direction));
+        $normalized = str_replace(['_', ' '], '-', $normalized);
         $valid = array_map('strtolower', config('dictionary.completion.valid_language_directions', []));
 
-        return in_array($normalized, $valid, true)
+        if (
+            in_array($normalized, $valid, true)
             || str_contains($normalized, '→')
-            || str_contains($normalized, '->');
+            || str_contains($normalized, '->')
+            || str_contains($normalized, '/')
+        ) {
+            return true;
+        }
+
+        // Accept pairs like "sindhi-english", "en-sd", "arabic–sindhi".
+        $parts = preg_split('/[-–—\/]+/u', $normalized) ?: [];
+        $parts = array_values(array_filter(array_map('trim', $parts)));
+
+        return count($parts) >= 2
+            && collect($parts)->every(fn (string $part) => in_array($part, $valid, true));
     }
 
     private function isCuratedSense(Sense $sense): bool

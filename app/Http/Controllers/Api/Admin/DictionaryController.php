@@ -1137,34 +1137,36 @@ class DictionaryController extends Controller
         }
         $validated['normalized_variant'] = DictionaryText::normalizeForLookup($validated['variant']);
 
-        $variant = Variant::firstOrCreate([
-            'lemma_id' => $lemmaId,
-            'variant' => $validated['variant'],
-        ], [
+        $payload = [
             'normalized_variant' => $validated['normalized_variant'],
-            'dialect' => $validated['dialect'] ?? null,
             'type' => $validated['type'],
             'romanization' => $validated['romanization'] ?? null,
+            'dialect' => $validated['dialect'] ?? null,
             'note' => $validated['note'] ?? null,
             'source' => $validated['source'] ?? null,
             'source_entry_id' => $validated['source_entry_id'] ?? null,
             'review_status' => $validated['review_status'] ?? 'unreviewed',
-        ]);
+        ];
 
-        if (!$variant->wasRecentlyCreated) {
-            $variant->update([
-                'normalized_variant' => $validated['normalized_variant'],
-                'type' => $validated['type'],
-                'romanization' => $validated['romanization'] ?? $variant->romanization,
-                'dialect' => $validated['dialect'] ?? $variant->dialect,
-                'note' => $validated['note'] ?? $variant->note,
-                'source' => $validated['source'] ?? $variant->source,
-                'source_entry_id' => $validated['source_entry_id'] ?? $variant->source_entry_id,
-                'review_status' => $validated['review_status'] ?? $variant->review_status,
-            ]);
+        // BINARY compare keeps diacritic/spelling variants distinct under unicode_ci.
+        $existing = Variant::query()
+            ->where('lemma_id', $lemmaId)
+            ->whereRaw('variant = BINARY ?', [$validated['variant']])
+            ->first();
+
+        if ($existing) {
+            $existing->update($payload);
+
+            return response()->json($existing->fresh());
         }
 
-        return response()->json($variant->fresh(), $variant->wasRecentlyCreated ? 201 : 200);
+        $variant = Variant::create([
+            'lemma_id' => $lemmaId,
+            'variant' => $validated['variant'],
+            ...$payload,
+        ]);
+
+        return response()->json($variant->fresh(), 201);
     }
 
     public function destroyVariant($id)
@@ -1306,17 +1308,34 @@ class DictionaryController extends Controller
             'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
         ]);
 
-        $inflection = LemmaInflection::firstOrCreate([
-            'lemma_id' => $lemmaId,
-            'form' => trim($validated['form']),
-        ], [
+        $form = trim($validated['form']);
+        $payload = [
             'romanization' => $this->nullableTrimmed($validated['romanization'] ?? null),
             'description' => $this->nullableTrimmed($validated['description'] ?? null),
             'source' => $this->nullableTrimmed($validated['source'] ?? null),
             'review_status' => $validated['review_status'] ?? 'unreviewed',
+        ];
+
+        // Use BINARY compare so Arabic forms that differ only by diacritics stay distinct
+        // under utf8mb4_unicode_ci (which otherwise treats them as equal).
+        $existing = LemmaInflection::query()
+            ->where('lemma_id', $lemmaId)
+            ->whereRaw('form = BINARY ?', [$form])
+            ->first();
+
+        if ($existing) {
+            $existing->update($payload);
+
+            return response()->json($existing->fresh());
+        }
+
+        $inflection = LemmaInflection::create([
+            'lemma_id' => $lemmaId,
+            'form' => $form,
+            ...$payload,
         ]);
 
-        return response()->json($inflection->fresh(), $inflection->wasRecentlyCreated ? 201 : 200);
+        return response()->json($inflection->fresh(), 201);
     }
 
     public function destroyInflection($id)
@@ -1341,19 +1360,33 @@ class DictionaryController extends Controller
             'review_status' => 'nullable|in:unreviewed,reviewed,needs_work',
         ]);
 
-        $expression = LemmaIdiomaticExpression::firstOrCreate([
-            'lemma_id' => $lemmaId,
-            'phrase' => trim($validated['phrase']),
-        ], [
+        $expression = LemmaIdiomaticExpression::query()
+            ->where('lemma_id', $lemmaId)
+            ->whereRaw('phrase = BINARY ?', [trim($validated['phrase'])])
+            ->first();
+
+        $payload = [
             'romanization' => $this->nullableTrimmed($validated['romanization'] ?? null),
             'english_gloss' => $this->nullableTrimmed($validated['english_gloss'] ?? null),
             'example_sindhi' => $this->nullableTrimmed($validated['example_sindhi'] ?? null),
             'example_english' => $this->nullableTrimmed($validated['example_english'] ?? null),
             'source' => $this->nullableTrimmed($validated['source'] ?? null),
             'review_status' => $validated['review_status'] ?? 'unreviewed',
+        ];
+
+        if ($expression) {
+            $expression->update($payload);
+
+            return response()->json($expression->fresh());
+        }
+
+        $expression = LemmaIdiomaticExpression::create([
+            'lemma_id' => $lemmaId,
+            'phrase' => trim($validated['phrase']),
+            ...$payload,
         ]);
 
-        return response()->json($expression->fresh(), $expression->wasRecentlyCreated ? 201 : 200);
+        return response()->json($expression->fresh(), 201);
     }
 
     public function destroyIdiomaticExpression($id)
