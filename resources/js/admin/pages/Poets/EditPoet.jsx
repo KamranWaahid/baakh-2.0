@@ -423,6 +423,10 @@ const EditPoetContent = () => {
                                                         src={preview}
                                                         alt="Poet preview"
                                                         className="h-full w-full rounded-md object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            setPreview(null);
+                                                        }}
                                                     />
                                                 ) : (
                                                     <ImagePlus className="h-8 w-8 text-muted-foreground" />

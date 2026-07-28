@@ -189,11 +189,12 @@ chmod -R u+rwX storage bootstrap/cache public/assets/images
 
 ### Poet / media image uploads on cPanel
 
-The app boots from `APP_PATH` while Apache serves `public_html`. The deploy script now
-symlinks `public_html/assets/images` → `APP_PATH/public/assets/images`, and the uploader
-also dual-writes using `DOCUMENT_ROOT` / `MEDIA_WEB_ROOT`.
+The app boots from `APP_PATH` while Apache serves `public_html`. The deploy script keeps a
+**real** `public_html/assets/images` directory (symlinks often return HTTP 403 on shared hosting)
+and syncs it with `APP_PATH/public/assets/images`. Uploads dual-write using `DOCUMENT_ROOT` /
+`MEDIA_WEB_ROOT`.
 
-In `.env` (optional but recommended):
+In `.env` (recommended on cPanel):
 
 ```bash
 MEDIA_DISK=local
@@ -205,6 +206,27 @@ Then clear config cache:
 ```bash
 cd "$HOME/baakh_app"
 php artisan config:clear
+```
+
+If poet images return 403 after an older deploy that created a symlink:
+
+```bash
+APP_IMAGES="$HOME/baakh_app/public/assets/images"
+PUB_IMAGES="$HOME/public_html/assets/images"
+
+mkdir -p "$HOME/public_html/assets" "$APP_IMAGES"
+if [ -L "$PUB_IMAGES" ]; then
+  TMP="$(mktemp -d "$HOME/public_html/assets/.images-fix.XXXXXX")"
+  rsync -a "$APP_IMAGES/" "$TMP/"
+  rm -f "$PUB_IMAGES"
+  mv "$TMP" "$PUB_IMAGES"
+fi
+chmod -R u+rwX "$APP_IMAGES" "$PUB_IMAGES"
+
+# Ensure dual-write for future uploads
+grep -q '^MEDIA_WEB_ROOT=' "$HOME/baakh_app/.env" \
+  || echo "MEDIA_WEB_ROOT=$HOME/public_html" >> "$HOME/baakh_app/.env"
+cd "$HOME/baakh_app" && php artisan config:clear
 ```
 
 If images still 404 after upload, re-run:
