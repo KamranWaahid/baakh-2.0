@@ -25,7 +25,6 @@ import {
     Info,
     MessageSquare,
     Globe,
-    Mail
 } from 'lucide-react';
 
 export const SidebarContext = React.createContext({ onLinkClick: () => { } });
@@ -93,10 +92,14 @@ const Sidebar = ({ onLinkClick }) => {
     return (
         <SidebarContext.Provider value={{ onLinkClick }}>
             <div className="h-full min-h-0 flex flex-col gap-4 py-4 overflow-y-auto overscroll-contain">
-                <Link to="/" className="px-6 pr-12 flex items-center gap-2 group min-w-0">
-                    <Logo className="h-8 w-8 text-primary group-hover:scale-110 transition-transform shrink-0" />
-                    <span className="font-bold text-xl truncate">Baakh Admin</span>
-                </Link>
+                <a
+                    href="/"
+                    className="px-6 flex items-center min-w-0 no-underline hover:opacity-100 hover:bg-transparent focus:outline-none focus-visible:ring-0"
+                    aria-label="Baakh home"
+                    title="Baakh home"
+                >
+                    <Logo className="h-8 w-8 text-primary shrink-0" />
+                </a>
                 <nav className="flex-1 px-4 flex flex-col gap-1">
                     <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>
 
@@ -129,17 +132,6 @@ const Sidebar = ({ onLinkClick }) => {
                         <SidebarLink to="/admin/dictionary/qa-search" icon={Shield}>QA & Search</SidebarLink>
                     </SidebarGroup>
 
-                    <SidebarGroup icon={Database} label="Corpus">
-                        <SidebarLink to="/admin/corpus/sentence-explorer" icon={BookOpen}>Sentence Explorer</SidebarLink>
-                        <SidebarLink to="/admin/corpus/context-clusters" icon={AlignCenter}>Context Clusters</SidebarLink>
-                    </SidebarGroup>
-
-                    <SidebarGroup icon={LayoutDashboard} label="Analytics">
-                        <SidebarLink to="/admin/analytics/frequency" icon={Layers}>Frequency Stats</SidebarLink>
-                        <SidebarLink to="/admin/analytics/dialect" icon={Map}>Dialect Coverage</SidebarLink>
-                        <SidebarLink to="/admin/analytics/trends" icon={Type}>Usage Trends</SidebarLink>
-                    </SidebarGroup>
-
                     <div className="my-2 border-t" />
                     <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Locations</div>
                     <SidebarGroup icon={MapPin} label="Locations">
@@ -153,12 +145,6 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarGroup icon={Shield} label="Moderation">
                         <SidebarLink to="/admin/moderation/reports" icon={Flag}>Reports</SidebarLink>
                         <SidebarLink to="/admin/moderation/feedback" icon={MessageSquare}>User Feedback</SidebarLink>
-                    </SidebarGroup>
-
-                    <div className="my-2 border-t" />
-                    <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Communications</div>
-                    <SidebarGroup icon={Mail} label="Emails">
-                        <SidebarLink to="/admin/emails/templates" icon={Mail}>Email Templates</SidebarLink>
                     </SidebarGroup>
 
                     <div className="my-2 border-t" />

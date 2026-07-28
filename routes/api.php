@@ -221,6 +221,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::post('poet-books/{id}', [\App\Http\Controllers\Api\Admin\PoetBookController::class, 'update']);
 
         Route::get('poets/create', [\App\Http\Controllers\Api\Admin\PoetController::class, 'create']);
+        Route::get('poets/{id}/editor-json', [\App\Http\Controllers\Api\Admin\PoetController::class, 'editorJson']);
+        Route::post('poets/{id}/import-json', [\App\Http\Controllers\Api\Admin\PoetController::class, 'importJson']);
         Route::apiResource('poets', \App\Http\Controllers\Api\Admin\PoetController::class);
         Route::post('poets/{id}/restore', [\App\Http\Controllers\Api\Admin\PoetController::class, 'restore']);
         Route::delete('poets/{id}/permanent', [\App\Http\Controllers\Api\Admin\PoetController::class, 'permanentDelete']);

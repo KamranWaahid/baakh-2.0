@@ -19,14 +19,14 @@ const PoemDetail = ({ lang }) => {
     const { poemSlug } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [verseBaseSize, setVerseBaseSize] = useState(18);
+    const [verseBaseSize, setVerseBaseSize] = useState(24);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) {
             return undefined;
         }
         const mq = window.matchMedia('(min-width: 768px)');
-        const sync = () => setVerseBaseSize(mq.matches ? 20 : 18);
+        const sync = () => setVerseBaseSize(mq.matches ? 28 : 24);
         sync();
         mq.addEventListener('change', sync);
         return () => mq.removeEventListener('change', sync);
@@ -48,7 +48,7 @@ const PoemDetail = ({ lang }) => {
     if (isLoading) {
         return (
             <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white">
-                <article className="w-full max-w-[680px] mb-12 md:mb-20 space-y-8">
+                <article className="w-full max-w-[760px] mb-12 md:mb-20 space-y-8">
                     <Skeleton className="h-6 w-32" />
                     <Skeleton className="h-16 w-full" />
                     <div className="flex items-center gap-4">
@@ -106,7 +106,7 @@ const PoemDetail = ({ lang }) => {
 
     return (
         <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
-            <article className="w-full max-w-[680px] mb-12 md:mb-20 animate-fade-in-up">
+            <article className="w-full max-w-[760px] mb-12 md:mb-20 animate-fade-in-up">
                 {/* Header */}
                 <header className="mb-8">
                     {/* Badge */}
@@ -153,14 +153,14 @@ const PoemDetail = ({ lang }) => {
                                 isRtl={isRtl}
                                 align={verseAlign}
                                 baseFontSize={verseBaseSize}
-                                minFontSize={11}
-                                className="mb-6"
+                                minFontSize={15}
+                                className="mb-8 md:mb-10"
                                 interactive
                             />
                         ))
                     ) : (
                         <div
-                            className={`prose prose-lg max-w-none leading-[1.7] text-[18px] md:text-[20px] ${verseAlign === 'center' ? 'text-center' : verseAlign === 'left' ? 'text-left' : 'text-right'} whitespace-pre-line`}
+                            className={`prose prose-xl max-w-none leading-[1.9] text-[22px] md:text-[26px] ${verseAlign === 'center' ? 'text-center' : verseAlign === 'left' ? 'text-left' : 'text-right'} whitespace-pre-line`}
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }}
                         />
                     )}

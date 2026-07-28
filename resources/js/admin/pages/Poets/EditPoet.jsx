@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,10 +24,11 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Trash2, Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { Trash2, Plus, AlertCircle, Loader2, ImagePlus, X, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LocationCombobox } from '@/components/ui/location-combobox';
-import AvatarImgOrIcon from '@/web/components/AvatarImgOrIcon';
+import { getImageUrl } from '@/web/utils/url';
+import PoetEditorJsonModal from './PoetEditorJsonModal';
 
 // Simple Error Boundary to catch render crashes
 class EditPoetErrorBoundary extends React.Component {
@@ -84,7 +85,12 @@ const EditPoetContent = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [preview, setPreview] = useState(null);
+    const [imageFile, setImageFile] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [submitError, setSubmitError] = useState(null);
+    const [placeLabels, setPlaceLabels] = useState({});
+    const [jsonModalOpen, setJsonModalOpen] = useState(false);
+    const fileInputRef = useRef(null);
 
     const { data: createData } = useQuery({
         queryKey: ['poets-create-data'],
@@ -95,6 +101,8 @@ const EditPoetContent = () => {
         staleTime: 0,
         refetchOnMount: 'always',
     });
+
+    const cityOptions = createData?.cities || [];
 
     const { data: poet, isLoading, isError, error } = useQuery({
         queryKey: ['poet', id],
@@ -124,26 +132,49 @@ const EditPoetContent = () => {
 
     useEffect(() => {
         if (poet) {
-            form.reset({
-                poet_slug: poet.poet_slug || '',
-                date_of_birth: poet.date_of_birth || '',
-                date_of_death: poet.date_of_death || '',
-                visibility: poet.visibility === 1,
-                is_featured: poet.is_featured === 1,
-                details: Array.isArray(poet.all_details) ? poet.all_details.map(d => ({
+            const labels = {};
+            const details = Array.isArray(poet.all_details) ? poet.all_details.map((d, index) => {
+                const birthId = d.birth_place != null && d.birth_place !== '' ? String(d.birth_place) : null;
+                const deathId = d.death_place != null && d.death_place !== '' ? String(d.death_place) : null;
+                if (birthId && d.birth_place_name) {
+                    labels[`birth:${index}`] = d.birth_place_name;
+                }
+                if (deathId && d.death_place_name) {
+                    labels[`death:${index}`] = d.death_place_name;
+                }
+                return {
                     lang: d.lang || 'sd',
                     poet_name: d.poet_name || '',
                     poet_laqab: d.poet_laqab || '',
                     pen_name: d.pen_name || '',
                     tagline: d.tagline || '',
                     poet_bio: d.poet_bio || '',
-                    birth_place: d.birth_place?.toString() || null,
-                    death_place: d.death_place?.toString() || null,
-                })) : [],
+                    birth_place: birthId,
+                    death_place: deathId,
+                };
+            }) : [];
+
+            form.reset({
+                poet_slug: poet.poet_slug || '',
+                date_of_birth: poet.date_of_birth || '',
+                date_of_death: poet.date_of_death || '',
+                visibility: poet.visibility === 1 || poet.visibility === true,
+                is_featured: poet.is_featured === 1 || poet.is_featured === true,
+                image: null,
+                details,
             });
-            if (poet.poet_pic) {
-                const pic = poet.poet_pic;
-                setPreview(/^https?:\/\//i.test(pic) ? pic : pic.startsWith('/') ? pic : `/${pic}`);
+            setPlaceLabels(labels);
+            setImageFile(null);
+            setRemoveImage(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+
+            const pic = poet.poet_pic_url || poet.poet_pic;
+            if (pic) {
+                setPreview(/^https?:\/\//i.test(pic) || pic.startsWith('blob:') ? pic : getImageUrl(pic, 'poet'));
+            } else {
+                setPreview(null);
             }
         }
     }, [poet, form]);
@@ -170,8 +201,10 @@ const EditPoetContent = () => {
             formData.append('is_featured', data.is_featured ? '1' : '0');
         }
 
-        if (data.image && data.image.length > 0) {
-            formData.append('image', data.image[0]);
+        if (imageFile instanceof File) {
+            formData.append('image', imageFile);
+        } else if (removeImage) {
+            formData.append('remove_image', '1');
         }
 
         if (dirty.details) {
@@ -214,8 +247,26 @@ const EditPoetContent = () => {
     const handleImageChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (preview && preview.startsWith('blob:')) {
+                URL.revokeObjectURL(preview);
+            }
             setPreview(URL.createObjectURL(file));
+            setImageFile(file);
+            setRemoveImage(false);
             form.setValue('image', e.target.files, { shouldDirty: true, shouldValidate: true });
+        }
+    };
+
+    const handleRemoveImage = () => {
+        if (preview && preview.startsWith('blob:')) {
+            URL.revokeObjectURL(preview);
+        }
+        setPreview(null);
+        setImageFile(null);
+        setRemoveImage(true);
+        form.setValue('image', null, { shouldDirty: true, shouldValidate: true });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -256,7 +307,13 @@ const EditPoetContent = () => {
 
     return (
         <div className="max-w-4xl mx-auto pb-10">
-            <h2 className="text-2xl font-bold mb-4">Edit Poet</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <h2 className="text-2xl font-bold">Edit Poet</h2>
+                <Button type="button" variant="outline" size="sm" onClick={() => setJsonModalOpen(true)}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Poet JSON
+                </Button>
+            </div>
 
             {submitError && (
                 <Alert variant="destructive" className="mb-6">
@@ -356,31 +413,58 @@ const EditPoetContent = () => {
                             <FormField
                                 control={form.control}
                                 name="image"
-                                render={({ field: { value, onChange, ...fieldProps } }) => (
+                                render={({ field: { value, onChange, ref, ...fieldProps } }) => (
                                     <FormItem>
                                         <FormLabel>Profile Image</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                {...fieldProps}
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                                                onChange={(event) => {
-                                                    handleImageChange(event);
-                                                    onChange(event.target.files);
-                                                }}
-                                            />
-                                        </FormControl>
-                                        {preview && (
-                                            <div className="mt-2 h-32 w-32 overflow-hidden rounded-md">
-                                                <AvatarImgOrIcon
-                                                    src={preview}
-                                                    imageType="poet"
-                                                    alt=""
-                                                    className="h-full w-full rounded-md"
-                                                    imgClassName="h-full w-full rounded-md object-cover"
-                                                />
+                                        <div className="flex flex-col sm:flex-row gap-4 items-start">
+                                            <div className="relative h-32 w-32 rounded-md border bg-muted flex items-center justify-center">
+                                                {preview ? (
+                                                    <img
+                                                        src={preview}
+                                                        alt="Poet preview"
+                                                        className="h-full w-full rounded-md object-cover"
+                                                    />
+                                                ) : (
+                                                    <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                                                )}
+                                                {preview && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-md"
+                                                        onClick={handleRemoveImage}
+                                                        aria-label="Remove profile image"
+                                                        title="Remove image"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </div>
-                                        )}
+                                            <div className="flex-1 space-y-2">
+                                                <FormControl>
+                                                    <Input
+                                                        {...fieldProps}
+                                                        ref={(el) => {
+                                                            fileInputRef.current = el;
+                                                            if (typeof ref === 'function') ref(el);
+                                                            else if (ref) ref.current = el;
+                                                        }}
+                                                        type="file"
+                                                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                                                        onChange={(event) => {
+                                                            handleImageChange(event);
+                                                            onChange(event.target.files);
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {removeImage
+                                                        ? 'Image will be removed when you save.'
+                                                        : 'Choose a new JPEG, PNG, or WebP (max 10 MB) to replace the current photo.'}
+                                                </p>
+                                            </div>
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -485,9 +569,22 @@ const EditPoetContent = () => {
                                                     <FormLabel>Birth Place</FormLabel>
                                                     <FormControl>
                                                         <LocationCombobox
-                                                            options={createData?.cities || []}
+                                                            options={cityOptions}
                                                             value={field.value}
-                                                            onChange={field.onChange}
+                                                            selectedLabel={
+                                                                cityOptions.find((c) => String(c.id) === String(field.value))?.name
+                                                                || placeLabels[`birth:${index}`]
+                                                                || null
+                                                            }
+                                                            onChange={(next) => {
+                                                                field.onChange(next || null);
+                                                                if (next) {
+                                                                    const name = cityOptions.find((c) => String(c.id) === String(next))?.name;
+                                                                    if (name) {
+                                                                        setPlaceLabels((prev) => ({ ...prev, [`birth:${index}`]: name }));
+                                                                    }
+                                                                }
+                                                            }}
                                                             placeholder="Select Birth City"
                                                         />
                                                     </FormControl>
@@ -504,9 +601,22 @@ const EditPoetContent = () => {
                                                     <FormLabel>Death Place</FormLabel>
                                                     <FormControl>
                                                         <LocationCombobox
-                                                            options={createData?.cities || []}
+                                                            options={cityOptions}
                                                             value={field.value}
-                                                            onChange={field.onChange}
+                                                            selectedLabel={
+                                                                cityOptions.find((c) => String(c.id) === String(field.value))?.name
+                                                                || placeLabels[`death:${index}`]
+                                                                || null
+                                                            }
+                                                            onChange={(next) => {
+                                                                field.onChange(next || null);
+                                                                if (next) {
+                                                                    const name = cityOptions.find((c) => String(c.id) === String(next))?.name;
+                                                                    if (name) {
+                                                                        setPlaceLabels((prev) => ({ ...prev, [`death:${index}`]: name }));
+                                                                    }
+                                                                }
+                                                            }}
                                                             placeholder="Select Death City"
                                                         />
                                                     </FormControl>
@@ -554,6 +664,12 @@ const EditPoetContent = () => {
                     </div>
                 </form>
             </Form>
+
+            <PoetEditorJsonModal
+                poetId={id}
+                open={jsonModalOpen}
+                onClose={() => setJsonModalOpen(false)}
+            />
         </div>
     );
 };

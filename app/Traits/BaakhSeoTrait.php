@@ -21,7 +21,7 @@ trait BaakhSeoTrait
     public function SEO_General($title, $desc, $seo_image = null, $keywords = null, $additionalData = [])
     {
         // Set default image if SEO image is not provided or it's not a path (might be a URL)
-        $image = $seo_image ? $seo_image : asset('assets/og/baakh-1200x630.png');
+        $image = $seo_image ? $seo_image : asset('assets/og/baakh-og-v2-1200x630.png');
 
         $currentLang = app()->getLocale();
         $isSd = $currentLang === 'sd';
@@ -215,7 +215,7 @@ trait BaakhSeoTrait
         $keywords = $this->appendKeywords([$poet_name, $poetLaqab . '\'s Poetry']);
 
         // Link previews (WhatsApp, etc.): Baakh logo on white
-        $ogImage = asset('assets/og/baakh-1200x630.png');
+        $ogImage = asset('assets/og/baakh-og-v2-1200x630.png');
 
         // SEO metadata
         SEOTools::addImages($ogImage);
@@ -397,7 +397,7 @@ trait BaakhSeoTrait
         $alternateUrl = url("{$alternateLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}");
 
         // WhatsApp / social link previews: Baakh logo on white (not poetry card or poet photo).
-        $image = $seo_image ? $seo_image : asset('assets/og/baakh-1200x630.png');
+        $image = $seo_image ? $seo_image : asset('assets/og/baakh-og-v2-1200x630.png');
 
         SEOTools::addImages($image);
         SEOMeta::setTitle($title); // Set title in Sindhi

@@ -19,7 +19,7 @@ const SidebarLeft = ({ lang }) => {
     ];
 
     return (
-        <aside className="w-[240px] border-e border-gray-100 h-[calc(100dvh-var(--baakh-header-h,57px))] sticky top-[var(--baakh-header-h,57px)] hidden lg:flex flex-col p-6 bg-white shrink-0">
+        <aside className="w-[240px] border-e border-gray-100 hidden lg:flex flex-col p-6 bg-white shrink-0 self-start sticky top-[var(--baakh-header-h,57px)] z-30 h-[calc(100dvh-var(--baakh-header-h,57px))] overflow-y-auto overscroll-contain">
             <nav className="space-y-1 mb-8">
                 {navItems.map((item) => {
                     const isActive = location.pathname === item.path;

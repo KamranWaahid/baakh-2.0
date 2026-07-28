@@ -21,21 +21,31 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Trash2, ArrowLeft, Plus } from 'lucide-react';
+import { Trash2, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+const formatRoleLabel = (name = '') => {
+    const label = name.replace(/_/g, ' ');
+    return label ? label.charAt(0).toUpperCase() + label.slice(1) : 'Role';
+};
 
 const TeamMembers = () => {
     const { id: teamId } = useParams();
     const queryClient = useQueryClient();
-    const { isSuperAdmin, canManage, canDelete } = useAuth();
-    const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm({
+    const { canManage, canDelete } = useAuth();
+    const [formError, setFormError] = useState(null);
+
+    const { register, handleSubmit, reset, formState: { errors }, setValue, watch } = useForm({
         defaultValues: {
             role: 'member',
             system_role: 'viewer'
         }
     });
 
-    // Fetch team details
+    const teamRole = watch('role');
+    const systemRole = watch('system_role');
+
     const { data: team } = useQuery({
         queryKey: ['team', teamId],
         queryFn: async () => {
@@ -44,7 +54,6 @@ const TeamMembers = () => {
         }
     });
 
-    // Fetch members
     const { data: members, isLoading } = useQuery({
         queryKey: ['team-members', teamId],
         queryFn: async () => {
@@ -53,25 +62,36 @@ const TeamMembers = () => {
         }
     });
 
-    // Add Member Mutation
+    const { data: roles } = useQuery({
+        queryKey: ['roles'],
+        queryFn: async () => {
+            const response = await api.get('/api/admin/roles');
+            return response.data;
+        }
+    });
+
     const addMemberMutation = useMutation({
         mutationFn: async (data) => {
             return api.post(`/api/admin/teams/${teamId}/members`, data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(['team-members', teamId]);
-            reset();
+            queryClient.invalidateQueries(['admins']);
+            queryClient.invalidateQueries(['editors']);
+            queryClient.invalidateQueries(['viewers']);
+            setFormError(null);
+            reset({ role: 'member', system_role: 'viewer' });
         },
         onError: (error) => {
-            if (error.response?.data?.errors?.email) {
-                alert(error.response.data.errors.email[0]);
+            const errorsPayload = error.response?.data?.errors;
+            if (errorsPayload) {
+                setFormError(Object.values(errorsPayload).flat().join(' '));
             } else {
-                alert("Failed to add member: " + (error.response?.data?.message || "Unknown error"));
+                setFormError(error.response?.data?.message || 'Failed to add member');
             }
         }
     });
 
-    // Remove Member Mutation
     const removeMemberMutation = useMutation({
         mutationFn: async (userId) => {
             return api.delete(`/api/admin/teams/${teamId}/members/${userId}`);
@@ -81,7 +101,6 @@ const TeamMembers = () => {
         }
     });
 
-    // Update Role Mutation
     const updateRoleMutation = useMutation({
         mutationFn: async ({ userId, role }) => {
             return api.put(`/api/admin/teams/${teamId}/members/${userId}`, { role });
@@ -92,6 +111,7 @@ const TeamMembers = () => {
     });
 
     const onAddMember = (data) => {
+        setFormError(null);
         addMemberMutation.mutate(data);
     };
 
@@ -112,7 +132,6 @@ const TeamMembers = () => {
             </div>
 
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-                {/* Add Member Form */}
                 {canManage && (
                     <Card className="lg:col-span-2 h-fit">
                         <CardHeader className="pb-3 md:pb-6">
@@ -122,8 +141,9 @@ const TeamMembers = () => {
                             <form onSubmit={handleSubmit(onAddMember)} className="space-y-4">
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Full Name (English) *</label>
-                                        <Input {...register('name', { required: true })} placeholder="John Doe" className="h-10" />
+                                        <label className="text-sm font-medium">Full Name (English)</label>
+                                        <Input {...register('name')} placeholder="John Doe" className="h-10" />
+                                        <p className="text-xs text-gray-400">Required only when creating a new account.</p>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Full Name (Sindhi)</label>
@@ -133,8 +153,8 @@ const TeamMembers = () => {
 
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium">Username *</label>
-                                        <Input {...register('username', { required: true })} placeholder="johndoe" className="h-10" />
+                                        <label className="text-sm font-medium">Username</label>
+                                        <Input {...register('username')} placeholder="johndoe" className="h-10" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Email Address *</label>
@@ -145,49 +165,70 @@ const TeamMembers = () => {
 
                                 <div className="grid sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
+                                        <label className="text-sm font-medium">Password</label>
+                                        <Input
+                                            type="password"
+                                            {...register('password', {
+                                                minLength: { value: 8, message: 'Min 8 characters' }
+                                            })}
+                                            placeholder="••••••••"
+                                            className="h-10"
+                                        />
+                                        {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
+                                        <p className="text-xs text-gray-400">Required when creating a new account. Ignored if email already exists.</p>
+                                    </div>
+                                    <div className="space-y-2">
                                         <label className="text-sm font-medium">Phone Number</label>
                                         <Input {...register('phone')} placeholder="+92..." className="h-10" />
                                     </div>
+                                </div>
+
+                                <div className="grid sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Team Role</label>
-                                        <Select onValueChange={(v) => setValue('role', v)} defaultValue="member">
+                                        <Select value={teamRole} onValueChange={(v) => setValue('role', v)}>
                                             <SelectTrigger className="h-10">
                                                 <SelectValue placeholder="Select team role" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="member">Team Member</SelectItem>
-                                                <SelectItem value="lead">Team Lead</SelectItem>
-                                                <SelectItem value="manager">Project Manager</SelectItem>
+                                                <SelectItem value="member">Member</SelectItem>
+                                                <SelectItem value="admin">Admin</SelectItem>
+                                                <SelectItem value="owner">Owner</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">System Role</label>
+                                        <Select value={systemRole} onValueChange={(v) => setValue('system_role', v)}>
+                                            <SelectTrigger className="h-10">
+                                                <SelectValue placeholder="Select system role" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {(Array.isArray(roles) ? roles : []).map((role) => (
+                                                    <SelectItem key={role.id || role.name} value={role.name}>
+                                                        {formatRoleLabel(role.name)}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-gray-400">Controls access across the admin panel (admin, editor, viewer…).</p>
+                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">System Role (Admin Access Level)</label>
-                                    <Select onValueChange={(v) => setValue('system_role', v)} defaultValue="viewer">
-                                        <SelectTrigger className="h-10">
-                                            <SelectValue placeholder="Select system role" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="admin">Admin (Manage Teams/Users)</SelectItem>
-                                            <SelectItem value="editor">Editor (Manage Content)</SelectItem>
-                                            <SelectItem value="contributor">Contributor (Add Content)</SelectItem>
-                                            <SelectItem value="viewer">Viewer (Read Only)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <p className="text-xs text-gray-400">This determines what the user can see/do in the entire admin panel.</p>
-                                </div>
+                                {formError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-md text-sm">
+                                        {formError}
+                                    </div>
+                                )}
 
-                                <Button type="submit" className="w-full sm:w-auto h-11 px-8" disabled={addMemberMutation.isLoading}>
-                                    {addMemberMutation.isLoading ? 'Adding...' : 'Add Member to Team'}
+                                <Button type="submit" className="w-full sm:w-auto h-11 px-8" disabled={addMemberMutation.isPending}>
+                                    {addMemberMutation.isPending ? 'Adding...' : 'Add Member to Team'}
                                 </Button>
                             </form>
                         </CardContent>
                     </Card>
                 )}
 
-                {/* Members List */}
                 <Card className={canManage ? "lg:col-span-3" : "col-span-1 lg:col-span-3"}>
                     <CardHeader className="pb-3 md:pb-6">
                         <CardTitle className="text-lg text-primary">Team Members ({members?.length || 0})</CardTitle>
@@ -198,7 +239,8 @@ const TeamMembers = () => {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="min-w-[150px]">User</TableHead>
-                                        <TableHead>Role</TableHead>
+                                        <TableHead>Team Role</TableHead>
+                                        <TableHead className="hidden md:table-cell">System Role</TableHead>
                                         <TableHead className="hidden sm:table-cell">Joined</TableHead>
                                         {canManage && <TableHead className="text-right">Actions</TableHead>}
                                     </TableRow>
@@ -214,23 +256,34 @@ const TeamMembers = () => {
                                             </TableCell>
                                             <TableCell className="whitespace-nowrap">
                                                 <Select
-                                                    defaultValue={member.role}
+                                                    value={member.role}
                                                     onValueChange={(val) => updateRoleMutation.mutate({ userId: member.user_id, role: val })}
-                                                    disabled={!canManage || updateRoleMutation.isLoading || member.role === 'owner'}
+                                                    disabled={!canManage || updateRoleMutation.isPending || member.role === 'owner'}
                                                 >
                                                     <SelectTrigger className="w-[110px] h-8 text-xs">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="member">Member</SelectItem>
-                                                        <SelectItem value="lead">Lead</SelectItem>
-                                                        <SelectItem value="manager">Manager</SelectItem>
+                                                        <SelectItem value="admin">Admin</SelectItem>
                                                         <SelectItem value="owner">Owner</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </TableCell>
+                                            <TableCell className="hidden md:table-cell">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {(member.user?.roles || []).map((role) => (
+                                                        <Badge key={role.id || role.name} variant="secondary" className="text-[10px] uppercase font-normal">
+                                                            {formatRoleLabel(role.name)}
+                                                        </Badge>
+                                                    ))}
+                                                    {(!member.user?.roles || member.user.roles.length === 0) && (
+                                                        <span className="text-xs text-gray-400">-</span>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="text-xs text-gray-400 whitespace-nowrap hidden sm:table-cell">
-                                                {new Date(member.joined_at).toLocaleDateString()}
+                                                {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : '-'}
                                             </TableCell>
                                             {canManage && (
                                                 <TableCell className="text-right whitespace-nowrap">
@@ -239,7 +292,7 @@ const TeamMembers = () => {
                                                             variant="ghost"
                                                             size="icon"
                                                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                            disabled={!canDelete}
+                                                            disabled={!canDelete || removeMemberMutation.isPending}
                                                             onClick={() => {
                                                                 if (confirm(`Remove ${member.user?.name} from team?`)) {
                                                                     removeMemberMutation.mutate(member.user_id);
@@ -255,7 +308,7 @@ const TeamMembers = () => {
                                     ))}
                                     {(!members || members.length === 0) && (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                                                 No members found.
                                             </TableCell>
                                         </TableRow>

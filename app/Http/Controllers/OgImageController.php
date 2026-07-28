@@ -165,7 +165,7 @@ class OgImageController extends Controller
             );
         }
 
-        $brand = public_path('assets/og/baakh-1200x630.png');
+        $brand = public_path('assets/og/baakh-og-v2-1200x630.png');
         if (is_file($brand) && is_readable($brand)) {
             return response(file_get_contents($brand), $status)
                 ->header('Content-Type', 'image/png')

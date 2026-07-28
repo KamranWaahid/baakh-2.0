@@ -25,11 +25,19 @@ const TeamForm = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+    const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
         defaultValues: {
             admin_role: 'admin'
         }
     });
+
+    useEffect(() => {
+        register('role');
+        register('admin_role');
+    }, [register]);
+
+    const adminRole = watch('admin_role') || 'admin';
+    const teamRole = watch('role');
 
     const { data: team, isLoading } = useQuery({
         queryKey: ['team', id],
@@ -112,7 +120,7 @@ const TeamForm = () => {
                             {isSimpleMode && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Team Role Category</label>
-                                    <Select onValueChange={(val) => setValue('role', val)}>
+                                    <Select value={teamRole || undefined} onValueChange={(val) => setValue('role', val)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select role category" />
                                         </SelectTrigger>
@@ -205,7 +213,7 @@ const TeamForm = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">System Role</label>
-                                    <Select onValueChange={(val) => setValue('admin_role', val)} defaultValue="admin">
+                                    <Select value={adminRole} onValueChange={(val) => setValue('admin_role', val)} defaultValue="admin">
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select role" />
                                         </SelectTrigger>

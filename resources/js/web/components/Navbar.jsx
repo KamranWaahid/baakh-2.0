@@ -166,7 +166,8 @@ const Navbar = ({ lang }) => {
     };
 
     const scrollDirection = useScrollDirection();
-    const isHidden = scrollDirection === 'down' && isMobile;
+    // Hide-on-scroll only on mobile; keep header sticky and visible on desktop.
+    const isHidden = isMobile && scrollDirection === 'down';
     const headerRef = useRef(null);
 
     useLayoutEffect(() => {
