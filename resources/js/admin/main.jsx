@@ -53,6 +53,10 @@ import PoetryList from './pages/Poetry/PoetryList';
 import CreatePoetry from './pages/Poetry/CreatePoetry';
 import CreateCouplet from './pages/Poetry/CreateCouplet';
 import CoupletsList from './pages/Poetry/CoupletsList';
+import LyricsList from './pages/Lyrics/LyricsList';
+import CreateLyrics from './pages/Lyrics/CreateLyrics';
+import SingersList from './pages/Singers/SingersList';
+import CreateSinger from './pages/Singers/CreateSinger';
 import TagsList from './pages/Tags/TagsList';
 import TagForm from './pages/Tags/TagForm';
 import CategoriesList from './pages/Categories/CategoriesList';
@@ -196,6 +200,48 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CoupletsList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/lyrics" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <LyricsList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/lyrics/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateLyrics />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/lyrics/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateLyrics />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/singers" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <SingersList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/singers/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateSinger />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/singers/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateSinger />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

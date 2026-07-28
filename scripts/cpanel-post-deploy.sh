@@ -154,11 +154,14 @@ publish_public_files() {
     --exclude "assets/images" \
     "$app_public/" "$PUBLIC_PATH/"
 
-  ensure_media_images_symlink "$app_public"
+  ensure_media_images_sync "$app_public"
   patch_public_index
 }
 
-ensure_media_images_symlink() {
+# Keep a REAL public_html/assets/images directory (not a symlink).
+# Symlinks from public_html → baakh_app often 403 on shared Apache (FollowSymLinks /
+# open_basedir). Uploads dual-write via MEDIA_WEB_ROOT / DOCUMENT_ROOT.
+ensure_media_images_sync() {
   local app_public="${1:?public root is required}"
   local app_images="${app_public}/assets/images"
   local public_assets="${PUBLIC_PATH}/assets"
@@ -166,27 +169,31 @@ ensure_media_images_symlink() {
 
   mkdir -p "${app_public}/assets" "$app_images" "$public_assets"
 
-  # If public_html still has a real images tree, merge it into APP_PATH then replace with a symlink
-  # so runtime uploads to APP_PATH/public are immediately visible on the live site.
-  if [ -d "$public_images" ] && [ ! -L "$public_images" ]; then
-    echo "Merging existing public_html/assets/images into app public..."
-    rsync -a "$public_images/" "$app_images/"
-    rm -rf "$public_images"
-  fi
-
+  # Replace a broken/forbidden symlink with a real directory seeded from the app copy.
   if [ -L "$public_images" ]; then
-    ln -sfn "$app_images" "$public_images"
+    echo "Replacing public_html/assets/images symlink with a real directory (avoids Apache 403)..."
+    local tmp_images
+    tmp_images="$(mktemp -d "${PUBLIC_PATH}/assets/.images-restore.XXXXXX")"
+    # Prefer files reachable via the symlink when it still resolves.
+    if [ -d "$public_images" ]; then
+      rsync -a "$public_images/" "$tmp_images/" 2>/dev/null || true
+    fi
+    rsync -a "$app_images/" "$tmp_images/"
+    rm -f "$public_images"
+    mv "$tmp_images" "$public_images"
   elif [ ! -e "$public_images" ]; then
-    ln -sfn "$app_images" "$public_images"
-  fi
-
-  if [ -L "$public_images" ]; then
-    echo "Linked $public_images -> $app_images (runtime poet uploads stay live)."
+    mkdir -p "$public_images"
+    rsync -a "$app_images/" "$public_images/"
   else
-    echo "Warning: could not symlink media images; set MEDIA_WEB_ROOT=$PUBLIC_PATH in .env" >&2
+    # Both are real dirs: merge both ways so neither side loses uploads.
+    echo "Syncing poet/media images between app and public_html..."
+    rsync -a "$public_images/" "$app_images/"
+    rsync -a "$app_images/" "$public_images/"
   fi
 
-  chmod -R u+rwX "$app_images" 2>/dev/null || true
+  chmod -R u+rwX "$app_images" "$public_images" 2>/dev/null || true
+  echo "Media images ready at $public_images (real directory)."
+  echo "Tip: set MEDIA_WEB_ROOT=$PUBLIC_PATH in $APP_PATH/.env so new uploads dual-write."
 }
 
 verify_vite_build() {

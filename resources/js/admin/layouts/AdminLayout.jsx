@@ -60,11 +60,11 @@ const AdminLayout = ({ children }) => {
     };
 
     return (
-        <div className="admin-shell grid min-h-[100dvh] w-full max-w-[100vw] overflow-x-clip md:grid-cols-[220px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)]">
-            <div className="hidden border-r bg-muted/40 md:block md:min-h-[100dvh] md:sticky md:top-0 md:h-[100dvh] md:overflow-y-auto overscroll-contain">
+        <div className="admin-shell flex min-h-[100dvh] w-full">
+            <aside className="hidden md:fixed md:inset-y-0 md:z-30 md:flex md:w-[220px] lg:w-[280px] md:flex-col border-r bg-muted/40 overflow-y-auto overscroll-contain">
                 <Sidebar />
-            </div>
-            <div className="flex min-w-0 flex-col max-w-full">
+            </aside>
+            <div className="flex min-w-0 flex-1 flex-col max-w-full md:pl-[220px] lg:pl-[280px]">
                 <header className="sticky top-0 z-40 flex h-14 items-center gap-2 sm:gap-4 border-b bg-background px-3 sm:px-4 lg:h-[60px] lg:px-6">
                     <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                         <SheetTrigger asChild>
@@ -119,7 +119,7 @@ const AdminLayout = ({ children }) => {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </header>
-                <main className="flex min-w-0 flex-1 flex-col gap-4 p-3 sm:p-4 lg:gap-6 lg:p-6 overflow-x-clip">
+                <main className="flex min-w-0 flex-1 flex-col gap-4 overflow-x-clip p-3 sm:p-4 lg:gap-6 lg:p-6">
                     <div
                         key={location.key}
                         className="admin-page flex min-w-0 w-full max-w-full flex-1 flex-col gap-4 lg:gap-6 animate-in fade-in slide-in-from-bottom-1 duration-500 ease-out fill-mode-forward"

@@ -46,16 +46,16 @@ const HesudharBulkCheck = () => {
     };
 
     return (
-        <div className="p-4 md:p-8 space-y-6">
-            <div className="flex items-center gap-3 md:gap-4">
-                <Button variant="ghost" size="icon" asChild className="h-8 w-8 md:h-10 md:w-10">
+        <div className="min-w-0 w-full max-w-full space-y-4 p-0 sm:space-y-6">
+            <div className="flex min-w-0 items-center gap-3 md:gap-4">
+                <Button variant="ghost" size="icon" asChild className="h-8 w-8 shrink-0 md:h-10 md:w-10">
                     <Link to="/admin/hesudhar">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                 </Button>
-                <div className="space-y-1">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Hesudhar Checker</h2>
-                    <p className="text-gray-500 text-sm md:text-base">Find and fix spell errors in bulk</p>
+                <div className="min-w-0 space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Hesudhar Checker</h2>
+                    <p className="text-sm text-muted-foreground md:text-base">Find and fix spell errors in bulk</p>
                 </div>
             </div>
 
@@ -114,20 +114,20 @@ const HesudharBulkCheck = () => {
                                 )}
                             </div>
                         ) : (
-                            <div className="divide-y max-h-[600px] overflow-y-auto pr-2">
+                            <div className="max-h-[600px] divide-y overflow-y-auto pr-1 sm:pr-2">
                                 {mistakes.map((mistake, index) => (
-                                    <div key={index} className="py-3 flex items-center justify-between group gap-4">
-                                        <div className="flex items-center">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-red-500 font-arabic text-base line-through decoration-2 opacity-70">
+                                    <div key={index} className="flex items-center justify-between gap-3 py-3 group sm:gap-4">
+                                        <div className="min-w-0 flex items-center">
+                                            <div className="flex min-w-0 flex-col">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="font-arabic text-base text-red-500 line-through decoration-2 opacity-70 break-words">
                                                         {mistake.word}
                                                     </span>
-                                                    <Badge variant="secondary" className="text-[9px] py-0 px-1 uppercase opacity-50 shrink-0">
+                                                    <Badge variant="secondary" className="shrink-0 px-1 py-0 text-[9px] uppercase opacity-50">
                                                         {mistake.type === 'normalization' ? 'Std' : 'Spelling'}
                                                     </Badge>
                                                 </div>
-                                                <span className="text-green-600 font-arabic text-lg font-bold">
+                                                <span className="font-arabic text-lg font-bold text-green-600 break-words">
                                                     {mistake.correct}
                                                 </span>
                                             </div>
@@ -135,7 +135,7 @@ const HesudharBulkCheck = () => {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            className="md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
+                                            className="shrink-0 transition-opacity md:opacity-0 md:group-hover:opacity-100"
                                             onClick={() => handleFixIndividual(mistake)}
                                         >
                                             Apply

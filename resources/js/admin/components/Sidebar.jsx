@@ -25,6 +25,8 @@ import {
     Info,
     MessageSquare,
     Globe,
+    Music2,
+    Mic2,
 } from 'lucide-react';
 
 export const SidebarContext = React.createContext({ onLinkClick: () => { } });
@@ -32,7 +34,9 @@ export const SidebarContext = React.createContext({ onLinkClick: () => { } });
 export const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
     const location = useLocation();
     const { onLinkClick } = useContext(SidebarContext);
-    const isActive = location.pathname === to;
+    const isActive = to === '/admin'
+        ? location.pathname === '/admin'
+        : location.pathname === to || location.pathname.startsWith(`${to}/`);
 
     if (disabled) {
         return (
@@ -58,8 +62,19 @@ export const SidebarLink = ({ to, icon: Icon, children, disabled }) => {
     );
 };
 
-export const SidebarGroup = ({ icon: Icon, label, children, disabled }) => {
-    const [isOpen, setIsOpen] = useState(false);
+export const SidebarGroup = ({ icon: Icon, label, children, disabled, defaultOpen = false }) => {
+    const location = useLocation();
+    const childPaths = React.Children.toArray(children)
+        .map((child) => child?.props?.to)
+        .filter(Boolean);
+    const childActive = childPaths.some(
+        (path) => location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
+    const [isOpen, setIsOpen] = useState(defaultOpen || childActive);
+
+    React.useEffect(() => {
+        if (childActive) setIsOpen(true);
+    }, [childActive]);
 
     return (
         <div className="flex flex-col gap-1">
@@ -67,7 +82,9 @@ export const SidebarGroup = ({ icon: Icon, label, children, disabled }) => {
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors w-full text-left ${disabled
                     ? 'opacity-50 cursor-not-allowed text-muted-foreground select-none'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    : childActive
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                 disabled={disabled}
             >
@@ -112,6 +129,11 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarGroup icon={BookOpen} label="Poetry">
                         <SidebarLink to="/admin/poetry" icon={Book}>Main Poetry</SidebarLink>
                         <SidebarLink to="/admin/couplets" icon={AlignCenter}>Couplets</SidebarLink>
+                    </SidebarGroup>
+
+                    <SidebarGroup icon={Music2} label="Music">
+                        <SidebarLink to="/admin/singers" icon={Mic2}>Artists</SidebarLink>
+                        <SidebarLink to="/admin/lyrics" icon={Music2}>Lyrics</SidebarLink>
                     </SidebarGroup>
 
                     <SidebarGroup icon={Tags} label="Topics">

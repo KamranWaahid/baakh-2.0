@@ -236,6 +236,25 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
+
+        Route::get('lyrics/check-slug', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'checkSlug']);
+        Route::get('lyrics/create', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'create']);
+        Route::get('lyrics/search-poetry', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'searchPoetry']);
+        Route::get('lyrics/poetry/{id}/couplets', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'poetryCouplets']);
+        Route::get('lyrics/search-lyrics', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'searchLyrics']);
+        Route::get('lyrics/source/{id}/parts', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'lyricsSourceParts']);
+        Route::post('lyrics/{id}/cover', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'uploadCover']);
+        Route::apiResource('lyrics', \App\Http\Controllers\Api\Admin\LyricsController::class);
+        Route::patch('lyrics/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'toggleVisibility']);
+        Route::patch('lyrics/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'toggleFeatured']);
+        Route::post('lyrics/{id}/restore', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'restore']);
+        Route::delete('lyrics/{id}/permanent', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'permanentDelete']);
+        Route::get('singers/check-slug', [\App\Http\Controllers\Api\Admin\SingerController::class, 'checkSlug']);
+        Route::apiResource('singers', \App\Http\Controllers\Api\Admin\SingerController::class);
+        Route::patch('singers/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\SingerController::class, 'toggleVisibility']);
+        Route::patch('singers/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\SingerController::class, 'toggleFeatured']);
+        Route::post('singers/{id}/restore', [\App\Http\Controllers\Api\Admin\SingerController::class, 'restore']);
+        Route::delete('singers/{id}/permanent', [\App\Http\Controllers\Api\Admin\SingerController::class, 'permanentDelete']);
         Route::get('couplets/check-slug', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'checkSlug']);
         Route::apiResource('couplets', \App\Http\Controllers\Api\Admin\CoupletController::class);
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);

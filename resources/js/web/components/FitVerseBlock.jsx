@@ -9,8 +9,10 @@ const FitVerseBlock = ({
     text,
     isRtl = false,
     align = 'right',
-    baseFontSize = 24,
-    minFontSize = 15,
+    baseFontSize = 28,
+    minFontSize = 17,
+    /** Space between the two lines inside one couplet (px). */
+    lineGap = 6,
     className = '',
     interactive = true,
     lineClassName = '',
@@ -140,7 +142,8 @@ const FitVerseBlock = ({
     return (
         <div
             ref={containerRef}
-            className={`w-full max-w-full overflow-x-hidden ${className}`}
+            className={`w-full max-w-full overflow-x-hidden flex flex-col ${className}`}
+            style={{ gap: `${lineGap}px` }}
         >
             {lines.map((line, index) => (
                 <div
@@ -152,9 +155,9 @@ const FitVerseBlock = ({
                     style={{
                         fontSize: `${fontSize}px`,
                         letterSpacing,
-                        lineHeight: 2,
+                        // Tight line box so couplet lines sit closer (“backup” spacing).
+                        lineHeight: 1.35,
                         transform: scale < 0.999 ? `scale(${scale})` : undefined,
-                        marginBottom: index === lines.length - 1 ? 0 : undefined,
                     }}
                     dir={isRtl ? 'rtl' : 'ltr'}
                 >
