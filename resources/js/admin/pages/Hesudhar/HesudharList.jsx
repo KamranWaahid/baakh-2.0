@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { Plus, Trash2, RefreshCw, Loader2, FileSearch, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -22,7 +21,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import { GlobalSearch } from '../../components/GlobalSearch';
 
 const HesudharList = () => {
@@ -35,7 +34,7 @@ const HesudharList = () => {
         queryKey: ['hesudhar', page],
         queryFn: async () => {
             const response = await api.get('/api/admin/hesudhar', {
-                params: { page, per_page: 20 }
+                params: { page, per_page: 20 },
             });
             return response.data;
         },
@@ -46,14 +45,14 @@ const HesudharList = () => {
         mutationFn: (id) => api.delete(`/api/admin/hesudhar/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries(['hesudhar']);
-        }
+        },
     });
 
     const refreshMutation = useMutation({
         mutationFn: () => api.post('/api/admin/hesudhar/refresh'),
         onSuccess: (data) => {
             alert(data.data.message || 'Dictionary refreshed successfully!');
-        }
+        },
     });
 
     const cleanseMutation = useMutation({
@@ -64,7 +63,7 @@ const HesudharList = () => {
         },
         onError: (err) => {
             alert('Cleanse failed: ' + (err.response?.data?.message || err.message));
-        }
+        },
     });
 
     const handleCleanse = () => {
@@ -94,41 +93,59 @@ const HesudharList = () => {
     };
 
     return (
-        <div className="p-4 md:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Hesudhar</h2>
-                    <p className="text-gray-500 text-sm md:text-base">Manage spell correction dictionary</p>
+        <div className="min-w-0 w-full max-w-full space-y-4 p-0 sm:space-y-6">
+            <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight md:text-3xl">Hesudhar</h2>
+                    <p className="text-sm text-muted-foreground md:text-base">
+                        Manage spell correction dictionary
+                    </p>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <Button variant="outline" asChild className="w-full sm:w-auto">
+
+                <div className="flex min-w-0 w-full flex-wrap gap-2 lg:w-auto lg:justify-end">
+                    <Button variant="outline" asChild className="flex-1 min-w-[9.5rem] sm:flex-none">
                         <Link to="/admin/hesudhar/check">
-                            <FileSearch className="mr-2 h-4 w-4" /> Bulk Check
+                            <FileSearch className="mr-2 h-4 w-4 shrink-0" />
+                            <span className="truncate">Bulk Check</span>
                         </Link>
                     </Button>
-                    <Button variant="outline" className="w-full sm:w-auto" onClick={() => refreshMutation.mutate()} disabled={refreshMutation.isPending}>
-                        {refreshMutation.isPending ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        Refresh Dictionary
+                    <Button
+                        variant="outline"
+                        className="flex-1 min-w-[9.5rem] sm:flex-none"
+                        onClick={() => refreshMutation.mutate()}
+                        disabled={refreshMutation.isPending}
+                    >
+                        {refreshMutation.isPending
+                            ? <RefreshCw className="mr-2 h-4 w-4 shrink-0 animate-spin" />
+                            : <RefreshCw className="mr-2 h-4 w-4 shrink-0" />}
+                        <span className="truncate">
+                            <span className="sm:hidden">Refresh</span>
+                            <span className="hidden sm:inline">Refresh Dictionary</span>
+                        </span>
                     </Button>
                     <Button
                         variant="destructive"
-                        className="w-full sm:w-auto"
+                        className="flex-1 min-w-[9.5rem] sm:flex-none"
                         onClick={handleCleanse}
                         disabled={cleanseMutation.isPending}
                         title="Run phonetic cleansing on all WordNet records (fixes ھ→ہ, Kaf, Yeh, Alef+Madda)"
                     >
                         {cleanseMutation.isPending
-                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            : <Wand2 className="mr-2 h-4 w-4" />}
-                        Cleanse WordNet
+                            ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
+                            : <Wand2 className="mr-2 h-4 w-4 shrink-0" />}
+                        <span className="truncate">
+                            <span className="sm:hidden">Cleanse</span>
+                            <span className="hidden sm:inline">Cleanse WordNet</span>
+                        </span>
                     </Button>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button onClick={handleAdd} className="w-full sm:w-auto">
-                                <Plus className="mr-2 h-4 w-4" /> Add Word
+                            <Button onClick={handleAdd} className="flex-1 min-w-[9.5rem] sm:flex-none">
+                                <Plus className="mr-2 h-4 w-4 shrink-0" />
+                                Add Word
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="w-[calc(100vw-2rem)] max-w-[425px]">
                             <DialogHeader>
                                 <DialogTitle>{editingEntry ? 'Edit Word Pair' : 'Add New Word Pair'}</DialogTitle>
                             </DialogHeader>
@@ -141,35 +158,33 @@ const HesudharList = () => {
                 </div>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Manage Spell Correction Dictionary</CardTitle>
-                    <div className="flex items-center py-4">
-                        <div className="relative flex-1">
-                            <GlobalSearch
-                                className="w-full max-w-sm ml-auto"
-                                onSelect={handleEdit}
-                            />
-                        </div>
+            <Card className="min-w-0 overflow-hidden">
+                <CardHeader className="space-y-3">
+                    <CardTitle className="text-lg sm:text-xl">Manage Spell Correction Dictionary</CardTitle>
+                    <div className="w-full min-w-0">
+                        <GlobalSearch
+                            className="w-full max-w-full sm:max-w-sm"
+                            onSelect={handleEdit}
+                        />
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="min-w-0 space-y-4">
                     <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Incorrect Word</TableHead>
-                                    <TableHead>Correct Word</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead className="min-w-[7rem]">Incorrect Word</TableHead>
+                                    <TableHead className="min-w-[7rem]">Correct Word</TableHead>
+                                    <TableHead className="w-[7.5rem] text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     Array(5).fill(0).map((_, index) => (
                                         <TableRow key={index}>
-                                            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                            <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-24 sm:w-32" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-24 sm:w-32" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="ml-auto h-8 w-16" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : isError ? (
@@ -188,16 +203,21 @@ const HesudharList = () => {
                                     data?.data?.map((entry) => (
                                         <TableRow key={entry.id}>
                                             <TableCell className="font-medium">
-                                                <span lang="sd">{entry.word}</span>
+                                                <span lang="sd" className="font-arabic break-words" dir="rtl">
+                                                    {entry.word}
+                                                </span>
                                             </TableCell>
                                             <TableCell>
-                                                <span lang="sd">{entry.correct}</span>
+                                                <span lang="sd" className="font-arabic break-words" dir="rtl">
+                                                    {entry.correct}
+                                                </span>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex justify-end gap-1 sm:gap-2">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
+                                                        className="px-2 sm:px-3"
                                                         onClick={() => handleEdit(entry)}
                                                     >
                                                         Edit
@@ -205,7 +225,7 @@ const HesudharList = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        className="px-2 text-destructive hover:bg-destructive/10 hover:text-destructive sm:px-3"
                                                         onClick={() => handleDelete(entry.id)}
                                                         disabled={deleteMutation.isPending}
                                                     >
@@ -221,15 +241,16 @@ const HesudharList = () => {
                     </div>
 
                     {data && (
-                        <div className="flex items-center justify-end space-x-2 py-4">
-                            <div className="flex-1 text-sm text-muted-foreground">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm text-muted-foreground">
                                 Showing {data.from} to {data.to} of {data.total} results
-                            </div>
-                            <div className="space-x-2">
+                            </p>
+                            <div className="flex gap-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    className="flex-1 sm:flex-none"
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={!data.prev_page_url}
                                 >
                                     Previous
@@ -237,7 +258,8 @@ const HesudharList = () => {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => setPage(p => p + 1)}
+                                    className="flex-1 sm:flex-none"
+                                    onClick={() => setPage((p) => p + 1)}
                                     disabled={!data.next_page_url}
                                 >
                                     Next

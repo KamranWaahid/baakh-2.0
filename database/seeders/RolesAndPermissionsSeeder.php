@@ -49,6 +49,18 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit_couplets',
             'delete_couplets',
 
+            // Lyrics (ٻول) Management
+            'view_lyrics',
+            'create_lyrics',
+            'edit_lyrics',
+            'delete_lyrics',
+
+            // Singer Management
+            'view_singers',
+            'create_singers',
+            'edit_singers',
+            'delete_singers',
+
             // Bundle Management
             'view_bundles',
             'manage_bundles',
@@ -97,6 +109,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'create_couplets',
             'edit_couplets',
             'delete_couplets',
+            'view_lyrics',
+            'create_lyrics',
+            'edit_lyrics',
+            'delete_lyrics',
+            'view_singers',
+            'create_singers',
+            'edit_singers',
+            'delete_singers',
             'view_bundles',
             'manage_bundles',
             'view_dashboard',
@@ -119,6 +139,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_couplets',
             'create_couplets',
             'edit_couplets',
+            'view_lyrics',
+            'create_lyrics',
+            'edit_lyrics',
+            'view_singers',
+            'create_singers',
+            'edit_singers',
             'view_bundles',
             'view_dashboard',
             'use_romanizer',
@@ -136,6 +162,11 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_couplets',
             'create_couplets',
             'edit_couplets',
+            'view_lyrics',
+            'create_lyrics',
+            'edit_lyrics',
+            'view_singers',
+            'create_singers',
             'view_dashboard',
             'use_romanizer',
         ]);
@@ -148,6 +179,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_categories',
             'view_tags',
             'view_couplets',
+            'view_lyrics',
+            'view_singers',
             'view_bundles',
         ]);
 
