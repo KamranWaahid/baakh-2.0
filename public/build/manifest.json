@@ -1,36 +1,36 @@
 {
-  "_FitVerseBlock-4874ca56.js": {
-    "file": "assets/FitVerseBlock-4874ca56.js",
+  "_FitVerseBlock-185c1e1f.js": {
+    "file": "assets/FitVerseBlock-185c1e1f.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "resources/js/web/main.jsx",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_x-11f69d69.js",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js"
     ]
   },
-  "_PostCard-a93cfa6e.js": {
-    "file": "assets/PostCard-a93cfa6e.js",
+  "_PostCard-c2e7f040.js": {
+    "file": "assets/PostCard-c2e7f040.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_FitVerseBlock-4874ca56.js",
-      "_dialog-846f4f40.js"
+      "_FitVerseBlock-185c1e1f.js",
+      "_dialog-2bfbb301.js"
     ]
   },
-  "_PostCardSkeleton-13c0573d.js": {
-    "file": "assets/PostCardSkeleton-13c0573d.js",
+  "_PostCardSkeleton-3326c178.js": {
+    "file": "assets/PostCardSkeleton-3326c178.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js"
+      "_dialog-2bfbb301.js"
     ]
   },
-  "_SegmentedProgressBar-5238ce7b.js": {
-    "file": "assets/SegmentedProgressBar-5238ce7b.js",
+  "_SegmentedProgressBar-e08ab487.js": {
+    "file": "assets/SegmentedProgressBar-e08ab487.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js"
+      "_dialog-2bfbb301.js"
     ]
   },
   "_axios-ade11851.js": {
@@ -45,8 +45,8 @@
   "_dateUtils-29c5e816.js": {
     "file": "assets/dateUtils-29c5e816.js"
   },
-  "_dialog-846f4f40.js": {
-    "file": "assets/dialog-846f4f40.js",
+  "_dialog-2bfbb301.js": {
+    "file": "assets/dialog-2bfbb301.js",
     "imports": [
       "_x-11f69d69.js",
       "_radix-ui-937a0db1.js",
@@ -101,26 +101,26 @@
       "_x-11f69d69.js"
     ]
   },
-  "_separator-ef54bc12.js": {
-    "file": "assets/separator-ef54bc12.js",
+  "_separator-1ee4529f.js": {
+    "file": "assets/separator-1ee4529f.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js"
+      "_dialog-2bfbb301.js"
     ]
   },
-  "_switch-603460df.js": {
-    "file": "assets/switch-603460df.js",
+  "_switch-f19ed327.js": {
+    "file": "assets/switch-f19ed327.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_x-11f69d69.js"
     ]
   },
-  "_tabs-52467b68.js": {
-    "file": "assets/tabs-52467b68.js",
+  "_tabs-72e5d3fe.js": {
+    "file": "assets/tabs-72e5d3fe.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js"
+      "_dialog-2bfbb301.js"
     ]
   },
   "_useInfiniteQuery-71718c24.js": {
@@ -144,31 +144,31 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-19ddd1e1.css",
+    "file": "assets/app-f2a67016.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
   "resources/js/admin/main.css": {
-    "file": "assets/main-2f5eb6f6.css",
+    "file": "assets/main-0ef06cc9.css",
     "src": "resources/js/admin/main.css"
   },
   "resources/js/admin/main.jsx": {
     "css": [
-      "assets/main-2f5eb6f6.css"
+      "assets/main-0ef06cc9.css"
     ],
-    "file": "assets/main-06800741.js",
+    "file": "assets/main-eae70c76.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_switch-603460df.js",
-      "_dialog-846f4f40.js",
+      "_switch-f19ed327.js",
+      "_dialog-2bfbb301.js",
       "_external-link-5ae56695.js",
       "_recharts-7bd71b5e.js",
       "_link-2-d3ac683a.js",
       "_save-ca64c1d3.js",
       "_eye-e704f4b9.js",
-      "_tabs-52467b68.js",
-      "_SegmentedProgressBar-5238ce7b.js",
+      "_tabs-72e5d3fe.js",
+      "_SegmentedProgressBar-e08ab487.js",
       "_axios-ade11851.js",
       "_clock-70661102.js"
     ],
@@ -184,15 +184,15 @@
     "src": "resources/js/app.js"
   },
   "resources/js/lyrics/main.css": {
-    "file": "assets/main-7fff5ce0.css",
+    "file": "assets/main-878e776e.css",
     "src": "resources/js/lyrics/main.css"
   },
   "resources/js/lyrics/main.jsx": {
     "css": [
-      "assets/main-7fff5ce0.css",
-      "assets/app-19ddd1e1.css"
+      "assets/main-878e776e.css",
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/main-9ce33d78.js",
+    "file": "assets/main-60d79652.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
@@ -204,20 +204,20 @@
   },
   "resources/js/web/components/CoupletsFeed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/CoupletsFeed-124669b2.js",
+    "file": "assets/CoupletsFeed-dacd9821.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_PostCard-a93cfa6e.js",
-      "_separator-ef54bc12.js",
-      "_PostCardSkeleton-13c0573d.js",
+      "_PostCard-c2e7f040.js",
+      "_separator-1ee4529f.js",
+      "_PostCardSkeleton-3326c178.js",
       "_x-11f69d69.js",
       "_useInfiniteQuery-71718c24.js",
       "_index-4792a901.js",
       "resources/js/web/main.jsx",
-      "_FitVerseBlock-4874ca56.js",
-      "_dialog-846f4f40.js",
+      "_FitVerseBlock-185c1e1f.js",
+      "_dialog-2bfbb301.js",
       "_recharts-7bd71b5e.js",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js",
@@ -227,11 +227,11 @@
     "src": "resources/js/web/components/CoupletsFeed.jsx"
   },
   "resources/js/web/components/ExploreTopics.jsx": {
-    "file": "assets/ExploreTopics-be5e22cc.js",
+    "file": "assets/ExploreTopics-b09999af.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -240,20 +240,20 @@
   },
   "resources/js/web/components/Feed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/Feed-73f8fe10.js",
+    "file": "assets/Feed-abcd19c3.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_PostCard-a93cfa6e.js",
+      "_PostCard-c2e7f040.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
-      "_separator-ef54bc12.js",
-      "_tabs-52467b68.js",
-      "_PostCardSkeleton-13c0573d.js",
+      "_dialog-2bfbb301.js",
+      "_separator-1ee4529f.js",
+      "_tabs-72e5d3fe.js",
+      "_PostCardSkeleton-3326c178.js",
       "resources/js/web/main.jsx",
       "_useInfiniteQuery-71718c24.js",
-      "_FitVerseBlock-4874ca56.js",
+      "_FitVerseBlock-185c1e1f.js",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js",
       "_axios-ade11851.js",
@@ -264,21 +264,21 @@
   },
   "resources/js/web/components/GenreFeed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/GenreFeed-7ddbb61a.js",
+    "file": "assets/GenreFeed-291ad6b5.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_x-11f69d69.js",
       "_useInfiniteQuery-71718c24.js",
       "_index-4792a901.js",
-      "_PostCard-a93cfa6e.js",
-      "_separator-ef54bc12.js",
-      "_PostCardSkeleton-13c0573d.js",
+      "_PostCard-c2e7f040.js",
+      "_separator-1ee4529f.js",
+      "_PostCardSkeleton-3326c178.js",
       "_recharts-7bd71b5e.js",
       "_axios-ade11851.js",
-      "_FitVerseBlock-4874ca56.js",
+      "_FitVerseBlock-185c1e1f.js",
       "resources/js/web/main.jsx",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js"
@@ -288,22 +288,22 @@
   },
   "resources/js/web/components/PeriodFeed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/PeriodFeed-91d4c530.js",
+    "file": "assets/PeriodFeed-8e3d19fc.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_x-11f69d69.js",
       "_useInfiniteQuery-71718c24.js",
       "_index-4792a901.js",
-      "_PostCard-a93cfa6e.js",
-      "_separator-ef54bc12.js",
-      "_PostCardSkeleton-13c0573d.js",
+      "_PostCard-c2e7f040.js",
+      "_separator-1ee4529f.js",
+      "_PostCardSkeleton-3326c178.js",
       "resources/js/web/main.jsx",
       "_recharts-7bd71b5e.js",
       "_axios-ade11851.js",
-      "_FitVerseBlock-4874ca56.js",
+      "_FitVerseBlock-185c1e1f.js",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js"
     ],
@@ -312,16 +312,16 @@
   },
   "resources/js/web/components/PoemDetail.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/PoemDetail-5378cfb7.js",
+    "file": "assets/PoemDetail-4f10c12f.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
       "resources/js/web/main.jsx",
-      "_FitVerseBlock-4874ca56.js",
-      "_dialog-846f4f40.js",
-      "_separator-ef54bc12.js",
+      "_FitVerseBlock-185c1e1f.js",
+      "_dialog-2bfbb301.js",
+      "_separator-1ee4529f.js",
       "_dateUtils-29c5e816.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js",
@@ -333,19 +333,19 @@
   },
   "resources/js/web/components/PoetProfile.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/PoetProfile-bfd9f930.js",
+    "file": "assets/PoetProfile-d686a708.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js",
-      "_SegmentedProgressBar-5238ce7b.js",
-      "_separator-ef54bc12.js",
+      "_dialog-2bfbb301.js",
+      "_SegmentedProgressBar-e08ab487.js",
+      "_separator-1ee4529f.js",
       "_x-11f69d69.js",
-      "_PostCard-a93cfa6e.js",
+      "_PostCard-c2e7f040.js",
       "_useInfiniteQuery-71718c24.js",
       "_index-4792a901.js",
-      "_FitVerseBlock-4874ca56.js",
+      "_FitVerseBlock-185c1e1f.js",
       "_html-5767ea50.js",
       "resources/js/web/main.jsx",
       "_link-2-d3ac683a.js",
@@ -358,20 +358,20 @@
   },
   "resources/js/web/components/PoetryFeed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/PoetryFeed-8aca158c.js",
+    "file": "assets/PoetryFeed-b2f17d55.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_PostCard-a93cfa6e.js",
-      "_separator-ef54bc12.js",
-      "_PostCardSkeleton-13c0573d.js",
+      "_PostCard-c2e7f040.js",
+      "_separator-1ee4529f.js",
+      "_PostCardSkeleton-3326c178.js",
       "_x-11f69d69.js",
       "_useInfiniteQuery-71718c24.js",
       "_index-4792a901.js",
       "resources/js/web/main.jsx",
-      "_dialog-846f4f40.js",
-      "_FitVerseBlock-4874ca56.js",
+      "_dialog-2bfbb301.js",
+      "_FitVerseBlock-185c1e1f.js",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js",
       "_axios-ade11851.js",
@@ -382,12 +382,12 @@
   },
   "resources/js/web/components/PoetsFeed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/PoetsFeed-5daf9b9e.js",
+    "file": "assets/PoetsFeed-1a5d007e.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_x-11f69d69.js",
       "_useInfiniteQuery-71718c24.js",
       "_index-4792a901.js",
@@ -401,16 +401,16 @@
   },
   "resources/js/web/components/ProsodyFeed.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/ProsodyFeed-2155468b.js",
+    "file": "assets/ProsodyFeed-32adb828.js",
     "imports": [
       "_radix-ui-937a0db1.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_x-11f69d69.js",
-      "_switch-603460df.js",
-      "_tabs-52467b68.js",
-      "_separator-ef54bc12.js",
+      "_switch-f19ed327.js",
+      "_tabs-72e5d3fe.js",
+      "_separator-1ee4529f.js",
       "resources/js/web/main.jsx",
       "_volume-2-0b1df276.js",
       "_recharts-7bd71b5e.js",
@@ -421,13 +421,13 @@
   },
   "resources/js/web/components/SidebarLeft.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/SidebarLeft-6df74d3c.js",
+    "file": "assets/SidebarLeft-56ab1cef.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
@@ -437,17 +437,17 @@
   },
   "resources/js/web/components/SidebarRight.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
     "dynamicImports": [
       "_x-11f69d69.js"
     ],
-    "file": "assets/SidebarRight-71e22a3e.js",
+    "file": "assets/SidebarRight-8bc7c906.js",
     "imports": [
       "resources/js/web/main.jsx",
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_dateUtils-29c5e816.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
@@ -457,14 +457,14 @@
   },
   "resources/js/web/components/SocialCallback.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/SocialCallback-77705c52.js",
+    "file": "assets/SocialCallback-b81e831c.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
       "resources/js/web/main.jsx",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -473,18 +473,18 @@
   },
   "resources/js/web/components/TopicDetail.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/TopicDetail-04b71aaf.js",
+    "file": "assets/TopicDetail-17aa8b83.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
-      "_PostCard-a93cfa6e.js",
+      "_dialog-2bfbb301.js",
+      "_PostCard-c2e7f040.js",
       "_html-5767ea50.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js",
-      "_FitVerseBlock-4874ca56.js",
+      "_FitVerseBlock-185c1e1f.js",
       "resources/js/web/main.jsx",
       "_link-2-d3ac683a.js",
       "_volume-2-0b1df276.js"
@@ -494,7 +494,7 @@
   },
   "resources/js/web/main.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
     "dynamicImports": [
       "_x-11f69d69.js",
@@ -524,11 +524,11 @@
       "resources/js/web/components/ExploreTopics.jsx",
       "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-9bf86774.js",
+    "file": "assets/main-92664c6f.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -536,11 +536,11 @@
     "src": "resources/js/web/main.jsx"
   },
   "resources/js/web/pages/About.jsx": {
-    "file": "assets/About-5445fcf2.js",
+    "file": "assets/About-d771234e.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -549,13 +549,13 @@
   },
   "resources/js/web/pages/ForgotPassword.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/ForgotPassword-c3701f6c.js",
+    "file": "assets/ForgotPassword-5290d180.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
@@ -564,11 +564,11 @@
     "src": "resources/js/web/pages/ForgotPassword.jsx"
   },
   "resources/js/web/pages/Help.jsx": {
-    "file": "assets/Help-d79c36b5.js",
+    "file": "assets/Help-15af6dab.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -576,11 +576,11 @@
     "src": "resources/js/web/pages/Help.jsx"
   },
   "resources/js/web/pages/Privacy.jsx": {
-    "file": "assets/Privacy-28a23535.js",
+    "file": "assets/Privacy-5e067875.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -589,14 +589,14 @@
   },
   "resources/js/web/pages/Profile.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/Profile-6b4e26a5.js",
+    "file": "assets/Profile-fd63185f.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
       "resources/js/web/main.jsx",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_save-ca64c1d3.js",
       "_lock-9e67bd07.js",
       "_axios-ade11851.js",
@@ -606,11 +606,11 @@
     "src": "resources/js/web/pages/Profile.jsx"
   },
   "resources/js/web/pages/ResetPassword.jsx": {
-    "file": "assets/ResetPassword-309d5da4.js",
+    "file": "assets/ResetPassword-76a959f5.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_lock-9e67bd07.js",
       "_eye-e704f4b9.js",
       "_axios-ade11851.js",
@@ -621,14 +621,14 @@
   },
   "resources/js/web/pages/SetPassword.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/SetPassword-1e55af8a.js",
+    "file": "assets/SetPassword-5e58a79e.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
       "resources/js/web/main.jsx",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_lock-9e67bd07.js",
       "_eye-e704f4b9.js",
       "_axios-ade11851.js",
@@ -639,14 +639,14 @@
   },
   "resources/js/web/pages/Settings.jsx": {
     "css": [
-      "assets/app-19ddd1e1.css"
+      "assets/app-f2a67016.css"
     ],
-    "file": "assets/Settings-402f6b71.js",
+    "file": "assets/Settings-09282d9e.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
       "resources/js/web/main.jsx",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_lock-9e67bd07.js",
       "_eye-e704f4b9.js",
       "_clock-70661102.js",
@@ -657,11 +657,11 @@
     "src": "resources/js/web/pages/Settings.jsx"
   },
   "resources/js/web/pages/Status.jsx": {
-    "file": "assets/Status-2149c9a5.js",
+    "file": "assets/Status-c93220be.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],
@@ -669,11 +669,11 @@
     "src": "resources/js/web/pages/Status.jsx"
   },
   "resources/js/web/pages/Terms.jsx": {
-    "file": "assets/Terms-e396fdba.js",
+    "file": "assets/Terms-50975db4.js",
     "imports": [
       "_radix-ui-937a0db1.js",
       "_x-11f69d69.js",
-      "_dialog-846f4f40.js",
+      "_dialog-2bfbb301.js",
       "_axios-ade11851.js",
       "_recharts-7bd71b5e.js"
     ],

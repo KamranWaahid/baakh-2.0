@@ -80,6 +80,11 @@ class NormalizeSeoUrls
             }
         }
 
+        // Apex home → primary Sindhi locale (aligns canonical, hreflang, and client routing)
+        if ($path === '/') {
+            return redirect($this->withQuery('/sd', $request), 301);
+        }
+
         // Legacy unprefixed content URLs → /sd/...
         $legacy = $this->legacyRedirectTarget($path);
         if ($legacy !== null) {

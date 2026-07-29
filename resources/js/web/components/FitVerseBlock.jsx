@@ -4,7 +4,7 @@ import { CoupletWithWords } from './WordTooltip';
 /**
  * Measure line widths at a given font size without mutating live React nodes.
  */
-function measureLinesWidth(lines, {
+export function measureLinesWidth(lines, {
     fontSize,
     isRtl,
     sampleEl,
@@ -41,8 +41,68 @@ function measureLinesWidth(lines, {
 }
 
 /**
+ * Compute a single fit (fontSize / scale / letterSpacing) for a set of lines
+ * so they stay on one row within `available` width.
+ */
+export function computeVerseFit(lines, {
+    available,
+    baseFontSize,
+    minFontSize,
+    isRtl,
+    sampleEl,
+}) {
+    if (available <= 0 || !sampleEl) {
+        return { fontSize: baseFontSize, scale: 1, letterSpacing: 'normal' };
+    }
+
+    const maxWidth = measureLinesWidth(lines, {
+        fontSize: baseFontSize,
+        isRtl,
+        sampleEl,
+    });
+    if (maxWidth <= 0) {
+        return { fontSize: baseFontSize, scale: 1, letterSpacing: 'normal' };
+    }
+
+    if (maxWidth <= available) {
+        return { fontSize: baseFontSize, scale: 1, letterSpacing: 'normal' };
+    }
+
+    const fitRatio = (available * 0.995) / maxWidth;
+    const nextSize = Math.max(minFontSize, Math.floor(baseFontSize * fitRatio * 100) / 100);
+    let nextScale = 1;
+
+    if (nextSize <= minFontSize + 0.05) {
+        const atMinWidth = measureLinesWidth(lines, {
+            fontSize: minFontSize,
+            isRtl,
+            sampleEl,
+        });
+        if (atMinWidth > available) {
+            nextScale = Math.min(1, Math.max(0.82, (available * 0.995) / atMinWidth));
+        }
+    }
+
+    return {
+        fontSize: nextSize,
+        scale: nextScale,
+        letterSpacing: nextSize < baseFontSize * 0.92 ? '-0.015em' : 'normal',
+    };
+}
+
+export function splitVerseLines(text) {
+    return String(text ?? '')
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map((line) => line.replace(/[ \t]+$/g, ''));
+}
+
+/**
  * Renders a couplet as original verse lines (split on newlines) and shrinks
  * font-size so each line stays on a single row across container widths.
+ *
+ * Pass `lockedFit` from a parent when multiple blocks should share one size
+ * (e.g. all couplets on a poem detail page).
  */
 const FitVerseBlock = ({
     text,
@@ -55,19 +115,19 @@ const FitVerseBlock = ({
     className = '',
     interactive = true,
     lineClassName = '',
+    /** When set, skip local fitting and use this shared size. */
+    lockedFit = null,
 }) => {
     const containerRef = useRef(null);
     const sampleRef = useRef(null);
-    const [fontSize, setFontSize] = useState(baseFontSize);
-    const [scale, setScale] = useState(1);
-    const [letterSpacing, setLetterSpacing] = useState('normal');
+    const [localFit, setLocalFit] = useState({
+        fontSize: baseFontSize,
+        scale: 1,
+        letterSpacing: 'normal',
+    });
 
-    const lines = useMemo(() => {
-        return String(text ?? '')
-            .replace(/\r\n/g, '\n')
-            .split('\n')
-            .map((line) => line.replace(/[ \t]+$/g, ''));
-    }, [text]);
+    const lines = useMemo(() => splitVerseLines(text), [text]);
+    const { fontSize, scale, letterSpacing } = lockedFit ?? localFit;
 
     const alignClass =
         align === 'center'
@@ -84,6 +144,8 @@ const FitVerseBlock = ({
                 : 'origin-left';
 
     useLayoutEffect(() => {
+        if (lockedFit) return undefined;
+
         const container = containerRef.current;
         if (!container) return undefined;
 
@@ -94,39 +156,13 @@ const FitVerseBlock = ({
             if (available <= 0) return;
 
             const sampleEl = sampleRef.current || container;
-            const maxWidth = measureLinesWidth(lines, {
-                fontSize: baseFontSize,
+            setLocalFit(computeVerseFit(lines, {
+                available,
+                baseFontSize,
+                minFontSize,
                 isRtl,
                 sampleEl,
-            });
-            if (maxWidth <= 0) return;
-
-            if (maxWidth <= available) {
-                setFontSize(baseFontSize);
-                setScale(1);
-                setLetterSpacing('normal');
-                return;
-            }
-
-            // Stick close to the edge; shrink only enough to avoid wrapping.
-            const fitRatio = (available * 0.995) / maxWidth;
-            const nextSize = Math.max(minFontSize, Math.floor(baseFontSize * fitRatio * 100) / 100);
-            let nextScale = 1;
-
-            if (nextSize <= minFontSize + 0.05) {
-                const atMinWidth = measureLinesWidth(lines, {
-                    fontSize: minFontSize,
-                    isRtl,
-                    sampleEl,
-                });
-                if (atMinWidth > available) {
-                    nextScale = Math.min(1, Math.max(0.82, (available * 0.995) / atMinWidth));
-                }
-            }
-
-            setFontSize(nextSize);
-            setScale(nextScale);
-            setLetterSpacing(nextSize < baseFontSize * 0.92 ? '-0.015em' : 'normal');
+            }));
         };
 
         const schedule = () => {
@@ -150,13 +186,16 @@ const FitVerseBlock = ({
             observer.disconnect();
             document.fonts?.removeEventListener?.('loadingdone', onFontsReady);
         };
-    }, [baseFontSize, minFontSize, lines, align, isRtl]);
+    }, [baseFontSize, minFontSize, lines, align, isRtl, lockedFit]);
 
     useEffect(() => {
-        setFontSize(baseFontSize);
-        setScale(1);
-        setLetterSpacing('normal');
-    }, [baseFontSize, text]);
+        if (lockedFit) return;
+        setLocalFit({
+            fontSize: baseFontSize,
+            scale: 1,
+            letterSpacing: 'normal',
+        });
+    }, [baseFontSize, text, lockedFit]);
 
     return (
         <div
@@ -187,5 +226,120 @@ const FitVerseBlock = ({
         </div>
     );
 };
+
+/**
+ * Fits every couplet to one shared font size (driven by the longest line
+ * in the whole poem) so stanzas don't look uneven on narrow screens.
+ */
+export function FitVerseGroup({
+    couplets,
+    isRtl = false,
+    align = 'right',
+    baseFontSize = 28,
+    minFontSize = 17,
+    lineGap = 6,
+    coupletClassName = '',
+    interactive = true,
+    className = '',
+}) {
+    const containerRef = useRef(null);
+    const sampleRef = useRef(null);
+    const [lockedFit, setLockedFit] = useState({
+        fontSize: baseFontSize,
+        scale: 1,
+        letterSpacing: 'normal',
+    });
+
+    const allLines = useMemo(() => {
+        if (!Array.isArray(couplets)) return [];
+        return couplets.flatMap((couplet) => splitVerseLines(couplet));
+    }, [couplets]);
+
+    useLayoutEffect(() => {
+        const container = containerRef.current;
+        if (!container || allLines.length === 0) return undefined;
+
+        let frame = 0;
+
+        const measure = () => {
+            const available = container.clientWidth;
+            if (available <= 0) return;
+
+            const sampleEl = sampleRef.current || container;
+            const next = computeVerseFit(allLines, {
+                available,
+                baseFontSize,
+                minFontSize,
+                isRtl,
+                sampleEl,
+            });
+            setLockedFit((prev) => (
+                prev.fontSize === next.fontSize
+                && prev.scale === next.scale
+                && prev.letterSpacing === next.letterSpacing
+                    ? prev
+                    : next
+            ));
+        };
+
+        const schedule = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(measure);
+        };
+
+        schedule();
+
+        const observer = new ResizeObserver(schedule);
+        observer.observe(container);
+
+        const onFontsReady = () => schedule();
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(onFontsReady).catch(() => {});
+        }
+        document.fonts?.addEventListener?.('loadingdone', onFontsReady);
+
+        return () => {
+            cancelAnimationFrame(frame);
+            observer.disconnect();
+            document.fonts?.removeEventListener?.('loadingdone', onFontsReady);
+        };
+    }, [allLines, baseFontSize, minFontSize, isRtl]);
+
+    useEffect(() => {
+        setLockedFit({
+            fontSize: baseFontSize,
+            scale: 1,
+            letterSpacing: 'normal',
+        });
+    }, [baseFontSize, couplets]);
+
+    return (
+        <div ref={containerRef} className={`w-full max-w-full ${className}`}>
+            {/* Font metrics probe — inherits serif / arabic from parent */}
+            <div
+                ref={sampleRef}
+                aria-hidden
+                className="absolute opacity-0 pointer-events-none whitespace-nowrap"
+                style={{ fontSize: `${baseFontSize}px`, lineHeight: 1.45 }}
+            >
+                {'\u00A0'}
+            </div>
+            {Array.isArray(couplets) && couplets.map((couplet, index) => (
+                <FitVerseBlock
+                    key={index}
+                    text={couplet}
+                    isRtl={isRtl}
+                    align={align}
+                    baseFontSize={baseFontSize}
+                    minFontSize={minFontSize}
+                    lineGap={lineGap}
+                    className={coupletClassName}
+                    interactive={interactive}
+                    lockedFit={lockedFit}
+                />
+            ))}
+        </div>
+    );
+}
 
 export default FitVerseBlock;

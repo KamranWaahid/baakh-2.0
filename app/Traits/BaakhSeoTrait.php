@@ -34,10 +34,11 @@ trait BaakhSeoTrait
         if ($segments[0] === 'en' || $segments[0] === 'sd') {
             array_shift($segments);
         }
-        $innerPath = implode('/', $segments);
+        $innerPath = trim(implode('/', $segments), '/');
 
-        $sdUrl = url('sd/' . $innerPath);
-        $enUrl = url('en/' . $innerPath);
+        $sdUrl = $innerPath === '' ? url('/sd') : url('/sd/' . $innerPath);
+        $enUrl = $innerPath === '' ? url('/en') : url('/en/' . $innerPath);
+        $canonical = url()->current();
 
         // Handle keywords
         if (!is_null($keywords)) {
@@ -49,13 +50,15 @@ trait BaakhSeoTrait
         // Set SEO meta tags
         SEOMeta::setTitle($title);
         SEOMeta::setDescription($desc);
-        SEOMeta::setCanonical(url()->current());
+        SEOMeta::setCanonical($canonical);
 
-        // Add alternate languages for SEO
+        // Alternate languages — always include a self-referential hreflang
         SEOMeta::addAlternateLanguage('en', $enUrl);
         SEOMeta::addAlternateLanguage('sd', $sdUrl);
-        // Primary language is Sindhi — align with sitemap and Mokhii
         SEOMeta::addAlternateLanguage('x-default', $sdUrl);
+        if ($canonical !== $enUrl && $canonical !== $sdUrl) {
+            SEOMeta::addAlternateLanguage($currentLang === 'sd' ? 'sd' : 'en', $canonical);
+        }
 
         // Set OpenGraph data
         OpenGraph::setDescription($additionalData['og_description'] ?? $desc);
@@ -222,7 +225,8 @@ trait BaakhSeoTrait
         SEOMeta::setTitle($title); // Set title in Sindhi
         SEOMeta::setDescription($shortBio);
         SEOMeta::setCanonical($url);
-        SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
+        SEOMeta::addAlternateLanguage('en', $currentLang === 'en' ? $url : $alternateUrl);
+        SEOMeta::addAlternateLanguage('sd', $currentLang === 'sd' ? $url : url("sd/poet/{$poet->poet_slug}"));
         SEOMeta::addAlternateLanguage('x-default', url("sd/poet/{$poet->poet_slug}"));
         SEOMeta::addKeyword($keywords);
 
@@ -393,9 +397,6 @@ trait BaakhSeoTrait
 
         $url = url("{$currentLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}");
 
-        $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
-        $alternateUrl = url("{$alternateLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}");
-
         // WhatsApp / social link previews: Baakh logo on white (not poetry card or poet photo).
         $image = $seo_image ? $seo_image : asset('assets/og/baakh-og-v2-1200x630.png');
 
@@ -403,7 +404,18 @@ trait BaakhSeoTrait
         SEOMeta::setTitle($title); // Set title in Sindhi
         SEOMeta::setDescription($shortBio);
         SEOMeta::setCanonical($url);
-        SEOMeta::addAlternateLanguage($alternateLang, $alternateUrl);
+        SEOMeta::addAlternateLanguage(
+            'en',
+            $currentLang === 'en'
+                ? $url
+                : url("en/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
+        );
+        SEOMeta::addAlternateLanguage(
+            'sd',
+            $currentLang === 'sd'
+                ? $url
+                : url("sd/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
+        );
         SEOMeta::addAlternateLanguage(
             'x-default',
             url("sd/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
