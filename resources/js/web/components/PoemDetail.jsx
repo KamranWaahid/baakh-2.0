@@ -12,7 +12,7 @@ import PaywallCTA from './PaywallCTA';
 import { formatSindhiDate } from '../utils/dateUtils';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 import DOMPurify from 'dompurify';
-import FitVerseBlock from './FitVerseBlock';
+import { FitVerseGroup } from './FitVerseBlock';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -157,22 +157,19 @@ const PoemDetail = ({ lang }) => {
                 </header>
 
 
-                {/* Body — each original verse line stays on one row; font scales to fit width */}
+                {/* Body — one shared fit for all couplets so stanza sizes stay equal on mobile */}
                 <div className={`max-w-none text-gray-900 font-serif antialiased ${isRtl ? 'font-arabic' : ''}`}>
                     {Array.isArray(poem.content) ? (
-                        poem.content.map((couplet, index) => (
-                            <FitVerseBlock
-                                key={index}
-                                text={couplet}
-                                isRtl={isRtl}
-                                align={verseAlign}
-                                baseFontSize={verseBaseSize}
-                                minFontSize={verseMinSize}
-                                lineGap={lineGap}
-                                className={coupletGapClass}
-                                interactive
-                            />
-                        ))
+                        <FitVerseGroup
+                            couplets={poem.content}
+                            isRtl={isRtl}
+                            align={verseAlign}
+                            baseFontSize={verseBaseSize}
+                            minFontSize={verseMinSize}
+                            lineGap={lineGap}
+                            coupletClassName={coupletGapClass}
+                            interactive
+                        />
                     ) : (
                         <div
                             className={`prose prose-xl max-w-none leading-[1.55] text-[26px] md:text-[34px] ${verseAlign === 'center' ? 'text-center' : verseAlign === 'left' ? 'text-left' : 'text-right'} whitespace-pre-line`}
