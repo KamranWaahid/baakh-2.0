@@ -48,19 +48,17 @@ api.interceptors.request.use(config => {
         config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Global Language Interceptor
-    // Automatically detect language from URL path (/en/ or /sd/) and attach as param
+    // Detect language from /en|/sd or /lyrics-site/en|/lyrics-site/sd
     const pathname = window.location.pathname;
-    const langMatch = pathname.match(/^\/(en|sd)(\/|$)/);
-    const lang = langMatch ? langMatch[1] : 'sd';
+    const langMatch = pathname.match(/(?:^|\/lyrics-site)\/(en|sd)(?:\/|$)/);
+    const pathLang = langMatch ? langMatch[1] : 'sd';
 
-    if (lang) {
-        config.params = {
-            ...config.params,
-            lang: lang
-        };
-        config.headers['Accept-Language'] = lang;
-    }
+    // Caller-provided lang (Bol SPA) wins over path detection.
+    config.params = {
+        lang: pathLang,
+        ...config.params,
+    };
+    config.headers['Accept-Language'] = config.params.lang || pathLang;
 
     // Keep explicit API prefixes untouched to avoid hitting SPA/web routes.
     // All callers use /api/* paths and should resolve through Laravel API routes.

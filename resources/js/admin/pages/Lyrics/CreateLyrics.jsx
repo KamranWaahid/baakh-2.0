@@ -53,8 +53,10 @@ import {
     Check, ChevronsUpDown, Settings, Eye, Star, Folder, Mic2, Music2,
     Plus, Trash2, GripVertical, MessageSquare, BookOpen, Languages,
     ArrowUp, ArrowDown, Feather, Quote, Info, Link2, ExternalLink,
-    ImagePlus, X,
+    ImagePlus, X, Layers, Braces,
 } from 'lucide-react';
+import LyricsEditorJsonModal from './LyricsEditorJsonModal';
+import { SECTION_META } from './lyricsStructure';
 
 const coverUrl = (path) => {
     if (!path) return '';
@@ -66,6 +68,9 @@ const lyricsSchema = z.object({
     lyrics_title: z.string().min(2, 'Title is required'),
     lyrics_slug: z.string().min(2, 'Slug is required'),
     singer_id: z.string().optional().nullable(),
+    band_id: z.string().optional().nullable(),
+    genre_id: z.string().optional().nullable(),
+    poetry_id: z.string().optional().nullable(),
     content_style: z.string().default('center'),
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
@@ -74,6 +79,9 @@ const lyricsSchema = z.object({
     music_url: z.string().optional().nullable(),
     music_title: z.string().optional().nullable(),
     music_type: z.string().optional().nullable(),
+    youtube_url: z.string().optional().nullable(),
+    spotify_url: z.string().optional().nullable(),
+    deezer_url: z.string().optional().nullable(),
 });
 
 const detectMusicType = (url) => {
@@ -117,9 +125,10 @@ const KIND_META = {
     },
 };
 
-const emptyPart = (kind = 'sung') => ({
+const emptyPart = (kind = 'sung', section = null) => ({
     _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     kind,
+    section: section || null,
     role: kind === 'couplet' ? 'intro' : (kind === 'music' ? 'mid' : 'body'),
     relation: kind === 'couplet' ? 'exact' : 'original',
     poet_id: '',
@@ -145,12 +154,17 @@ const CreateLyrics = () => {
     const [slugError, setSlugError] = useState('');
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [openSinger, setOpenSinger] = useState(false);
+    const [openBand, setOpenBand] = useState(false);
+    const [collaborators, setCollaborators] = useState([]);
+    const [jsonModalOpen, setJsonModalOpen] = useState(false);
     const [openPoetFor, setOpenPoetFor] = useState(null);
     const [openPoetryFor, setOpenPoetryFor] = useState(null);
     const [poetrySearch, setPoetrySearch] = useState('');
     const [poetryResults, setPoetryResults] = useState([]);
     const [poetrySearching, setPoetrySearching] = useState(false);
     const [linkedPoetry, setLinkedPoetry] = useState(null); // { partKey, detail }
+    const [openSongPoetry, setOpenSongPoetry] = useState(false);
+    const [songPoetryMeta, setSongPoetryMeta] = useState(null); // { title, poet_name, couplets? }
     const [openLyricsFor, setOpenLyricsFor] = useState(null);
     const [lyricsSearch, setLyricsSearch] = useState('');
     const [lyricsResults, setLyricsResults] = useState([]);
@@ -216,6 +230,9 @@ const CreateLyrics = () => {
             lyrics_title: '',
             lyrics_slug: '',
             singer_id: '',
+            band_id: '',
+            genre_id: '',
+            poetry_id: '',
             content_style: 'center',
             visibility: true,
             is_featured: false,
@@ -224,6 +241,9 @@ const CreateLyrics = () => {
             music_url: '',
             music_title: '',
             music_type: '',
+            youtube_url: '',
+            spotify_url: '',
+            deezer_url: '',
         },
     });
 
@@ -366,6 +386,9 @@ const CreateLyrics = () => {
             lyrics_title: perso?.title || '',
             lyrics_slug: lyrics.lyrics_slug || '',
             singer_id: lyrics.singer_id?.toString() || '',
+            band_id: lyrics.band_id?.toString() || '',
+            genre_id: lyrics.genre_id?.toString() || '',
+            poetry_id: lyrics.poetry_id?.toString() || '',
             content_style: lyrics.content_style || 'center',
             visibility: !!lyrics.visibility,
             is_featured: !!lyrics.is_featured,
@@ -374,7 +397,18 @@ const CreateLyrics = () => {
             music_url: lyrics.music_url || '',
             music_title: lyrics.music_title || '',
             music_type: lyrics.music_type || detectMusicType(lyrics.music_url || ''),
+            youtube_url: lyrics.listen_links?.youtube || '',
+            spotify_url: lyrics.listen_links?.spotify || '',
+            deezer_url: lyrics.listen_links?.deezer || '',
         });
+        setCollaborators(
+            (lyrics.collaborators || []).map((c, i) => ({
+                key: `c-${c.type}-${c.id}-${i}`,
+                type: c.type || 'singer',
+                id: c.id?.toString() || '',
+                role: c.role || 'feat',
+            })),
+        );
         setRomanTitle(roman?.title || '');
         setCoverImage(null);
         setRemoveCover(false);
@@ -384,6 +418,7 @@ const CreateLyrics = () => {
         const loaded = (lyrics.parts || []).map((p, i) => ({
             _key: `loaded-${p.id || i}`,
             kind: p.kind || 'sung',
+            section: p.section || null,
             role: p.role || '',
             relation: p.relation || 'original',
             poet_id: p.poet_id?.toString() || '',
@@ -397,6 +432,27 @@ const CreateLyrics = () => {
             text_roman: p.text_roman || '',
         }));
         setParts(loaded.length ? loaded : [emptyPart('sung')]);
+
+        if (lyrics.poetry_id) {
+            const title = lyrics.poetry?.info?.title
+                || lyrics.poetry?.translations?.find?.((t) => t.lang === 'sd')?.title
+                || `Poetry #${lyrics.poetry_id}`;
+            const poetName = lyrics.poetry?.poet_details?.poet_laqab
+                || lyrics.poetry?.poet_details?.poet_name
+                || null;
+            setSongPoetryMeta({ title, poet_name: poetName });
+            api.get(`/api/admin/lyrics/poetry/${lyrics.poetry_id}/couplets`)
+                .then((res) => {
+                    setSongPoetryMeta({
+                        title: res.data.title || title,
+                        poet_name: res.data.poet_name || poetName,
+                        couplets: res.data.couplets || [],
+                    });
+                })
+                .catch(() => { /* keep basic meta */ });
+        } else {
+            setSongPoetryMeta(null);
+        }
 
         // Fill poetry titles for linked parts
         loaded.filter((p) => p.poetry_id && !p.poetry_title).forEach(async (p) => {
@@ -421,13 +477,28 @@ const CreateLyrics = () => {
             const payload = {
                 ...values,
                 singer_id: values.singer_id || null,
+                band_id: values.band_id || null,
+                genre_id: values.genre_id || null,
+                poetry_id: values.poetry_id || null,
+                collaborators: collaborators
+                    .filter((c) => c.id)
+                    .map((c, i) => ({
+                        type: c.type,
+                        id: Number(c.id),
+                        role: c.role || 'feat',
+                        sort_order: i,
+                    })),
                 music_url: values.music_url?.trim() || null,
                 music_title: values.music_title?.trim() || null,
                 music_type: values.music_type || detectMusicType(values.music_url) || null,
+                youtube_url: values.youtube_url?.trim() || '',
+                spotify_url: values.spotify_url?.trim() || '',
+                deezer_url: values.deezer_url?.trim() || '',
                 roman_title: romanTitle,
                 parts: parts.map((p, i) => ({
                     sort_order: i,
                     kind: p.kind,
+                    section: p.section || null,
                     role: p.role || null,
                     relation: p.relation || 'original',
                     poet_id: p.poet_id || null,
@@ -550,13 +621,63 @@ const CreateLyrics = () => {
     }, []);
 
     useEffect(() => {
-        if (!openPoetryFor) return;
-        const part = parts.find((p) => p._key === openPoetryFor);
+        if (!openPoetryFor && !openSongPoetry) return;
+        const part = openPoetryFor ? parts.find((p) => p._key === openPoetryFor) : null;
         const timer = setTimeout(() => {
             searchPoetry(poetrySearch, part?.poet_id || undefined);
         }, 300);
         return () => clearTimeout(timer);
-    }, [openPoetryFor, poetrySearch, searchPoetry]);
+    }, [openPoetryFor, openSongPoetry, poetrySearch, searchPoetry, parts]);
+
+    const linkSongPoetry = async (poetryItem) => {
+        try {
+            const res = await api.get(`/api/admin/lyrics/poetry/${poetryItem.id}/couplets`);
+            const detail = res.data;
+            form.setValue('poetry_id', detail.id.toString());
+            setSongPoetryMeta({
+                title: detail.title,
+                poet_name: detail.poet_name,
+                couplets: detail.couplets || [],
+            });
+            setOpenSongPoetry(false);
+            setPoetrySearch('');
+        } catch (e) {
+            alert(e.response?.data?.message || 'Failed to load poetry');
+        }
+    };
+
+    const clearSongPoetry = () => {
+        form.setValue('poetry_id', '');
+        setSongPoetryMeta(null);
+    };
+
+    const insertSongPoetryAsParts = () => {
+        const couplets = songPoetryMeta?.couplets || [];
+        const poetryId = form.getValues('poetry_id');
+        if (!poetryId || couplets.length === 0) {
+            alert('Attach a full poem first (with couplets).');
+            return;
+        }
+        const newParts = couplets.map((c, i) => ({
+            ...emptyPart('couplet'),
+            _key: `poem-${poetryId}-${c.id || i}-${Date.now()}`,
+            role: i === 0 ? 'intro' : (i === couplets.length - 1 ? 'outro' : 'mid'),
+            relation: 'exact',
+            poetry_id: poetryId.toString(),
+            poetry_title: songPoetryMeta.title || '',
+            couplet_id: c.id?.toString() || '',
+            text_sd: c.text_sd || '',
+            text_roman: c.text_roman || '',
+        }));
+        setParts((prev) => {
+            const onlyEmpty = prev.length === 1
+                && !prev[0].text_sd?.trim()
+                && !prev[0].text_roman?.trim()
+                && !prev[0].poetry_id;
+            return onlyEmpty ? newParts : [...prev, ...newParts];
+        });
+        setIsTransliterated(true);
+    };
 
     const linkPoetryToPart = async (partKey, poetryItem) => {
         try {
@@ -722,6 +843,13 @@ const CreateLyrics = () => {
 
     const singerName = (singerId) =>
         meta?.singers?.find((s) => s.id.toString() === singerId)?.name;
+    const bandName = (bandId) =>
+        meta?.bands?.find((b) => b.id.toString() === bandId)?.name;
+    const collabLabel = (c) => {
+        if (!c.id) return 'Select…';
+        if (c.type === 'band') return bandName(c.id) || `Band #${c.id}`;
+        return singerName(c.id) || `Artist #${c.id}`;
+    };
 
     if (isMetaLoading || (isEdit && isLyricsLoading)) {
         return (
@@ -789,6 +917,16 @@ const CreateLyrics = () => {
                                     ) : isTransliterated ? (
                                         <span className="text-emerald-600">Auto-Transliterated</span>
                                     ) : null}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-xs ms-1"
+                                        onClick={() => setJsonModalOpen(true)}
+                                    >
+                                        <Braces className="h-3.5 w-3.5 mr-1" />
+                                        Lyrics JSON
+                                    </Button>
                                 </div>
                             </div>
 
@@ -833,7 +971,7 @@ const CreateLyrics = () => {
                                 )}
 
                                 {/* Song timeline */}
-                                <div className="space-y-3 pt-2">
+                                <div className="space-y-5 pt-2">
                                     {parts.map((part, index) => {
                                         const metaKind = KIND_META[part.kind] || KIND_META.other;
                                         const Icon = metaKind.icon;
@@ -886,13 +1024,18 @@ const CreateLyrics = () => {
                                         return (
                                             <div
                                                 key={part._key}
-                                                className="rounded-lg border border-border bg-card p-3 md:p-4 space-y-3"
+                                                className="rounded-lg border border-border bg-card p-3 md:p-4 space-y-4"
                                             >
                                                 <div className="flex items-center justify-between gap-2 flex-wrap">
                                                     <div className="flex items-center gap-2 text-sm">
                                                         <GripVertical className="h-4 w-4 text-muted-foreground/40" />
                                                         <Icon className="h-4 w-4 text-muted-foreground" />
                                                         <span className="font-medium">{metaKind.label}</span>
+                                                        {part.section && SECTION_META[part.section] && (
+                                                            <span className="inline-flex items-center rounded-full border bg-background px-2.5 py-0.5 text-xs font-medium">
+                                                                [{SECTION_META[part.section].label}]
+                                                            </span>
+                                                        )}
                                                         <span className="text-[10px] text-muted-foreground/60 tabular-nums">
                                                             #{index + 1}
                                                         </span>
@@ -924,6 +1067,38 @@ const CreateLyrics = () => {
                                                 </div>
 
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                    <Select
+                                                        value={part.section || '_none'}
+                                                        onValueChange={(v) => {
+                                                            if (v === '_none') {
+                                                                updatePart(part._key, { section: null });
+                                                                return;
+                                                            }
+                                                            const meta = SECTION_META[v];
+                                                            updatePart(part._key, {
+                                                                section: v,
+                                                                ...(meta ? {
+                                                                    kind: part.kind === 'couplet' ? part.kind : meta.kind,
+                                                                    role: meta.role,
+                                                                    ...(meta.kind === 'music' && !part.text_sd ? {
+                                                                        text_sd: '♪ موسيقي شروع',
+                                                                        text_roman: '♪ Music starts',
+                                                                    } : {}),
+                                                                } : {}),
+                                                            });
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="h-8 text-xs">
+                                                            <SelectValue placeholder="Section" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="_none">Section…</SelectItem>
+                                                            {Object.entries(SECTION_META).map(([k, m]) => (
+                                                                <SelectItem key={k} value={k}>{m.label}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+
                                                     <Select
                                                         value={part.kind}
                                                         onValueChange={(v) => updatePart(part._key, {
@@ -1201,7 +1376,7 @@ const CreateLyrics = () => {
                                                         lang="sd"
                                                         rows={4}
                                                         className={cn(
-                                                            'min-h-[88px] resize-y text-lg leading-relaxed font-arabic text-right',
+                                                            'min-h-[112px] resize-y text-lg leading-8 font-arabic text-right py-3',
                                                             part.kind === 'spoken' || part.kind === 'explanation' ? 'italic opacity-90' : ''
                                                         )}
                                                         placeholder={
@@ -1218,7 +1393,7 @@ const CreateLyrics = () => {
                                                         dir="ltr"
                                                         rows={4}
                                                         className={cn(
-                                                            'min-h-[88px] resize-y text-base leading-relaxed font-sans text-left',
+                                                            'min-h-[112px] resize-y text-base leading-8 font-sans text-left py-3',
                                                             part.kind === 'spoken' || part.kind === 'explanation' ? 'italic opacity-90' : ''
                                                         )}
                                                         placeholder="Auto-transliterated roman text…"
@@ -1492,6 +1667,46 @@ const CreateLyrics = () => {
                                     </a>
                                 )}
 
+                                <div className="space-y-3 pt-2 border-t">
+                                    <p className="text-xs text-muted-foreground">Platform listen links (icons on Bol)</p>
+                                    <FormField
+                                        control={form.control}
+                                        name="youtube_url"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">YouTube</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} value={field.value || ''} placeholder="https://youtube.com/…" />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="spotify_url"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">Spotify</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} value={field.value || ''} placeholder="https://open.spotify.com/…" />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="deezer_url"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">Deezer</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} value={field.value || ''} placeholder="https://www.deezer.com/…" />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+
                                 {(() => {
                                     const url = form.watch('music_url') || '';
                                     const yt = url.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
@@ -1581,6 +1796,241 @@ const CreateLyrics = () => {
                                             >
                                                 + Add new singer
                                             </Button>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="band_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm">Band (بينڊ)</FormLabel>
+                                            <Popover open={openBand} onOpenChange={setOpenBand}>
+                                                <PopoverTrigger asChild>
+                                                    <FormControl>
+                                                        <Button
+                                                            variant="outline"
+                                                            role="combobox"
+                                                            className={cn('w-full justify-between font-arabic', !field.value && 'text-muted-foreground')}
+                                                        >
+                                                            {field.value ? bandName(field.value) : 'Select band (optional)'}
+                                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                        </Button>
+                                                    </FormControl>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-[300px] p-0" align="start">
+                                                    <Command>
+                                                        <CommandInput placeholder="Search band..." className="font-arabic text-right" />
+                                                        <CommandList>
+                                                            <CommandEmpty>No band found.</CommandEmpty>
+                                                            <CommandGroup>
+                                                                <CommandItem
+                                                                    value="none"
+                                                                    onSelect={() => {
+                                                                        form.setValue('band_id', '');
+                                                                        setOpenBand(false);
+                                                                    }}
+                                                                >
+                                                                    — No band —
+                                                                </CommandItem>
+                                                                {meta?.bands?.map((b) => (
+                                                                    <CommandItem
+                                                                        key={b.id}
+                                                                        value={`${b.name} ${b.id}`}
+                                                                        onSelect={() => {
+                                                                            form.setValue('band_id', b.id.toString());
+                                                                            setOpenBand(false);
+                                                                        }}
+                                                                        className="font-arabic text-right flex flex-row-reverse justify-between"
+                                                                    >
+                                                                        {b.name}
+                                                                        <Check className={cn('h-4 w-4', b.id.toString() === field.value ? 'opacity-100' : 'opacity-0')} />
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="space-y-2 rounded-md border p-3">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <label className="text-sm font-medium">Collaborations</label>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setCollaborators((prev) => [
+                                                ...prev,
+                                                { key: `new-${Date.now()}`, type: 'singer', id: '', role: 'feat' },
+                                            ])}
+                                        >
+                                            + Add
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Feat / with / collab artists or bands.</p>
+                                    {collaborators.length === 0 && (
+                                        <p className="text-xs text-muted-foreground">None yet.</p>
+                                    )}
+                                    {collaborators.map((c) => (
+                                        <div key={c.key} className="grid gap-2 sm:grid-cols-[88px_1fr_88px_auto] items-center">
+                                            <Select
+                                                value={c.type}
+                                                onValueChange={(v) => setCollaborators((prev) => prev.map((row) => (
+                                                    row.key === c.key ? { ...row, type: v, id: '' } : row
+                                                )))}
+                                            >
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="singer">Artist</SelectItem>
+                                                    <SelectItem value="band">Band</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select
+                                                value={c.id || 'none'}
+                                                onValueChange={(v) => setCollaborators((prev) => prev.map((row) => (
+                                                    row.key === c.key ? { ...row, id: v === 'none' ? '' : v } : row
+                                                )))}
+                                            >
+                                                <SelectTrigger className="font-arabic">
+                                                    <SelectValue placeholder={collabLabel(c)} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">Select…</SelectItem>
+                                                    {(c.type === 'band' ? meta?.bands : meta?.singers)?.map((item) => (
+                                                        <SelectItem key={item.id} value={item.id.toString()} className="font-arabic">
+                                                            {item.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <Select
+                                                value={c.role || 'feat'}
+                                                onValueChange={(v) => setCollaborators((prev) => prev.map((row) => (
+                                                    row.key === c.key ? { ...row, role: v } : row
+                                                )))}
+                                            >
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="feat">feat</SelectItem>
+                                                    <SelectItem value="with">with</SelectItem>
+                                                    <SelectItem value="collab">collab</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setCollaborators((prev) => prev.filter((row) => row.key !== c.key))}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <FormField
+                                    control={form.control}
+                                    name="genre_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm flex items-center gap-2">
+                                                <Layers className="h-4 w-4 text-muted-foreground" /> Genre
+                                            </FormLabel>
+                                            <Select
+                                                value={field.value || 'none'}
+                                                onValueChange={(v) => field.onChange(v === 'none' ? '' : v)}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select genre (optional)" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="none">No genre</SelectItem>
+                                                    {(meta?.genres || []).map((g) => (
+                                                        <SelectItem key={g.id} value={g.id.toString()}>
+                                                            <span className="font-arabic" dir="rtl">{g.name}</span>
+                                                            {g.name_en ? ` · ${g.name_en}` : ''}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="poetry_id"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-sm flex items-center gap-2">
+                                                <Feather className="h-4 w-4 text-muted-foreground" /> Full poetry (optional)
+                                            </FormLabel>
+                                            <p className="text-[11px] text-muted-foreground -mt-1 mb-1">
+                                                Attach a complete poem from the archive. Lyric parts stay separate — visitors can read both.
+                                            </p>
+                                            {field.value && songPoetryMeta ? (
+                                                <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                                                    <div className="font-arabic text-sm" dir="rtl">{songPoetryMeta.title}</div>
+                                                    {songPoetryMeta.poet_name && (
+                                                        <div className="font-arabic text-xs text-muted-foreground" dir="rtl">
+                                                            {songPoetryMeta.poet_name}
+                                                        </div>
+                                                    )}
+                                                    <div className="text-[11px] text-muted-foreground">
+                                                        {(songPoetryMeta.couplets || []).length} couplets · shown on public song page
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            onClick={insertSongPoetryAsParts}
+                                                            disabled={!songPoetryMeta.couplets?.length}
+                                                        >
+                                                            Insert as couplet parts
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                setOpenSongPoetry(true);
+                                                                setPoetrySearch('');
+                                                                searchPoetry('');
+                                                            }}
+                                                        >
+                                                            Change
+                                                        </Button>
+                                                        <Button type="button" size="sm" variant="ghost" onClick={clearSongPoetry}>
+                                                            Remove
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="w-full justify-start"
+                                                    onClick={() => {
+                                                        setOpenSongPoetry(true);
+                                                        setPoetrySearch('');
+                                                        searchPoetry('');
+                                                    }}
+                                                >
+                                                    <BookOpen className="h-4 w-4 mr-2" />
+                                                    Attach full poem…
+                                                </Button>
+                                            )}
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -1862,6 +2312,52 @@ const CreateLyrics = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={openSongPoetry} onOpenChange={(o) => {
+                setOpenSongPoetry(o);
+                if (!o) setPoetrySearch('');
+            }}>
+                <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Attach full poetry</DialogTitle>
+                        <DialogDescription>
+                            Choose a poem from the archive. It will appear on the public song page alongside lyric parts.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Input
+                        value={poetrySearch}
+                        onChange={(e) => setPoetrySearch(e.target.value)}
+                        placeholder="Search poetry title or poet…"
+                        className="mb-2"
+                    />
+                    <div className="overflow-y-auto space-y-1 flex-1 min-h-[200px]">
+                        {poetrySearching && (
+                            <p className="text-sm text-muted-foreground py-6 text-center">Searching…</p>
+                        )}
+                        {!poetrySearching && poetryResults.length === 0 && (
+                            <p className="text-sm text-muted-foreground py-6 text-center">No poetry found.</p>
+                        )}
+                        {poetryResults.map((item) => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                className="w-full text-right rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                                onClick={() => linkSongPoetry(item)}
+                            >
+                                <div className="font-arabic text-sm" dir="rtl">{item.title}</div>
+                                {item.poet_name && (
+                                    <div className="font-arabic text-xs text-muted-foreground mt-1" dir="rtl">
+                                        {item.poet_name}
+                                    </div>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setOpenSongPoetry(false)}>Cancel</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={!!linkedPoetry} onOpenChange={(o) => !o && setLinkedPoetry(null)}>
                 <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
                     <DialogHeader>
@@ -1898,35 +2394,66 @@ const CreateLyrics = () => {
                     <DialogFooter className="flex-wrap gap-2">
                         <Button variant="outline" onClick={() => setLinkedPoetry(null)}>Close</Button>
                         {linkedPoetry?.detail?.couplets?.length > 0 && (
-                            <Button
-                                variant="secondary"
-                                onClick={() => {
-                                    const partKey = linkedPoetry.partKey;
-                                    const all = linkedPoetry.detail.couplets
-                                        .map((c) => c.text_sd)
-                                        .filter(Boolean)
-                                        .join('\n\n');
-                                    const allRoman = linkedPoetry.detail.couplets
-                                        .map((c) => c.text_roman)
-                                        .filter(Boolean)
-                                        .join('\n\n');
-                                    updatePart(partKey, {
-                                        text_sd: all,
-                                        text_roman: allRoman,
-                                        couplet_id: '',
-                                        relation: 'exact',
-                                        kind: 'sung',
-                                    });
-                                    if (all && !allRoman) {
-                                        schedulePartRoman(partKey, all);
-                                    } else {
+                            <>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        const partKey = linkedPoetry.partKey;
+                                        const detail = linkedPoetry.detail;
+                                        const couplets = detail.couplets || [];
+                                        const newParts = couplets.map((c, i) => ({
+                                            ...emptyPart('couplet'),
+                                            _key: `poem-part-${detail.id}-${c.id || i}-${Date.now()}`,
+                                            role: i === 0 ? 'intro' : (i === couplets.length - 1 ? 'outro' : 'mid'),
+                                            relation: 'exact',
+                                            poet_id: detail.poet_id?.toString() || '',
+                                            poetry_id: detail.id.toString(),
+                                            poetry_title: detail.title || '',
+                                            couplet_id: c.id?.toString() || '',
+                                            text_sd: c.text_sd || '',
+                                            text_roman: c.text_roman || '',
+                                        }));
+                                        setParts((prev) => {
+                                            const without = prev.filter((p) => p._key !== partKey);
+                                            const base = without.length ? without : [];
+                                            return [...base, ...newParts];
+                                        });
                                         setIsTransliterated(true);
-                                    }
-                                    setLinkedPoetry(null);
-                                }}
-                            >
-                                Use full poem text
-                            </Button>
+                                        setLinkedPoetry(null);
+                                    }}
+                                >
+                                    Insert as couplet parts
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => {
+                                        const partKey = linkedPoetry.partKey;
+                                        const all = linkedPoetry.detail.couplets
+                                            .map((c) => c.text_sd)
+                                            .filter(Boolean)
+                                            .join('\n\n');
+                                        const allRoman = linkedPoetry.detail.couplets
+                                            .map((c) => c.text_roman)
+                                            .filter(Boolean)
+                                            .join('\n\n');
+                                        updatePart(partKey, {
+                                            text_sd: all,
+                                            text_roman: allRoman,
+                                            couplet_id: '',
+                                            relation: 'exact',
+                                            kind: 'sung',
+                                        });
+                                        if (all && !allRoman) {
+                                            schedulePartRoman(partKey, all);
+                                        } else {
+                                            setIsTransliterated(true);
+                                        }
+                                        setLinkedPoetry(null);
+                                    }}
+                                >
+                                    Use full poem text
+                                </Button>
+                            </>
                         )}
                     </DialogFooter>
                 </DialogContent>
@@ -1988,6 +2515,21 @@ const CreateLyrics = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <LyricsEditorJsonModal
+                open={jsonModalOpen}
+                onClose={() => setJsonModalOpen(false)}
+                lyricsId={isEdit ? id : null}
+                lyricsTitle={form.watch('lyrics_title') || ''}
+                romanTitle={romanTitle}
+                parts={parts}
+                onApply={({ parts: nextParts, lyrics_title, roman_title }) => {
+                    if (nextParts?.length) setParts(nextParts);
+                    if (lyrics_title) form.setValue('lyrics_title', lyrics_title);
+                    if (roman_title) setRomanTitle(roman_title);
+                    allowAutoUpdates.current = true;
+                }}
+            />
         </Form>
     );
 };

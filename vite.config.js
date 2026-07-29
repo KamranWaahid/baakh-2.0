@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/admin/main.jsx',
                 'resources/js/web/main.jsx',
+                'resources/js/lyrics/main.jsx',
             ],
             refresh: true,
         }),

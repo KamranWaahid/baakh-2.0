@@ -32,6 +32,11 @@ class NormalizeSeoUrls
         }
 
         $host = strtolower($request->getHost());
+        $lyricsHosts = array_map('strtolower', config('app.lyrics_hosts', []));
+        if (in_array($host, $lyricsHosts, true) || str_starts_with($host, 'lyrics.')) {
+            return $next($request);
+        }
+
         $scheme = 'https';
         $canonicalHost = $this->canonicalHost();
 
@@ -41,7 +46,8 @@ class NormalizeSeoUrls
         }
 
         // Legacy staging host → canonical apex (baakh.com)
-        if ($host === 'beta.baakh.com' || str_starts_with($host, 'beta.')) {
+        // Never redirect the lyrics subdomain into the archive apex.
+        if (($host === 'beta.baakh.com' || str_starts_with($host, 'beta.')) && !str_starts_with($host, 'lyrics.')) {
             return $this->redirectAway($scheme, $canonicalHost, $path, $request);
         }
 
@@ -100,6 +106,7 @@ class NormalizeSeoUrls
             '/auth/',
             '/livewire',
             '/og-image/',
+            '/lyrics-site',
         ];
 
         foreach ($prefixes as $prefix) {

@@ -119,6 +119,18 @@ Route::prefix('v1')->group(function () {
     Route::get('periods/{id}/poets', [App\Http\Controllers\Api\PeriodController::class, 'poets']);
     Route::get('prosody', [App\Http\Controllers\Api\ProsodyController::class, 'index']);
 
+    // Public lyrics site (lyrics.baakh.com)
+    Route::get('lyrics', [App\Http\Controllers\Api\PublicLyricsController::class, 'index']);
+    Route::get('lyrics/{slug}', [App\Http\Controllers\Api\PublicLyricsController::class, 'show']);
+    Route::get('lyrics-genres', [App\Http\Controllers\Api\PublicLyricsGenreController::class, 'index']);
+    Route::get('lyrics-genres/{slug}', [App\Http\Controllers\Api\PublicLyricsGenreController::class, 'show']);
+    Route::get('singers', [App\Http\Controllers\Api\PublicSingerController::class, 'index']);
+    Route::get('singers/{slug}/lyrics', [App\Http\Controllers\Api\PublicSingerController::class, 'lyrics']);
+    Route::get('singers/{slug}', [App\Http\Controllers\Api\PublicSingerController::class, 'show']);
+    Route::get('bands', [App\Http\Controllers\Api\PublicBandController::class, 'index']);
+    Route::get('bands/{slug}/lyrics', [App\Http\Controllers\Api\PublicBandController::class, 'lyrics']);
+    Route::get('bands/{slug}', [App\Http\Controllers\Api\PublicBandController::class, 'show']);
+
     // Interaction Routes
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('interactions/like', [App\Http\Controllers\Api\UserInteractionController::class, 'toggleLike']);
@@ -237,6 +249,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
 
+        Route::apiResource('lyrics-genres', \App\Http\Controllers\Api\Admin\LyricsGenreController::class);
         Route::get('lyrics/check-slug', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'checkSlug']);
         Route::get('lyrics/create', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'create']);
         Route::get('lyrics/search-poetry', [\App\Http\Controllers\Api\Admin\LyricsController::class, 'searchPoetry']);
@@ -255,6 +268,12 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::patch('singers/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\SingerController::class, 'toggleFeatured']);
         Route::post('singers/{id}/restore', [\App\Http\Controllers\Api\Admin\SingerController::class, 'restore']);
         Route::delete('singers/{id}/permanent', [\App\Http\Controllers\Api\Admin\SingerController::class, 'permanentDelete']);
+        Route::get('bands/check-slug', [\App\Http\Controllers\Api\Admin\BandController::class, 'checkSlug']);
+        Route::apiResource('bands', \App\Http\Controllers\Api\Admin\BandController::class);
+        Route::patch('bands/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\BandController::class, 'toggleVisibility']);
+        Route::patch('bands/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\BandController::class, 'toggleFeatured']);
+        Route::post('bands/{id}/restore', [\App\Http\Controllers\Api\Admin\BandController::class, 'restore']);
+        Route::delete('bands/{id}/permanent', [\App\Http\Controllers\Api\Admin\BandController::class, 'permanentDelete']);
         Route::get('couplets/check-slug', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'checkSlug']);
         Route::apiResource('couplets', \App\Http\Controllers\Api\Admin\CoupletController::class);
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);

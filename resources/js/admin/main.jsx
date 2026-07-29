@@ -55,8 +55,11 @@ import CreateCouplet from './pages/Poetry/CreateCouplet';
 import CoupletsList from './pages/Poetry/CoupletsList';
 import LyricsList from './pages/Lyrics/LyricsList';
 import CreateLyrics from './pages/Lyrics/CreateLyrics';
+import LyricsGenreList from './pages/Lyrics/LyricsGenreList';
 import SingersList from './pages/Singers/SingersList';
 import CreateSinger from './pages/Singers/CreateSinger';
+import BandsList from './pages/Bands/BandsList';
+import CreateBand from './pages/Bands/CreateBand';
 import TagsList from './pages/Tags/TagsList';
 import TagForm from './pages/Tags/TagForm';
 import CategoriesList from './pages/Categories/CategoriesList';
@@ -210,6 +213,13 @@ const App = () => {
                             </AdminLayout>
                         </ProtectedRoute>
                     } />
+                    <Route path="/admin/lyrics-genres" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <LyricsGenreList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
                     <Route path="/admin/lyrics/create" element={
                         <ProtectedRoute>
                             <AdminLayout>
@@ -242,6 +252,27 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CreateSinger />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/bands" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <BandsList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/bands/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateBand />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/bands/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <CreateBand />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

@@ -15,6 +15,7 @@ class LyricsPart extends Model
         'lyrics_id',
         'sort_order',
         'kind',
+        'section',
         'role',
         'relation',
         'poet_id',

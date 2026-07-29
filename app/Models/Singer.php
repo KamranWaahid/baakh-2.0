@@ -16,6 +16,7 @@ class Singer extends Model
         'date_of_death',
         'visibility',
         'is_featured',
+        'listen_links',
     ];
 
     protected $casts = [
@@ -23,6 +24,7 @@ class Singer extends Model
         'is_featured' => 'boolean',
         'date_of_birth' => 'date',
         'date_of_death' => 'date',
+        'listen_links' => 'array',
     ];
 
     public function details()
@@ -38,5 +40,13 @@ class Singer extends Model
     public function lyrics()
     {
         return $this->hasMany(Lyrics::class, 'singer_id');
+    }
+
+    public function bands()
+    {
+        return $this->belongsToMany(Band::class, 'band_singer')
+            ->withPivot(['role', 'sort_order'])
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
     }
 }
