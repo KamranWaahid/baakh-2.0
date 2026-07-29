@@ -51,9 +51,20 @@ const hasArabicScript = (value) => /[\u0600-\u06FF]/.test(value || '');
 
 const getNotificationCopy = (n) => {
     const data = n.data || {};
+    const isSystemError = n.type === 'system_error' || n.icon === 'Bug';
     let entityName = (data.entity_name || '').trim();
     let poetName = (data.poet_name || '').trim();
     let message = (n.message || '').trim();
+
+    // System errors must keep the full summary — quote scraping is only for poetry/content copy.
+    if (isSystemError) {
+        return {
+            headline: n.title || 'Update',
+            entityName: '',
+            poetName: '',
+            message: message || data.path || 'Open error log for details',
+        };
+    }
 
     // Prefer structured fields; fall back to parsing older "title" by poet messages.
     if ((!entityName || looksLikeSlug(entityName)) && message) {

@@ -66,13 +66,19 @@ class NotificationController extends Controller
     private function serialize(AdminNotification $n): array
     {
         $data = is_array($n->data) ? $n->data : [];
-        $data = $this->enrichEntityData($data, $n->message);
+        $isSystemError = $n->type === 'system_error';
+
+        if (!$isSystemError) {
+            $data = $this->enrichEntityData($data, $n->message);
+        }
 
         return [
             'id' => $n->id,
             'type' => $n->type,
             'title' => $n->title,
-            'message' => $this->readableMessage($n->message, $data),
+            'message' => $isSystemError
+                ? $this->readableSystemErrorMessage($n->message, $data)
+                : $this->readableMessage($n->message, $data),
             'icon' => $n->icon,
             'color' => $n->color,
             'link' => $n->link,
@@ -126,6 +132,33 @@ class NotificationController extends Controller
         }
 
         return $data;
+    }
+
+    private function readableSystemErrorMessage(?string $message, array $data): string
+    {
+        $message = trim((string) $message);
+
+        if ($message !== '' && preg_match("/Table ['\`](?:[^'\`]+\\.)?([^'\`]+)['\`] doesn't exist/i", $message, $m)) {
+            $message = "Missing database table: {$m[1]}";
+        } elseif ($message !== '' && str_starts_with($message, 'SQLSTATE[')) {
+            $message = 'Database query failed';
+        }
+
+        if ($message === '') {
+            $message = trim((string) ($data['exception'] ?? '')) ?: 'Open error log for details';
+        }
+
+        $path = trim((string) ($data['path'] ?? ''));
+        if ($path !== '' && !str_contains($message, $path)) {
+            $message .= ' · ' . $path;
+        }
+
+        $count = (int) ($data['count'] ?? 1);
+        if ($count > 1 && !str_contains($message, '×')) {
+            $message .= " · ×{$count}";
+        }
+
+        return $message;
     }
 
     private function readableMessage(?string $message, array $data): string

@@ -34,9 +34,14 @@ class AdminNotification extends Model
     {
         $map = self::getActionMap();
 
-        // Find matching notification type
-        foreach ($map as $pattern => $config) {
+        // Prefer the longest/most specific pattern so "system_error_updated"
+        // does not match the shorter "system_error" entry.
+        $patterns = array_keys($map);
+        usort($patterns, fn (string $a, string $b) => strlen($b) <=> strlen($a));
+
+        foreach ($patterns as $pattern) {
             if (str_contains($action, $pattern)) {
+                $config = $map[$pattern];
                 $title = str_replace('{user}', $userName ?? 'System', $config['title']);
                 $message = $description ?: $title;
 
