@@ -19,9 +19,9 @@ const PoemDetail = ({ lang }) => {
     const { poemSlug } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [verseBaseSize, setVerseBaseSize] = useState(26);
-    const [verseMinSize, setVerseMinSize] = useState(17);
-    const [coupletGapClass, setCoupletGapClass] = useState('mb-10');
+    const [verseBaseSize, setVerseBaseSize] = useState(21);
+    const [verseMinSize, setVerseMinSize] = useState(16);
+    const [coupletGapClass, setCoupletGapClass] = useState('mb-5');
     const [lineGap, setLineGap] = useState(6);
 
     useEffect(() => {
@@ -31,12 +31,11 @@ const PoemDetail = ({ lang }) => {
         const mq = window.matchMedia('(min-width: 768px)');
         const sync = () => {
             const desktop = mq.matches;
-            // Larger desktop reading size; keep a higher floor so fit-scaling doesn’t crush verse.
-            setVerseBaseSize(desktop ? 34 : 26);
-            setVerseMinSize(desktop ? 20 : 17);
-            // Wider gap between couplets on desktop; tighter line pairing inside each couplet.
-            setCoupletGapClass(desktop ? 'mb-14' : 'mb-10');
-            setLineGap(desktop ? 5 : 6);
+            // ~30% smaller than the previous 42/30 for a calmer reading scale.
+            setVerseBaseSize(desktop ? 29 : 21);
+            setVerseMinSize(desktop ? 18 : 15);
+            setCoupletGapClass(desktop ? 'mb-6' : 'mb-5');
+            setLineGap(desktop ? 6 : 5);
         };
         sync();
         mq.addEventListener('change', sync);
@@ -108,12 +107,16 @@ const PoemDetail = ({ lang }) => {
 
     if (!poem || !poem.id) return null;
 
-    // Justification Logic
+    // Justification: Sindhi (RTL) defaults to right; English/roman (LTR) defaults to left.
+    // Explicit content_style and ghazal centering still win.
     const isGhazal = poem.category?.name && (poem.category.name.toLowerCase().includes('ghazal') || poem.category.name.includes('غزل'));
     const verseAlign = isGhazal || poem.content_style === 'center'
         ? 'center'
-        : (poem.content_style === 'left' ? 'left' : 'right');
-
+        : poem.content_style === 'left'
+            ? 'left'
+            : poem.content_style === 'right'
+                ? 'right'
+                : (isRtl ? 'right' : 'left');
 
     return (
         <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>

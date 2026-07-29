@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
-import { Search, Bell, Menu, User as UserIcon, LogOut, Settings, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Shield } from 'lucide-react';
-import { useScrollDirection } from '../hooks/useScrollDirection';
+import { Search, Menu, User as UserIcon, LogOut, Settings, Home, Feather, BookOpen, Scroll, Music, Tags, History, Scale, Shield } from 'lucide-react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import LoginModal from './LoginModal';
@@ -26,28 +25,6 @@ const Navbar = ({ lang }) => {
     const { user, loading, logout } = useAuth();
     const { openMenu } = useMobileMenu();
     const [searchOpen, setSearchOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => {
-            // Hide-on-scroll only on true phone widths; keep sticky visible from md/desktop up.
-            setIsMobile(window.innerWidth < 768);
-        };
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    const navItems = [
-        { label: isRtl ? 'گھر' : 'Home', icon: Home, path: `/${lang}` },
-        { label: isRtl ? 'شاعر' : 'Poets', icon: Feather, path: `/${lang}/poets` },
-        { label: isRtl ? 'شاعري' : 'Poetry', icon: BookOpen, path: `/${lang}/poetry` },
-        { label: isRtl ? 'بيت' : 'Couplets', icon: Scroll, path: `/${lang}/couplets` },
-        { label: isRtl ? 'ٻول' : 'Lyrics', icon: Music, path: `/${lang}/lyrics` },
-        { label: isRtl ? 'صنف' : 'Genre', icon: Tags, path: `/${lang}/genre` },
-        { label: isRtl ? 'دور' : 'Period', icon: History, path: `/${lang}/period` },
-        { label: isRtl ? 'علم عروض' : 'Prosody', icon: Scale, path: `/${lang}/prosody` },
-    ];
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -59,7 +36,6 @@ const Navbar = ({ lang }) => {
 
         document.addEventListener('keydown', handleKeyDown);
 
-        // Listen for open-search event from MobileMenu
         const handleOpenSearch = () => setSearchOpen(true);
         document.addEventListener('open-search', handleOpenSearch);
 
@@ -69,8 +45,6 @@ const Navbar = ({ lang }) => {
         };
     }, []);
 
-    const location = useLocation();
-
     const NavItems = () => {
         const { lang } = useParams();
         const location = useLocation();
@@ -79,7 +53,6 @@ const Navbar = ({ lang }) => {
 
         const targetLang = lang === 'en' ? 'sd' : 'en';
 
-        // Safer path replacement using URL segments
         const pathSegments = location.pathname.split('/').filter(Boolean);
         if (pathSegments.length > 0 && (pathSegments[0] === 'en' || pathSegments[0] === 'sd')) {
             pathSegments[0] = targetLang;
@@ -166,9 +139,6 @@ const Navbar = ({ lang }) => {
         );
     };
 
-    const scrollDirection = useScrollDirection();
-    // Hide-on-scroll only on mobile; desktop keeps a sticky, always-visible header.
-    const isHidden = isMobile && scrollDirection === 'down';
     const headerRef = useRef(null);
 
     useLayoutEffect(() => {
@@ -176,8 +146,7 @@ const Navbar = ({ lang }) => {
         if (!el) return undefined;
 
         const publishHeight = () => {
-            const h = isHidden ? 0 : el.offsetHeight;
-            document.documentElement.style.setProperty('--baakh-header-h', `${h}px`);
+            document.documentElement.style.setProperty('--baakh-header-h', `${el.offsetHeight}px`);
         };
 
         publishHeight();
@@ -190,14 +159,14 @@ const Navbar = ({ lang }) => {
             window.removeEventListener('resize', publishHeight);
             document.documentElement.style.removeProperty('--baakh-header-h');
         };
-    }, [isHidden, lang, isRtl]);
+    }, [lang, isRtl]);
 
     return (
         <>
             <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} lang={lang} />
             <div
                 ref={headerRef}
-                className={`sticky top-0 z-[50] bg-white transition-[transform,opacity] duration-300 will-change-transform md:translate-y-0 md:opacity-100 md:pointer-events-auto ${isHidden ? 'translate-y-[-110%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}
+                className="fixed top-0 inset-x-0 z-[50] bg-white"
             >
                 <div
                     role="status"
@@ -215,57 +184,63 @@ const Navbar = ({ lang }) => {
                         </p>
                     </div>
                 </div>
-                <nav className={`h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 bg-white ${isHidden ? '' : 'shadow-sm'}`}>
-                <div className="flex items-center gap-4 flex-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:hidden text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
-                        onClick={openMenu}
-                        aria-label="Open menu"
-                    >
-                        <Menu className="h-5 w-5 md:h-6 md:w-6" />
-                    </Button>
-
-                    <Link
-                        to={`/${lang}`}
-                        aria-label={lang === 'sd' ? "باک هوم" : "Baakh Home"}
-                        className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95 duration-200"
-                    >
-                        <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
-                    </Link>
-
-                    <div className="relative w-64 hidden md:block ml-4" role="search">
-                        <Search className={`absolute z-10 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ${isRtl ? 'right-3' : 'left-3'}`} />
-                        <div
-                            onClick={() => setSearchOpen(true)}
-                            className={`flex h-10 w-full items-center rounded-full border border-gray-100 bg-gray-50/50 text-sm text-muted-foreground hover:bg-gray-100 hover:border-gray-200 cursor-pointer transition-all ${isRtl ? 'text-right pr-9 pl-12' : 'text-left pl-9 pr-12'}`}
-                            dir={isRtl ? 'rtl' : 'ltr'}
+                <nav className="h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 bg-white shadow-sm">
+                    <div className="flex items-center gap-4 flex-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="lg:hidden text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors"
+                            onClick={openMenu}
+                            aria-label="Open menu"
                         >
-                            <span className="truncate">{isRtl ? 'ڳوليو...' : 'Search'}</span>
-                            <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 text-[10px] uppercase font-medium text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm ${isRtl ? 'left-3' : 'right-3'}`}>
-                                <span className="text-xs">⌘</span> K
+                            <Menu className="h-5 w-5 md:h-6 md:w-6" />
+                        </Button>
+
+                        <Link
+                            to={`/${lang}`}
+                            aria-label={lang === 'sd' ? "باک هوم" : "Baakh Home"}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95 duration-200"
+                        >
+                            <Logo className="h-7 w-7 md:h-8 md:w-8 text-black" />
+                        </Link>
+
+                        <div className="relative w-64 hidden md:block ml-4" role="search">
+                            <Search className={`absolute z-10 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground ${isRtl ? 'right-3' : 'left-3'}`} />
+                            <div
+                                onClick={() => setSearchOpen(true)}
+                                className={`flex h-10 w-full items-center rounded-full border border-gray-100 bg-gray-50/50 text-sm text-muted-foreground hover:bg-gray-100 hover:border-gray-200 cursor-pointer transition-all ${isRtl ? 'text-right pr-9 pl-12' : 'text-left pl-9 pr-12'}`}
+                                dir={isRtl ? 'rtl' : 'ltr'}
+                            >
+                                <span className="truncate">{isRtl ? 'ڳوليو...' : 'Search'}</span>
+                                <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1 text-[10px] uppercase font-medium text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100 shadow-sm ${isRtl ? 'left-3' : 'right-3'}`}>
+                                    <span className="text-xs">⌘</span> K
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex items-center gap-2 md:gap-4 hidden lg:flex">
-                    <NavItems />
-                </div>
-                <div className="flex items-center lg:hidden">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors md:hidden"
-                        onClick={() => setSearchOpen(true)}
-                        aria-label="Search"
-                    >
-                        <Search className="h-5 w-5" />
-                    </Button>
-                </div>
-            </nav>
+                    <div className="flex items-center gap-2 md:gap-4 hidden lg:flex">
+                        <NavItems />
+                    </div>
+                    <div className="flex items-center lg:hidden">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-gray-500 h-10 w-10 active:bg-gray-100 rounded-full transition-colors md:hidden"
+                            onClick={() => setSearchOpen(true)}
+                            aria-label="Search"
+                        >
+                            <Search className="h-5 w-5" />
+                        </Button>
+                    </div>
+                </nav>
             </div>
+            {/* Reserve space so page content is not under the fixed header */}
+            <div
+                aria-hidden
+                className="w-full shrink-0"
+                style={{ height: 'var(--baakh-header-h, 97px)' }}
+            />
         </>
     );
 };
