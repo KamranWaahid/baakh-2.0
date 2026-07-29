@@ -174,18 +174,30 @@ trait BaakhSeoTrait
 
         $poet = $poetModel;
 
-        $poetDetails = $poet->details;
-        $locations = Cache::rememberForever($cacheKeyLocations, function () use ($poetDetails) {
+        $poetDetails = $this->poetDetailsForLocale($poet);
+        if (!$poetDetails) {
+            $currentLang = app()->getLocale();
+            $name = $poet->poet_slug;
+            $url = url("{$currentLang}/poet/{$poet->poet_slug}");
+            $title = trans('labels.seo_title_poet', ['poetLaqab' => $name]);
+            $shortBio = $title;
+            SEOMeta::setTitle($title);
+            SEOMeta::setDescription($shortBio);
+            SEOMeta::setCanonical($url);
+
             return [
-                'birth' => $poetDetails->birthPlaceComplete(),
-                'death' => $poetDetails->deathPlaceComplete()
+                'title' => $title,
+                'description' => $shortBio,
+                'html' => '<h2>' . e($name) . '</h2>',
             ];
-        });
+        }
+
+        $locations = $this->cachedPoetLocations($cacheKeyLocations, $poetDetails);
 
         $poetImage = $poet->poet_pic;
-        $poetLaqab = $poetDetails->poet_laqab;
+        $poetLaqab = (string) ($poetDetails->poet_laqab ?? $poet->poet_slug);
         $final_name = mb_substr($poetLaqab, -1) == 'و' ? mb_substr($poetLaqab, 0, -1) . 'ي' : $poetLaqab;
-        $poet_name = $poetDetails->poet_name;
+        $poet_name = (string) ($poetDetails->poet_name ?? '');
         $tagline = $poetDetails->tagline;
         $currentLang = app()->getLocale();
 
@@ -197,7 +209,7 @@ trait BaakhSeoTrait
 
 
         // $name_en = $author->name_en; // Author's name in English
-        $bio = strip_tags($poet->details->poet_bio);
+        $bio = strip_tags((string) ($poetDetails->poet_bio ?? ''));
         $shortBio = Str::limit($bio, 161);
         $currentLang = app()->getLocale();
         $alternateLang = $currentLang === 'en' ? 'sd' : 'en';
@@ -274,8 +286,8 @@ trait BaakhSeoTrait
             'birthDate' => $poetLaqab,
         ];
 
-        // death place
-        if ($locations['birth']['cityName']) {
+        // birth / death place (incomplete geo data must not break the page)
+        if (!empty($locations['birth']['cityName'])) {
             $jsonLdData['birthDate'] = $birthDate;
             $_add_birth = $locations['birth'];
             $_brth_city = $_add_birth['cityName'];
@@ -289,9 +301,9 @@ trait BaakhSeoTrait
             ];
         }
 
-        if ($locations['death']['cityName']) {
+        if (!empty($locations['death']['cityName'])) {
             $jsonLdData['deathDate'] = $deathDate;
-            $_add_death = $locations['birth'];
+            $_add_death = $locations['death'];
             $_ddth_city = $_add_death['cityName'];
             $_ddth_prov = $_add_death['provinceName'];
             $_ddth_cntry = $_add_death['countryName'];
@@ -349,13 +361,27 @@ trait BaakhSeoTrait
         $poetIdWithLang = $poetModel->id . '_lng_' . $currentLang;
         $cacheKeyLocations = 'cache_poet_' . $poetIdWithLang . '_locations';
         $poetryInfo = $poetry->info;
-        $poetDetails = $poetModel->details;
+        $poetDetails = $this->poetDetailsForLocale($poetModel);
 
         $p_category = $poetry->category;
+        if (!$p_category || !$poetDetails) {
+            $slugTitle = (string) ($poetry->poetry_title ?: $poetry->poetry_slug);
+            $catSeg = $p_category?->slug ?? $poetryCategory;
+            $url = url("{$currentLang}/poet/{$poetModel->poet_slug}/{$catSeg}/{$poetry->poetry_slug}");
+            SEOMeta::setTitle($slugTitle);
+            SEOMeta::setDescription($slugTitle);
+            SEOMeta::setCanonical($url);
+
+            return [
+                'title' => $slugTitle,
+                'description' => $slugTitle,
+                'html' => '<h2>' . e($slugTitle) . '</h2>',
+            ];
+        }
 
         $couplets = $poetry->all_couplets;
 
-        $poetLaqab = $poetDetails->poet_laqab;
+        $poetLaqab = (string) ($poetDetails->poet_laqab ?? $poetModel->poet_slug);
 
         $final_name = mb_substr($poetLaqab, -1) == 'و' ? mb_substr($poetLaqab, 0, -1) . 'ي' : $poetLaqab;
 
@@ -367,13 +393,16 @@ trait BaakhSeoTrait
             $poetName = $final_name . ($gender ? ' ' . $gender->singular() : '');
         }
 
+        $categoryName = (string) ($p_category->category_name ?? $p_category->slug ?? $poetryCategory);
+        $categorySlug = (string) ($p_category->slug ?? $poetryCategory);
+        $poemTitle = (string) ($poetryInfo->title ?? $poetry->poetry_title ?? $poetry->poetry_slug);
 
-        $title = trans('labels.seo_custom_bio_poetry', ['category' => $p_category->category_name, 'poetName' => $poetName, 'title' => $poetryInfo->title]);
+        $title = trans('labels.seo_custom_bio_poetry', ['category' => $categoryName, 'poetName' => $poetName, 'title' => $poemTitle]);
         $stanzas = [];
         $fallbackHtml = '<h2>' . e($title) . '</h2>';
         // if there is no info then make it from couplets
-        if ($poetryInfo->info != null || $poetryInfo->info != '') {
-            $shortBio = $poetryInfo->info . ' ' . $poetryInfo->source ?? '';
+        if ($poetryInfo && ($poetryInfo->info != null && $poetryInfo->info != '')) {
+            $shortBio = $poetryInfo->info . ' ' . ($poetryInfo->source ?? '');
             $fallbackHtml .= '<p>' . nl2br(e($shortBio)) . '</p>';
         } else {
             if (count($couplets) > 0) {
@@ -383,19 +412,23 @@ trait BaakhSeoTrait
                         '@type' => 'CreativeWork',
                         'text' => $couplet->couplet_text
                     ];
-                    $fallbackHtml .= '<li>' . strip_tags($couplet->couplet_text) . '</li>';
+                    $fallbackHtml .= '<li>' . strip_tags((string) $couplet->couplet_text) . '</li>';
                 }
                 $fallbackHtml .= '</ul>';
-                $shortBio = Str::limit(preg_replace('/\s+/', ' ', strip_tags($couplets[0]->couplet_text)), 160, '...');
+                $shortBio = Str::limit(preg_replace('/\s+/', ' ', strip_tags((string) $couplets[0]->couplet_text)), 160, '...');
             } else {
                 $shortBio = $title;
             }
         }
 
         $poetImage = $poetModel->poet_pic;
-        $keywords = $this->appendKeywords(json_decode($poetry->poetry_tags)); // ["ishq", "love", "rain"]
+        $tags = $poetry->poetry_tags;
+        if (is_string($tags)) {
+            $tags = json_decode($tags, true);
+        }
+        $keywords = $this->appendKeywords(is_array($tags) ? $tags : null);
 
-        $url = url("{$currentLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}");
+        $url = url("{$currentLang}/poet/{$poetModel->poet_slug}/{$categorySlug}/{$poetry->poetry_slug}");
 
         // WhatsApp / social link previews: Baakh logo on white (not poetry card or poet photo).
         $image = $seo_image ? $seo_image : asset('assets/og/baakh-og-v2-1200x630.png');
@@ -408,17 +441,17 @@ trait BaakhSeoTrait
             'en',
             $currentLang === 'en'
                 ? $url
-                : url("en/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
+                : url("en/poet/{$poetModel->poet_slug}/{$categorySlug}/{$poetry->poetry_slug}")
         );
         SEOMeta::addAlternateLanguage(
             'sd',
             $currentLang === 'sd'
                 ? $url
-                : url("sd/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
+                : url("sd/poet/{$poetModel->poet_slug}/{$categorySlug}/{$poetry->poetry_slug}")
         );
         SEOMeta::addAlternateLanguage(
             'x-default',
-            url("sd/poet/{$poetModel->poet_slug}/{$p_category->category_slug}/{$poetry->poetry_slug}")
+            url("sd/poet/{$poetModel->poet_slug}/{$categorySlug}/{$poetry->poetry_slug}")
         );
         SEOMeta::addKeyword($keywords);
 
@@ -439,15 +472,10 @@ trait BaakhSeoTrait
         TwitterCard::setSite('@BaakhConnect');
 
         // SEO for Poet in the Poetry
-        $locations = Cache::rememberForever($cacheKeyLocations, function () use ($poetDetails) {
-            return [
-                'birth' => $poetDetails->birthPlaceComplete(),
-                'death' => $poetDetails->deathPlaceComplete()
-            ];
-        });
+        $locations = $this->cachedPoetLocations($cacheKeyLocations, $poetDetails);
 
-        $poetLaqab = $poetDetails->poet_laqab;
-        $poet_name = $poetDetails->poet_name;
+        $poetLaqab = (string) ($poetDetails->poet_laqab ?? $poetModel->poet_slug);
+        $poet_name = (string) ($poetDetails->poet_name ?? '');
         $tagline = $poetDetails->tagline;
         $birthDate = $poetModel->date_of_birth;
         $deathDate = $poetModel->date_of_death;
@@ -474,7 +502,7 @@ trait BaakhSeoTrait
 
 
         // death place
-        if ($locations['birth']['cityName']) {
+        if (!empty($locations['birth']['cityName'])) {
             $jsonLdPoetData['birthDate'] = $birthDate;
             $_add_birth = $locations['birth'];
             $_brth_city = $_add_birth['cityName'];
@@ -488,9 +516,9 @@ trait BaakhSeoTrait
             ];
         }
 
-        if ($locations['death']['cityName']) {
+        if (!empty($locations['death']['cityName'])) {
             $jsonLdPoetData['deathDate'] = $deathDate;
-            $_add_death = $locations['birth'];
+            $_add_death = $locations['death'];
             $_ddth_city = $_add_death['cityName'];
             $_ddth_prov = $_add_death['provinceName'];
             $_ddth_cntry = $_add_death['countryName'];
@@ -538,8 +566,8 @@ trait BaakhSeoTrait
                 [
                     '@type' => 'ListItem',
                     'position' => 4,
-                    'name' => $p_category->category_name,
-                    'item' => url("{$currentLang}/poet/{$poetModel->poet_slug}/{$p_category->category_slug}")
+                    'name' => $categoryName,
+                    'item' => url("{$currentLang}/poet/{$poetModel->poet_slug}/{$categorySlug}")
                 ],
                 [
                     '@type' => 'ListItem',
@@ -556,6 +584,52 @@ trait BaakhSeoTrait
             'description' => $shortBio,
             'html' => $fallbackHtml
         ];
+    }
+
+    /**
+     * Prefer locale-specific poet detail row; fall back to any available translation.
+     */
+    private function poetDetailsForLocale(Poets $poet): ?\App\Models\PoetsDetail
+    {
+        $locale = app()->getLocale();
+
+        try {
+            return $poet->all_details->firstWhere('lang', $locale)
+                ?? $poet->all_details->first()
+                ?? $poet->details;
+        } catch (\Throwable) {
+            try {
+                return $poet->details;
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Cached birth/death place labels — never throws for broken geo data.
+     */
+    private function cachedPoetLocations(string $cacheKey, \App\Models\PoetsDetail $poetDetails): array
+    {
+        $empty = [
+            'birth' => ['cityName' => null, 'provinceName' => null, 'countryName' => null],
+            'death' => ['cityName' => null, 'provinceName' => null, 'countryName' => null],
+        ];
+
+        try {
+            return Cache::rememberForever($cacheKey, function () use ($poetDetails, $empty) {
+                try {
+                    return [
+                        'birth' => $poetDetails->birthPlaceComplete(),
+                        'death' => $poetDetails->deathPlaceComplete(),
+                    ];
+                } catch (\Throwable) {
+                    return $empty;
+                }
+            });
+        } catch (\Throwable) {
+            return $empty;
+        }
     }
 
 

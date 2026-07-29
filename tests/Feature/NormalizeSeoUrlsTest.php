@@ -46,6 +46,53 @@ class NormalizeSeoUrlsTest extends TestCase
         $response->assertHeader('Content-Type', 'image/png');
     }
 
+    public function test_periods_plural_redirects_to_singular(): void
+    {
+        $response = $this->get('/periods');
+
+        $response->assertRedirect('/sd/period');
+        $response->assertStatus(301);
+    }
+
+    public function test_lang_periods_plural_redirects_to_singular(): void
+    {
+        $response = $this->get('/sd/periods');
+
+        $response->assertRedirect('/sd/period');
+        $response->assertStatus(301);
+    }
+
+    public function test_poet_seo_survives_broken_birth_place_chain(): void
+    {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('poets')) {
+            $this->markTestSkipped('poets table unavailable');
+        }
+        if (!\Illuminate\Support\Facades\Schema::hasTable('poets_detail')) {
+            $this->markTestSkipped('poets_detail table unavailable');
+        }
+
+        $poet = \App\Models\Poets::query()->create([
+            'poet_slug' => 'seo-nullsafe-poet-' . uniqid(),
+            'poet_pic' => '/assets/images/poets/default.webp',
+            'visibility' => 1,
+        ]);
+
+        \App\Models\PoetsDetail::query()->create([
+            'poet_id' => $poet->id,
+            'poet_name' => 'Nullsafe Poet',
+            'poet_laqab' => 'Nullsafe',
+            'poet_bio' => 'Bio',
+            'birth_place' => 999999001, // missing city → must not 500
+            'death_place' => null,
+            'lang' => 'sd',
+        ]);
+
+        $response = $this->get('/sd/poet/' . $poet->poet_slug);
+
+        $this->assertNotEquals(500, $response->status());
+        $response->assertOk();
+    }
+
     public function test_missing_poet_returns_http_404(): void
     {
         if (!\Illuminate\Support\Facades\Schema::hasTable('poets')) {

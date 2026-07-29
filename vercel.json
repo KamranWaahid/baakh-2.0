@@ -65,7 +65,12 @@
         },
         {
             "source": "/periods",
-            "destination": "/sd/periods",
+            "destination": "/sd/period",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/periods",
+            "destination": "/:lang/period",
             "permanent": true
         },
         {

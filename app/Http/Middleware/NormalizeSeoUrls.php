@@ -63,6 +63,11 @@ class NormalizeSeoUrls
             return redirect($this->withQuery($path, $request), 301);
         }
 
+        // /{lang}/periods → /{lang}/period (SPA route is singular)
+        if (preg_match('#^/(en|sd)/periods$#', $path, $m)) {
+            return redirect($this->withQuery('/' . $m[1] . '/period', $request), 301);
+        }
+
         // ?lang=en|sd → /{lang}/... (and drop the query param)
         if ($request->query->has('lang')) {
             $lang = strtolower((string) $request->query('lang'));
@@ -245,7 +250,7 @@ class NormalizeSeoUrls
 
         // Misc legacy
         $simple = [
-            '/periods' => '/sd/periods',
+            '/periods' => '/sd/period',
             '/privacy' => '/sd/privacy',
             '/prosody' => '/sd/prosody',
             '/genres' => '/sd/explore',
