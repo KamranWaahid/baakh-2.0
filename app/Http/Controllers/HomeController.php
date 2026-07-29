@@ -556,11 +556,9 @@ class HomeController extends UserController
 
         if ($request->has('period_id')) {
             $period = \App\Models\Period::find($request->period_id);
-            if ($period) {
-                $range = explode('-', $period->date_range);
-                $startYear = trim($range[0]);
-                $endYearRaw = trim($range[1]);
-                $endYear = ($endYearRaw === 'Present') ? date('Y') : $endYearRaw;
+            $years = $period?->yearRange();
+            if ($years) {
+                [$startYear, $endYear] = $years;
 
                 $query->whereHas('poet', function ($q) use ($startYear, $endYear) {
                     $q->whereYear('date_of_birth', '<=', $endYear)

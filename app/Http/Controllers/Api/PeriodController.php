@@ -34,12 +34,13 @@ class PeriodController extends Controller
     {
         $lang = $request->get('lang', 'sd');
         $period = Period::findOrFail($id);
+        $years = $period->yearRange();
 
-        // Parse date range
-        $range = explode('-', $period->date_range);
-        $startYear = trim($range[0]);
-        $endYearRaw = trim($range[1]);
-        $endYear = ($endYearRaw === 'Present') ? date('Y') : $endYearRaw;
+        if (!$years) {
+            return response()->json([]);
+        }
+
+        [$startYear, $endYear] = $years;
 
         $poets = \App\Models\Poets::with('all_details')
             ->where(function ($query) use ($startYear, $endYear) {
