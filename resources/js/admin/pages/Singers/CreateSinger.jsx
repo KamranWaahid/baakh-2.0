@@ -26,6 +26,9 @@ const emptyForm = {
     date_of_death: '',
     visibility: true,
     is_featured: false,
+    youtube_url: '',
+    spotify_url: '',
+    deezer_url: '',
 };
 
 const picUrl = (path) => {
@@ -74,6 +77,9 @@ const CreateSinger = () => {
             date_of_death: singer.date_of_death || '',
             visibility: !!singer.visibility,
             is_featured: !!singer.is_featured,
+            youtube_url: singer.youtube_url || singer.listen_links?.youtube || '',
+            spotify_url: singer.spotify_url || singer.listen_links?.spotify || '',
+            deezer_url: singer.deezer_url || singer.listen_links?.deezer || '',
         });
         setImagePreview(singer.singer_pic ? picUrl(singer.singer_pic) : '');
         setImageFile(null);
@@ -101,6 +107,10 @@ const CreateSinger = () => {
         mutationFn: async () => {
             const fd = new FormData();
             Object.entries(form).forEach(([key, value]) => {
+                if (['youtube_url', 'spotify_url', 'deezer_url'].includes(key)) {
+                    fd.append(key, value || '');
+                    return;
+                }
                 if (value === '' || value === null || value === undefined) return;
                 if (typeof value === 'boolean') {
                     fd.append(key, value ? '1' : '0');
@@ -334,6 +344,39 @@ const CreateSinger = () => {
                                     onChange={(e) => setField('singer_bio_roman', e.target.value)}
                                     placeholder="Biography…"
                                 />
+                            </div>
+
+                            <div className="sm:col-span-2 pt-2 border-t">
+                                <p className="text-sm font-medium mb-3">Listen</p>
+                                <div className="grid gap-3">
+                                    <div>
+                                        <label className="text-xs text-muted-foreground">YouTube</label>
+                                        <Input
+                                            className="mt-1"
+                                            value={form.youtube_url}
+                                            onChange={(e) => setField('youtube_url', e.target.value)}
+                                            placeholder="https://youtube.com/…"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-muted-foreground">Spotify</label>
+                                        <Input
+                                            className="mt-1"
+                                            value={form.spotify_url}
+                                            onChange={(e) => setField('spotify_url', e.target.value)}
+                                            placeholder="https://open.spotify.com/…"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-muted-foreground">Deezer</label>
+                                        <Input
+                                            className="mt-1"
+                                            value={form.deezer_url}
+                                            onChange={(e) => setField('deezer_url', e.target.value)}
+                                            placeholder="https://www.deezer.com/…"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between bg-muted/10 py-3">

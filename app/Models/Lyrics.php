@@ -14,6 +14,9 @@ class Lyrics extends Model
 
     protected $fillable = [
         'singer_id',
+        'band_id',
+        'genre_id',
+        'poetry_id',
         'user_id',
         'lyrics_slug',
         'lyrics_tags',
@@ -23,6 +26,7 @@ class Lyrics extends Model
         'music_url',
         'music_title',
         'music_type',
+        'listen_links',
         'cover_image',
     ];
 
@@ -30,11 +34,32 @@ class Lyrics extends Model
         'visibility' => 'boolean',
         'is_featured' => 'boolean',
         'lyrics_tags' => 'array',
+        'listen_links' => 'array',
     ];
 
     public function singer()
     {
         return $this->belongsTo(Singer::class, 'singer_id');
+    }
+
+    public function band()
+    {
+        return $this->belongsTo(Band::class, 'band_id');
+    }
+
+    public function collaborators()
+    {
+        return $this->hasMany(LyricsCollaborator::class, 'lyrics_id')->orderBy('sort_order');
+    }
+
+    public function genre()
+    {
+        return $this->belongsTo(LyricsGenre::class, 'genre_id');
+    }
+
+    public function poetry()
+    {
+        return $this->belongsTo(Poetry::class, 'poetry_id');
     }
 
     public function user()

@@ -22,10 +22,15 @@ For cPanel shared hosting, deploy app code outside `public_html` and publish onl
 
 1. Create/import a MySQL database and user in cPanel.
 2. In **Domains**, ensure your site document root is `public_html`.
-3. In **Software > Setup Node.js App** (optional), do nothing unless your host requires Node app setup. This app runs on PHP/Apache; Node is only used at build time.
-4. In **Software > MultiPHP INI Editor**, set PHP to a Laravel-compatible version (8.1+).
-5. In **Git Version Control**, create or pull this repository.
-6. In repository settings, enable **Deployment** and make sure it uses project `.cpanel.yml`.
+3. **Lyrics subdomain (`lyrics.baakh.com`):** add the subdomain in cPanel and point its document root to the **same** `public_html` as `baakh.com` (same Laravel boot). Set in `.env`:
+   - `LYRICS_URL=https://lyrics.baakh.com`
+   - `LYRICS_HOSTS=lyrics.baakh.com`
+   - add `https://lyrics.baakh.com` to `CORS_ALLOWED_ORIGINS` if you override CORS
+   Local preview without DNS: `https://your-host/lyrics-site/sd`
+4. In **Software > Setup Node.js App** (optional), do nothing unless your host requires Node app setup. This app runs on PHP/Apache; Node is only used at build time.
+5. In **Software > MultiPHP INI Editor**, set PHP to a Laravel-compatible version (8.1+).
+6. In **Git Version Control**, create or pull this repository.
+7. In repository settings, enable **Deployment** and make sure it uses project `.cpanel.yml`.
 
 ### Verify PHP and Node (Terminal)
 

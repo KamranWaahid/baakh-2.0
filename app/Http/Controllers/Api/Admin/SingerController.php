@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Singer;
+use App\Support\ListenLinks;
 use App\Traits\HasMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -99,6 +100,8 @@ class SingerController extends Controller
             'singer_laqab_roman' => $en?->singer_laqab ?? '',
             'tagline_roman' => $en?->tagline ?? '',
             'singer_bio_roman' => $en?->singer_bio ?? '',
+            'listen_links' => ListenLinks::normalize($singer->listen_links),
+            ...ListenLinks::flat($singer->listen_links),
             'details' => $singer->allDetails,
         ]);
     }
@@ -120,6 +123,7 @@ class SingerController extends Controller
                 'date_of_death' => $validated['date_of_death'] ?? null,
                 'visibility' => filter_var($validated['visibility'] ?? true, FILTER_VALIDATE_BOOLEAN),
                 'is_featured' => filter_var($validated['is_featured'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'listen_links' => ListenLinks::fromRequest($request, $validated),
             ]);
 
             $this->syncDetails($singer, $validated);
@@ -169,6 +173,7 @@ class SingerController extends Controller
                 'date_of_death' => $validated['date_of_death'] ?? null,
                 'visibility' => filter_var($validated['visibility'] ?? true, FILTER_VALIDATE_BOOLEAN),
                 'is_featured' => filter_var($validated['is_featured'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'listen_links' => ListenLinks::fromRequest($request, $validated),
             ]);
 
             $this->syncDetails($singer, $validated);
@@ -299,6 +304,7 @@ class SingerController extends Controller
             'date_of_death' => 'nullable|date',
             'visibility' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
+            ...ListenLinks::rules(),
             'remove_image' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,webp,jpg,png|max:10240',
         ]);

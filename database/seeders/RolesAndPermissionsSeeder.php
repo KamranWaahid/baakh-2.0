@@ -61,6 +61,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit_singers',
             'delete_singers',
 
+            // Band Management
+            'view_bands',
+            'create_bands',
+            'edit_bands',
+            'delete_bands',
+
             // Bundle Management
             'view_bundles',
             'manage_bundles',
@@ -117,6 +123,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'create_singers',
             'edit_singers',
             'delete_singers',
+            'view_bands',
+            'create_bands',
+            'edit_bands',
+            'delete_bands',
             'view_bundles',
             'manage_bundles',
             'view_dashboard',
@@ -145,6 +155,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_singers',
             'create_singers',
             'edit_singers',
+            'view_bands',
+            'create_bands',
+            'edit_bands',
             'view_bundles',
             'view_dashboard',
             'use_romanizer',
@@ -167,6 +180,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit_lyrics',
             'view_singers',
             'create_singers',
+            'view_bands',
+            'create_bands',
+            'edit_bands',
             'view_dashboard',
             'use_romanizer',
         ]);
@@ -181,6 +197,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_couplets',
             'view_lyrics',
             'view_singers',
+            'view_bands',
             'view_bundles',
         ]);
 

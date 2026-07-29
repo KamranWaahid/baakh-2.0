@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Band;
 use App\Models\Lyrics;
+use App\Models\LyricsGenre;
 use App\Models\Poets;
 use App\Models\Singer;
+use App\Support\ListenLinks;
 use App\Support\SafeUserData;
 use App\Traits\HasMedia;
 use Illuminate\Http\Request;
@@ -47,6 +50,7 @@ class LyricsController extends Controller
         $query->with([
             'info' => fn ($q) => $q->where('lang', 'sd'),
             'singer.allDetails',
+            'genre.details',
             'parts',
             'user' => fn ($q) => $q->select('id', 'name'),
         ]);
@@ -94,6 +98,13 @@ class LyricsController extends Controller
             $singerName = $sd?->singer_name ?? $lyrics->singer->singer_slug;
         }
         $data['singer_name'] = $singerName;
+        $genreName = null;
+        if ($lyrics->genre) {
+            $gd = $lyrics->genre->details->firstWhere('lang', 'sd')
+                ?? $lyrics->genre->details->first();
+            $genreName = $gd?->name ?? $lyrics->genre->slug;
+        }
+        $data['genre_name'] = $genreName;
         $data['parts_count'] = $lyrics->parts?->count() ?? 0;
         $data['poets_count'] = $lyrics->parts
             ? $lyrics->parts->pluck('poet_id')->filter()->unique()->count()
@@ -111,13 +122,25 @@ class LyricsController extends Controller
             'parts.poetry.info' => fn ($q) => $q->where('lang', 'sd'),
             'parts.sourceLyrics.info' => fn ($q) => $q->where('lang', 'sd'),
             'singer.allDetails',
+            'band.allDetails',
+            'collaborators',
+            'poetry.info' => fn ($q) => $q->where('lang', 'sd'),
+            'poetry.poet_details' => fn ($q) => $q->where('lang', 'sd'),
         ])
             ->where(function ($q) use ($id) {
                 $q->where('id', $id)->orWhere('lyrics_slug', $id);
             })
             ->firstOrFail();
 
-        return response()->json($lyrics);
+        $payload = $lyrics->toArray();
+        $payload['collaborators'] = $lyrics->collaborators->map(fn ($c) => [
+            'type' => $c->collaborator_type,
+            'id' => $c->collaborator_id,
+            'role' => $c->role,
+            'sort_order' => $c->sort_order,
+        ])->values();
+
+        return response()->json($payload);
     }
 
     public function create()
@@ -142,12 +165,43 @@ class LyricsController extends Controller
             ];
         });
 
+        $genres = LyricsGenre::with('details')
+            ->where('visibility', 1)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(function ($genre) {
+                $sd = $genre->details->firstWhere('lang', 'sd') ?? $genre->details->first();
+                $en = $genre->details->firstWhere('lang', 'en');
+
+                return [
+                    'id' => $genre->id,
+                    'slug' => $genre->slug,
+                    'name' => $sd?->name ?? $genre->slug,
+                    'name_en' => $en?->name,
+                ];
+            });
+
+        $bands = Band::where('visibility', 1)->with('allDetails')->get()->map(function ($band) {
+            $sd = $band->allDetails->firstWhere('lang', 'sd')
+                ?? $band->allDetails->first();
+
+            return [
+                'id' => $band->id,
+                'name' => $sd?->band_name ?? $band->band_slug,
+                'slug' => $band->band_slug,
+            ];
+        });
+
         return response()->json([
             'poets' => $poets,
             'singers' => $singers,
+            'bands' => $bands,
+            'genres' => $genres,
             'kinds' => self::KINDS,
             'relations' => self::RELATIONS,
             'roles' => self::ROLES,
+            'collab_roles' => ['feat', 'with', 'collab'],
             'content_styles' => ['justified', 'center', 'start', 'end'],
         ]);
     }
@@ -339,6 +393,9 @@ class LyricsController extends Controller
         try {
             $lyrics = Lyrics::create([
                 'singer_id' => $validated['singer_id'] ?? null,
+                'band_id' => $validated['band_id'] ?? null,
+                'genre_id' => $validated['genre_id'] ?? null,
+                'poetry_id' => $validated['poetry_id'] ?? null,
                 'user_id' => Auth::id(),
                 'lyrics_slug' => $validated['lyrics_slug'],
                 'lyrics_tags' => $validated['lyrics_tags'] ?? [],
@@ -348,10 +405,12 @@ class LyricsController extends Controller
                 'music_url' => $validated['music_url'] ?? null,
                 'music_title' => $validated['music_title'] ?? null,
                 'music_type' => $validated['music_type'] ?? $this->detectMusicType($validated['music_url'] ?? null),
+                'listen_links' => ListenLinks::fromRequest($request, $validated),
             ]);
 
             $this->syncTranslations($lyrics, $validated);
             $this->syncParts($lyrics, $validated['parts']);
+            $this->syncCollaborators($lyrics, $validated['collaborators'] ?? []);
 
             DB::commit();
             return response()->json(['message' => 'Lyrics created successfully', 'id' => $lyrics->id], 201);
@@ -372,6 +431,9 @@ class LyricsController extends Controller
         try {
             $lyrics->update([
                 'singer_id' => $validated['singer_id'] ?? null,
+                'band_id' => $validated['band_id'] ?? null,
+                'genre_id' => $validated['genre_id'] ?? null,
+                'poetry_id' => $validated['poetry_id'] ?? null,
                 'lyrics_slug' => $validated['lyrics_slug'],
                 'lyrics_tags' => $validated['lyrics_tags'] ?? [],
                 'visibility' => $validated['visibility'],
@@ -380,11 +442,13 @@ class LyricsController extends Controller
                 'music_url' => $validated['music_url'] ?? null,
                 'music_title' => $validated['music_title'] ?? null,
                 'music_type' => $validated['music_type'] ?? $this->detectMusicType($validated['music_url'] ?? null),
+                'listen_links' => ListenLinks::fromRequest($request, $validated),
             ]);
 
             $this->syncTranslations($lyrics, $validated);
             $lyrics->parts()->forceDelete();
             $this->syncParts($lyrics, $validated['parts']);
+            $this->syncCollaborators($lyrics, $validated['collaborators'] ?? []);
 
             DB::commit();
             return response()->json(['message' => 'Lyrics updated successfully', 'id' => $lyrics->id]);
@@ -541,6 +605,9 @@ class LyricsController extends Controller
                 Rule::unique('lyrics', 'lyrics_slug')->ignore($lyricsId),
             ],
             'singer_id' => 'nullable|exists:singers,id',
+            'band_id' => 'nullable|exists:bands,id',
+            'genre_id' => 'nullable|exists:lyrics_genres,id',
+            'poetry_id' => 'nullable|exists:poetry_main,id',
             'content_style' => 'nullable|string',
             'visibility' => 'required|boolean',
             'is_featured' => 'required|boolean',
@@ -551,8 +618,15 @@ class LyricsController extends Controller
             'music_url' => 'nullable|string|max:1000',
             'music_title' => 'nullable|string|max:255',
             'music_type' => ['nullable', Rule::in(['youtube', 'audio', 'other'])],
+            ...ListenLinks::rules(),
+            'collaborators' => 'nullable|array',
+            'collaborators.*.type' => ['required_with:collaborators', Rule::in(['singer', 'band'])],
+            'collaborators.*.id' => 'required_with:collaborators|integer',
+            'collaborators.*.role' => ['nullable', Rule::in(['feat', 'with', 'collab'])],
+            'collaborators.*.sort_order' => 'nullable|integer|min:0',
             'parts' => 'required|array|min:1',
             'parts.*.kind' => ['required', Rule::in(self::KINDS)],
+            'parts.*.section' => 'nullable|string|max:40',
             'parts.*.role' => ['nullable', Rule::in(self::ROLES)],
             'parts.*.relation' => ['nullable', Rule::in(self::RELATIONS)],
             'parts.*.poet_id' => 'nullable|exists:poets,id',
@@ -661,6 +735,9 @@ class LyricsController extends Controller
             $lyrics->parts()->create([
                 'sort_order' => $part['sort_order'] ?? $index,
                 'kind' => $kind,
+                'section' => isset($part['section']) && $part['section'] !== ''
+                    ? substr((string) $part['section'], 0, 40)
+                    : null,
                 'role' => $part['role'] ?? ($kind === 'music' ? 'mid' : null),
                 'relation' => $part['relation'] ?? (
                     !empty($part['poet_id']) || !empty($part['poetry_id']) || !empty($part['couplet_id']) || !empty($part['source_lyrics_id'])
@@ -674,6 +751,33 @@ class LyricsController extends Controller
                 'source_part_id' => $part['source_part_id'] ?? null,
                 'text_sd' => $textSd !== '' ? strip_tags($textSd, self::ALLOWED_HTML) : null,
                 'text_roman' => $textRoman !== '' ? $textRoman : null,
+            ]);
+        }
+    }
+
+    private function syncCollaborators(Lyrics $lyrics, array $collaborators): void
+    {
+        $lyrics->collaborators()->delete();
+
+        foreach (array_values($collaborators) as $index => $row) {
+            $type = $row['type'] ?? null;
+            $id = (int) ($row['id'] ?? 0);
+            if (!$type || !$id) {
+                continue;
+            }
+
+            if ($type === 'singer' && !Singer::where('id', $id)->exists()) {
+                continue;
+            }
+            if ($type === 'band' && !Band::where('id', $id)->exists()) {
+                continue;
+            }
+
+            $lyrics->collaborators()->create([
+                'collaborator_type' => $type,
+                'collaborator_id' => $id,
+                'role' => $row['role'] ?? 'feat',
+                'sort_order' => $row['sort_order'] ?? $index,
             ]);
         }
     }

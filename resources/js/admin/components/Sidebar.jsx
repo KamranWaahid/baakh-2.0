@@ -133,7 +133,9 @@ const Sidebar = ({ onLinkClick }) => {
 
                     <SidebarGroup icon={Music2} label="Music">
                         <SidebarLink to="/admin/singers" icon={Mic2}>Artists</SidebarLink>
+                        <SidebarLink to="/admin/bands" icon={Users}>Bands</SidebarLink>
                         <SidebarLink to="/admin/lyrics" icon={Music2}>Lyrics</SidebarLink>
+                        <SidebarLink to="/admin/lyrics-genres" icon={Layers}>Genre</SidebarLink>
                     </SidebarGroup>
 
                     <SidebarGroup icon={Tags} label="Topics">

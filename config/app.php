@@ -57,6 +57,17 @@ return [
 
     'url' => env('APP_URL', 'https://baakh.com'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Lyrics public site (separate subdomain SPA)
+    |--------------------------------------------------------------------------
+    */
+    'lyrics_url' => env('LYRICS_URL', 'https://lyrics.baakh.com'),
+    'lyrics_hosts' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('LYRICS_HOSTS', 'lyrics.baakh.com,lyrics.localhost,lyrics.baakh.test'))
+    ))),
+
     'asset_url' => env('ASSET_URL'),
 
     /*

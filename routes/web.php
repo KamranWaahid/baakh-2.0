@@ -222,6 +222,16 @@ Route::prefix('api')->group(function () {
         Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
         Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
         Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
+        Route::get('lyrics', [App\Http\Controllers\Api\PublicLyricsController::class, 'index']);
+        Route::get('lyrics/{slug}', [App\Http\Controllers\Api\PublicLyricsController::class, 'show']);
+        Route::get('lyrics-genres', [App\Http\Controllers\Api\PublicLyricsGenreController::class, 'index']);
+        Route::get('lyrics-genres/{slug}', [App\Http\Controllers\Api\PublicLyricsGenreController::class, 'show']);
+        Route::get('singers', [App\Http\Controllers\Api\PublicSingerController::class, 'index']);
+        Route::get('singers/{slug}/lyrics', [App\Http\Controllers\Api\PublicSingerController::class, 'lyrics']);
+        Route::get('singers/{slug}', [App\Http\Controllers\Api\PublicSingerController::class, 'show']);
+        Route::get('bands', [App\Http\Controllers\Api\PublicBandController::class, 'index']);
+        Route::get('bands/{slug}/lyrics', [App\Http\Controllers\Api\PublicBandController::class, 'lyrics']);
+        Route::get('bands/{slug}', [App\Http\Controllers\Api\PublicBandController::class, 'show']);
     });
 });
 
@@ -250,6 +260,16 @@ Route::prefix('v1')->group(function () {
     Route::get('sidebar/staff-picks', [App\Http\Controllers\Api\SidebarController::class, 'staffPicks']);
     Route::get('sidebar/topics', [App\Http\Controllers\Api\SidebarController::class, 'topics']);
     Route::get('explore-topics', [App\Http\Controllers\Api\ExploreTopicController::class, 'index']);
+    Route::get('lyrics', [App\Http\Controllers\Api\PublicLyricsController::class, 'index']);
+    Route::get('lyrics/{slug}', [App\Http\Controllers\Api\PublicLyricsController::class, 'show']);
+    Route::get('lyrics-genres', [App\Http\Controllers\Api\PublicLyricsGenreController::class, 'index']);
+    Route::get('lyrics-genres/{slug}', [App\Http\Controllers\Api\PublicLyricsGenreController::class, 'show']);
+    Route::get('singers', [App\Http\Controllers\Api\PublicSingerController::class, 'index']);
+    Route::get('singers/{slug}/lyrics', [App\Http\Controllers\Api\PublicSingerController::class, 'lyrics']);
+    Route::get('singers/{slug}', [App\Http\Controllers\Api\PublicSingerController::class, 'show']);
+    Route::get('bands', [App\Http\Controllers\Api\PublicBandController::class, 'index']);
+    Route::get('bands/{slug}/lyrics', [App\Http\Controllers\Api\PublicBandController::class, 'lyrics']);
+    Route::get('bands/{slug}', [App\Http\Controllers\Api\PublicBandController::class, 'show']);
 });
 
 /*
@@ -288,7 +308,39 @@ Route::any('{apiPath}', function (Request $request, string $apiPath) {
     }
 })->where('apiPath', '^(v1|auth|admin)(/.*)?$');
 
-Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|robots\.txt|_health).*$')->name('web.spa');
+/*
+|--------------------------------------------------------------------------
+| Lyrics public site (lyrics.baakh.com)
+|--------------------------------------------------------------------------
+| Separate SPA from the poetry archive. Same Laravel app / API, different
+| Vite entry + blade. Local preview: /lyrics-site/*
+*/
+$lyricsSpa = static function (Request $request, $any = null) {
+    return app(\App\Http\Controllers\LyricsSpaController::class)->index($request, $any);
+};
+
+foreach (config('app.lyrics_hosts', ['lyrics.baakh.com']) as $lyricsHost) {
+    Route::domain($lyricsHost)->group(function () use ($lyricsSpa, $lyricsHost) {
+        Route::get('{any?}', $lyricsSpa)
+            ->where('any', '^(?!api|build|robots\.txt|_health|admin).*$')
+            ->name('lyrics.spa.' . str_replace('.', '_', $lyricsHost));
+    });
+}
+
+Route::get('lyrics-site/{any?}', $lyricsSpa)
+    ->where('any', '.*')
+    ->name('lyrics.spa.local');
+
+// Main archive: send /lyrics to the separate lyrics site (not the archive SPA)
+Route::get('{lang}/lyrics', function (string $lang) {
+    if (!in_array($lang, ['en', 'sd'], true)) {
+        abort(404);
+    }
+    $base = rtrim((string) config('app.lyrics_url', 'https://lyrics.baakh.com'), '/');
+    return redirect()->away("{$base}/{$lang}", 301);
+})->where('lang', 'en|sd');
+
+Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|robots\.txt|_health|lyrics-site).*$')->name('web.spa');
 
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
