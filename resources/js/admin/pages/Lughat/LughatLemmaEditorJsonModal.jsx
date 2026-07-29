@@ -41,7 +41,8 @@ COMPLETE THE WORD (no empty required boxes):
 - general.pronunciation_simple and/or general.phonetic — fill when possible; ipa if confident. IPA may use phonetic symbols; romanization fields must NOT.
 - morphology.root / gender / number when knowable from forms or dictionary; mark morphology_reviewed=true if you filled morphology.
 - At least one curated sense; usually several (see SENSES).
-- Every sense MUST fill: short_gloss, definition (primary, Sindhi), definition_sd when useful, optional definition_en, language_direction (prefer "sindhi"), source_dictionary, publisher, publisher_url, prepared_by, review_status="reviewed", status="approved".
+- Every sense MUST fill: short_gloss, definition (primary, Sindhi), definition_sd when useful, optional definition_en, english_equivalents (string array of English gloss words, e.g. ["offspring","progeny","children"]), language_direction (prefer "sindhi"), source_dictionary, publisher, publisher_url, prepared_by, review_status="reviewed", status="approved".
+- english_equivalents is REQUIRED when an English gloss is knowable — never leave it empty if definition_en or common English glosses exist. Put short headword-style English words only (not full sentences).
 - Add ≥1 example per poetic sense when poetry.couplets allow (example_type=poetry_citation).
 - If you add variants or examples, set variants_reviewed / examples_reviewed true.
 - Set pronunciation_reviewed=true only if pronunciation fields are filled.
@@ -57,7 +58,7 @@ SENSES (most important — for poetry sense-tagging):
   (b) NEW poetic / contextual senses based on how the word is used in poetry.source_couplet and poetry.couplets (usage_label e.g. "poetic", "figurative", "mystical", "romantic" as fits).
 - Goal: when an editor tags a word in a couplet, they can pick the sense that matches THAT poetic line so readers understand the verse.
 - Do NOT only copy one dictionary gloss — expand to cover both everyday and poetic readings.
-- Never leave sense definition/gloss/language_direction/source empty.
+- Never leave sense definition/gloss/english_equivalents/language_direction/source empty when knowable.
 Source defaults on every sense: source_dictionary="Baakh Lughat", publisher="baakh.com", publisher_url="https://baakh.com/", prepared_by="Kamran Wahid".
 
 FORMS / INFLECTIONS (critical for paradigms like تنھنجو/تنھنجي/تنھنجا/تنھنجون):
@@ -93,7 +94,15 @@ Also honor relations_checklist.empty — those buckets are currently 0 and shoul
 Aim for several synonyms when the general dictionary or common Sindhi usage provides them (as with آدمي).
 Prefer linking real Baakh Lughat lemmas via related_word that matches an existing headword when known.
 
-Variants = spelling/dialect orthography only — not grammatical inflections (those go in forms.inflections).
+VARIANTS (spelling/dialect orthography only — not grammatical inflections; those go in forms.inflections):
+Use key "variant" (NOT "form") for the surface string. Use key "type" (NOT "variant_type").
+Allowed type values ONLY:
+spelling|misspelling|dialectal|historical|diacritic|normalized|short_vowel_variant|fully_voweled_variant|fatha_variant
+- diacritic = diacritic / airab forms (e.g. اولادُ)
+- fully_voweled_variant = fully vocalized form (e.g. اَولادُ) — American spelling "voweled", with _variant suffix
+- spelling = alternate orthography (e.g. اولاڌ)
+Example object:
+{ "variant": "اولاڌ", "type": "spelling", "romanization": "aulaadh", "dialect": null, "note": "…", "source": "Baakh Lughat" }
 Use Standard Sindhi Arabic script.
 
 JSON:

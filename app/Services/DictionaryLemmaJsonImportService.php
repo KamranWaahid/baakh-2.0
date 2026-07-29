@@ -478,17 +478,24 @@ class DictionaryLemmaJsonImportService
                 return false;
             }
 
-            return filled($variant['variant'] ?? null);
+            return filled($variant['variant'] ?? $variant['form'] ?? $variant['surface'] ?? null);
         }));
 
         $keepIds = [];
 
         foreach ($manualVariants as $variantData) {
-            $text = trim((string) $variantData['variant']);
-            $type = $this->normalizeVariantType($variantData['type'] ?? 'spelling');
+            $text = trim((string) ($variantData['variant'] ?? $variantData['form'] ?? $variantData['surface']));
+            $type = $this->normalizeVariantType($variantData['type'] ?? $variantData['variant_type'] ?? 'spelling');
+
+            $normalizedOverride = $variantData['normalized_variant']
+                ?? $variantData['normalized_form']
+                ?? $variantData['normalized']
+                ?? null;
 
             $payload = [
-                'normalized_variant' => DictionaryText::normalizeForLookup($text),
+                'normalized_variant' => DictionaryText::normalizeForLookup(
+                    filled($normalizedOverride) ? (string) $normalizedOverride : $text
+                ),
                 'type' => $type,
                 'romanization' => $this->nullableString($variantData['romanization'] ?? null),
                 'dialect' => $this->nullableString($variantData['dialect'] ?? null),
@@ -780,6 +787,15 @@ class DictionaryLemmaJsonImportService
             'dialectal' => 'dialectal',
             'historical' => 'historical',
             'diacritic' => 'diacritic',
+            'diacritic_airab' => 'diacritic',
+            'diacritic/airab' => 'diacritic',
+            'airab' => 'diacritic',
+            'fully_voweled' => 'fully_voweled_variant',
+            'fully_vowelled' => 'fully_voweled_variant',
+            'fully_vowelled_variant' => 'fully_voweled_variant',
+            'short_vowel' => 'short_vowel_variant',
+            'short_vowels' => 'short_vowel_variant',
+            'fatha' => 'fatha_variant',
         ];
 
         return $map[$normalized] ?? 'spelling';
