@@ -168,22 +168,6 @@ const Navbar = ({ lang }) => {
                 ref={headerRef}
                 className="fixed top-0 inset-x-0 z-[50] bg-white"
             >
-                <div
-                    role="status"
-                    className={`w-full border-b border-amber-200/80 bg-amber-50 px-3 py-1.5 sm:px-4 ${isRtl ? 'font-arabic' : ''}`}
-                    dir={isRtl ? 'rtl' : 'ltr'}
-                >
-                    <div className="mx-auto flex max-w-[1504px] items-start sm:items-center justify-center gap-2">
-                        <span className="shrink-0 mt-0.5 sm:mt-0 inline-flex items-center rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900">
-                            {isRtl ? 'نوٽيس' : 'Notice'}
-                        </span>
-                        <p className="text-[11px] sm:text-xs leading-snug text-amber-900 text-center sm:text-start">
-                            {isRtl
-                                ? 'فني مسئلن سبب گوگل لاگ اِن جو فيچر عارضي طور غير فعال آهي. اسان ان کي جلد بحال ڪري رهيا آهيون. توهان جي صبر جي مهرباني.'
-                                : 'Due to technical issues, Google login is temporarily disabled. We are restoring it soon. Thank you for your patience.'}
-                        </p>
-                    </div>
-                </div>
                 <nav className="h-[56px] lg:h-[65px] border-b border-gray-100 flex items-center justify-between px-4 md:px-8 bg-white shadow-sm">
                     <div className="flex items-center gap-4 flex-1">
                         <Button

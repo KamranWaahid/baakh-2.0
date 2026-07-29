@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import {
     Loader2, Copy, CheckCircle2, FileInput, Save, Sparkles,
@@ -25,9 +24,11 @@ Keep top-level id/public_id and any existing numeric row ids.
 english_equivalents = string array.
 Examples: sentence (Sindhi), translation (English), optional romanization/source.
 Idioms: phrase, english_gloss, example_sindhi, example_english.
-Relations: relation_type is synonym|antonym|hypernym|related + related_word.
+Relations: relation_type is synonym|antonym|hypernym|related|singular|plural|dialect|derived|usage + related_word. derived = محبتي/خوني/پياري. usage = people-say/first-second form; put label in note and example sentence in gloss.
 Variant type: spelling|misspelling|dialectal|historical|diacritic|normalized|short_vowel_variant|fully_voweled_variant|fatha_variant.
 completion_status: pending|complete. source_confidence: 0-100.
+ROMAN ONLY (critical): general.transliteration and every romanization field = plain Latin a–z, spaces, hyphens only. No Arabic/Sindhi script. No zabar/zer/pesh (َ ِ ُ), tashdeed (ّ), sukun (ْ), tanween, or Latin accented letters (ā ī ū). Write aadmi not ādmī / not آدْمي.
+PRIMARY DEFINITIONS IN SINDHI (critical): for each sense, definition and short_gloss MUST be Sindhi (Arabic script). Do not use English as the primary definition. Put English only in definition_en (optional). definition_sd may clarify Sindhi when helpful. Prefer language_direction "sindhi".
 Add more senses/examples/relations/variants/inflections/idioms when useful. Use Standard Sindhi Arabic script.
 
 JSON:
@@ -73,8 +74,14 @@ export default function LemmaEditorJsonModal({ lemmaId, onClose }) {
     const [copied, setCopied] = useState(false);
     const [copiedPrompt, setCopiedPrompt] = useState(false);
     const [mode, setMode] = useState('view'); // view | input
+    const [viewText, setViewText] = useState('');
     const [inputJson, setInputJson] = useState('');
     const [parseError, setParseError] = useState(null);
+
+    const aiPayload = useMemo(
+        () => (lemma ? AI_ENRICH_PROMPT + JSON.stringify(lemma, null, 2) : ''),
+        [lemma]
+    );
 
     useEffect(() => {
         setMode('view');
@@ -83,6 +90,12 @@ export default function LemmaEditorJsonModal({ lemmaId, onClose }) {
         setCopied(false);
         setCopiedPrompt(false);
     }, [lemmaId]);
+
+    useEffect(() => {
+        if (aiPayload) {
+            setViewText(aiPayload);
+        }
+    }, [aiPayload]);
 
     const handleCopyJson = async () => {
         if (!lemma) return;
@@ -93,11 +106,11 @@ export default function LemmaEditorJsonModal({ lemmaId, onClose }) {
     };
 
     const handleCopyForAi = async () => {
-        if (!lemma) return;
-        const payload = AI_ENRICH_PROMPT + JSON.stringify(lemma, null, 2);
+        const payload = viewText.trim() || aiPayload;
+        if (!payload) return;
         await navigator.clipboard.writeText(payload);
         setCopiedPrompt(true);
-        toast.success('Prompt + JSON copied. Paste into ChatGPT, then paste the reply JSON back here.');
+        toast.success('Prompt + JSON copied. Paste into ChatGPT, then paste the reply JSON back via Input JSON.');
         setTimeout(() => setCopiedPrompt(false), 2000);
     };
 
@@ -162,7 +175,7 @@ export default function LemmaEditorJsonModal({ lemmaId, onClose }) {
                             <DialogTitle>Word Data JSON</DialogTitle>
                             <DialogDescription>
                                 {mode === 'view'
-                                    ? 'Copy for AI → paste ChatGPT reply via Input JSON. Or Copy JSON only.'
+                                    ? 'Edit box below has the AI prompt + JSON. Select all / Copy for AI → paste into ChatGPT → paste the reply via Input JSON.'
                                     : 'Paste ONLY the JSON object ChatGPT returned (markdown fences are OK).'}
                             </DialogDescription>
                         </div>
@@ -210,11 +223,19 @@ export default function LemmaEditorJsonModal({ lemmaId, onClose }) {
                         </div>
                     </div>
                 ) : (
-                    <ScrollArea className="flex-1 bg-muted/50 rounded-md border p-4">
-                        <pre className="text-xs font-mono whitespace-pre-wrap break-all" dir="ltr">
-                            {JSON.stringify(lemma, null, 2)}
-                        </pre>
-                    </ScrollArea>
+                    <div className="flex flex-col gap-2 min-h-0 flex-1">
+                        <p className="text-xs text-muted-foreground">
+                            AI prompt + lemma JSON — edit if needed, then copy into ChatGPT.
+                        </p>
+                        <Textarea
+                            value={viewText}
+                            onChange={(e) => setViewText(e.target.value)}
+                            onFocus={(e) => e.target.select()}
+                            className="font-mono text-xs min-h-[420px] flex-1"
+                            dir="ltr"
+                            spellCheck={false}
+                        />
+                    </div>
                 )}
             </DialogContent>
         </Dialog>

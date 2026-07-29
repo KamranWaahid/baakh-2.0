@@ -117,6 +117,8 @@ const FitVerseBlock = ({
     lineClassName = '',
     /** When set, skip local fitting and use this shared size. */
     lockedFit = null,
+    dictionarySource = 'general',
+    poetryId = null,
 }) => {
     const containerRef = useRef(null);
     const sampleRef = useRef(null);
@@ -134,10 +136,12 @@ const FitVerseBlock = ({
             ? 'text-center'
             : align === 'left'
                 ? 'text-left'
-                : 'text-right';
+                : align === 'justify'
+                    ? 'text-justify'
+                    : 'text-right';
 
     const originClass =
-        align === 'center'
+        align === 'center' || align === 'justify'
             ? 'origin-center'
             : isRtl || align === 'right'
                 ? 'origin-right'
@@ -207,7 +211,7 @@ const FitVerseBlock = ({
                 <div
                     key={`${index}-${line.slice(0, 12)}`}
                     ref={index === 0 ? sampleRef : undefined}
-                    className={`block max-w-full whitespace-nowrap ${alignClass} ${originClass} ${lineClassName}`}
+                    className={`block max-w-full ${align === 'justify' ? 'whitespace-normal' : 'whitespace-nowrap'} ${alignClass} ${originClass} ${lineClassName}`}
                     style={{
                         fontSize: `${fontSize}px`,
                         letterSpacing,
@@ -219,7 +223,14 @@ const FitVerseBlock = ({
                     {line === ''
                         ? '\u00A0'
                         : interactive
-                            ? <CoupletWithWords text={line} isRtl={isRtl} />
+                            ? (
+                                <CoupletWithWords
+                                    text={line}
+                                    isRtl={isRtl}
+                                    dictionarySource={dictionarySource}
+                                    poetryId={poetryId}
+                                />
+                            )
                             : line}
                 </div>
             ))}
@@ -241,6 +252,8 @@ export function FitVerseGroup({
     coupletClassName = '',
     interactive = true,
     className = '',
+    dictionarySource = 'general',
+    poetryId = null,
 }) {
     const containerRef = useRef(null);
     const sampleRef = useRef(null);
@@ -336,6 +349,8 @@ export function FitVerseGroup({
                     className={coupletClassName}
                     interactive={interactive}
                     lockedFit={lockedFit}
+                    dictionarySource={dictionarySource}
+                    poetryId={poetryId}
                 />
             ))}
         </div>

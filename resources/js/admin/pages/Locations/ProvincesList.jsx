@@ -31,13 +31,15 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Map } from 'lucide-react';
+import { Plus, Edit, Trash2, Map, Braces } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
+import LocationJsonImportModal from './LocationJsonImportModal';
 
 const ProvincesList = () => {
     const queryClient = useQueryClient();
     const [selectedProvince, setSelectedProvince] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [jsonOpen, setJsonOpen] = useState(false);
     const { register, handleSubmit, reset, setValue, control, formState: { errors } } = useForm();
     const [filterCountry, setFilterCountry] = useState('all');
     const [activeTab, setActiveTab] = useState("sd");
@@ -158,11 +160,16 @@ const ProvincesList = () => {
                         </SelectContent>
                     </Select>
 
+                    <Button variant="outline" onClick={() => setJsonOpen(true)} className="w-full sm:w-auto flex items-center gap-2">
+                        <Braces className="h-4 w-4" /> Import JSON
+                    </Button>
                     <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
                         <Plus className="h-4 w-4" /> Add Province
                     </Button>
                 </div>
             </div>
+
+            <LocationJsonImportModal open={jsonOpen} onOpenChange={setJsonOpen} type="provinces" />
 
             <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>

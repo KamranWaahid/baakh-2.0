@@ -457,6 +457,14 @@ const SenseEditor = () => {
     const antonyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'antonym');
     const hypernyms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'hypernym');
     const relatedWords = (lemma.lemma_relations || []).filter(r => r.relation_type === 'related');
+    const singularForms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'singular');
+    const pluralForms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'plural');
+    const dialectForms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'dialect');
+    const derivedForms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'derived');
+    const usageForms = (lemma.lemma_relations || []).filter(r => r.relation_type === 'usage');
+    const relationsTotal = synonyms.length + antonyms.length + hypernyms.length + relatedWords.length
+        + singularForms.length + pluralForms.length + dialectForms.length
+        + derivedForms.length + usageForms.length;
     const senses = lemma.senses || [];
     const primarySense = senses[0] || null;
     const variants = lemma.variants || [];
@@ -598,7 +606,7 @@ const SenseEditor = () => {
                     <TabsTrigger value="completion">Completion</TabsTrigger>
                     <TabsTrigger value="morphology">Morphology</TabsTrigger>
                     <TabsTrigger value="senses">Senses ({senses.length})</TabsTrigger>
-                    <TabsTrigger value="relations">Relations ({synonyms.length + antonyms.length + hypernyms.length + relatedWords.length})</TabsTrigger>
+                    <TabsTrigger value="relations">Relations ({relationsTotal})</TabsTrigger>
                     <TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
                     <TabsTrigger value="forms">Forms ({inflections.length + idioms.length})</TabsTrigger>
                 </TabsList>
@@ -611,11 +619,11 @@ const SenseEditor = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>{wordLabel}</Label>
-                                    <Input value={lemmaForm.lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, lemma: e.target.value })} className={`${isSourceTerm ? '' : 'font-arabic'} text-xl`} dir={sourceWordDir} />
+                                    <Input value={lemmaForm.lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, lemma: e.target.value })} className="font-arabic text-xl" dir={sourceWordDir} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Normalized Form</Label>
-                                    <Input value={lemmaForm.normalized_lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, normalized_lemma: e.target.value })} dir="auto" />
+                                    <Input value={lemmaForm.normalized_lemma || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, normalized_lemma: e.target.value })} className="font-arabic" dir="auto" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Transliteration (Roman)</Label>
@@ -631,7 +639,7 @@ const SenseEditor = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Simple Pronunciation</Label>
-                                    <Input value={lemmaForm.pronunciation_simple || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, pronunciation_simple: e.target.value })} placeholder="Readable pronunciation..." />
+                                    <Input value={lemmaForm.pronunciation_simple || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, pronunciation_simple: e.target.value })} className="font-arabic" dir="auto" placeholder="Readable pronunciation..." />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Audio URL</Label>
@@ -639,7 +647,7 @@ const SenseEditor = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Syllabification</Label>
-                                    <Input value={lemmaForm.syllabification || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, syllabification: e.target.value })} />
+                                    <Input value={lemmaForm.syllabification || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, syllabification: e.target.value })} className="font-arabic" dir="auto" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Part of Speech</Label>
@@ -677,11 +685,11 @@ const SenseEditor = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Etymology</Label>
-                                    <Textarea value={lemmaForm.etymology || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, etymology: e.target.value })} rows={3} placeholder="Origin or historical note..." />
+                                    <Textarea value={lemmaForm.etymology || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, etymology: e.target.value })} rows={3} className="font-arabic" dir="auto" placeholder="Origin or historical note..." />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Notes</Label>
-                                    <Textarea value={lemmaForm.notes || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, notes: e.target.value })} rows={3} placeholder="Editorial notes..." />
+                                    <Textarea value={lemmaForm.notes || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, notes: e.target.value })} rows={3} className="font-arabic" dir="auto" placeholder="Editorial notes..." />
                                 </div>
                             </div>
                             <div className="rounded-lg border p-4 space-y-3">
@@ -692,8 +700,8 @@ const SenseEditor = () => {
                                     <Textarea value={lemmaForm.search_keywords_romanized || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, search_keywords_romanized: e.target.value })} rows={2} placeholder="Romanized keywords, comma separated" />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <Input value={lemmaForm.metadata_region || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_region: e.target.value })} placeholder="Region" />
-                                    <Input value={lemmaForm.metadata_dialect_notes || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_dialect_notes: e.target.value })} placeholder="Dialect notes" />
+                                    <Input value={lemmaForm.metadata_region || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_region: e.target.value })} className="font-arabic" dir="auto" placeholder="Region" />
+                                    <Input value={lemmaForm.metadata_dialect_notes || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_dialect_notes: e.target.value })} className="font-arabic" dir="auto" placeholder="Dialect notes" />
                                     <Input value={lemmaForm.metadata_version || ''} onChange={(e) => setLemmaForm({ ...lemmaForm, metadata_version: e.target.value })} placeholder="Entry version" />
                                 </div>
                             </div>
@@ -936,9 +944,9 @@ const SenseEditor = () => {
                     <Card>
                         <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ArrowRightLeft className="h-4 w-4" /> Linguistic Relations</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
-                            {synonyms.length + antonyms.length + hypernyms.length + relatedWords.length === 0 && (
+                            {relationsTotal === 0 && (
                                 <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                                    No imported relations were present in Open Lexicon for this entry. Add manual relations here when editorial links are known.
+                                    Link synonyms, singular/plural forms, and dialect forms (e.g. محبت → محبتون, Utradi محبتان).
                                 </div>
                             )}
 
@@ -972,6 +980,107 @@ const SenseEditor = () => {
                                 </div>
                             </div>
 
+                            {/* Singular */}
+                            <div>
+                                <Label className="text-muted-foreground mb-2 block">Singular ({singularForms.length})</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {singularForms.map(r => (
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-emerald-50 text-emerald-800" title={relationDisplayRomanization(r) || r.note || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
+                                            <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+                                        </Badge>
+                                    ))}
+                                    {singularForms.length === 0 && <span className="text-xs text-muted-foreground">No singular forms</span>}
+                                </div>
+                            </div>
+
+                            {/* Plural */}
+                            <div>
+                                <Label className="text-muted-foreground mb-2 block">Plural ({pluralForms.length})</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {pluralForms.map(r => (
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-teal-50 text-teal-800" title={relationDisplayRomanization(r) || r.note || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
+                                            <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+                                        </Badge>
+                                    ))}
+                                    {pluralForms.length === 0 && <span className="text-xs text-muted-foreground">e.g. محبتون</span>}
+                                </div>
+                            </div>
+
+                            {/* Dialect */}
+                            <div>
+                                <Label className="text-muted-foreground mb-2 block">Dialect forms ({dialectForms.length})</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {dialectForms.map(r => (
+                                        <Badge key={r.id} variant="secondary" className="font-arabic text-sm gap-1 pr-1 bg-amber-50 text-amber-900" title={relationDisplayRomanization(r) || ''}>
+                                            {relationDisplayWord(r)}
+                                            {r.note && <span className="font-sans text-[10px] opacity-80">· {r.note}</span>}
+                                            {r.related_lemma_id && <span className="font-sans text-[10px] opacity-70">linked</span>}
+                                            <button onClick={() => deleteRelation.mutate(r.id)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+                                        </Badge>
+                                    ))}
+                                    {dialectForms.length === 0 && <span className="text-xs text-muted-foreground">e.g. Utradi · محبتان</span>}
+                                </div>
+                            </div>
+
+                            {/* Derived — خون→خوني، محبت→محبتي، پيار→پياري */}
+                            <div>
+                                <Label className="text-muted-foreground mb-2 block">Derived forms ({derivedForms.length})</Label>
+                                <p className="text-xs text-muted-foreground mb-2">Noun → related form (often ي): خون / خوني · محبت / محبتي · پيار / پياري</p>
+                                <div className="space-y-2">
+                                    {derivedForms.map(r => (
+                                        <div key={r.id} className="flex items-start justify-between gap-2 rounded-md border bg-rose-50/50 px-3 py-2">
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="font-arabic text-lg font-semibold" dir="rtl">{relationDisplayWord(r)}</span>
+                                                    {r.note && <Badge variant="outline" className="text-[10px]">{r.note}</Badge>}
+                                                    {r.related_lemma_id && <span className="text-[10px] text-muted-foreground">linked</span>}
+                                                </div>
+                                                {r.gloss && (
+                                                    <p className="mt-1 font-arabic text-sm text-muted-foreground" dir="rtl">{r.gloss}</p>
+                                                )}
+                                            </div>
+                                            <button onClick={() => deleteRelation.mutate(r.id)} className="shrink-0 text-muted-foreground hover:text-destructive">
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {derivedForms.length === 0 && (
+                                        <span className="text-xs text-muted-foreground">Add محبتي، خوني، پياري…</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* People say / usage forms */}
+                            <div>
+                                <Label className="text-muted-foreground mb-2 block">People say / usage ({usageForms.length})</Label>
+                                <p className="text-xs text-muted-foreground mb-2">First form, second form, verbal use — with an example sentence</p>
+                                <div className="space-y-2">
+                                    {usageForms.map(r => (
+                                        <div key={r.id} className="flex items-start justify-between gap-2 rounded-md border bg-sky-50/50 px-3 py-2">
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="font-arabic text-lg font-semibold" dir="rtl">{relationDisplayWord(r)}</span>
+                                                    {r.note && <Badge variant="outline" className="text-[10px]">{r.note}</Badge>}
+                                                </div>
+                                                {r.gloss && (
+                                                    <p className="mt-1 font-arabic text-sm" dir="rtl">{r.gloss}</p>
+                                                )}
+                                            </div>
+                                            <button onClick={() => deleteRelation.mutate(r.id)} className="shrink-0 text-muted-foreground hover:text-destructive">
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {usageForms.length === 0 && (
+                                        <span className="text-xs text-muted-foreground">e.g. محبتي · ھي ماڻھو محبتي آھي.</span>
+                                    )}
+                                </div>
+                            </div>
+
                             {/* Hypernyms */}
                             <div>
                                 <Label className="text-muted-foreground mb-2 block">Hypernyms ({hypernyms.length})</Label>
@@ -1002,14 +1111,19 @@ const SenseEditor = () => {
                             </div>
 
                             {/* Add Relation */}
-                            <div className="border-t pt-4">
-                                <Label className="text-sm mb-2 block">Add Relation</Label>
-                                <div className="grid grid-cols-1 md:grid-cols-[140px_minmax(220px,1fr)_180px_1fr_auto] gap-2">
+                            <div className="border-t pt-4 space-y-3">
+                                <Label className="text-sm block">Add Relation</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(220px,1fr)_180px_1fr_auto] gap-2">
                                     <Select value={newRelation.relation_type} onValueChange={(v) => setNewRelation({ ...newRelation, relation_type: v })}>
-                                        <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="synonym">Synonym</SelectItem>
                                             <SelectItem value="antonym">Antonym</SelectItem>
+                                            <SelectItem value="singular">Singular</SelectItem>
+                                            <SelectItem value="plural">Plural</SelectItem>
+                                            <SelectItem value="dialect">Dialect</SelectItem>
+                                            <SelectItem value="derived">Derived (ي)</SelectItem>
+                                            <SelectItem value="usage">People say / form</SelectItem>
                                             <SelectItem value="hypernym">Hypernym</SelectItem>
                                             <SelectItem value="related">Related</SelectItem>
                                         </SelectContent>
@@ -1018,7 +1132,14 @@ const SenseEditor = () => {
                                         <Input
                                             value={newRelation.related_word}
                                             onChange={(e) => handleRelationWordChange(e.target.value)}
-                                            placeholder="Enter word..."
+                                            placeholder={
+                                                newRelation.relation_type === 'plural' ? 'محبتون' :
+                                                newRelation.relation_type === 'singular' ? 'محبت' :
+                                                newRelation.relation_type === 'dialect' ? 'محبتان' :
+                                                newRelation.relation_type === 'derived' ? 'محبتي' :
+                                                newRelation.relation_type === 'usage' ? 'محبتي / محبت' :
+                                                'Enter word...'
+                                            }
                                             className="font-arabic"
                                             dir="rtl"
                                             autoComplete="off"
@@ -1071,15 +1192,60 @@ const SenseEditor = () => {
                                         onChange={(e) => setNewRelation({ ...newRelation, romanization: e.target.value })}
                                         placeholder="Romanization"
                                     />
-                                    <Input
-                                        value={newRelation.note}
-                                        onChange={(e) => setNewRelation({ ...newRelation, note: e.target.value })}
-                                        placeholder="Note / gloss"
-                                    />
+                                    {(newRelation.relation_type === 'derived' || newRelation.relation_type === 'usage') ? (
+                                        <Select
+                                            value={newRelation.note || undefined}
+                                            onValueChange={(v) => setNewRelation({ ...newRelation, note: v })}
+                                        >
+                                            <SelectTrigger><SelectValue placeholder="Form label" /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Derived (ي)">Derived (ي)</SelectItem>
+                                                <SelectItem value="First form">First form</SelectItem>
+                                                <SelectItem value="Second form">Second form</SelectItem>
+                                                <SelectItem value="Verbal use">Verbal use</SelectItem>
+                                                <SelectItem value="Dialect usage">Dialect usage</SelectItem>
+                                                <SelectItem value="People say">People say</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <Input
+                                            value={newRelation.note}
+                                            onChange={(e) => setNewRelation({ ...newRelation, note: e.target.value })}
+                                            placeholder={
+                                                newRelation.relation_type === 'dialect'
+                                                    ? 'Dialect (e.g. Utradi)'
+                                                    : 'Note / gloss'
+                                            }
+                                        />
+                                    )}
                                     <Button onClick={handleAddRelation} disabled={addRelation.isPending || !relationSearchTerm}>
                                         {addRelation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                                     </Button>
                                 </div>
+                                {(newRelation.relation_type === 'derived' || newRelation.relation_type === 'usage' || newRelation.relation_type === 'dialect') && (
+                                    <Input
+                                        value={newRelation.gloss}
+                                        onChange={(e) => setNewRelation({ ...newRelation, gloss: e.target.value })}
+                                        placeholder="People say… ھي ماڻھو محبتي آھي."
+                                        className="font-arabic"
+                                        dir="rtl"
+                                    />
+                                )}
+                                {newRelation.relation_type === 'derived' && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Example: on محبت add derived word محبتي (same pattern as خون→خوني، پيار→پياري). Optional sentence in the field above.
+                                    </p>
+                                )}
+                                {newRelation.relation_type === 'usage' && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Use for first/second form or “people say” lines: word = محبتي / محبتون / محبتان, label = First form / Second form / Verbal use, sentence = example.
+                                    </p>
+                                )}
+                                {newRelation.relation_type === 'dialect' && (
+                                    <p className="text-xs text-muted-foreground">
+                                        For dialect forms, put the dialect name in the note field (e.g. Utradi) and the form in the word field (محبتان).
+                                    </p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

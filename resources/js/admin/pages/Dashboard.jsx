@@ -23,7 +23,6 @@ import {
     Bar,
     Legend
 } from 'recharts';
-import IncompleteWordOfTheDay from './Dashboard/IncompleteWordOfTheDay';
 
 const Dashboard = () => {
     const { data, isError } = useQuery({
@@ -165,8 +164,6 @@ const Dashboard = () => {
                     </CardContent>
                 </Card>
             </div>
-
-            <IncompleteWordOfTheDay />
         </div>
     );
 };

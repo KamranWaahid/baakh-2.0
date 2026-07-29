@@ -36,7 +36,7 @@ class PeriodController extends Controller
         $period = Period::findOrFail($id);
         $years = $period->yearRange();
 
-        if (!$years) {
+        if (!is_array($years) || !isset($years[0], $years[1])) {
             return response()->json([]);
         }
 

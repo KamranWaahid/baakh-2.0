@@ -185,6 +185,13 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::apiResource('countries', CountryController::class);
     Route::apiResource('provinces', ProvinceController::class);
     Route::apiResource('cities', CityController::class);
+    Route::apiResource('districts', \App\Http\Controllers\Api\Admin\DistrictController::class);
+    Route::apiResource('talukas', \App\Http\Controllers\Api\Admin\TalukaController::class);
+    Route::post('locations/import/countries', [\App\Http\Controllers\Api\Admin\LocationImportController::class, 'importCountries']);
+    Route::post('locations/import/provinces', [\App\Http\Controllers\Api\Admin\LocationImportController::class, 'importProvinces']);
+    Route::post('locations/import/cities', [\App\Http\Controllers\Api\Admin\LocationImportController::class, 'importCities']);
+    Route::post('locations/import/districts', [\App\Http\Controllers\Api\Admin\LocationImportController::class, 'importDistricts']);
+    Route::post('locations/import/talukas', [\App\Http\Controllers\Api\Admin\LocationImportController::class, 'importTalukas']);
 
     // Languages
     Route::apiResource('languages', LanguageController::class);
@@ -246,6 +253,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::post('poet-books/{id}/pages/bulk-save', [\App\Http\Controllers\Api\Admin\PoetBookPageController::class, 'bulkSave']);
         Route::apiResource('poet-books', \App\Http\Controllers\Api\Admin\PoetBookController::class);
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
+        Route::get('poetry/lughat-senses', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'lookupLughatSenses']);
+        Route::get('poetry/lughat-expressions', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'lookupLughatExpressions']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
 
@@ -295,11 +304,17 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::patch('poetry/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'toggleFeatured']);
         Route::post('poetry/{id}/restore', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'restore']);
         Route::delete('poetry/{id}/permanent', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'permanentDelete']);
+        Route::post('poetry/refine-hesudhar-all', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'refineAllHesudhar']);
+        Route::post('poetry/{id}/refine-hesudhar', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'refineHesudhar']);
+        Route::get('poetry/{id}/sense-annotations', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'senseAnnotations']);
+        Route::put('poetry/{id}/sense-annotations', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'syncSenseAnnotations']);
 
         Route::patch('couplets/{id}/toggle-visibility', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'toggleVisibility']);
         Route::patch('couplets/{id}/toggle-featured', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'toggleFeatured']);
         Route::post('couplets/{id}/restore', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'restore']);
         Route::delete('couplets/{id}/permanent', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'permanentDelete']);
+        Route::post('couplets/refine-hesudhar-all', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'refineAllHesudhar']);
+        Route::post('couplets/{id}/refine-hesudhar', [\App\Http\Controllers\Api\Admin\CoupletController::class, 'refineHesudhar']);
 
         // Corpus Routes
         Route::get('corpus/sentences', [\App\Http\Controllers\Api\Admin\CorpusController::class, 'index']);
@@ -345,6 +360,43 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::delete('dictionary/inflections/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyInflection']);
         Route::post('dictionary/lemmas/{id}/idiomatic-expressions', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'storeIdiomaticExpression']);
         Route::delete('dictionary/idiomatic-expressions/{id}', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'destroyIdiomaticExpression']);
+
+        // Baakh Lughat (poetic dictionary — full CRUD mirror of Dictionary)
+        Route::get('lughat/stats', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'stats']);
+        Route::get('lughat/senses', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'senses']);
+        Route::get('lughat/morphology', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'morphology']);
+        Route::get('lughat/variants', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'variants']);
+        Route::get('lughat/qa', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'qa']);
+        Route::get('lughat/lemma-search', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'lemmaSearch']);
+        Route::get('lughat/import-from-poetry', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'poetryImportStatus']);
+        Route::post('lughat/import-from-poetry', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'importFromPoetry']);
+        Route::get('lughat/search', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'search']);
+        Route::get('lughat/lookup-senses', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'lookupSenses']);
+        Route::post('lughat/add-stubs', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'addStubs']);
+        Route::apiResource('lughat/lemmas', \App\Http\Controllers\Api\Admin\LughatDictionaryController::class);
+        Route::patch('lughat/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'approve']);
+        Route::get('lughat/lemmas/{id}/editor-json', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'editorJson']);
+        Route::post('lughat/lemmas/{id}/import-json', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'importJson']);
+        Route::get('lughat/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'completion']);
+        Route::patch('lughat/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'updateCompletion']);
+        Route::post('lughat/lemmas/{lemmaId}/senses', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeSense']);
+        Route::put('lughat/senses/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'updateSense']);
+        Route::post('lughat/senses', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeSense']);
+        Route::delete('lughat/senses/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroySense']);
+        Route::post('lughat/senses/{senseId}/examples', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeExample']);
+        Route::put('lughat/examples/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'updateExample']);
+        Route::delete('lughat/examples/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroyExample']);
+        Route::put('lughat/lemmas/{id}/morphology', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'updateMorphology']);
+        Route::post('lughat/lemmas/{id}/variants', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeVariant']);
+        Route::delete('lughat/variants/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroyVariant']);
+        Route::post('lughat/lemmas/{id}/relations', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeRelation']);
+        Route::delete('lughat/relations/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroyRelation']);
+        Route::post('lughat/lemmas/{id}/inflections', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeInflection']);
+        Route::delete('lughat/inflections/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroyInflection']);
+        Route::post('lughat/lemmas/{id}/idiomatic-expressions', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeIdiomaticExpression']);
+        Route::delete('lughat/idiomatic-expressions/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroyIdiomaticExpression']);
+        Route::post('lughat/expressions', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'storeExpression']);
+        Route::delete('lughat/expressions/{id}', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'destroyExpression']);
     });
 
 // Public Sync Endpoints (Read-only, protected by token)

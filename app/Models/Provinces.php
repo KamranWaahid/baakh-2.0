@@ -36,4 +36,9 @@ class Provinces extends Model
     {
         return $this->hasMany(Cities::class);
     }
+
+    public function districts()
+    {
+        return $this->hasMany(Districts::class, 'province_id');
+    }
 }

@@ -162,6 +162,12 @@ class Handler extends ExceptionHandler
             if (preg_match('/Base table or view already exists:\s*\d+\s+Table [\'\`](?:[^\'\`]+\\.)?([^\'\`]+)[\'\`]/i', $message, $m)) {
                 return "Database table already exists: {$m[1]}";
             }
+            if (preg_match('/Duplicate key name [\'\`]([^\'\`]+)[\'\`]/i', $message, $m)) {
+                return "Duplicate database index: {$m[1]}";
+            }
+            if (preg_match('/Identifier name [\'\`]([^\'\`]+)[\'\`] is too long/i', $message, $m)) {
+                return "Database index name too long: {$m[1]}";
+            }
 
             return 'Database query failed';
         }

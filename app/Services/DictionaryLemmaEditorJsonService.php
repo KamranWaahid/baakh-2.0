@@ -31,7 +31,10 @@ class DictionaryLemmaEditorJsonService
 
         return [
             '_schema' => 'baakh.dictionary.editor_json.v1',
-            '_instructions' => 'Edit only these editor fields. Keep numeric ids when present so existing rows update. Paste back via Input JSON → Submit & Rewrite.',
+            '_instructions' => 'Edit only these editor fields. Keep numeric ids when present so existing rows update. Paste back via Input JSON → Submit & Rewrite. '
+                . 'ROMAN ONLY: transliteration and all romanization fields = plain Latin a–z/spaces/hyphens. '
+                . 'No Arabic script; no zabar/zer/pesh (َُِ), tashdeed (ّ), sukun (ْ), or accented Latin (āīū). e.g. aadmi not ādmī. '
+                . 'PRIMARY DEFINITIONS IN SINDHI: sense.definition and short_gloss MUST be Sindhi; English only in definition_en.',
             'id' => $lemma->id,
             'public_id' => $lemma->public_id,
 

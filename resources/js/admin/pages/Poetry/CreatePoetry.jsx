@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -39,9 +39,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages } from 'lucide-react';
+import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, SpellCheck, Loader2, Shuffle } from 'lucide-react';
+import PoetryLughatSensePicker from './PoetryLughatSensePicker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import {
     Command,
     CommandEmpty,
@@ -65,6 +67,7 @@ const poetrySchema = z.object({
     category_id: z.string().min(1, 'Category is required'),
     topic_category_id: z.string().optional().nullable(),
     content_style: z.string().default('center'),
+    dictionary_source: z.enum(['general', 'lughat']).default('general'),
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
     poetry_info: z.string().optional(),
@@ -94,9 +97,28 @@ const CreatePoetry = () => {
     const [openTags, setOpenTags] = useState(false);
     const [openBook, setOpenBook] = useState(false);
     const [script, setScript] = useState('perso'); // 'perso' | 'roman'
+    const [sensePickerMode, setSensePickerMode] = useState(false);
+    const [senseAnnotations, setSenseAnnotations] = useState([]);
+    const [expressionAnnotations, setExpressionAnnotations] = useState([]);
+    const poetryEditorRef = useRef(null);
+    const romanEditorRef = useRef(null);
+
+    const autosizeTextarea = useCallback((el, { minHeight = 280 } = {}) => {
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${Math.max(el.scrollHeight, minHeight)}px`;
+    }, []);
 
     // Prevent auto-updates on initial load for Edit mode
-    const allowAutoUpdates = React.useRef(!isEdit);
+    const allowAutoUpdates = useRef(!isEdit);
+
+    // Grow editors with content (typing, paste, edit load, auto-transliteration).
+    useLayoutEffect(() => {
+        if (!sensePickerMode) {
+            autosizeTextarea(poetryEditorRef.current, { minHeight: 280 });
+        }
+        autosizeTextarea(romanEditorRef.current, { minHeight: 280 });
+    }, [poetryContent, transliteratedText, sensePickerMode, script, autosizeTextarea]);
 
     // Reset transliteration status when content changes
     useEffect(() => {
@@ -183,6 +205,7 @@ const CreatePoetry = () => {
             category_id: '',
             topic_category_id: '',
             content_style: 'center',
+            dictionary_source: 'general',
             visibility: true,
             is_featured: false,
             poetry_info: '',
@@ -231,6 +254,22 @@ const CreatePoetry = () => {
 
     useEffect(() => {
         if (isEdit && poetry) {
+            if (poetry.sense_annotations) {
+                setSenseAnnotations(
+                    (poetry.sense_annotations || []).map((a) => ({
+                        ...a,
+                        promote: a.promoted !== false,
+                    }))
+                );
+            }
+            if (poetry.expression_annotations) {
+                setExpressionAnnotations(poetry.expression_annotations || []);
+            }
+        }
+    }, [isEdit, poetry]);
+
+    useEffect(() => {
+        if (isEdit && poetry) {
             const persoTranslation = poetry.translations?.find(t => t.lang === 'sd') || poetry.translations?.[0];
             const romanTranslation = poetry.translations?.find(t => t.lang === 'en');
 
@@ -241,6 +280,7 @@ const CreatePoetry = () => {
                 category_id: poetry.category_id?.toString() || '',
                 topic_category_id: poetry.topic_category_id?.toString() || '',
                 content_style: poetry.content_style || 'center',
+                dictionary_source: poetry.dictionary_source === 'lughat' ? 'lughat' : 'general',
                 visibility: poetry.visibility === 1,
                 is_featured: poetry.is_featured === 1,
                 poetry_info: persoTranslation?.info || '',
@@ -287,6 +327,41 @@ const CreatePoetry = () => {
         },
     });
 
+    const refineHesudharMutation = useMutation({
+        mutationFn: async () => {
+            if (isEdit) {
+                const res = await api.post(`/api/admin/poetry/${id}/refine-hesudhar`);
+                return res.data;
+            }
+            const res = await api.post('/api/admin/hesudhar/standardize', { text: poetryContent });
+            return { standardized_text: res.data.standardized_text, message: 'Editor text refined with Hesudhar (not saved yet).' };
+        },
+        onSuccess: (data) => {
+            if (data?.standardized_text != null) {
+                setPoetryContent(data.standardized_text);
+                toast.success(data.message || 'Text refined. Save to keep changes.');
+                return;
+            }
+            queryClient.invalidateQueries(['poetry', id]);
+            queryClient.invalidateQueries(['poetry']);
+            toast.success(data.message || 'Poetry refined and saved.');
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Hesudhar refine failed.');
+        },
+    });
+
+    const handleRefineHesudhar = () => {
+        if (!poetryContent.trim() && !isEdit) {
+            toast.error('Add poetry text first.');
+            return;
+        }
+        const msg = isEdit
+            ? 'Refine this poetry with Hesudhar and update the database?'
+            : 'Refine the editor text with Hesudhar? (Save afterwards to keep it.)';
+        if (!window.confirm(msg)) return;
+        refineHesudharMutation.mutate();
+    };
     const onSubmit = (data) => {
         const coupletTexts = poetryContent
             .split(/\n\s*\n/)
@@ -295,14 +370,31 @@ const CreatePoetry = () => {
 
         const transformedData = {
             ...data,
-            ...data,
             couplets: coupletTexts.map(text => ({ couplet_text: text })),
             roman_title: romanTitle,
             roman_content: transliteratedText
                 .split(/\n\s*\n/)
                 .map(text => text.trim())
                 .filter(text => text.length > 0)
-                .map(text => ({ couplet_text: text }))
+                .map(text => ({ couplet_text: text })),
+            sense_annotations: senseAnnotations.map((a) => ({
+                couplet_index: a.couplet_index,
+                token_index: a.token_index,
+                sense_id: a.sense_id,
+                surface_form: a.surface_form,
+                note: a.note || null,
+                promote: a.promote !== false,
+            })),
+            expression_annotations: expressionAnnotations.map((a) => ({
+                couplet_index: a.couplet_index,
+                start_token_index: a.start_token_index,
+                end_token_index: a.end_token_index,
+                surface_text: a.surface_text,
+                expression_type: a.expression_type || 'izafat',
+                literal_gloss: a.literal_gloss || null,
+                poetic_gloss: a.poetic_gloss || null,
+                note: a.note || null,
+            })),
         };
 
         if (transformedData.couplets.length === 0) {
@@ -366,6 +458,17 @@ const CreatePoetry = () => {
                             </h2>
                         </div>
                         <div className="flex items-center gap-4">
+                            <Button
+                                variant="outline"
+                                type="button"
+                                onClick={handleRefineHesudhar}
+                                disabled={refineHesudharMutation.isPending}
+                            >
+                                {refineHesudharMutation.isPending
+                                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    : <SpellCheck className="mr-2 h-4 w-4" />}
+                                Refine Hesudhar
+                            </Button>
                             <Button variant="ghost" type="button" onClick={() => navigate('/admin/poetry')}>Cancel</Button>
                             <Button type="submit" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
@@ -381,7 +484,7 @@ const CreatePoetry = () => {
                     )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border overflow-hidden min-h-[420px] md:min-h-[700px]">
+                        <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border min-h-[420px] md:min-h-[560px] h-auto self-start">
                             <Tabs value={script} onValueChange={setScript} className="w-full">
                                 <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/5 sticky top-0 z-10 w-full">
                                     <TabsList className="h-9 bg-muted/50">
@@ -429,12 +532,31 @@ const CreatePoetry = () => {
                                 </div>
 
                                 <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
                                             <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
                                         </div>
-                                        <div className="text-xs text-muted-foreground/50 font-medium">
-                                            <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
+                                        <div className="flex items-center gap-3">
+                                            {script === 'perso' && (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={sensePickerMode ? 'default' : 'outline'}
+                                                    className="h-7 text-xs gap-1.5"
+                                                    onClick={() => setSensePickerMode((v) => !v)}
+                                                >
+                                                    <Shuffle className="h-3.5 w-3.5" />
+                                                    {sensePickerMode ? 'Editing text' : 'Lughat senses'}
+                                                    {senseAnnotations.length + expressionAnnotations.length > 0 && (
+                                                        <span className="ml-0.5 rounded-full bg-background/20 px-1.5 text-[10px]">
+                                                            {senseAnnotations.length + expressionAnnotations.length}
+                                                        </span>
+                                                    )}
+                                                </Button>
+                                            )}
+                                            <div className="text-xs text-muted-foreground/50 font-medium">
+                                                <span>{poetryContent.split(/\n\s*\n/).filter(text => text.trim().length > 0).length.toString().padStart(2, '0')} Couplets</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -468,44 +590,65 @@ const CreatePoetry = () => {
 
                                     <div className="pt-6">
                                         <TabsContent value="perso" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
+                                            {sensePickerMode ? (
+                                                <PoetryLughatSensePicker
+                                                    content={poetryContent}
+                                                    poetryId={isEdit ? id : null}
+                                                    annotations={senseAnnotations}
+                                                    onChange={setSenseAnnotations}
+                                                    expressionAnnotations={expressionAnnotations}
+                                                    onExpressionChange={setExpressionAnnotations}
+                                                    contentStyle={form.watch('content_style')}
+                                                />
+                                            ) : (
                                             <textarea
                                                 id="poetry-editor"
+                                                ref={poetryEditorRef}
                                                 dir="rtl"
                                                 lang="sd"
-                                                className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-arabic ${form.watch('content_style') === 'center' ? 'text-center' :
-                                                    form.watch('content_style') === 'start' ? 'text-right' :
-                                                        form.watch('content_style') === 'end' ? 'text-left' : 'text-justify'
+                                                rows={8}
+                                                className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-arabic ${
+                                                    form.watch('content_style') === 'center' ? 'text-center'
+                                                        : form.watch('content_style') === 'start' ? 'text-right'
+                                                            : form.watch('content_style') === 'end' ? 'text-left'
+                                                                : form.watch('content_style') === 'left' ? 'text-left'
+                                                                    : form.watch('content_style') === 'right' ? 'text-right'
+                                                                        : 'text-justify'
                                                     }`}
                                                 placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
                                                 value={poetryContent}
                                                 onChange={(e) => {
                                                     setPoetryContent(e.target.value);
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                    autosizeTextarea(e.target, { minHeight: 280 });
                                                 }}
                                             />
+                                            )}
                                         </TabsContent>
                                         <TabsContent value="roman" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
                                             <textarea
                                                 dir="ltr"
-                                                className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[60px] leading-tight bg-transparent text-left font-sans mb-3"
+                                                className="w-full text-5xl font-bold border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[60px] leading-tight bg-transparent text-left font-sans mb-3"
                                                 placeholder="Roman Title"
                                                 value={romanTitle}
                                                 onChange={(e) => {
                                                     setRomanTitle(e.target.value);
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                                    autosizeTextarea(e.target, { minHeight: 60 });
                                                 }}
                                             />
                                             <textarea
+                                                ref={romanEditorRef}
                                                 dir="ltr"
-                                                className={`w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-sans ${form.watch('content_style') === 'center' ? 'text-center' :
+                                                rows={8}
+                                                className={`w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-sans ${form.watch('content_style') === 'center' ? 'text-center' :
                                                     form.watch('content_style') === 'start' ? 'text-left' :
                                                         form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
                                                     }`}
                                                 placeholder="Transliterated text will appear here..."
                                                 value={transliteratedText}
-                                                onChange={(e) => setTransliteratedText(e.target.value)}
+                                                onChange={(e) => {
+                                                    setTransliteratedText(e.target.value);
+                                                    autosizeTextarea(e.target, { minHeight: 280 });
+                                                }}
                                             />
                                         </TabsContent>
                                     </div>
@@ -558,37 +701,96 @@ const CreatePoetry = () => {
                                         <FormField
                                             control={form.control}
                                             name="content_style"
-                                            render={({ field }) => (
+                                            render={({ field }) => {
+                                                const styles = meta?.content_styles?.length
+                                                    ? meta.content_styles
+                                                    : ['justified', 'center', 'start', 'end'];
+                                                const labels = {
+                                                    center: 'Center',
+                                                    start: 'Start (right in Sindhi)',
+                                                    end: 'End (left in Sindhi)',
+                                                    justified: 'Justified',
+                                                    justify: 'Justified',
+                                                    left: 'Left',
+                                                    right: 'Right',
+                                                };
+                                                return (
                                                 <FormItem>
                                                     <FormLabel className="text-sm font-medium mb-2 block">Content Alignment</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                    <Select
+                                                        value={field.value || 'center'}
+                                                        onValueChange={(value) => {
+                                                            field.onChange(value);
+                                                            form.setValue('content_style', value, {
+                                                                shouldDirty: true,
+                                                                shouldTouch: true,
+                                                            });
+                                                        }}
+                                                    >
                                                         <FormControl>
                                                             <SelectTrigger>
                                                                 <SelectValue placeholder="Alignment" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {meta?.content_styles?.map(style => (
+                                                            {styles.map((style) => (
                                                                 <SelectItem key={style} value={style}>
-                                                                    {style.charAt(0).toUpperCase() + style.slice(1)}
+                                                                    {labels[style] || (style.charAt(0).toUpperCase() + style.slice(1))}
                                                                 </SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
+                                                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                                                        Applies to the editor preview and the public poem body.
+                                                    </p>
                                                     <FormMessage />
                                                     {slugError && <p className="text-[10px] text-destructive mt-1">{slugError}</p>}
                                                 </FormItem>
-                                            )}
+                                                );
+                                            }}
                                         />
                                     </div>
                                 </CardContent>
-                                <CardFooter className="bg-muted/10 flex justify-between py-3">
-                                    <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/admin/poetry')}>
-                                        Cancel
+                                <CardFooter className="bg-muted/10 flex flex-col gap-2 py-3 px-6">
+                                    <Button
+                                        variant={form.watch('dictionary_source') === 'lughat' ? 'default' : 'outline'}
+                                        size="sm"
+                                        type="button"
+                                        className="h-8 w-full"
+                                        title={
+                                            form.watch('dictionary_source') === 'lughat'
+                                                ? 'Public meanings use Baakh Lughat (click to switch to general dictionary)'
+                                                : 'Public meanings use general dictionary (click to switch to Baakh Lughat)'
+                                        }
+                                        onClick={() => {
+                                            const next = form.getValues('dictionary_source') === 'lughat'
+                                                ? 'general'
+                                                : 'lughat';
+                                            form.setValue('dictionary_source', next, {
+                                                shouldDirty: true,
+                                                shouldTouch: true,
+                                            });
+                                            toast.success(
+                                                next === 'lughat'
+                                                    ? 'Dictionary: Baakh Lughat — save to apply on the public site'
+                                                    : 'Dictionary: General — save to apply on the public site'
+                                            );
+                                        }}
+                                    >
+                                        <Shuffle className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                                        Shift Dictionary
+                                        {form.watch('dictionary_source') === 'lughat' ? (
+                                            <span className="ml-1.5 text-[10px] opacity-80">· باک لغت</span>
+                                        ) : null}
                                     </Button>
-                                    <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars}>
-                                        {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
-                                    </Button>
+                                    <div className="flex w-full items-center justify-between gap-2">
+                                        <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/admin/poetry')}>
+                                            Cancel
+                                        </Button>
+                                        <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars}>
+                                            {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
+                                        </Button>
+                                    </div>
                                 </CardFooter>
                             </Card>
 
@@ -1048,19 +1250,6 @@ const CreatePoetry = () => {
                                                         placeholder="Story..."
                                                         {...field}
                                                     />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="source"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-sm font-medium mb-2 block">Source</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Book name..." {...field} className="h-8 text-sm" />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>

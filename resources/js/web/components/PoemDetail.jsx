@@ -13,6 +13,7 @@ import { formatSindhiDate } from '../utils/dateUtils';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 import DOMPurify from 'dompurify';
 import { FitVerseGroup } from './FitVerseBlock';
+import { resolveVerseAlign, verseAlignClass } from '../utils/contentStyle';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -107,16 +108,9 @@ const PoemDetail = ({ lang }) => {
 
     if (!poem || !poem.id) return null;
 
-    // Justification: Sindhi (RTL) defaults to right; English/roman (LTR) defaults to left.
-    // Explicit content_style and ghazal centering still win.
+    // Admin saves center|start|end|justified (legacy left|right). Respect that on the public body.
     const isGhazal = poem.category?.name && (poem.category.name.toLowerCase().includes('ghazal') || poem.category.name.includes('غزل'));
-    const verseAlign = isGhazal || poem.content_style === 'center'
-        ? 'center'
-        : poem.content_style === 'left'
-            ? 'left'
-            : poem.content_style === 'right'
-                ? 'right'
-                : (isRtl ? 'right' : 'left');
+    const verseAlign = resolveVerseAlign(poem.content_style, { isRtl, isGhazal });
 
     return (
         <div className="w-full flex flex-col items-center py-6 md:py-12 px-4 md:px-8 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
@@ -169,10 +163,12 @@ const PoemDetail = ({ lang }) => {
                             lineGap={lineGap}
                             coupletClassName={coupletGapClass}
                             interactive
+                            dictionarySource={poem.dictionary_source === 'lughat' ? 'lughat' : 'general'}
+                            poetryId={poem.id}
                         />
                     ) : (
                         <div
-                            className={`prose prose-xl max-w-none leading-[1.55] text-[26px] md:text-[34px] ${verseAlign === 'center' ? 'text-center' : verseAlign === 'left' ? 'text-left' : 'text-right'} whitespace-pre-line`}
+                            className={`prose prose-xl max-w-none leading-[1.55] text-[26px] md:text-[34px] ${verseAlignClass(verseAlign)} whitespace-pre-line`}
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }}
                         />
                     )}
