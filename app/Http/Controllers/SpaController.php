@@ -57,7 +57,15 @@ class SpaController extends Controller
                         // Link previews (WhatsApp, etc.) use brand logo on white —
                         // not the designed poetry share card (that is only for in-app share/download).
                         $ogImageUrl = asset('assets/og/baakh-og-v2-1200x630.png');
-                        $fallback = $this->SEO_Poetry($poetry, $categorySlug, $poet, $ogImageUrl);
+                        try {
+                            $fallback = $this->SEO_Poetry($poetry, $categorySlug, $poet, $ogImageUrl);
+                        } catch (\Throwable) {
+                            // Never 500 for crawlers — fall back to generic meta.
+                            $fallback = $this->SEO_General($title, $description, null, null, [
+                                'og_description' => $ogDescription,
+                                'og_image_alt' => $ogImageAlt,
+                            ]);
+                        }
                         return view('app', compact('fallback'));
                     }
 
@@ -71,7 +79,14 @@ class SpaController extends Controller
                         fn () => Poets::where('poet_slug', $poetSlug)->first()
                     );
                     if ($poet) {
-                        $fallback = $this->SEO_Poet($poet, '');
+                        try {
+                            $fallback = $this->SEO_Poet($poet, '');
+                        } catch (\Throwable) {
+                            $fallback = $this->SEO_General($title, $description, null, null, [
+                                'og_description' => $ogDescription,
+                                'og_image_alt' => $ogImageAlt,
+                            ]);
+                        }
                         return view('app', compact('fallback'));
                     }
 
@@ -120,7 +135,7 @@ HTML;
         <li><a href="{$base}/poetry">شاعري</a></li>
         <li><a href="{$base}/couplets">بند</a></li>
         <li><a href="{$base}/explore">ڳولا</a></li>
-        <li><a href="{$base}/periods">دور</a></li>
+        <li><a href="{$base}/period">دور</a></li>
         <li><a href="{$base}/about">باک بابت</a></li>
         <li><a href="/en">English</a></li>
     </ul>
@@ -139,7 +154,7 @@ HTML;
         <li><a href="{$base}/poetry">Poetry</a></li>
         <li><a href="{$base}/couplets">Couplets</a></li>
         <li><a href="{$base}/explore">Explore</a></li>
-        <li><a href="{$base}/periods">Periods</a></li>
+        <li><a href="{$base}/period">Periods</a></li>
         <li><a href="{$base}/about">About</a></li>
         <li><a href="/sd">سنڌي</a></li>
     </ul>

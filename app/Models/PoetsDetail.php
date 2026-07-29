@@ -50,40 +50,46 @@ class PoetsDetail extends Model
      */
     public function birthPlaceComplete()
     {
-        $locale = app()->getLocale();
-        $city = Cities::with([
-            'details' => fn($q) => $q->where('lang', $locale),
-            'province.details' => fn($q) => $q->where('lang', $locale),
-            'province.country.details' => fn($q) => $q->where('lang', $locale)
-        ])->find($this->birth_place);
-
-        if (!$city)
-            return ['cityName' => null, 'provinceName' => null, 'countryName' => null];
-
-        return [
-            'cityName' => $city->details->first()->city_name ?? null,
-            'provinceName' => $city->province->details->first()->province_name ?? null,
-            'countryName' => $city->province->country->details->first()->country_name ?? null,
-        ];
+        return $this->placeComplete($this->birth_place);
     }
 
     public function deathPlaceComplete()
     {
-        $locale = app()->getLocale();
-        $city = Cities::with([
-            'details' => fn($q) => $q->where('lang', $locale),
-            'province.details' => fn($q) => $q->where('lang', $locale),
-            'province.country.details' => fn($q) => $q->where('lang', $locale)
-        ])->find($this->death_place);
+        return $this->placeComplete($this->death_place);
+    }
 
-        if (!$city)
-            return ['cityName' => null, 'provinceName' => null, 'countryName' => null];
+    /**
+     * Resolve city/province/country labels for a place id.
+     * Must never throw — incomplete geo FKs or missing locale rows used to 500 poet SEO pages.
+     */
+    private function placeComplete(mixed $placeId): array
+    {
+        $empty = ['cityName' => null, 'provinceName' => null, 'countryName' => null];
 
-        return [
-            'cityName' => $city->details->first()->city_name ?? null,
-            'provinceName' => $city->province->details->first()->province_name ?? null,
-            'countryName' => $city->province->country->details->first()->country_name ?? null,
-        ];
+        if ($placeId === null || $placeId === '' || $placeId === 0 || $placeId === '0') {
+            return $empty;
+        }
+
+        try {
+            $locale = app()->getLocale();
+            $city = Cities::with([
+                'details' => fn ($q) => $q->where('lang', $locale),
+                'province.details' => fn ($q) => $q->where('lang', $locale),
+                'province.country.details' => fn ($q) => $q->where('lang', $locale),
+            ])->find($placeId);
+
+            if (!$city) {
+                return $empty;
+            }
+
+            return [
+                'cityName' => $city->details->first()?->city_name,
+                'provinceName' => $city->province?->details->first()?->province_name,
+                'countryName' => $city->province?->country?->details->first()?->country_name,
+            ];
+        } catch (\Throwable) {
+            return $empty;
+        }
     }
 
 
