@@ -16,6 +16,8 @@ class Cities extends Model
         'geo_lat',
         'geo_long',
         'province_id',
+        'district_id',
+        'taluka_id',
     ];
 
     public function user()
@@ -31,5 +33,15 @@ class Cities extends Model
     public function province()
     {
         return $this->belongsTo(Provinces::class);
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(Districts::class, 'district_id');
+    }
+
+    public function taluka()
+    {
+        return $this->belongsTo(Talukas::class, 'taluka_id');
     }
 }

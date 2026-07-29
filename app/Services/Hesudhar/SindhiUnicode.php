@@ -66,8 +66,7 @@ class SindhiUnicode
         "\u{0645}",   // م — M
         "\u{0644}",   // ل — L
         "\u{06AF}",   // گ — G
-        "\u{0DA0}",   // (fallback gaf variant)
-        "\u{0DA9}",   // ڙ — RR (retroflex R)
+        "\u{0699}",   // ڙ — RR (retroflex R)
         "\u{062C}",   // ج — J
         "\u{0631}",   // ر — R
         "\u{06BB}",   // ڻ — NN (retroflex N)
@@ -82,17 +81,31 @@ class SindhiUnicode
         // NOTE: Waw (و) is EXCLUDED here to fix the "علاوہ" bug as discussed.
     ];
 
+    // -- HAMZA -----------------------------------------------------------------
+    public const HAMZA = "\u{0621}";   // ء — often word-final with ءِ / ءَ case endings
+
     // -- VOWEL DIACRITICS ------------------------------------------------------
+    public const FATHA = "\u{064E}";   // ◌َ — Fatha (zabar)
+    public const DAMMA = "\u{064F}";   // ◌ُ — Damma (pesh)
+    public const KASRA = "\u{0650}";   // ◌ِ — Kasra (zer)
+
     public const VOWEL_DIACRITICS = [
-        "\u{064E}",   // ◌َ — Fatha (zabar)
-        "\u{064F}",   // ◌ُ — Damma (pesh)
-        "\u{0650}",   // ◌ِ — Kasra (zer)
+        self::FATHA,
+        self::DAMMA,
+        self::KASRA,
         "\u{064B}",   // ◌ً — Tanwin Fath
         "\u{064C}",   // ◌ٌ — Tanwin Damm
         "\u{064D}",   // ◌ٍ — Tanwin Kasr
         "\u{0652}",   // ◌ْ — Sukun
         "\u{0651}",   // ◌ّ — Shadda
         "\u{0670}",   // ◌ٰ — Superscript Alef
+    ];
+
+    /** Diacritics allowed on final hamza case endings (ءِ، ءَ، ءُ). */
+    public const FINAL_HAMZA_DIACRITICS = [
+        self::FATHA,
+        self::DAMMA,
+        self::KASRA,
     ];
 
     public const ARABIC_DEFINITE_ARTICLE = "\u{0627}\u{0644}";   // ال

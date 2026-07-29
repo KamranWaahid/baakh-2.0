@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BaakhHesudhar;
 use App\Helpers\SindhiNormalizer;
+use App\Services\Hesudhar\HesudharDictionary;
+use App\Services\LughatMissingWordsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -43,6 +45,8 @@ class HesudharController extends Controller
             'correct' => strip_tags($validated['correct']),
         ]);
 
+        HesudharDictionary::forget();
+
         return response()->json([
             'message' => 'Word added to dictionary',
             'data' => $word
@@ -69,6 +73,8 @@ class HesudharController extends Controller
             'correct' => strip_tags($validated['correct']),
         ]);
 
+        HesudharDictionary::forget();
+
         return response()->json([
             'message' => 'Word updated successfully',
             'data' => $word
@@ -79,6 +85,8 @@ class HesudharController extends Controller
     {
         $word = BaakhHesudhar::findOrFail($id);
         $word->delete();
+
+        HesudharDictionary::forget();
 
         return response()->json([
             'message' => 'Word deleted successfully'
@@ -93,25 +101,9 @@ class HesudharController extends Controller
 
         $fullText = $request->input('text', '');
 
-        // Phase 0/3: WordNet Integration & Feedback Loop
-        $pipeline = new \App\Services\Hesudhar\HesudharPipeline(function ($word) {
-            // First, check exact match in the dictionary
-            $entry = BaakhHesudhar::where('word', $word)->first();
-
-            // Fallback for visual encoding variants
-            if (!$entry && preg_match('/[هہةھە]/u', $word)) {
-                $variants = [
-                    str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ه', $word),
-                    str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ہ', $word),
-                    str_replace(['ه', 'ہ', 'ھ', 'ە', 'ة'], 'ھ', $word),
-                ];
-                $entry = BaakhHesudhar::whereIn('word', $variants)->first();
-            }
-
-            return $entry ? $entry->correct : null;
-        });
-
-        $result = $pipeline->process($fullText);
+        // Dictionary-first (baakh_hesudhars), then phonetic algorithm for unknown words
+        HesudharDictionary::warm();
+        $result = HesudharDictionary::pipeline()->process($fullText);
 
         $mistakes = [];
         foreach ($result->changesLog as $change) {
@@ -121,9 +113,7 @@ class HesudharController extends Controller
                 'type' => ($change['source'] === 'WORDNET') ? 'dictionary' : 'normalization'
             ];
 
-            // Auto-Flagging Feedback Loop:
-            // If the algorithm corrects a word, check if we already have a record for it
-            // that contradicts the algorithm's phonetic conclusion.
+            // Auto-flag: algorithm disagreed with an existing dictionary mapping for this surface form
             if ($change['source'] === 'ALGORITHM') {
                 $dictionaryEntry = BaakhHesudhar::where('word', $change['original'])->first();
                 if ($dictionaryEntry && $dictionaryEntry->correct !== $change['corrected']) {
@@ -136,7 +126,8 @@ class HesudharController extends Controller
 
         return response()->json([
             'mistakes' => $mistakes,
-            'total_mistakes' => count($mistakes)
+            'total_mistakes' => count($mistakes),
+            'missing_lughat_words' => app(LughatMissingWordsService::class)->missingFromText($fullText),
         ]);
     }
 
@@ -155,6 +146,8 @@ class HesudharController extends Controller
                 File::makeDirectory(public_path('vendor/hesudhar'), 0755, true);
             }
             File::put($filePath, $content);
+
+            HesudharDictionary::forget();
 
             return response()->json(['message' => 'Dictionary file updated successfully.']);
         } catch (\Exception $e) {
@@ -189,6 +182,8 @@ class HesudharController extends Controller
 
             $offset += $chunkSize;
         } while (count($rows) === $chunkSize);
+
+        HesudharDictionary::forget();
 
         return response()->json([
             'message' => "Phonetic cleanse complete. Fixed {$fixedCount} records.",

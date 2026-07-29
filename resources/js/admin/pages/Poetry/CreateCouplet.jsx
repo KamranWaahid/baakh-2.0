@@ -32,9 +32,10 @@ import {
     DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Trash2, Plus, Eye, EyeOff, Star, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, ChevronsUpDown, Check, Info } from 'lucide-react';
+import { Trash2, Plus, Eye, EyeOff, Star, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, ChevronsUpDown, Check, Info, SpellCheck, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 import {
     Popover,
     PopoverContent,
@@ -275,6 +276,45 @@ const CreateCouplet = () => {
         }
     });
 
+    const refineHesudharMutation = useMutation({
+        mutationFn: async () => {
+            if (isEdit) {
+                const res = await api.post(`/api/admin/couplets/${id}/refine-hesudhar`);
+                return res.data;
+            }
+            const res = await api.post('/api/admin/hesudhar/standardize', { text: coupletContent });
+            return { standardized_text: res.data.standardized_text, message: 'Editor text refined with Hesudhar (not saved yet).' };
+        },
+        onSuccess: (data) => {
+            if (data?.standardized_text != null) {
+                setCoupletContent(data.standardized_text);
+                toast.success(data.message || 'Text refined. Save to keep changes.');
+                return;
+            }
+            if (data?.couplet_text) {
+                setCoupletContent(data.couplet_text);
+            }
+            queryClient.invalidateQueries(['couplet', id]);
+            queryClient.invalidateQueries(['couplets']);
+            toast.success(data.message || 'Couplet refined and saved.');
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Hesudhar refine failed.');
+        },
+    });
+
+    const handleRefineHesudhar = () => {
+        if (!coupletContent.trim() && !isEdit) {
+            toast.error('Add couplet text first.');
+            return;
+        }
+        const msg = isEdit
+            ? 'Refine this couplet with Hesudhar and update the database?'
+            : 'Refine the editor text with Hesudhar? (Save afterwards to keep it.)';
+        if (!window.confirm(msg)) return;
+        refineHesudharMutation.mutate();
+    };
+
     const onSubmit = (data) => {
         const lines = coupletContent.split('\n').filter(line => line.trim() !== '');
         if (lines.length !== 2) {
@@ -311,6 +351,17 @@ const CreateCouplet = () => {
                             </h2>
                         </div>
                         <div className="flex items-center gap-4">
+                            <Button
+                                variant="outline"
+                                type="button"
+                                onClick={handleRefineHesudhar}
+                                disabled={refineHesudharMutation.isPending}
+                            >
+                                {refineHesudharMutation.isPending
+                                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    : <SpellCheck className="mr-2 h-4 w-4" />}
+                                Refine Hesudhar
+                            </Button>
                             <Button variant="ghost" type="button" onClick={() => navigate('/admin/couplets')}>Cancel</Button>
                             <Button type="submit" disabled={mutation.isPending || lineCount !== 2 || !!slugError || isCheckingSlug} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}

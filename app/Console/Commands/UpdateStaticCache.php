@@ -441,6 +441,7 @@ class UpdateStaticCache extends Command
                 return $c->couplet_text;
             }), // Array of couplets
             'content_style' => $p->content_style ?? 'center',
+            'dictionary_source' => $p->dictionary_source ?? 'general',
             'info' => $info->info ?? null,
             'source' => $info->source ?? null,
             'views' => $p->views ?? 0,
@@ -798,6 +799,7 @@ class UpdateStaticCache extends Command
             'is_bookmarked' => false,
             'cover' => $p->cover_image ?? null,
             'content_style' => $p->content_style,
+            'dictionary_source' => $p->dictionary_source ?? 'general',
         ];
     }
 

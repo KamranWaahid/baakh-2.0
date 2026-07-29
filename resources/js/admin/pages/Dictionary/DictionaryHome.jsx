@@ -24,6 +24,7 @@ import {
     Plus
 } from 'lucide-react';
 import LemmaEditorJsonModal from './LemmaEditorJsonModal';
+import IncompleteWordOfTheDay from './IncompleteWordOfTheDay';
 
 const DictionaryHome = () => {
     const [search, setSearch] = useState('');
@@ -101,6 +102,8 @@ const DictionaryHome = () => {
                 <StatCard icon={Layers} label="Pending Completion" value={stats?.pending_completion_lemmas?.toLocaleString() || '—'} />
                 <StatCard icon={Type} label="Completion" value={`${stats?.completion_percentage ?? '—'}%`} sub={topSource?.source_dictionary || 'Top source'} />
             </div>
+
+            <IncompleteWordOfTheDay />
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
