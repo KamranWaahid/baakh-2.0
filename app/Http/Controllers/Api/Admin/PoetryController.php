@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Poetry;
+use App\Services\LughatExpressionService;
+use App\Services\LughatPoetrySenseAnnotationService;
 use App\Services\StaticCacheService;
 use App\Support\SafeUserData;
 use Illuminate\Http\Request;
@@ -14,9 +16,16 @@ class PoetryController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:view_poetry')->only(['index', 'show', 'checkSlug']);
+        $this->middleware('can:view_poetry')->only(['index', 'show', 'checkSlug', 'lookupLughatSenses', 'lookupLughatExpressions', 'senseAnnotations']);
         $this->middleware('can:create_poetry')->only(['create', 'store']);
-        $this->middleware('can:edit_poetry')->only(['update', 'toggleVisibility', 'toggleFeatured']);
+        $this->middleware('can:edit_poetry')->only([
+            'update',
+            'toggleVisibility',
+            'toggleFeatured',
+            'refineHesudhar',
+            'refineAllHesudhar',
+            'syncSenseAnnotations',
+        ]);
         $this->middleware('can:delete_poetry')->only(['destroy']);
     }
     public function index(Request $request)
@@ -103,7 +112,80 @@ class PoetryController extends Controller
             ->where('id', $id)
             ->orWhere('poetry_slug', $id)
             ->firstOrFail();
-        return response()->json($poetry);
+
+        $payload = $poetry->toArray();
+        $payload['sense_annotations'] = app(LughatPoetrySenseAnnotationService::class)
+            ->listForPoetry((int) $poetry->id);
+        $payload['expression_annotations'] = app(LughatExpressionService::class)
+            ->listPoetryAnnotations((int) $poetry->id);
+
+        return response()->json($payload);
+    }
+
+    public function lookupLughatExpressions(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'required|string|min:1|max:500',
+        ]);
+
+        $hits = app(LughatExpressionService::class)->search($validated['q'], 12);
+
+        return response()->json([
+            'query' => $validated['q'],
+            'matches' => $hits,
+        ]);
+    }
+
+    public function lookupLughatSenses(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'required|string|min:1|max:255',
+            'poetry_id' => 'nullable|integer|min:1',
+        ]);
+
+        return response()->json(
+            app(LughatPoetrySenseAnnotationService::class)->lookupSenses(
+                $validated['q'],
+                isset($validated['poetry_id']) ? (int) $validated['poetry_id'] : null
+            )
+        );
+    }
+
+    public function senseAnnotations($id)
+    {
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
+
+        return response()->json([
+            'poetry_id' => $poetry->id,
+            'annotations' => app(LughatPoetrySenseAnnotationService::class)->listForPoetry((int) $poetry->id),
+        ]);
+    }
+
+    public function syncSenseAnnotations(Request $request, $id)
+    {
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
+
+        $validated = $request->validate([
+            'annotations' => 'required|array',
+            'annotations.*.couplet_index' => 'required|integer|min:0',
+            'annotations.*.token_index' => 'required|integer|min:0',
+            'annotations.*.sense_id' => 'required|integer|exists:lughat_senses,id',
+            'annotations.*.surface_form' => 'nullable|string|max:255',
+            'annotations.*.note' => 'nullable|string',
+            'annotations.*.promote' => 'nullable|boolean',
+            'replace' => 'nullable|boolean',
+        ]);
+
+        $service = app(LughatPoetrySenseAnnotationService::class);
+        $saved = ($validated['replace'] ?? true)
+            ? $service->replaceForPoetry($poetry, $validated['annotations'], true)
+            : $service->syncForPoetry($poetry, $validated['annotations'], true);
+
+        return response()->json([
+            'message' => 'Sense annotations saved.',
+            'annotations' => $service->listForPoetry((int) $poetry->id),
+            'saved_count' => count($saved),
+        ]);
     }
 
     public function destroy($id)
@@ -234,6 +316,7 @@ class PoetryController extends Controller
             'poetry_slug' => 'required|unique:poetry_main,poetry_slug',
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
+            'dictionary_source' => 'nullable|in:general,lughat',
             'visibility' => 'required|boolean',
             'is_featured' => 'required|boolean',
             'couplets' => 'required|array|min:1',
@@ -246,6 +329,22 @@ class PoetryController extends Controller
             'book_id' => 'nullable|exists:poet_books,id',
             'page_start' => 'nullable|integer|min:1',
             'page_end' => 'nullable|integer|min:1',
+            'sense_annotations' => 'nullable|array',
+            'sense_annotations.*.couplet_index' => 'required_with:sense_annotations|integer|min:0',
+            'sense_annotations.*.token_index' => 'required_with:sense_annotations|integer|min:0',
+            'sense_annotations.*.sense_id' => 'required_with:sense_annotations|integer|exists:lughat_senses,id',
+            'sense_annotations.*.surface_form' => 'nullable|string|max:255',
+            'sense_annotations.*.note' => 'nullable|string',
+            'sense_annotations.*.promote' => 'nullable|boolean',
+            'expression_annotations' => 'nullable|array',
+            'expression_annotations.*.couplet_index' => 'required_with:expression_annotations|integer|min:0',
+            'expression_annotations.*.start_token_index' => 'required_with:expression_annotations|integer|min:0',
+            'expression_annotations.*.end_token_index' => 'required_with:expression_annotations|integer|min:0',
+            'expression_annotations.*.surface_text' => 'required_with:expression_annotations|string|max:500',
+            'expression_annotations.*.expression_type' => 'nullable|string|max:40',
+            'expression_annotations.*.literal_gloss' => 'nullable|string|max:500',
+            'expression_annotations.*.poetic_gloss' => 'nullable|string',
+            'expression_annotations.*.note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -260,6 +359,7 @@ class PoetryController extends Controller
                 'visibility' => $validated['visibility'],
                 'is_featured' => $validated['is_featured'],
                 'content_style' => $validated['content_style'],
+                'dictionary_source' => $validated['dictionary_source'] ?? 'general',
                 'book_id' => $validated['book_id'] ?? null,
                 'page_start' => $validated['page_start'] ?? null,
                 'page_end' => $validated['page_end'] ?? null,
@@ -305,7 +405,18 @@ class PoetryController extends Controller
                 ]);
             }
 
+            if (!empty($validated['sense_annotations'])) {
+                app(LughatPoetrySenseAnnotationService::class)
+                    ->replaceForPoetry($poetry->fresh(), $validated['sense_annotations'], true);
+            }
+
+            if (!empty($validated['expression_annotations'])) {
+                app(LughatExpressionService::class)
+                    ->replacePoetryAnnotations($poetry->fresh(), $validated['expression_annotations']);
+            }
+
             DB::commit();
+            $this->forgetPoetryPublicCache($validated['poetry_slug']);
             return response()->json(['message' => 'Poetry created successfully', 'id' => $poetry->id], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -317,6 +428,7 @@ class PoetryController extends Controller
     {
         $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
         $actualId = $poetry->id;
+        $previousSlug = $poetry->poetry_slug;
 
         $validated = $request->validate([
             'poet_id' => 'required|exists:poets,id',
@@ -325,6 +437,7 @@ class PoetryController extends Controller
             'poetry_slug' => 'required|unique:poetry_main,poetry_slug,' . $actualId,
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
+            'dictionary_source' => 'nullable|in:general,lughat',
             'visibility' => 'required|boolean',
             'is_featured' => 'required|boolean',
             'couplets' => 'required|array|min:1',
@@ -337,6 +450,22 @@ class PoetryController extends Controller
             'book_id' => 'nullable|exists:poet_books,id',
             'page_start' => 'nullable|integer|min:1',
             'page_end' => 'nullable|integer|min:1',
+            'sense_annotations' => 'nullable|array',
+            'sense_annotations.*.couplet_index' => 'required_with:sense_annotations|integer|min:0',
+            'sense_annotations.*.token_index' => 'required_with:sense_annotations|integer|min:0',
+            'sense_annotations.*.sense_id' => 'required_with:sense_annotations|integer|exists:lughat_senses,id',
+            'sense_annotations.*.surface_form' => 'nullable|string|max:255',
+            'sense_annotations.*.note' => 'nullable|string',
+            'sense_annotations.*.promote' => 'nullable|boolean',
+            'expression_annotations' => 'nullable|array',
+            'expression_annotations.*.couplet_index' => 'required_with:expression_annotations|integer|min:0',
+            'expression_annotations.*.start_token_index' => 'required_with:expression_annotations|integer|min:0',
+            'expression_annotations.*.end_token_index' => 'required_with:expression_annotations|integer|min:0',
+            'expression_annotations.*.surface_text' => 'required_with:expression_annotations|string|max:500',
+            'expression_annotations.*.expression_type' => 'nullable|string|max:40',
+            'expression_annotations.*.literal_gloss' => 'nullable|string|max:500',
+            'expression_annotations.*.poetic_gloss' => 'nullable|string',
+            'expression_annotations.*.note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -350,6 +479,7 @@ class PoetryController extends Controller
                 'visibility' => $validated['visibility'],
                 'is_featured' => $validated['is_featured'],
                 'content_style' => $validated['content_style'],
+                'dictionary_source' => $validated['dictionary_source'] ?? $poetry->dictionary_source ?? 'general',
                 'book_id' => $validated['book_id'] ?? null,
                 'page_start' => $validated['page_start'] ?? null,
                 'page_end' => $validated['page_end'] ?? null,
@@ -401,13 +531,40 @@ class PoetryController extends Controller
                 );
             }
 
+            if (array_key_exists('sense_annotations', $validated)) {
+                app(LughatPoetrySenseAnnotationService::class)
+                    ->replaceForPoetry($poetry->fresh(), $validated['sense_annotations'] ?? [], true);
+            }
+
+            if (array_key_exists('expression_annotations', $validated)) {
+                app(LughatExpressionService::class)
+                    ->replacePoetryAnnotations($poetry->fresh(), $validated['expression_annotations'] ?? []);
+            }
+
             DB::commit();
+            $this->forgetPoetryPublicCache($previousSlug);
+            if ($previousSlug !== $validated['poetry_slug']) {
+                $this->forgetPoetryPublicCache($validated['poetry_slug']);
+            }
             return response()->json(['message' => 'Poetry updated successfully']);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Failed to update poetry: ' . $e->getMessage()], 500);
         }
     }
+
+    /** Bust public poem JSON cache so content_style / couplets update immediately. */
+    private function forgetPoetryPublicCache(?string $slug): void
+    {
+        if (!$slug) {
+            return;
+        }
+        $cache = app(StaticCacheService::class);
+        foreach (['sd', 'en', 'snd'] as $locale) {
+            $cache->forget("poetry_detail_{$slug}_{$locale}");
+        }
+    }
+
     public function checkSlug(Request $request)
     {
         $slug = $request->get('slug');
@@ -531,5 +688,36 @@ class PoetryController extends Controller
             DB::rollBack();
             return response()->json(['message' => 'Failed to permanently delete poetry: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Refine this poetry's Sindhi couplets (+ sd title/info) with Hesudhar dictionary-first correction.
+     */
+    public function refineHesudhar($id, \App\Services\Hesudhar\HesudharContentRefiner $refiner)
+    {
+        $poetry = Poetry::where('id', $id)->orWhere('poetry_slug', $id)->firstOrFail();
+        $result = $refiner->refinePoetry($poetry);
+
+        return response()->json([
+            'message' => $result['updated'] > 0 || ($result['translations_updated'] ?? 0) > 0
+                ? "Hesudhar refined {$result['updated']} couplet(s) ({$result['changes']} word fixes)."
+                : 'No Hesudhar changes needed for this poetry.',
+            'data' => $result,
+        ]);
+    }
+
+    /**
+     * Refine all poetry works in the database with Hesudhar.
+     */
+    public function refineAllHesudhar(\App\Services\Hesudhar\HesudharContentRefiner $refiner)
+    {
+        set_time_limit(0);
+
+        $result = $refiner->refineAllPoetry();
+
+        return response()->json([
+            'message' => "Hesudhar scanned {$result['poetry_scanned']} poetry works; updated {$result['couplets_updated']} couplets ({$result['changes']} word fixes).",
+            'data' => $result,
+        ]);
     }
 }

@@ -21,8 +21,9 @@ import {
     PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Eye, EyeOff, Star, Edit, MoreHorizontal, RotateCcw, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Star, Edit, MoreHorizontal, RotateCcw, ShieldAlert, SpellCheck, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -96,6 +97,40 @@ const PoetryList = () => {
         },
     });
 
+    const refineAllMutation = useMutation({
+        mutationFn: async () => {
+            const res = await api.post('/api/admin/poetry/refine-hesudhar-all');
+            return res.data;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['poetry']);
+            toast.success(data.message || 'Poetry refined with Hesudhar.');
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Hesudhar refine failed.');
+        },
+    });
+
+    const refineOneMutation = useMutation({
+        mutationFn: async (id) => {
+            const res = await api.post(`/api/admin/poetry/${id}/refine-hesudhar`);
+            return res.data;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['poetry']);
+            toast.success(data.message || 'Poetry refined.');
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Hesudhar refine failed.');
+        },
+    });
+
+    const handleRefineAll = () => {
+        if (!window.confirm('Refine ALL poetry couplets in the database with Hesudhar? This updates Sindhi text in place.')) {
+            return;
+        }
+        refineAllMutation.mutate();
+    };
     const handleDelete = async (id) => {
         if (showTrash) {
             if (window.confirm('Are you sure you want to PERMANENTLY delete this poetry? This cannot be undone.')) {
@@ -126,6 +161,19 @@ const PoetryList = () => {
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
+                    {!showTrash && (
+                        <Button
+                            variant="outline"
+                            onClick={handleRefineAll}
+                            disabled={refineAllMutation.isPending}
+                            className="w-full sm:w-auto"
+                        >
+                            {refineAllMutation.isPending
+                                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                : <SpellCheck className="mr-2 h-4 w-4" />}
+                            Refine all (Hesudhar)
+                        </Button>
+                    )}
                     <Button
                         variant={showTrash ? "destructive" : "outline"}
                         onClick={() => { setShowTrash(!showTrash); setPage(1); }}
@@ -259,6 +307,16 @@ const PoetryList = () => {
                                                                     {p.is_featured === 1 ? "Unfeature" : "Feature"}
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Refine this poetry with Hesudhar and save to the database?')) {
+                                                                            refineOneMutation.mutate(p.id);
+                                                                        }
+                                                                    }}
+                                                                    disabled={refineOneMutation.isPending}
+                                                                >
+                                                                    <SpellCheck className="mr-2 h-4 w-4" /> Refine Hesudhar
+                                                                </DropdownMenuItem>
                                                                 <DropdownMenuItem asChild>
                                                                     <Link to={`/admin/poetry/${p.poetry_slug}/edit`}>
                                                                         <Edit className="mr-2 h-4 w-4" /> Edit

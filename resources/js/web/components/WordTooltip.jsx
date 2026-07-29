@@ -29,7 +29,7 @@ function MeaningLine({ text, index, total }) {
     const prefix = total > 1 ? `${index + 1}. ` : '• ';
     return (
         <p
-            className={`text-sm text-gray-800 leading-snug ${rtl ? 'font-arabic' : ''}`}
+            className={`text-sm text-gray-800 leading-snug break-words ${rtl ? 'font-arabic' : ''}`}
             dir={rtl ? 'rtl' : 'ltr'}
             lang={rtl ? 'sd' : 'en'}
         >
@@ -47,14 +47,18 @@ function computePosition(anchorRect, tooltipEl) {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const tw = tooltipEl?.offsetWidth || TOOLTIP_WIDTH;
-    const th = tooltipEl?.offsetHeight || 120;
+    const naturalH = tooltipEl?.scrollHeight || tooltipEl?.offsetHeight || 120;
 
     let left = anchorRect.left + anchorRect.width / 2 - tw / 2;
     left = Math.max(VIEW_PAD, Math.min(left, vw - tw - VIEW_PAD));
 
-    const spaceBelow = vh - anchorRect.bottom - VIEW_PAD;
-    const spaceAbove = anchorRect.top - VIEW_PAD;
-    const placeBelow = spaceBelow >= th + GAP || spaceBelow >= spaceAbove;
+    const spaceBelow = vh - anchorRect.bottom - VIEW_PAD - GAP;
+    const spaceAbove = anchorRect.top - VIEW_PAD - GAP;
+    const placeBelow = spaceBelow >= Math.min(naturalH, 160) || spaceBelow >= spaceAbove;
+
+    const available = Math.max(120, placeBelow ? spaceBelow : spaceAbove);
+    const maxHeight = Math.min(420, Math.floor(vh * 0.75), available);
+    const th = Math.min(naturalH, maxHeight);
 
     let top = placeBelow
         ? anchorRect.bottom + GAP
@@ -67,13 +71,13 @@ function computePosition(anchorRect, tooltipEl) {
         Math.min(tw - 16, anchorRect.left + anchorRect.width / 2 - left)
     );
 
-    return { top, left, placeBelow, arrowLeft };
+    return { top, left, placeBelow, arrowLeft, maxHeight };
 }
 
 /**
  * WordTooltip — compact dictionary card near a clicked word.
  */
-const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
+const WordTooltip = ({ word, onClose, anchorRect, isRtl, dictionarySource = 'general', poetryId = null }) => {
     const tooltipRef = useRef(null);
     const [position, setPosition] = useState(null);
     const [data, setData] = useState(null);
@@ -86,7 +90,13 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
-        api.get(`/api/v1/word/${encodeURIComponent(word)}`)
+        const params = new URLSearchParams();
+        if (dictionarySource === 'lughat') {
+            params.set('dictionary', 'lughat');
+            if (poetryId) params.set('poetry_id', String(poetryId));
+        }
+        const qs = params.toString();
+        api.get(`/api/v1/word/${encodeURIComponent(word)}${qs ? `?${qs}` : ''}`)
             .then(res => { if (!cancelled) setData(res.data); })
             .catch(() => { if (!cancelled) setData({ found: false }); })
             .finally(() => {
@@ -96,7 +106,7 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                 }
             });
         return () => { cancelled = true; };
-    }, [word]);
+    }, [word, dictionarySource, poetryId]);
 
     const requestClose = useCallback(() => {
         if (closingRef.current) return;
@@ -187,13 +197,15 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
             style={{
                 top: position?.top ?? -9999,
                 left: position?.left ?? -9999,
+                maxHeight: position?.maxHeight ?? 'min(420px, 75vh)',
                 visibility: position ? 'visible' : 'hidden',
                 '--wt-origin-x': originX,
                 '--wt-origin-y': originY,
                 '--wt-from-y': fromY,
             }}
             className={[
-                'word-tooltip fixed z-[9999] w-[260px] max-w-[calc(100vw-16px)] bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden max-h-[min(320px,70vh)] overflow-y-auto',
+                'word-tooltip fixed z-[9999] w-[260px] max-w-[calc(100vw-16px)] bg-white rounded-xl border border-gray-200 shadow-lg',
+                'overflow-x-hidden overflow-y-auto overscroll-contain',
                 phase === 'enter' ? 'word-tooltip-enter' : '',
                 phase === 'exit' ? 'word-tooltip-exit' : '',
             ].filter(Boolean).join(' ')}
@@ -222,35 +234,44 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                 />
             )}
 
-            <div className="px-3 py-2.5">
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-xl font-bold text-gray-900 font-arabic truncate">{data?.word || word}</span>
-                        {posLabel && (
-                            <span className="text-[11px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">
-                                {posLabel}
-                            </span>
-                        )}
-                        {data?.completion_status && (
-                            <span className={`text-[11px] px-1.5 py-0.5 rounded shrink-0 ${data.completion_status === 'complete' ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'}`}>
-                                {data.completion_status === 'complete' ? 'Complete' : 'Pending'}
-                            </span>
-                        )}
-                    </div>
+            <div className="px-3 py-2.5 min-w-0">
+                <div className="flex items-start justify-between gap-2 min-w-0">
+                    <span className="text-xl font-bold text-gray-900 font-arabic break-words min-w-0">
+                        {data?.word || word}
+                    </span>
                     <button type="button" onClick={requestClose} className="text-gray-400 hover:text-gray-600 p-0.5 shrink-0" aria-label="Close">
                         <X className="h-3.5 w-3.5" />
                     </button>
                 </div>
+                {(posLabel || data?.dictionary === 'lughat' || data?.source === 'baakh_lughat' || data?.completion_status) && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1 min-w-0">
+                        {posLabel && (
+                            <span className="text-[11px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded max-w-full break-words leading-snug">
+                                {posLabel}
+                            </span>
+                        )}
+                        {(data?.dictionary === 'lughat' || data?.source === 'baakh_lughat') && (
+                            <span className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-arabic">
+                                باک لغت
+                            </span>
+                        )}
+                        {data?.completion_status && (
+                            <span className={`text-[11px] px-1.5 py-0.5 rounded ${data.completion_status === 'complete' ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'}`}>
+                                {data.completion_status === 'complete' ? 'Complete' : 'Pending'}
+                            </span>
+                        )}
+                    </div>
+                )}
                 {data?.romanized && (
-                    <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-xs text-gray-400">/{data.romanized}/</span>
-                        <button type="button" className="text-gray-300 hover:text-gray-500">
+                    <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                        <span className="text-xs text-gray-400 truncate">/{data.romanized}/</span>
+                        <button type="button" className="text-gray-300 hover:text-gray-500 shrink-0">
                             <Volume2 className="h-3 w-3" />
                         </button>
                     </div>
                 )}
                 {data?.gender && (
-                    <span className="text-[11px] text-gray-400 mt-0.5 block">
+                    <span className="text-[11px] text-gray-400 mt-0.5 block break-words">
                         {data.gender}{data.number ? ` · ${data.number}` : ''}
                     </span>
                 )}
@@ -289,17 +310,17 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                             const defRtl = isRtlScript(def);
                             const glossRtl = isRtlScript(sense.short_gloss);
                             return (
-                            <div key={sense.public_id || sense.id || i} className="rounded-md bg-gray-50 px-2 py-1.5">
+                            <div key={sense.public_id || sense.id || i} className="rounded-md bg-gray-50 px-2 py-1.5 min-w-0">
                                 {sense.short_gloss && (
                                     <p
-                                        className={`text-xs font-medium text-gray-600 ${glossRtl ? 'font-arabic' : ''}`}
+                                        className={`text-xs font-medium text-gray-600 break-words ${glossRtl ? 'font-arabic' : ''}`}
                                         dir={glossRtl ? 'rtl' : 'ltr'}
                                     >
                                         {sense.short_gloss}
                                     </p>
                                 )}
                                 <p
-                                    className={`text-sm text-gray-800 leading-snug ${defRtl ? 'font-arabic' : ''}`}
+                                    className={`text-sm text-gray-800 leading-snug break-words ${defRtl ? 'font-arabic' : ''}`}
                                     dir={defRtl ? 'rtl' : 'ltr'}
                                     lang={defRtl ? 'sd' : 'en'}
                                 >
@@ -316,13 +337,13 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
             {!loading && data?.found && (shownMeanings.length > 0 || shownMeaningsSd.length > 0 || shownMeaningsEn.length > 0) && (
                 <>
                     <div className="border-t border-gray-100" />
-                    <div className="px-3 py-2 space-y-2">
+                    <div className="px-3 py-2 space-y-2 min-w-0">
                         {shownMeanings.length > 0 && (
-                            <div>
-                                <span className="text-[11px] text-gray-400 block mb-1">
+                            <div className="min-w-0">
+                                <span className="text-[11px] text-gray-400 block mb-1 break-words">
                                     {isRtl ? 'معنى (Primary)' : 'Primary Meaning'}
                                 </span>
-                                <div className="space-y-0.5">
+                                <div className="space-y-0.5 min-w-0">
                                     {shownMeanings.map((m, i) => (
                                         <MeaningLine key={i} text={m} index={i} total={shownMeanings.length} />
                                     ))}
@@ -330,11 +351,11 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                             </div>
                         )}
                         {shownMeaningsSd.length > 0 && (
-                            <div dir="rtl">
-                                <span className="text-[11px] text-gray-400 block mb-1">
+                            <div dir="rtl" className="min-w-0">
+                                <span className="text-[11px] text-gray-400 block mb-1 break-words">
                                     {isRtl ? 'سنڌي معنى' : 'Sindhi Meaning'}
                                 </span>
-                                <div className="space-y-0.5">
+                                <div className="space-y-0.5 min-w-0">
                                     {shownMeaningsSd.map((m, i) => (
                                         <MeaningLine key={`sd-${i}`} text={m} index={i} total={shownMeaningsSd.length} />
                                     ))}
@@ -342,9 +363,9 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
                             </div>
                         )}
                         {shownMeaningsEn.length > 0 && (
-                            <div dir="ltr" className="text-left">
+                            <div dir="ltr" className="text-left min-w-0">
                                 <span className="text-[11px] text-gray-400 block mb-1">English Meaning</span>
-                                <div className="space-y-0.5">
+                                <div className="space-y-0.5 min-w-0">
                                     {shownMeaningsEn.map((m, i) => (
                                         <MeaningLine key={`en-${i}`} text={m} index={i} total={shownMeaningsEn.length} />
                                     ))}
@@ -363,11 +384,11 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
             {!loading && data?.found && synonyms.length > 0 && (
                 <>
                     <div className="border-t border-gray-100" />
-                    <div className="px-3 py-2">
+                    <div className="px-3 py-2 min-w-0">
                         <span className="text-[11px] text-gray-400">
                             {isRtl ? 'هم معنى' : 'Synonyms'}:{' '}
                         </span>
-                        <span className="text-sm text-gray-700 font-arabic">
+                        <span className="text-sm text-gray-700 font-arabic break-words">
                             {synonyms.join('، ')}
                         </span>
                     </div>
@@ -377,11 +398,11 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
             {!loading && data?.found && antonyms.length > 0 && (
                 <>
                     <div className="border-t border-gray-100" />
-                    <div className="px-3 py-2">
+                    <div className="px-3 py-2 min-w-0">
                         <span className="text-[11px] text-gray-400">
                             {isRtl ? 'ضد' : 'Antonym'}:{' '}
                         </span>
-                        <span className="text-sm text-gray-700 font-arabic">
+                        <span className="text-sm text-gray-700 font-arabic break-words">
                             {antonyms.join('، ')}
                         </span>
                     </div>
@@ -391,7 +412,7 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
             {!loading && data?.found && (
                 <>
                     <div className="border-t border-gray-100" />
-                    <div className="px-3 py-2">
+                    <div className="px-3 py-2 pb-3">
                         <button
                             type="button"
                             onClick={(e) => {
@@ -467,7 +488,7 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl }) => {
 /**
  * ClickableWord — renders a word as a clickable <span>.
  */
-export const ClickableWord = ({ word, isRtl }) => {
+export const ClickableWord = ({ word, isRtl, dictionarySource = 'general', poetryId = null }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [rect, setRect] = useState(null);
     const wordRef = useRef(null);
@@ -519,6 +540,8 @@ export const ClickableWord = ({ word, isRtl }) => {
                     word={cleanWord}
                     anchorRect={rect}
                     isRtl={isRtl}
+                    dictionarySource={dictionarySource}
+                    poetryId={poetryId}
                     onClose={() => setIsOpen(false)}
                 />
             )}
@@ -529,14 +552,22 @@ export const ClickableWord = ({ word, isRtl }) => {
 /**
  * CoupletWithWords — splits a couplet string into clickable words.
  */
-export const CoupletWithWords = ({ text, isRtl }) => {
+export const CoupletWithWords = ({ text, isRtl, dictionarySource = 'general', poetryId = null }) => {
     const tokens = text.split(/(\s+)/);
     return (
         <>
             {tokens.map((token, i) =>
                 /^\s+$/.test(token)
                     ? <span key={i}>{token}</span>
-                    : <ClickableWord key={i} word={token} isRtl={isRtl} />
+                    : (
+                        <ClickableWord
+                            key={i}
+                            word={token}
+                            isRtl={isRtl}
+                            dictionarySource={dictionarySource}
+                            poetryId={poetryId}
+                        />
+                    )
             )}
         </>
     );

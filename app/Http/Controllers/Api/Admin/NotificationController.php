@@ -140,6 +140,10 @@ class NotificationController extends Controller
 
         if ($message !== '' && preg_match("/Table ['\`](?:[^'\`]+\\.)?([^'\`]+)['\`] doesn't exist/i", $message, $m)) {
             $message = "Missing database table: {$m[1]}";
+        } elseif ($message !== '' && preg_match('/Duplicate key name [\'\`]([^\'\`]+)[\'\`]/i', $message, $m)) {
+            $message = "Duplicate database index: {$m[1]}";
+        } elseif ($message !== '' && preg_match('/Identifier name [\'\`]([^\'\`]+)[\'\`] is too long/i', $message, $m)) {
+            $message = "Database index name too long";
         } elseif ($message !== '' && str_starts_with($message, 'SQLSTATE[')) {
             $message = 'Database query failed';
         }

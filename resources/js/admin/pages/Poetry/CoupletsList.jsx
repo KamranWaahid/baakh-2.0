@@ -13,11 +13,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Eye, EyeOff, Star, Edit, Link as LinkIcon, Unlink, Search, RotateCcw, ShieldAlert, Trash } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, Star, Edit, Link as LinkIcon, Unlink, Search, RotateCcw, ShieldAlert, Trash, SpellCheck, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Badge } from '../../../components/ui/badge';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const CoupletsList = () => {
     const queryClient = useQueryClient();
@@ -115,6 +116,46 @@ const CoupletsList = () => {
         }
     };
 
+    const refineAllMutation = useMutation({
+        mutationFn: async () => {
+            const res = await api.post('/api/admin/couplets/refine-hesudhar-all');
+            return res.data;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['couplets']);
+            toast.success(data.message || 'Couplets refined with Hesudhar.');
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Hesudhar refine failed.');
+        },
+    });
+
+    const refineOneMutation = useMutation({
+        mutationFn: async (item) => {
+            // Linked poetry works refine via poetry endpoint; independent couplets via couplets endpoint
+            if (item.poetry?.id) {
+                const res = await api.post(`/api/admin/poetry/${item.poetry.id}/refine-hesudhar`);
+                return res.data;
+            }
+            const res = await api.post(`/api/admin/couplets/${item.id}/refine-hesudhar`);
+            return res.data;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(['couplets']);
+            toast.success(data.message || 'Refined with Hesudhar.');
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Hesudhar refine failed.');
+        },
+    });
+
+    const handleRefineAll = () => {
+        if (!window.confirm('Refine ALL Sindhi couplets in the database with Hesudhar? This updates text in place.')) {
+            return;
+        }
+        refineAllMutation.mutate();
+    };
+
     return (
         <div className="space-y-4 p-4 md:p-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -127,6 +168,19 @@ const CoupletsList = () => {
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
+                    {!showTrash && (
+                        <Button
+                            variant="outline"
+                            onClick={handleRefineAll}
+                            disabled={refineAllMutation.isPending}
+                            className="w-full sm:w-auto h-10 shadow-sm gap-2"
+                        >
+                            {refineAllMutation.isPending
+                                ? <Loader2 className="h-4 w-4 animate-spin" />
+                                : <SpellCheck className="h-4 w-4" />}
+                            <span>Refine all (Hesudhar)</span>
+                        </Button>
+                    )}
                     <Button
                         variant={showTrash ? "destructive" : "outline"}
                         onClick={() => { setShowTrash(!showTrash); setPage(1); }}
@@ -236,6 +290,20 @@ const CoupletsList = () => {
                                                         onClick={() => toggleVisibilityMutation.mutate(c)}
                                                     >
                                                         {((c.poetry?.visibility ?? c.visibility) === 1 || (c.poetry?.visibility ?? c.visibility) === true) ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-9 w-9"
+                                                        title="Refine with Hesudhar"
+                                                        disabled={refineOneMutation.isPending}
+                                                        onClick={() => {
+                                                            if (window.confirm('Refine with Hesudhar and save to the database?')) {
+                                                                refineOneMutation.mutate(c);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SpellCheck className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
                                                         <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug || c.id}/edit`}>
@@ -427,6 +495,20 @@ const CoupletsList = () => {
                                                                 title={((c.poetry?.is_featured ?? c.is_featured) === 1 || (c.poetry?.is_featured ?? c.is_featured) === true) ? "Unfeature" : "Feature"}
                                                             >
                                                                 <Star className={`h-4 w-4 ${((c.poetry?.is_featured ?? c.is_featured) === 1 || (c.poetry?.is_featured ?? c.is_featured) === true) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 opacity-60 hover:opacity-100"
+                                                                title="Refine with Hesudhar"
+                                                                disabled={refineOneMutation.isPending}
+                                                                onClick={() => {
+                                                                    if (window.confirm('Refine with Hesudhar and save to the database?')) {
+                                                                        refineOneMutation.mutate(c);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <SpellCheck className="h-4 w-4" />
                                                             </Button>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 opacity-60 hover:opacity-100" asChild>
                                                                 <Link to={c.poetry?.category_id ? `/admin/poetry/${c.poetry.poetry_slug}/edit` : `/admin/couplet/${c.poetry?.poetry_slug || c.id}/edit`}>

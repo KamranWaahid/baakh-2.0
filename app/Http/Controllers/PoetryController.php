@@ -239,6 +239,7 @@ class PoetryController extends UserController
                 return $c->couplet_text;
             }), // Array of couplets
             'content_style' => $poetry->content_style ?? 'center',
+            'dictionary_source' => $poetry->dictionary_source ?? 'general',
             'info' => $poetry->info?->info,
             'source' => $poetry->info?->source,
             'views' => $poetry->views,

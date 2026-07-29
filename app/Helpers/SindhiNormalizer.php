@@ -2,10 +2,12 @@
 
 namespace App\Helpers;
 
+use App\Services\Hesudhar\HesudharDictionary;
+
 class SindhiNormalizer
 {
     /**
-     * Standardizes Sindhi text using phonetic-contextual rules.
+     * Standardizes Sindhi text using Hesudhar dictionary first, then phonetic rules.
      */
     public static function normalize($text)
     {
@@ -13,8 +15,7 @@ class SindhiNormalizer
             return $text;
         }
 
-        $pipeline = new \App\Services\Hesudhar\HesudharPipeline();
-        return $pipeline->process($text)->correctedText;
+        return HesudharDictionary::pipeline()->process($text)->correctedText;
     }
 
     public static function normalizeWord($word)
@@ -23,15 +24,7 @@ class SindhiNormalizer
             return $word;
         }
 
-        $pipeline = new \App\Services\Hesudhar\HesudharPipeline();
-        return $pipeline->process($word)->correctedText;
-    }
-
-    private static function normalizeAtomic($text)
-    {
-        // Replace Alef + Madda with Alef with Madda Above
-        $text = str_replace('ا' . 'ٓ', 'آ', $text);
-        return $text;
+        return HesudharDictionary::pipeline()->process($word)->correctedText;
     }
 
     /**

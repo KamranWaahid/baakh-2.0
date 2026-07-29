@@ -557,7 +557,7 @@ class HomeController extends UserController
         if ($request->has('period_id')) {
             $period = \App\Models\Period::find($request->period_id);
             $years = $period?->yearRange();
-            if ($years) {
+            if (is_array($years) && isset($years[0], $years[1])) {
                 [$startYear, $endYear] = $years;
 
                 $query->whereHas('poet', function ($q) use ($startYear, $endYear) {

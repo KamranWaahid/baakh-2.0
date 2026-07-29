@@ -24,13 +24,15 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, MapPin } from 'lucide-react';
+import { Plus, Edit, Trash2, MapPin, Braces } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import LocationJsonImportModal from './LocationJsonImportModal';
 
 const CountriesList = () => {
     const queryClient = useQueryClient();
     const [selectedCountry, setSelectedCountry] = useState(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [jsonOpen, setJsonOpen] = useState(false);
     const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
     const [activeTab, setActiveTab] = useState("sd");
 
@@ -122,10 +124,17 @@ const CountriesList = () => {
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Countries</h1>
                     <p className="text-gray-500 mt-1 md:mt-2 text-sm md:text-base">Manage supported countries</p>
                 </div>
-                <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
-                    <Plus className="h-4 w-4" /> Add Country
-                </Button>
+                <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-2">
+                    <Button variant="outline" onClick={() => setJsonOpen(true)} className="w-full sm:w-auto flex items-center gap-2">
+                        <Braces className="h-4 w-4" /> Import JSON
+                    </Button>
+                    <Button onClick={handleCreate} className="w-full sm:w-auto flex items-center gap-2">
+                        <Plus className="h-4 w-4" /> Add Country
+                    </Button>
+                </div>
             </div>
+
+            <LocationJsonImportModal open={jsonOpen} onOpenChange={setJsonOpen} type="countries" />
 
             <div className="bg-white rounded-lg border overflow-x-auto">
                 <Table>

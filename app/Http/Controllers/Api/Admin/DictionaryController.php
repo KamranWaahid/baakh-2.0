@@ -1276,11 +1276,11 @@ class DictionaryController extends Controller
         }
 
         $validated = $request->validate([
-            'relation_type' => 'required|in:synonym,antonym,hypernym,related',
+            'relation_type' => 'required|in:synonym,antonym,hypernym,related,singular,plural,dialect,derived,usage',
             'related_word' => 'required|string',
             'romanization' => 'nullable|string',
             'note' => 'nullable|string',
-            'gloss' => 'nullable|string|max:255',
+            'gloss' => 'nullable|string',
             'part_of_speech' => 'nullable|string|max:255',
             'source' => 'nullable|string',
             'related_lemma_id' => 'nullable|integer|exists:lemmas,id',

@@ -284,6 +284,50 @@ class CoupletController extends Controller
         return response()->json(['message' => 'Couplet permanently deleted']);
     }
 
+    /**
+     * Refine one couplet's Sindhi text with Hesudhar dictionary-first correction.
+     */
+    public function refineHesudhar($id, \App\Services\Hesudhar\HesudharContentRefiner $refiner)
+    {
+        $couplet = Couplets::where('id', $id)
+            ->orWhere('couplet_slug', $id)
+            ->firstOrFail();
+
+        $outcome = $refiner->refineCoupletRecord($couplet);
+
+        if ($outcome['skipped'] ?? false) {
+            return response()->json([
+                'message' => $outcome['reason'] === 'non_sindhi'
+                    ? 'Skipped: not a Sindhi couplet.'
+                    : 'Skipped: empty couplet text.',
+                'data' => $outcome,
+            ]);
+        }
+
+        return response()->json([
+            'message' => $outcome['changed']
+                ? "Hesudhar updated this couplet ({$outcome['changes_count']} word fixes)."
+                : 'No Hesudhar changes needed for this couplet.',
+            'data' => $outcome,
+            'couplet_text' => $couplet->fresh()->couplet_text,
+        ]);
+    }
+
+    /**
+     * Refine all Sindhi couplets in the database with Hesudhar.
+     */
+    public function refineAllHesudhar(\App\Services\Hesudhar\HesudharContentRefiner $refiner)
+    {
+        set_time_limit(0);
+
+        $result = $refiner->refineAllCouplets();
+
+        return response()->json([
+            'message' => "Hesudhar scanned {$result['scanned']} couplets; updated {$result['updated']} ({$result['changes']} word fixes).",
+            'data' => $result,
+        ]);
+    }
+
     private function updateBookProgress(Couplets $couplet)
     {
         $book = \App\Models\PoetBook::find($couplet->book_id);

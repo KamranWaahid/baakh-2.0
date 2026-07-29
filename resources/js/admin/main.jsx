@@ -80,6 +80,8 @@ import DatabaseList from './pages/Databases/DatabaseList';
 import CountriesList from './pages/Locations/CountriesList';
 import ProvincesList from './pages/Locations/ProvincesList';
 import CitiesList from './pages/Locations/CitiesList';
+import DistrictsList from './pages/Locations/DistrictsList';
+import TalukasList from './pages/Locations/TalukasList';
 import UserForm from './pages/Users/UserForm';
 
 import TopicCategoryList from './pages/Topics/TopicCategoryList';
@@ -91,6 +93,12 @@ import MorphologyLab from './pages/Dictionary/MorphologyLab';
 import Variants from './pages/Dictionary/Variants';
 import DictionaryQA from './pages/Dictionary/DictionaryQA';
 import DictionaryHome from './pages/Dictionary/DictionaryHome';
+import LughatHome from './pages/Lughat/LughatHome';
+import LughatLemmaInbox from './pages/Lughat/LughatLemmaInbox';
+import LughatSenseEditor from './pages/Lughat/LughatSenseEditor';
+import LughatMorphologyLab from './pages/Lughat/LughatMorphologyLab';
+import LughatVariants from './pages/Lughat/LughatVariants';
+import LughatQA from './pages/Lughat/LughatQA';
 
 import ReportManagement from './pages/Moderation/Reports';
 import FeedbackManagement from './pages/Moderation/Feedback';
@@ -451,6 +459,22 @@ const App = () => {
                         </ProtectedRoute>
                     } />
 
+                    <Route path="/admin/locations/districts" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <DistrictsList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/admin/locations/talukas" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <TalukasList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+
                     <Route path="/admin/system/info" element={
                         <ProtectedRoute>
                             <AdminLayout>
@@ -494,6 +518,17 @@ const App = () => {
                     <Route path="/admin/dictionary/morphology-lab" element={<ProtectedRoute><AdminLayout><MorphologyLab /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/variants" element={<ProtectedRoute><AdminLayout><Variants /></AdminLayout></ProtectedRoute>} />
                     <Route path="/admin/dictionary/qa-search" element={<ProtectedRoute><AdminLayout><DictionaryQA /></AdminLayout></ProtectedRoute>} />
+
+                    {/* Baakh Lughat (poetic dictionary) */}
+                    <Route path="/admin/baakh-lughat" element={<ProtectedRoute><AdminLayout><LughatHome /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/lemma-inbox" element={<ProtectedRoute><AdminLayout><LughatLemmaInbox /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/lemmas/:id" element={<ProtectedRoute><AdminLayout><LughatSenseEditor /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/lemmas/:id/morphology" element={<ProtectedRoute><AdminLayout><LughatMorphologyLab /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/lemmas/:id/variants" element={<ProtectedRoute><AdminLayout><LughatVariants /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/sense-editor" element={<ProtectedRoute><AdminLayout><LughatSenseEditor /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/morphology-lab" element={<ProtectedRoute><AdminLayout><LughatMorphologyLab /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/variants" element={<ProtectedRoute><AdminLayout><LughatVariants /></AdminLayout></ProtectedRoute>} />
+                    <Route path="/admin/baakh-lughat/qa-search" element={<ProtectedRoute><AdminLayout><LughatQA /></AdminLayout></ProtectedRoute>} />
 
                     {/* Corpus Routes */}
                     <Route path="/admin/corpus/sentence-explorer" element={<ProtectedRoute><AdminLayout><SentenceExplorer /></AdminLayout></ProtectedRoute>} />

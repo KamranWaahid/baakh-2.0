@@ -125,11 +125,23 @@ const Sidebar = ({ onLinkClick }) => {
 
                     <SidebarLink to="/admin/poets" icon={Feather}>Poets</SidebarLink>
                     <SidebarLink to="/admin/books" icon={Book}>Poet Books</SidebarLink>
+                    <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
 
                     <SidebarGroup icon={BookOpen} label="Poetry">
                         <SidebarLink to="/admin/poetry" icon={Book}>Main Poetry</SidebarLink>
                         <SidebarLink to="/admin/couplets" icon={AlignCenter}>Couplets</SidebarLink>
                     </SidebarGroup>
+
+                    <SidebarGroup icon={Feather} label="Baakh Lughat">
+                        <SidebarLink to="/admin/baakh-lughat" icon={Book}>Lughat Home</SidebarLink>
+                        <SidebarLink to="/admin/baakh-lughat/lemma-inbox" icon={Layers}>Lughat Inbox</SidebarLink>
+                        <SidebarLink to="/admin/baakh-lughat/sense-editor" icon={Feather}>Sense Editor</SidebarLink>
+                        <SidebarLink to="/admin/baakh-lughat/morphology-lab" icon={Type}>Morphology Lab</SidebarLink>
+                        <SidebarLink to="/admin/baakh-lughat/variants" icon={AlignJustify}>Variants</SidebarLink>
+                        <SidebarLink to="/admin/baakh-lughat/qa-search" icon={Shield}>QA & Search</SidebarLink>
+                    </SidebarGroup>
+
+                    <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 
                     <SidebarGroup icon={Music2} label="Music">
                         <SidebarLink to="/admin/singers" icon={Mic2}>Artists</SidebarLink>
@@ -144,8 +156,6 @@ const Sidebar = ({ onLinkClick }) => {
                     </SidebarGroup>
 
                     <SidebarLink to="/admin/categories" icon={AlignCenter}>Poetry Forms</SidebarLink>
-                    <SidebarLink to="/admin/hesudhar" icon={Type}>Hesudhar</SidebarLink>
-                    <SidebarLink to="/admin/romanizer" icon={Languages}>Romanizer</SidebarLink>
 
                     <SidebarGroup icon={Book} label="Dictionary">
                         <SidebarLink to="/admin/dictionary" icon={Book}>Dictionary Home</SidebarLink>
@@ -161,6 +171,8 @@ const Sidebar = ({ onLinkClick }) => {
                     <SidebarGroup icon={MapPin} label="Locations">
                         <SidebarLink to="/admin/locations/countries" icon={Flag}>Countries</SidebarLink>
                         <SidebarLink to="/admin/locations/provinces" icon={Map}>Provinces</SidebarLink>
+                        <SidebarLink to="/admin/locations/districts" icon={Map}>Districts</SidebarLink>
+                        <SidebarLink to="/admin/locations/talukas" icon={MapPin}>Talukas</SidebarLink>
                         <SidebarLink to="/admin/locations/cities" icon={MapPin}>Cities</SidebarLink>
                     </SidebarGroup>
 

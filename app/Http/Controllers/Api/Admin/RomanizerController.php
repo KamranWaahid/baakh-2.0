@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Romanizer;
 use App\Helpers\SindhiNormalizer;
+use App\Models\Romanizer;
+use App\Services\RomanizerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 
 class RomanizerController extends Controller
@@ -91,21 +91,11 @@ class RomanizerController extends Controller
         ]);
     }
 
-    public function refresh()
+    public function refresh(RomanizerService $romanizer)
     {
-        $words = Romanizer::all();
-        $filePath = public_path('vendor/roman-converter/all_words.dic');
-
-        $content = "";
-        foreach ($words as $v) {
-            $content .= $v->word_sd . ":" . $v->word_roman . PHP_EOL;
-        }
-
         try {
-            if (!File::exists(public_path('vendor/roman-converter'))) {
-                File::makeDirectory(public_path('vendor/roman-converter'), 0755, true);
-            }
-            File::put($filePath, $content);
+            $romanizer->forget();
+            $romanizer->refreshDictionaryFile();
 
             return response()->json(['message' => 'Romanizer dictionary file updated successfully.']);
         } catch (\Exception $e) {
@@ -191,104 +181,14 @@ class RomanizerController extends Controller
         ]);
     }
 
-    public function transliterate(Request $request)
+    public function transliterate(Request $request, RomanizerService $romanizer)
     {
         $request->validate([
             'text' => 'required|string'
         ]);
 
-        $text = $request->text;
-
-        // Load the dictionary
-        $words = Romanizer::all()->pluck('word_roman', 'word_sd')->toArray();
-
-        // Punctuation to strip and NOT carry into Roman output
-        $sindhiPunctuation = ['،', '؛', '؟', "\xD8\x9B", ':', ';', '{', '}', '[', ']', '(', ')'];
-        // Punctuation to preserve in Roman output
-        $romanPunctuation = ['.', '!', '?', ',', '"', "'", '"', '"'];
-        $allPunctuation = array_merge($sindhiPunctuation, $romanPunctuation);
-
-        // Diacritic mappings for fallback (UTF-8 bytes)
-        $diacriticMap = [
-            "\xD9\x8E" => 'a', // Zabar (U+064E)
-            "\xD9\x90" => 'i', // Zer (U+0650)
-            "\xD9\x8F" => 'u', // Pesh (U+064F)
-        ];
-
-        $lines = explode("\n", $text);
-        $resultLines = [];
-
-        foreach ($lines as $line) {
-            $wordsInLine = explode(' ', $line);
-            $processedWords = [];
-
-            foreach ($wordsInLine as $word) {
-                if (empty(trim($word)))
-                    continue;
-
-                $cleanWord = $word;
-                $foundPunctuationStart = '';
-                $foundPunctuationEnd = '';
-
-                // Extract leading punctuation
-                $firstChar = mb_substr($cleanWord, 0, 1);
-                if (in_array($firstChar, $allPunctuation)) {
-                    $foundPunctuationStart = in_array($firstChar, $sindhiPunctuation) ? '' : $firstChar;
-                    $cleanWord = mb_substr($cleanWord, 1);
-                }
-
-                // Extract trailing punctuation
-                if (mb_strlen($cleanWord) > 0) {
-                    $lastChar = mb_substr($cleanWord, -1);
-                    if (in_array($lastChar, $allPunctuation)) {
-                        $foundPunctuationEnd = in_array($lastChar, $sindhiPunctuation) ? '' : $lastChar;
-                        $cleanWord = mb_substr($cleanWord, 0, -1);
-                    }
-                }
-
-                if (empty($cleanWord)) {
-                    $combined = $foundPunctuationStart . $foundPunctuationEnd;
-                    if (!empty($combined))
-                        $processedWords[] = $combined;
-                    continue;
-                }
-
-                // Logic:
-                // 1. Try Exact Match
-                if (isset($words[$cleanWord])) {
-                    $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
-                    continue;
-                }
-
-                // 2. Try Stripping Diacritics (Base Lookup)
-                $baseWord = SindhiNormalizer::stripDiacritics($cleanWord);
-                $suffix = '';
-
-                // Check for ending diacritic to append vowel
-                $lastChar = mb_substr($cleanWord, -1);
-                if (isset($diacriticMap[$lastChar])) {
-                    $suffix = $diacriticMap[$lastChar];
-                }
-
-                if (isset($words[$baseWord])) {
-                    $processedWords[] = $foundPunctuationStart . $words[$baseWord] . $suffix . $foundPunctuationEnd;
-                } else {
-                    // 3. Try Phonetic Normalization on Base
-                    $normalizedBase = SindhiNormalizer::normalize($baseWord);
-                    if (isset($words[$normalizedBase])) {
-                        $processedWords[] = $foundPunctuationStart . $words[$normalizedBase] . $suffix . $foundPunctuationEnd;
-                    } else {
-                        // Keep original (or stripped version?) - User prefers original if no match?
-                        // Actually, if we couldn't match, return original.
-                        $processedWords[] = $foundPunctuationStart . $cleanWord . $foundPunctuationEnd;
-                    }
-                }
-            }
-            $resultLines[] = implode(' ', $processedWords);
-        }
-
         return response()->json([
-            'transliterated_text' => implode("\n", $resultLines)
+            'transliterated_text' => $romanizer->transliterate($request->text)
         ]);
     }
 }

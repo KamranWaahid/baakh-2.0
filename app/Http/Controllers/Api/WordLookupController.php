@@ -4,24 +4,45 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lemma;
+use App\Models\LughatInflection;
+use App\Models\LughatLemma;
+use App\Models\LughatPoetrySenseAnnotation;
+use App\Models\LughatWordForm;
 use App\Services\BundledOpenLexiconLookup;
+use App\Services\LughatExpressionService;
 use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
+use Illuminate\Http\Request;
 
 class WordLookupController extends Controller
 {
     /**
-     * Look up a single word in the dictionary.
-     * Matches headwords / variants / inflections only — never definition text
-     * (definition LIKE caused false hits like روز → افطار via "روزو کولڻ").
-     * Falls back to the bundled Open Lexicon SQLite when app tables miss the word.
+     * Look up a single word.
+     * Query: dictionary=general|lughat. Optional poetry_id for preferred Baakh Lughat sense.
      */
-    public function lookup(string $word)
+    public function lookup(Request $request, string $word)
     {
         $word = DictionaryText::stripPunctuation(urldecode(trim($word)));
         if ($word === '') {
             return response()->json(['found' => false], 200);
         }
+
+        $dictionary = strtolower((string) $request->query('dictionary', 'general'));
+        $poetryId = $request->filled('poetry_id') ? (int) $request->query('poetry_id') : null;
+
+        if (in_array($dictionary, ['lughat', 'baakh_lughat', 'baakh'], true)) {
+            $lughat = $this->lookupLughat($word, $poetryId);
+            if ($lughat) {
+                return response()->json($lughat);
+            }
+            // Fall back to general when Baakh Lughat has no entry.
+        }
+
+        return $this->lookupGeneral($word);
+    }
+
+    private function lookupGeneral(string $word)
+    {
         $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations', 'inflections', 'idiomaticExpressions'];
         $normalized = DictionaryText::normalizeForLookup($word);
 
@@ -39,8 +60,6 @@ class WordLookupController extends Controller
 
         $payload = $this->buildLemmaPayload($lemma);
 
-        // If the DB entry only has Latin/English glosses (common for partial imports),
-        // enrich/replace with the fuller bundled Open Lexicon Sindhi senses.
         if (!$this->hasArabicScriptDefinition($payload)) {
             $fallback = app(BundledOpenLexiconLookup::class)->lookup($word);
             if ($fallback && $this->hasArabicScriptDefinition($fallback)) {
@@ -71,6 +90,103 @@ class WordLookupController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    private function lookupLughat(string $word, ?int $poetryId = null): ?array
+    {
+        $normalized = DictionaryText::normalizeForLookup($word);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations', 'inflections', 'idiomaticExpressions'];
+
+        $lemma = LughatLemma::query()
+            ->with($with)
+            ->where(function ($q) use ($word, $normalized) {
+                $q->where('normalized_lemma', $normalized)->orWhere('lemma', $word);
+            })
+            ->orderBy('homograph_number')
+            ->first();
+
+        if (!$lemma) {
+            $form = LughatWordForm::query()->with(['lemma' => fn ($q) => $q->with($with)])
+                ->where('normalized_form', $normalized)->first();
+            $lemma = $form?->lemma;
+        }
+
+        if (!$lemma) {
+            $inf = LughatInflection::query()->with(['lemma' => fn ($q) => $q->with($with)])
+                ->where('normalized_form', $normalized)->first();
+            $lemma = $inf?->lemma;
+        }
+
+        if (!$lemma) {
+            return null;
+        }
+
+        $preferredSenseId = null;
+        if ($poetryId) {
+            $preferredSenseId = LughatPoetrySenseAnnotation::query()
+                ->where('poetry_id', $poetryId)
+                ->where('lemma_id', $lemma->id)
+                ->where('normalized_form', $normalized)
+                ->value('sense_id');
+        }
+
+        $senses = $lemma->senses
+            ->sortBy(fn ($sense) => ($preferredSenseId && (int) $sense->id === (int) $preferredSenseId)
+                ? -1
+                : (int) ($sense->sense_order ?? 999))
+            ->values();
+
+        $meanings = collect();
+        $meaningsEn = collect();
+        $meaningsSd = collect();
+        $sensePayload = $senses->map(function ($sense) use (&$meanings, &$meaningsEn, &$meaningsSd, $preferredSenseId) {
+            foreach ([$sense->definition, $sense->full_definition, $sense->short_gloss, $sense->definition_sd] as $text) {
+                if (filled($text)) {
+                    $meanings->push($text);
+                }
+            }
+            if (filled($sense->definition_en)) {
+                $meaningsEn->push($sense->definition_en);
+            }
+            if (filled($sense->definition_sd)) {
+                $meaningsSd->push($sense->definition_sd);
+            }
+
+            return [
+                'id' => $sense->id,
+                'short_gloss' => $sense->short_gloss,
+                'definition' => $sense->definition,
+                'definition_en' => $sense->definition_en,
+                'definition_sd' => $sense->definition_sd,
+                'is_preferred' => $preferredSenseId && (int) $sense->id === (int) $preferredSenseId,
+            ];
+        })->all();
+
+        return [
+            'found' => true,
+            'id' => $lemma->id,
+            'public_id' => $lemma->public_id,
+            'word' => $lemma->lemma,
+            'romanized' => $lemma->transliteration,
+            'pos' => $lemma->pos,
+            'gender' => $lemma->morphology?->gender,
+            'number' => $lemma->morphology?->number,
+            'completion_status' => $lemma->completion_status,
+            'meanings' => $meanings->unique()->values()->all(),
+            'meanings_en' => $meaningsEn->unique()->values()->all(),
+            'meanings_sd' => $meaningsSd->unique()->values()->all(),
+            'senses' => $sensePayload,
+            'synonyms' => $lemma->lemmaRelations->where('relation_type', 'synonym')->pluck('related_word')->values()->all(),
+            'antonyms' => $lemma->lemmaRelations->where('relation_type', 'antonym')->pluck('related_word')->values()->all(),
+            'hypernyms' => $lemma->lemmaRelations->where('relation_type', 'hypernym')->pluck('related_word')->values()->all(),
+            'poetic_expressions' => app(LughatExpressionService::class)->expressionsForLemma((int) $lemma->id, 8),
+            'source' => 'baakh_lughat',
+            'dictionary' => 'lughat',
+        ];
     }
 
     private function buildLemmaPayload(Lemma $lemma): array

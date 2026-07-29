@@ -69,7 +69,7 @@ const RomanizerBulkCheck = () => {
                     <CardContent className="space-y-4">
                         <Textarea
                             placeholder="پنهنجو سنڌي متن هتي پيسٽ ڪريو..."
-                            className="min-h-[300px] text-lg leading-relaxed"
+                            className="min-h-[300px] text-lg leading-relaxed font-arabic"
                             dir="rtl"
                             value={text}
                             onChange={(e) => setText(e.target.value)}

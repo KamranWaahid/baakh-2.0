@@ -29,9 +29,18 @@ class Poetry extends Model
         'visibility',
         'is_featured',
         'content_style',
+        'dictionary_source',
         'page_start',
         'page_end',
     ];
+
+    public const DICTIONARY_GENERAL = 'general';
+    public const DICTIONARY_LUGHAT = 'lughat';
+
+    public function usesBaakhLughat(): bool
+    {
+        return ($this->dictionary_source ?? self::DICTIONARY_GENERAL) === self::DICTIONARY_LUGHAT;
+    }
 
     public function book()
     {
