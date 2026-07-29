@@ -6,7 +6,10 @@ Use this document as source material when writing AI prompts for design, copy, c
 
 ## 1. Product one-liner
 
-**ٻول (Bol)** is Baakh’s **separate Sindhi song-lyrics product**: admin CRUD for songs and artists, plus a **public site on `lyrics.baakh.com`** that is visually and structurally independent from `baakh.com` (the poetry archive).
+**ٻول (Bol)** is Baakh’s **separate Sindhi song-lyrics product**: admin CRUD for songs and artists in this repo, plus a **public site on `lyrics.baakh.com`**.
+
+- **Admin + API + DB:** this repo (`baakh-2.0`)
+- **Public frontend:** separate repo [`baakh-bol`](https://github.com/KamranWaahid/baakh-bol) (Vite/React). A Laravel-served SPA still exists under `/lyrics-site` for local preview / transitional hosting.
 
 ---
 
