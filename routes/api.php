@@ -345,7 +345,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('dictionary/variants', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'variants']);
         Route::get('dictionary/qa', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'qa']);
         Route::get('dictionary/lemma-search', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'lemmaSearch']);
-        Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class);
+        Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class)
+            ->names('dictionary.lemmas');
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
         Route::get('dictionary/lemmas/{id}/editor-json', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'editorJson']);
         Route::post('dictionary/lemmas/{id}/import-json', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'importJson']);
@@ -381,7 +382,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('lughat/lookup-senses', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'lookupSenses']);
         Route::post('lughat/add-stubs', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'addStubs']);
         Route::post('lughat/lemmas/stub-from-surface', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'stubFromSurface']);
-        Route::apiResource('lughat/lemmas', \App\Http\Controllers\Api\Admin\LughatDictionaryController::class);
+        Route::apiResource('lughat/lemmas', \App\Http\Controllers\Api\Admin\LughatDictionaryController::class)
+            ->names('lughat.lemmas');
         Route::patch('lughat/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'approve']);
         Route::get('lughat/lemmas/{id}/editor-json', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'editorJson']);
         Route::post('lughat/lemmas/{id}/import-json', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'importJson']);
