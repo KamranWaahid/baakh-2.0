@@ -35,10 +35,17 @@ class SecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        // Content Security Policy (CSP)
-        // Start with a permissive policy or report-only to avoid breaking the app immediately.
-        // Ideally, this should be tightened over time.
-        // $response->headers->set('Content-Security-Policy', "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:;");
+        // SPA HTML shells embed Vite hashed script URLs — never let browsers/proxies keep stale HTML.
+        $contentType = (string) $response->headers->get('Content-Type', '');
+        if (
+            str_contains($contentType, 'text/html')
+            || $request->is('admin', 'admin/*')
+            || $request->is('/')
+        ) {
+            $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+        }
 
         return $response;
     }

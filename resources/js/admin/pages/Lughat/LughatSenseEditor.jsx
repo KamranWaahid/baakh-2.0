@@ -29,6 +29,7 @@ import LughatLemmaEditorJsonModal from './LughatLemmaEditorJsonModal';
 
 const initialNewSenseForm = {
     definition: '',
+    short_gloss: '',
     definition_sd: '',
     definition_en: '',
     english_equivalents_text: '',
@@ -714,9 +715,19 @@ const SenseEditor = () => {
                                             <SelectItem value="adverb">Adverb</SelectItem>
                                             <SelectItem value="pronoun">Pronoun</SelectItem>
                                             <SelectItem value="preposition">Preposition</SelectItem>
+                                            <SelectItem value="postposition">Postposition</SelectItem>
                                             <SelectItem value="conjunction">Conjunction</SelectItem>
                                             <SelectItem value="interjection">Interjection</SelectItem>
                                             <SelectItem value="particle">Particle</SelectItem>
+                                            <SelectItem value="numeral">Numeral</SelectItem>
+                                            <SelectItem value="proper_noun">Proper noun</SelectItem>
+                                            {lemmaForm.pos && ![
+                                                'noun', 'verb', 'adjective', 'adverb', 'pronoun',
+                                                'preposition', 'postposition', 'conjunction', 'interjection',
+                                                'particle', 'numeral', 'proper_noun',
+                                            ].includes(lemmaForm.pos) && (
+                                                <SelectItem value={lemmaForm.pos}>{lemmaForm.pos}</SelectItem>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -885,13 +896,23 @@ const SenseEditor = () => {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
+                                        <Label>Short Gloss</Label>
+                                        <Input
+                                            value={newSenseForm.short_gloss}
+                                            onChange={(e) => setNewSenseForm({ ...newSenseForm, short_gloss: e.target.value })}
+                                            className="font-arabic"
+                                            dir="rtl"
+                                            placeholder="Short Sindhi gloss..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
                                         <Label>Sindhi Definition</Label>
                                         <Input
                                             value={newSenseForm.definition_sd}
                                             onChange={(e) => setNewSenseForm({ ...newSenseForm, definition_sd: e.target.value })}
                                             className="font-arabic"
                                             dir="rtl"
-                                            placeholder="Optional Sindhi meaning..."
+                                            placeholder="Sindhi meaning..."
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -899,7 +920,7 @@ const SenseEditor = () => {
                                         <Input
                                             value={newSenseForm.definition_en}
                                             onChange={(e) => setNewSenseForm({ ...newSenseForm, definition_en: e.target.value })}
-                                            placeholder="Optional English meaning..."
+                                            placeholder="English meaning..."
                                         />
                                     </div>
                                     <div className="space-y-2">

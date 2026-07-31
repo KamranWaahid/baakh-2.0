@@ -294,10 +294,18 @@ verify_vite_build
 echo "Running Laravel optimize tasks..."
 php artisan optimize:clear
 php artisan config:cache
+php artisan route:cache || true
 php artisan view:cache
 php artisan event:cache || true
 php artisan storage:link || true
 
 publish_public_files "$APP_PATH/public"
 
+# Ensure HTML/API process and Apache document-root /build share the same Vite hashes.
+if [ -f "$APP_PATH/.env" ] && ! grep -q '^MEDIA_WEB_ROOT=' "$APP_PATH/.env" 2>/dev/null; then
+  echo "Tip: add MEDIA_WEB_ROOT=$PUBLIC_PATH to $APP_PATH/.env so Clear Cache republishes assets."
+fi
+
 echo "Deployment finished successfully."
+echo "Verify new assets: ls -la \"$PUBLIC_PATH/build/assets\" | head"
+echo "Verify manifest: grep -o 'main-[^\"]*\\.js' \"$PUBLIC_PATH/build/manifest.json\" | head"

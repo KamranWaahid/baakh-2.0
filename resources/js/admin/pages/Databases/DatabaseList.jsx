@@ -126,7 +126,14 @@ const DatabaseList = () => {
             return api.post('/api/admin/databases/clear-cache');
         },
         onSuccess: (response) => {
-            alert(response.data.message || "Cache cleared successfully!");
+            const vite = response.data?.vite;
+            const fp = vite?.fingerprint ? `\nAsset fingerprint: ${vite.fingerprint}` : '';
+            const pub = vite?.message ? `\n${vite.message}` : '';
+            alert((response.data.message || 'Cache cleared successfully!') + pub + fp + '\n\nHard-refresh the admin (Cmd/Ctrl+Shift+R) to load the new UI.');
+            // Drop stale SPA chunks from memory; next navigation loads new hashed bundles.
+            if (typeof window !== 'undefined') {
+                window.setTimeout(() => window.location.reload(), 400);
+            }
         },
         onError: (error) => {
             alert(error.response?.data?.message || 'Cache clearing failed');
@@ -215,7 +222,7 @@ const DatabaseList = () => {
     };
 
     const handleClearCache = () => {
-        if (confirm('CLEAR: This will flush the application optimization cache. Continue?')) {
+        if (confirm('CLEAR: Flush caches, republish /build assets to the web root, then rebuild config/route/view caches so new UI loads. Continue?')) {
             clearCacheMutation.mutate();
         }
     };

@@ -294,32 +294,58 @@ class DatabaseController extends Controller
     }
 
     /**
-     * Clear all application caches.
+     * Clear all application caches, republish Vite assets, then rebuild production caches.
+     * Clearing alone used to leave stale public_html/build + empty optimize caches.
      */
     public function clearCache(Request $request)
     {
         try {
             set_time_limit(300);
 
-            // Comprehensive clear
             Artisan::call('optimize:clear');
-            $output = Artisan::output();
+            $output = trim(Artisan::output());
 
-            // Specific clear for dashboard stats if it exists
+            \Illuminate\Support\Facades\Cache::flush();
             \Illuminate\Support\Facades\Cache::forget('admin_dashboard_stats');
-            $output .= "\nDashboard stats cache cleared.";
+            $output .= "\nApplication + dashboard cache flushed.";
 
-            ActivityLog::log('cleared_cache', $request->user(), null, "Cleared application cache from admin panel");
+            $publish = app(\App\Services\ViteBuildPublishService::class)->publishToDocumentRoot();
+            $output .= "\n".$publish['message'];
+            if (!empty($publish['fingerprint'])) {
+                $output .= "\nVite manifest fingerprint: {$publish['fingerprint']}";
+            }
+
+            // Rebuild so production does not stay on a cold/empty optimize state.
+            Artisan::call('config:cache');
+            $output .= "\n".trim(Artisan::output());
+            try {
+                Artisan::call('route:cache');
+                $output .= "\n".trim(Artisan::output());
+            } catch (\Throwable $e) {
+                $output .= "\nroute:cache skipped: ".$e->getMessage();
+            }
+            Artisan::call('view:cache');
+            $output .= "\n".trim(Artisan::output());
+            try {
+                Artisan::call('event:cache');
+                $output .= "\n".trim(Artisan::output());
+            } catch (\Throwable) {
+                // optional on some hosts
+            }
+
+            ActivityLog::log('cleared_cache', $request->user(), null, 'Cleared caches, republished Vite build, rebuilt optimize caches');
 
             return response()->json([
-                'message' => 'Application cache cleared successfully',
-                'output' => $output
+                'message' => 'Cache cleared, frontend assets republished, and optimize caches rebuilt.',
+                'output' => $output,
+                'vite' => $publish,
             ]);
         } catch (\Exception $e) {
-            Log::error('Cache clear failed: ' . $e->getMessage());
+            Log::error('Cache clear failed: '.$e->getMessage());
+
             return response()->json([
                 'message' => 'Cache clear failed',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

@@ -101,22 +101,9 @@ class LughatLemmaJsonImportService
 
             $this->applyLemmaFields($lemma, $payload);
 
-            if (array_key_exists('completion_status', $payload) && filled($payload['completion_status'])) {
-                $status = strtolower((string) $payload['completion_status']);
-                if (in_array($status, ['complete', 'completed'], true)) {
-                    $status = LughatLemma::COMPLETION_COMPLETE;
-                } elseif ($status === 'pending') {
-                    $status = LughatLemma::COMPLETION_PENDING;
-                }
-
-                if (in_array($status, [LughatLemma::COMPLETION_PENDING, LughatLemma::COMPLETION_COMPLETE], true)) {
-                    $lemma->update([
-                        'completion_status' => $status,
-                        'completion_score' => $status === LughatLemma::COMPLETION_COMPLETE
-                            ? (int) ($payload['completion_score'] ?? $lemma->completion_score ?? 100)
-                            : (int) ($payload['completion_score'] ?? $lemma->completion_score ?? 0),
-                    ]);
-                }
+            // Never trust AI completion_status alone — re-evaluate after sync below.
+            if (array_key_exists('completion_notes', $payload) && is_string($payload['completion_notes'])) {
+                $lemma->update(['completion_notes' => $payload['completion_notes']]);
             }
 
             if (array_key_exists('morphology', $payload)) {
@@ -177,6 +164,40 @@ class LughatLemmaJsonImportService
                     app(PoetryRomanSyncService::class)->syncFromLemma($fresh->fresh());
                     $fresh->update(['romanization_status' => 'published']);
                 }
+            }
+
+            // Server checklist is source of truth — AI cannot mark complete with empty boxes.
+            if ($fresh) {
+                $checklist = app(LughatCompletionService::class)->evaluate($fresh);
+                $notes = filled($fresh->completion_notes) ? (string) $fresh->completion_notes : '';
+                if (!$checklist['is_complete'] && !empty($checklist['missing_requirements'])) {
+                    $gaps = collect($checklist['missing_requirements'])
+                        ->pluck('message')
+                        ->filter()
+                        ->take(8)
+                        ->implode(' · ');
+                    if ($gaps !== '') {
+                        $notes = trim($notes === '' ? $gaps : ($notes."\n".$gaps));
+                    }
+                }
+                $fresh->update([
+                    'completion_status' => $checklist['status'],
+                    'completion_score' => $checklist['score'],
+                    'checklist_json' => $checklist,
+                    'completion_notes' => $notes !== '' ? $notes : $fresh->completion_notes,
+                    'completed_at' => $checklist['is_complete'] ? ($fresh->completed_at ?: now()) : null,
+                    'completed_by' => $checklist['is_complete']
+                        ? ($fresh->completed_by ?: (auth()->id() ?? null))
+                        : null,
+                ]);
+                $fresh = $fresh->fresh([
+                    'senses.examples',
+                    'morphology',
+                    'variants',
+                    'lemmaRelations.relatedLemma',
+                    'inflections',
+                    'idiomaticExpressions',
+                ]);
             }
 
             return $fresh;

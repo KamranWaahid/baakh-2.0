@@ -34,14 +34,17 @@ class LughatLemmaEditorJsonService
         // Keep expression list tiny in editor-json (AI paste size); full list is on the Expressions UI.
         $linkedExpressions = app(LughatExpressionService::class)->expressionsForLemma((int) $lemma->id, 5);
 
-        return [
+        $payload = [
             '_schema' => 'baakh.lughat.editor_json.v2',
             '_name' => 'Baakh Lughat',
             // Kept short — full AI rules live in the Copy-for-AI prompt (avoid duplicating a huge blob in JSON).
-            '_instructions' => 'Complete this Baakh Lughat lemma (v2). Fill empty fields. '
-                . 'Sindhi primary definitions. Plain ASCII roman only. '
-                . 'Fill senses, typed relations, airab variants, forms.inflections. '
-                . 'Omit general_dictionary/relations_checklist in output. Keep numeric ids. Paste via Import JSON.',
+            '_instructions' => 'Complete this Baakh Lughat lemma (v2). '
+                . 'Do NOT ignore any null/empty editor box — fill every key in empty_editor_fields[]. '
+                . 'Keep all keys even when still unknown (use null / []). '
+                . 'Sindhi defs + short_gloss + definition_sd + definition_en + english_equivalents + usage_label + domain per sense. '
+                . 'Typed relations (not related-only), airab variants with romanization, morphology by POS, forms. '
+                . 'Set completion_status=pending unless checklist + empty_editor_fields required gaps are cleared. '
+                . 'Omit general_dictionary/relations_checklist/empty_editor_fields in output. Keep numeric ids.',
             'id' => $lemma->id,
             'public_id' => $lemma->public_id,
 
@@ -92,9 +95,12 @@ class LughatLemmaEditorJsonService
                 ],
             ],
 
+            // Placeholder — replaced after empty_editor_fields is computed.
             'completion' => [
                 'completion_notes' => $lemma->completion_notes,
-                'completion_status' => $lemma->completion_status,
+                'completion_status' => LughatLemma::COMPLETION_PENDING,
+                'completion_score' => 0,
+                'missing_requirements' => [],
             ],
 
             'morphology' => [
@@ -106,38 +112,64 @@ class LughatLemmaEditorJsonService
                 'tense' => $lemma->morphology?->tense,
             ],
 
-            'senses' => $lemma->senses
-                ->map(fn (LughatSense $sense) => [
-                    'id' => $sense->id,
-                    'definition' => $sense->definition,
-                    'short_gloss' => $sense->short_gloss,
-                    'definition_sd' => $sense->definition_sd,
-                    'definition_en' => $sense->definition_en,
-                    'english_equivalents' => is_array($sense->english_equivalents) ? $sense->english_equivalents : [],
-                    'usage_label' => $sense->usage_label,
-                    'domain' => $sense->domain,
-                    'language_direction' => $sense->language_direction,
-                    'source_dictionary' => $sense->source_dictionary ?: 'Baakh Lughat',
-                    'publisher' => $sense->publisher ?: 'baakh.com',
-                    'publisher_url' => $this->sensePublisherUrl($sense),
-                    'prepared_by' => $this->sensePreparedBy($sense),
-                    'review_status' => $sense->review_status,
-                    'examples' => $sense->examples
-                        ->map(fn ($example) => [
-                            'id' => $example->id,
-                            'sentence' => $example->sentence,
-                            'romanization' => $example->romanization,
-                            'translation' => $example->translation,
-                            'source' => $example->source,
-                            'citation' => $example->citation,
-                            'poetry_id' => $example->poetry_id,
-                            'couplet_id' => $example->couplet_id,
-                            'quality_flag' => $example->quality_flag,
-                            'review_status' => $example->review_status,
-                        ])
-                        ->values()
-                        ->all(),
-                ])
+            'senses' => ($lemma->senses->isEmpty()
+                ? collect([[
+                    'definition' => null,
+                    'short_gloss' => null,
+                    'definition_sd' => null,
+                    'definition_en' => null,
+                    'english_equivalents' => [],
+                    'usage_label' => null,
+                    'domain' => null,
+                    'language_direction' => 'sindhi',
+                    'source_dictionary' => 'Baakh Lughat',
+                    'publisher' => 'baakh.com',
+                    'publisher_url' => 'https://baakh.com/',
+                    'prepared_by' => 'Kamran Wahid',
+                    'review_status' => 'reviewed',
+                    'status' => 'approved',
+                    'examples' => [],
+                ]])
+                : $lemma->senses
+            )
+                ->map(function ($sense) {
+                    if (is_array($sense)) {
+                        return $sense;
+                    }
+
+                    return [
+                        'id' => $sense->id,
+                        'definition' => $sense->definition,
+                        'short_gloss' => $sense->short_gloss,
+                        'definition_sd' => $sense->definition_sd,
+                        'definition_en' => $sense->definition_en,
+                        'english_equivalents' => is_array($sense->english_equivalents) ? $sense->english_equivalents : [],
+                        'usage_label' => $sense->usage_label,
+                        'domain' => $sense->domain,
+                        'language_direction' => $sense->language_direction,
+                        'source_dictionary' => $sense->source_dictionary ?: 'Baakh Lughat',
+                        'publisher' => $sense->publisher ?: 'baakh.com',
+                        'publisher_url' => $this->sensePublisherUrl($sense),
+                        'prepared_by' => $this->sensePreparedBy($sense),
+                        'review_status' => $sense->review_status,
+                        'status' => $sense->status,
+                        'examples' => $sense->examples
+                            ->map(fn ($example) => [
+                                'id' => $example->id,
+                                'sentence' => $example->sentence,
+                                'romanization' => $example->romanization,
+                                'translation' => $example->translation,
+                                'source' => $example->source,
+                                'citation' => $example->citation,
+                                'poetry_id' => $example->poetry_id,
+                                'couplet_id' => $example->couplet_id,
+                                'quality_flag' => $example->quality_flag,
+                                'review_status' => $example->review_status,
+                            ])
+                            ->values()
+                            ->all(),
+                    ];
+                })
                 ->values()
                 ->all(),
 
@@ -162,6 +194,7 @@ class LughatLemmaEditorJsonService
                 ->map(fn (LughatVariant $variant) => [
                     'id' => $variant->id,
                     'variant' => $variant->variant,
+                    'normalized_variant' => $variant->normalized_variant,
                     'type' => $variant->type,
                     'romanization' => $variant->romanization,
                     'dialect' => $variant->dialect,
@@ -216,6 +249,214 @@ class LughatLemmaEditorJsonService
                 'first_couplet_id' => $lemma->couplet_id,
             ],
         ];
+
+        $payload['empty_editor_fields'] = $this->buildEmptyEditorFields($payload, $lemma);
+
+        $eval = app(LughatCompletionService::class)->evaluate($lemma);
+        $payload['completion'] = [
+            'completion_notes' => $lemma->completion_notes,
+            'completion_status' => $eval['is_complete']
+                ? LughatLemma::COMPLETION_COMPLETE
+                : LughatLemma::COMPLETION_PENDING,
+            'completion_score' => $eval['score'],
+            'missing_requirements' => collect($eval['missing_requirements'] ?? [])
+                ->map(fn (array $row) => $row['message'] ?? $row['label'] ?? null)
+                ->filter()
+                ->values()
+                ->merge(
+                    collect($payload['empty_editor_fields']['fields'] ?? [])
+                        ->take(40)
+                        ->map(fn (array $row) => ($row['tab'] ?? '').': '.($row['path'] ?? '').' — '.($row['why'] ?? ''))
+                        ->filter()
+                )
+                ->unique()
+                ->values()
+                ->all(),
+        ];
+
+        return $payload;
+    }
+
+    /**
+     * Every null/empty Baakh Lughat editor box the AI must not ignore.
+     * Read-only helper — stripped on import.
+     */
+    private function buildEmptyEditorFields(array $payload, LughatLemma $lemma): array
+    {
+        $empty = [];
+        $general = is_array($payload['general'] ?? null) ? $payload['general'] : [];
+        $morphology = is_array($payload['morphology'] ?? null) ? $payload['morphology'] : [];
+        $senses = is_array($payload['senses'] ?? null) ? $payload['senses'] : [];
+        $relations = is_array($payload['relations'] ?? null) ? $payload['relations'] : [];
+        $variants = is_array($payload['variants'] ?? null) ? $payload['variants'] : [];
+        $forms = is_array($payload['forms'] ?? null) ? $payload['forms'] : [];
+        $inflections = is_array($forms['inflections'] ?? null) ? $forms['inflections'] : [];
+        $idioms = is_array($forms['idiomatic_expressions'] ?? null) ? $forms['idiomatic_expressions'] : [];
+
+        $push = function (string $path, string $tab, string $why) use (&$empty): void {
+            $empty[] = ['path' => $path, 'tab' => $tab, 'why' => $why];
+        };
+
+        foreach ([
+            'lemma' => 'Word / headword',
+            'normalized_lemma' => 'Normalized form',
+            'transliteration' => 'Roman transliteration',
+            'ipa' => 'IPA',
+            'phonetic' => 'Phonetic form',
+            'pronunciation_simple' => 'Simple pronunciation',
+            'audio_url' => 'Audio URL (fill if available)',
+            'syllabification' => 'Syllabification',
+            'pos' => 'Part of speech',
+            'etymology' => 'Etymology',
+            'notes' => 'Notes',
+            'metadata_region' => 'Metadata region',
+            'metadata_dialect_notes' => 'Metadata dialect notes',
+            'metadata_version' => 'Entry version',
+        ] as $key => $label) {
+            if (!$this->filledValue($general[$key] ?? null)) {
+                $push("general.{$key}", 'General', $label);
+            }
+        }
+
+        foreach (['search_keywords_sindhi', 'search_keywords_english', 'search_keywords_romanized'] as $key) {
+            if (!$this->filledList($general[$key] ?? null)) {
+                $push("general.{$key}", 'General', 'Structured search keywords');
+            }
+        }
+
+        $pos = strtolower(trim((string) ($general['pos'] ?? $lemma->pos ?? '')));
+        $openClass = in_array($pos, ['noun', 'verb', 'adjective', 'adj', 'adverb', 'adv', 'proper_noun', 'participle'], true)
+            || str_starts_with($pos, 'noun')
+            || str_starts_with($pos, 'verb');
+        $morphKeys = $openClass
+            ? ['root', 'pattern', 'gender', 'number', 'case', 'tense']
+            : ['pattern']; // particles/postpositions: pattern note is the editor box that matters
+        foreach ($morphKeys as $key) {
+            if (!$this->filledValue($morphology[$key] ?? null)) {
+                $push("morphology.{$key}", 'Morphology', "Morphology {$key}");
+            }
+        }
+
+        if ($senses === []) {
+            $push('senses[]', 'Senses', 'Add at least one sense with all sense boxes filled');
+        }
+
+        foreach ($senses as $index => $sense) {
+            if (!is_array($sense)) {
+                continue;
+            }
+            $prefix = "senses[{$index}]";
+            foreach ([
+                'definition' => 'Definition (Primary)',
+                'short_gloss' => 'Short Gloss',
+                'definition_sd' => 'Sindhi Definition',
+                'definition_en' => 'English Definition',
+                'usage_label' => 'Usage Label',
+                'domain' => 'Domain',
+                'language_direction' => 'Language Direction',
+                'source_dictionary' => 'Source / Provenance',
+                'review_status' => 'Review Status',
+            ] as $key => $label) {
+                if (!$this->filledValue($sense[$key] ?? null)) {
+                    $push("{$prefix}.{$key}", 'Senses', $label);
+                }
+            }
+            if (!$this->filledList($sense['english_equivalents'] ?? null)) {
+                $push("{$prefix}.english_equivalents", 'Senses', 'English Equivalents');
+            }
+            $examples = is_array($sense['examples'] ?? null) ? $sense['examples'] : [];
+            if ($examples === []) {
+                $push("{$prefix}.examples[]", 'Senses', 'At least one usage example when knowable');
+            }
+        }
+
+        $typed = collect($relations)->contains(function ($row) {
+            $type = is_array($row) ? (string) ($row['relation_type'] ?? '') : '';
+
+            return in_array($type, [
+                'synonym', 'antonym', 'hypernym', 'singular', 'plural', 'dialect', 'derived', 'usage',
+            ], true);
+        });
+        if (!$typed) {
+            $push('relations[]', 'Relations', 'Typed relations (synonym/antonym/… — not related-only)');
+        }
+
+        $checklistEmpty = is_array($payload['relations_checklist']['empty'] ?? null)
+            ? $payload['relations_checklist']['empty']
+            : [];
+        foreach ($checklistEmpty as $bucket) {
+            $push("relations[{$bucket}]", 'Relations', "Fill {$bucket} bucket when knowable");
+        }
+
+        if ($variants === []) {
+            $push('variants[]', 'Variants', 'Add airab/spelling variants');
+        }
+        foreach ($variants as $index => $variant) {
+            if (!is_array($variant)) {
+                continue;
+            }
+            $prefix = "variants[{$index}]";
+            foreach (['variant', 'type', 'romanization'] as $key) {
+                if (!$this->filledValue($variant[$key] ?? null)) {
+                    $push("{$prefix}.{$key}", 'Variants', "Variant {$key}");
+                }
+            }
+        }
+
+        $needsParadigm = $openClass;
+        if ($needsParadigm && $inflections === []) {
+            $push('forms.inflections[]', 'Forms', 'Add inflection forms for open-class POS');
+        }
+        foreach ($inflections as $index => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (!$this->filledValue($row['form'] ?? null)) {
+                $push("forms.inflections[{$index}].form", 'Forms', 'Inflection form');
+            }
+            if (!$this->filledValue($row['romanization'] ?? null)) {
+                $push("forms.inflections[{$index}].romanization", 'Forms', 'Inflection romanization');
+            }
+            if (!$this->filledValue($row['description'] ?? null) && !$this->filledValue($row['form_type'] ?? null)) {
+                $push("forms.inflections[{$index}].description", 'Forms', 'Inflection description / form_type');
+            }
+        }
+
+        if ($idioms === []) {
+            $push('forms.idiomatic_expressions[]', 'Forms', 'Idioms when attested (else leave [])');
+        }
+
+        return [
+            '_note' => 'READ-ONLY. Every listed path is an empty Baakh Lughat editor box. Fill them in output; do not ignore. Omit this key in output.',
+            'count' => count($empty),
+            'fields' => $empty,
+        ];
+    }
+
+    private function filledValue(mixed $value): bool
+    {
+        if (is_bool($value) || is_int($value) || is_float($value)) {
+            return true;
+        }
+
+        if (is_array($value)) {
+            return $this->filledList($value);
+        }
+
+        return filled(is_string($value) ? trim($value) : $value);
+    }
+
+    private function filledList(mixed $value): bool
+    {
+        if (is_string($value)) {
+            return trim($value) !== '';
+        }
+
+        if (!is_array($value)) {
+            return false;
+        }
+
+        return collect($value)->contains(fn ($item) => $this->filledValue($item));
     }
 
     /**
@@ -690,6 +931,10 @@ class LughatLemmaEditorJsonService
             'manual_variants_count',
             'imported_variants_count',
             'has_real_morphology',
+            'empty_editor_fields',
+            'relations_checklist',
+            'general_dictionary',
+            'occurrence_summary',
         ] as $key) {
             unset($payload[$key]);
         }

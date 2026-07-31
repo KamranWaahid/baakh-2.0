@@ -27,17 +27,25 @@
     RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
     RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
-    # Remove specific proxy for now to test native delivery with improved headers
-    # RewriteCond %{REQUEST_URI} ^/build/assets/.*\.js$ [OR]
-    # RewriteCond %{REQUEST_URI} ^/build/assets/.*\.css$
-    # RewriteRule ^build/assets/(.*)$ asset_proxy.php?file=$1 [L,QSA]
+    # Mark hashed Vite JS/CSS so they can be cached forever (content-hash in filename).
+    RewriteRule ^build/assets/.*\.(js|css)$ - [E=VITE_HASHED_ASSET:1,NC]
 
-    <FilesMatch "\.(js|css|json|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$">
-        <IfModule mod_headers.c>
+    # Hashed Vite assets: long cache. Manifest/JSON: revalidate. Images/fonts: long cache.
+    # HTML SPA shells get no-cache from Laravel SecurityHeaders (PHP responses).
+    <IfModule mod_headers.c>
+        Header set Cache-Control "public, max-age=31536000, immutable" env=VITE_HASHED_ASSET
+        Header set Access-Control-Allow-Origin "*" env=VITE_HASHED_ASSET
+
+        <FilesMatch "\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$">
             Header set Access-Control-Allow-Origin "*"
             Header set Cache-Control "public, max-age=31536000, immutable"
-        </IfModule>
-    </FilesMatch>
+        </FilesMatch>
+
+        <FilesMatch "\.(json)$">
+            Header set Cache-Control "no-cache, must-revalidate"
+            Header set Access-Control-Allow-Origin "*"
+        </FilesMatch>
+    </IfModule>
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
