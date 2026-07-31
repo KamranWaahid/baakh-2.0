@@ -30,6 +30,7 @@ class Poetry extends Model
         'is_featured',
         'content_style',
         'dictionary_source',
+        'romanization_source',
         'page_start',
         'page_end',
     ];
@@ -37,9 +38,17 @@ class Poetry extends Model
     public const DICTIONARY_GENERAL = 'general';
     public const DICTIONARY_LUGHAT = 'lughat';
 
+    public const ROMANIZATION_LEGACY = 'legacy';
+    public const ROMANIZATION_BAAKH_LUGHAT = 'baakh_lughat';
+
     public function usesBaakhLughat(): bool
     {
         return ($this->dictionary_source ?? self::DICTIONARY_GENERAL) === self::DICTIONARY_LUGHAT;
+    }
+
+    public function usesLughatRomanization(): bool
+    {
+        return ($this->romanization_source ?? self::ROMANIZATION_LEGACY) === self::ROMANIZATION_BAAKH_LUGHAT;
     }
 
     public function book()

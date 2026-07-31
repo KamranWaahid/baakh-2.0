@@ -194,7 +194,8 @@ class DictionaryLemmaJsonImportService
 
         if ($updates !== []) {
             if (isset($updates['lemma']) && !array_key_exists('normalized_lemma', $updates)) {
-                $updates['normalized_lemma'] = DictionaryText::normalizeForLookup($updates['lemma']);
+                $updates['normalized_lemma'] = DictionaryText::normalizeForIdentity($updates['lemma']);
+                $updates['lookup_base'] = DictionaryText::lookupBase($updates['lemma']);
             }
 
             $lemma->update($updates);

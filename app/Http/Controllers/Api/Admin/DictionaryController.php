@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Lemma;
 use App\Models\LemmaRelation;
+use App\Models\LughatLemma;
 use App\Models\Sense;
 use App\Models\SenseExample;
 use App\Models\Morphology;
@@ -14,9 +15,11 @@ use App\Models\LemmaInflection;
 use App\Services\DictionaryCompletionService;
 use App\Services\DictionaryLemmaEditorJsonService;
 use App\Services\DictionaryLemmaJsonImportService;
+use App\Services\Hesudhar\DictionaryLemmaHesudharService;
 use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use InvalidArgumentException;
@@ -114,6 +117,11 @@ class DictionaryController extends Controller
             $query->completionStatus($request->completion_status);
         }
 
+        $lughatStatus = $request->get('lughat_status', 'all');
+        if (in_array($lughatStatus, ['added', 'remaining'], true)) {
+            $this->applyLughatOverlapFilter($query, $lughatStatus);
+        }
+
         if ($request->has('status')) {
             if ($request->status !== 'all') {
                 $query->where('status', $request->status);
@@ -125,60 +133,82 @@ class DictionaryController extends Controller
 
         $limit = min(100, max(1, (int) $request->get('limit', 20)));
 
-        return response()->json($query->orderBy('lemma')->paginate($limit));
+        $page = $query->orderBy('lemma')->paginate($limit);
+        $lughatKeys = $this->lughatMatchKeys();
+        $page->getCollection()->transform(function ($row) use ($lughatKeys) {
+            $row->in_lughat = $this->lemmaMatchesLughat($row, $lughatKeys);
+
+            return $row;
+        });
+
+        return response()->json($page);
     }
 
     public function stats()
     {
-        $totalLemmas = Lemma::count();
-        $completeLemmas = Lemma::complete()->count();
-        $pendingCompletion = Lemma::pendingCompletion()->count();
+        // Keep this payload lean — heavy GROUP BY breakdowns were exceeding max_execution_time
+        // on ~180k lemmas. Cache briefly so Dictionary Home stays snappy.
+        return response()->json(Cache::remember('dictionary.stats.payload.v2', 120, function () {
+            $totalLemmas = (int) Lemma::query()->toBase()->count();
+            $completeLemmas = (int) Lemma::complete()->toBase()->count();
+            $pendingCompletion = (int) Lemma::pendingCompletion()->toBase()->count();
 
-        $sources = Sense::query()
-            ->select('source_dictionary', DB::raw('COUNT(*) as total'))
-            ->whereNotNull('source_dictionary')
-            ->groupBy('source_dictionary')
-            ->orderByDesc('total')
-            ->limit(10)
-            ->get();
+            $topSource = Sense::query()
+                ->select('source_dictionary', DB::raw('COUNT(*) as total'))
+                ->whereNotNull('source_dictionary')
+                ->groupBy('source_dictionary')
+                ->orderByDesc('total')
+                ->limit(1)
+                ->get();
+
+            return [
+                'total_lemmas' => $totalLemmas,
+                'pending_lemmas' => (int) Lemma::query()->where('status', 'pending')->toBase()->count(),
+                'approved_lemmas' => (int) Lemma::query()->where('status', 'approved')->toBase()->count(),
+                'complete_lemmas' => $completeLemmas,
+                'pending_completion_lemmas' => $pendingCompletion,
+                'completion_percentage' => $totalLemmas > 0 ? round(($completeLemmas / $totalLemmas) * 100, 1) : 0,
+                'total_senses' => (int) Sense::query()->toBase()->count(),
+                'open_lexicon_entries' => (int) Sense::query()->whereNotNull('lexical_id')->toBase()->count(),
+                'variant_entries' => (int) Sense::query()
+                    ->whereNotNull('word_variant')
+                    ->where('word_variant', '<>', '')
+                    ->toBase()
+                    ->count(),
+                'sources' => $topSource,
+            ];
+        }));
+    }
+
+    /**
+     * Lightweight Baakh Lughat overlap stats for Dictionary Home cards.
+     */
+    public function lughatStats()
+    {
+        return response()->json($this->dictionaryLughatStats());
+    }
+
+    /**
+     * Batch Hesudhar on general-dictionary HEADWORDS only (lemma column).
+     * Client should loop with after_id until done=true.
+     */
+    public function hesudharLemmas(Request $request, DictionaryLemmaHesudharService $hesudhar)
+    {
+        $validated = $request->validate([
+            'after_id' => 'nullable|integer|min:0',
+            'limit' => 'nullable|integer|min:25|max:500',
+        ]);
+
+        $batch = $hesudhar->processBatch(
+            (int) ($validated['after_id'] ?? 0),
+            (int) ($validated['limit'] ?? 200)
+        );
 
         return response()->json([
-            'total_lemmas' => $totalLemmas,
-            'pending_lemmas' => Lemma::where('status', 'pending')->count(),
-            'approved_lemmas' => Lemma::where('status', 'approved')->count(),
-            'complete_lemmas' => $completeLemmas,
-            'pending_completion_lemmas' => $pendingCompletion,
-            'completion_percentage' => $totalLemmas > 0 ? round(($completeLemmas / $totalLemmas) * 100, 1) : 0,
-            'total_senses' => Sense::count(),
-            'open_lexicon_entries' => Sense::whereNotNull('lexical_id')->count(),
-            'variant_entries' => Sense::whereNotNull('word_variant')->where('word_variant', '<>', '')->count(),
-            'sources' => $sources,
-            'pending_by_pos' => Lemma::pendingCompletion()
-                ->select('pos', DB::raw('COUNT(*) as total'))
-                ->groupBy('pos')
-                ->orderByDesc('total')
-                ->limit(10)
-                ->get(),
-            'pending_by_domain' => Sense::query()
-                ->join('lemmas', 'lemmas.id', '=', 'senses.lemma_id')
-                ->where('lemmas.completion_status', Lemma::COMPLETION_PENDING)
-                ->select('senses.domain', DB::raw('COUNT(DISTINCT lemmas.id) as total'))
-                ->groupBy('senses.domain')
-                ->orderByDesc('total')
-                ->limit(10)
-                ->get(),
-            'pending_by_source' => Sense::query()
-                ->join('lemmas', 'lemmas.id', '=', 'senses.lemma_id')
-                ->where('lemmas.completion_status', Lemma::COMPLETION_PENDING)
-                ->select('senses.source_dictionary', DB::raw('COUNT(DISTINCT lemmas.id) as total'))
-                ->groupBy('senses.source_dictionary')
-                ->orderByDesc('total')
-                ->limit(10)
-                ->get(),
-            'recently_completed' => Lemma::complete()
-                ->orderByDesc('completed_at')
-                ->limit(10)
-                ->get(['id', 'public_id', 'lemma', 'normalized_lemma', 'pos', 'completed_at', 'completed_by', 'completion_score']),
+            'message' => $batch['done']
+                ? "Hesudhar finished this run. Updated {$batch['updated']} headword(s) in the last batch."
+                : "Hesudhar batch: scanned {$batch['scanned']}, updated {$batch['updated']}. Continue from id {$batch['next_after_id']}.",
+            'data' => $batch,
         ]);
     }
 
@@ -566,6 +596,7 @@ class DictionaryController extends Controller
         ]);
 
         $validated['normalized_lemma'] = $validated['normalized_lemma'] ?? $this->defaultNormalizedLemma($validated['lemma']);
+        $validated['lookup_base'] = $validated['lookup_base'] ?? DictionaryText::lookupBase($validated['lemma']);
         $validated['completion_status'] = Lemma::COMPLETION_PENDING;
 
         $lemma = Lemma::create($validated);
@@ -909,6 +940,7 @@ class DictionaryController extends Controller
 
         if (array_key_exists('lemma', $validated) && !array_key_exists('normalized_lemma', $validated)) {
             $validated['normalized_lemma'] = $this->defaultNormalizedLemma($validated['lemma']);
+            $validated['lookup_base'] = DictionaryText::lookupBase($validated['lemma']);
         }
 
         $lemma->update($validated);
@@ -1437,7 +1469,7 @@ class DictionaryController extends Controller
 
     private function defaultNormalizedLemma(string $lemma): string
     {
-        return DictionaryText::normalizeForLookup($lemma);
+        return DictionaryText::normalizeForIdentity($lemma);
     }
 
     private function cleanStringArray(array $values): array
@@ -1521,6 +1553,7 @@ class DictionaryController extends Controller
         $lemma = Lemma::create([
             'lemma' => $word,
             'normalized_lemma' => $this->defaultNormalizedLemma($word),
+            'lookup_base' => DictionaryText::lookupBase($word),
             'transliteration' => $romanization,
             'pos' => $partOfSpeech,
             'status' => 'pending',
@@ -1585,6 +1618,132 @@ class DictionaryController extends Controller
             DictionaryText::normalizeForLookup((string) $value),
             DictionaryText::normalizeForLookup($search)
         );
+    }
+
+    /**
+     * Tiny cached key sets from Baakh Lughat (hundreds of strings, not 180k rows).
+     *
+     * @return array{surfaces: list<string>, norms: list<string>, surface_set: array<string, true>, norm_set: array<string, true>, lughat_lemmas: int}
+     */
+    private function lughatMatchKeys(): array
+    {
+        return Cache::remember('dictionary.lughat_keys.v2', 300, function () {
+            $surfaceSet = [];
+            $identitySet = [];
+            $lughatLemmas = 0;
+
+            foreach (LughatLemma::query()->select(['lemma', 'normalized_lemma'])->cursor() as $lemma) {
+                $lughatLemmas++;
+                if ($lemma->lemma) {
+                    $surfaceSet[$lemma->lemma] = true;
+                }
+                foreach ([$lemma->lemma, $lemma->normalized_lemma] as $value) {
+                    if (!$value) {
+                        continue;
+                    }
+                    // Identity keeps airab — دَلَ / دِلِ / دُلُ stay distinct.
+                    $identity = DictionaryText::normalizeForIdentity($value);
+                    if ($identity !== '') {
+                        $identitySet[$identity] = true;
+                    }
+                }
+            }
+
+            return [
+                'surfaces' => array_keys($surfaceSet),
+                'norms' => array_keys($identitySet),
+                'surface_set' => $surfaceSet,
+                'norm_set' => $identitySet,
+                'lughat_lemmas' => $lughatLemmas,
+            ];
+        });
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Models\Lemma>  $query
+     */
+    private function applyLughatOverlapFilter($query, string $status): void
+    {
+        $keys = $this->lughatMatchKeys();
+        $surfaces = $keys['surfaces'];
+        $norms = $keys['norms'];
+
+        if ($surfaces === [] && $norms === []) {
+            if ($status === 'added') {
+                $query->whereRaw('1 = 0');
+            }
+
+            return;
+        }
+
+        if ($status === 'added') {
+            $query->where(function ($q) use ($surfaces, $norms) {
+                if ($surfaces !== []) {
+                    $q->whereIn('lemma', $surfaces);
+                }
+                if ($norms !== []) {
+                    $method = $surfaces !== [] ? 'orWhereIn' : 'whereIn';
+                    $q->{$method}('normalized_lemma', $norms);
+                }
+            });
+
+            return;
+        }
+
+        // remaining: not matched by surface or normalized key
+        $query->where(function ($q) use ($surfaces, $norms) {
+            if ($surfaces !== []) {
+                $q->where(function ($inner) use ($surfaces) {
+                    $inner->whereNull('lemma')->orWhereNotIn('lemma', $surfaces);
+                });
+            }
+            if ($norms !== []) {
+                $q->where(function ($inner) use ($norms) {
+                    $inner->whereNull('normalized_lemma')->orWhereNotIn('normalized_lemma', $norms);
+                });
+            }
+        });
+    }
+
+    private function lemmaMatchesLughat(Lemma $row, ?array $keys = null): bool
+    {
+        $keys = $keys ?? $this->lughatMatchKeys();
+        if (isset($keys['surface_set'][$row->lemma])) {
+            return true;
+        }
+
+        $identity = DictionaryText::normalizeForIdentity((string) $row->lemma);
+        if ($identity !== '' && isset($keys['norm_set'][$identity])) {
+            return true;
+        }
+
+        if ($row->normalized_lemma && isset($keys['norm_set'][$row->normalized_lemma])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array{total: int, added: int, remaining: int, lughat_lemmas: int}
+     */
+    private function dictionaryLughatStats(): array
+    {
+        return Cache::remember('dictionary.lughat_stats.v2', 300, function () {
+            $keys = $this->lughatMatchKeys();
+            $total = (int) Lemma::query()->toBase()->count();
+
+            $addedQuery = Lemma::query();
+            $this->applyLughatOverlapFilter($addedQuery, 'added');
+            $added = (int) $addedQuery->toBase()->count();
+
+            return [
+                'total' => $total,
+                'added' => $added,
+                'remaining' => max(0, $total - $added),
+                'lughat_lemmas' => $keys['lughat_lemmas'],
+            ];
+        });
     }
 
     private function normalizedSql(string $column): string

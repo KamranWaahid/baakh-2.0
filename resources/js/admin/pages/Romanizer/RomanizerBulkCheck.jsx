@@ -88,12 +88,14 @@ const RomanizerBulkCheck = () => {
                 <Card>
                     <CardHeader>
                         <CardTitle>Missing Words ({(missingWords || []).length})</CardTitle>
-                        <CardDescription>These words are not in the Romanizer dictionary yet.</CardDescription>
+                        <CardDescription>
+                            Only Sindhi words the romanizer cannot resolve. Airab (َ ِ ُ) is kept; Latin, numbers, and punctuation are ignored.
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {(!missingWords || missingWords.length === 0) ? (
                             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground italic">
-                                {checkMutation.isSuccess ? "All words are already in the dictionary!" : "Perform a check to see missing words."}
+                                {checkMutation.isSuccess ? "All Sindhi words can already be romanized!" : "Perform a check to see missing words."}
                             </div>
                         ) : (
                             <div className="flex flex-wrap gap-2 overflow-y-auto max-h-[500px] p-2 border rounded-md">

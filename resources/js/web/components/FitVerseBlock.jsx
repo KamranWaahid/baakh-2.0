@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CoupletWithWords } from './WordTooltip';
+import { CoupletWithWords, countSindhiWordTokens } from './WordTooltip';
 
 /**
  * Measure line widths at a given font size without mutating live React nodes.
@@ -119,6 +119,8 @@ const FitVerseBlock = ({
     lockedFit = null,
     dictionarySource = 'general',
     poetryId = null,
+    coupletIndex = 0,
+    expressionAnnotations = [],
 }) => {
     const containerRef = useRef(null);
     const sampleRef = useRef(null);
@@ -129,6 +131,14 @@ const FitVerseBlock = ({
     });
 
     const lines = useMemo(() => splitVerseLines(text), [text]);
+    const lineTokenOffsets = useMemo(() => {
+        let offset = 0;
+        return lines.map((line) => {
+            const current = offset;
+            offset += countSindhiWordTokens(line);
+            return current;
+        });
+    }, [lines]);
     const { fontSize, scale, letterSpacing } = lockedFit ?? localFit;
 
     const alignClass =
@@ -229,6 +239,9 @@ const FitVerseBlock = ({
                                     isRtl={isRtl}
                                     dictionarySource={dictionarySource}
                                     poetryId={poetryId}
+                                    coupletIndex={coupletIndex}
+                                    tokenOffset={lineTokenOffsets[index] || 0}
+                                    expressionAnnotations={expressionAnnotations}
                                 />
                             )
                             : line}
@@ -254,6 +267,7 @@ export function FitVerseGroup({
     className = '',
     dictionarySource = 'general',
     poetryId = null,
+    expressionAnnotations = [],
 }) {
     const containerRef = useRef(null);
     const sampleRef = useRef(null);
@@ -351,6 +365,8 @@ export function FitVerseGroup({
                     lockedFit={lockedFit}
                     dictionarySource={dictionarySource}
                     poetryId={poetryId}
+                    coupletIndex={index}
+                    expressionAnnotations={expressionAnnotations}
                 />
             ))}
         </div>

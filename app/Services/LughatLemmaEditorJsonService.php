@@ -2,15 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\Couplets;
 use App\Models\Lemma;
 use App\Models\LughatLemma;
 use App\Models\LughatRelation;
 use App\Models\LughatSense;
 use App\Models\LughatVariant;
-use App\Models\Poetry;
-use App\Models\PoetryTranslations;
 use App\Support\DictionaryText;
+use Illuminate\Support\Collection;
 
 /**
  * Editor JSON for Baakh Lughat — mirrors DictionaryLemmaEditorJsonService shape
@@ -33,54 +31,30 @@ class LughatLemmaEditorJsonService
         $keywords = is_array($lemma->search_keywords_json) ? $lemma->search_keywords_json : [];
         $metadata = is_array($lemma->metadata_json) ? $lemma->metadata_json : [];
         $primarySense = $lemma->senses->first();
-        $poetryContext = $this->buildPoetryContext($lemma);
-        $linkedExpressions = app(LughatExpressionService::class)->expressionsForLemma((int) $lemma->id, 40);
-        $tokenHints = $this->buildTokenHints($poetryContext);
+        // Keep expression list tiny in editor-json (AI paste size); full list is on the Expressions UI.
+        $linkedExpressions = app(LughatExpressionService::class)->expressionsForLemma((int) $lemma->id, 5);
 
         return [
             '_schema' => 'baakh.lughat.editor_json.v2',
             '_name' => 'Baakh Lughat',
-            '_instructions' => 'Baakh Lughat poetic dictionary (v2). '
-                . 'You receive: (1) poetry.* couplets/token_hints for this word in verse, '
-                . '(2) general_dictionary.* from the site general dictionary / Open Lexicon (READ-ONLY reference), '
-                . '(3) current Baakh Lughat senses/forms. '
-                . 'COMPLETE THE WORD: do not leave required editor fields empty — fill every blank you can '
-                . '(lemma, normalized_lemma, pos, transliteration, pronunciation_simple/phonetic when possible, '
-                . 'morphology when knowable, reviewed flags when you filled those sections). '
-                . 'SENSES (critical): generate NEW senses (omit id) that combine general-dictionary meanings '
-                . 'WITH poetry-specific meanings so editors can tag the right sense on a line and readers understand the verse. '
-                . 'Include: (a) senses adapted from general_dictionary (usage_label/domain e.g. general/literal), '
-                . '(b) NEW poetic/contextual senses from poetry.* (usage_label poetic/figurative/mystical as fits). '
-                . 'PRIMARY DEFINITIONS IN SINDHI: sense.definition and short_gloss MUST be Sindhi (Arabic script); '
-                . 'English only in definition_en (optional). Fill definition_sd when useful. '
-                . 'Every sense MUST fill short_gloss, definition (Sindhi), language_direction (prefer sindhi), '
-                . 'source_dictionary, publisher, publisher_url, prepared_by; set review_status=reviewed and status=approved. '
-                . 'Prefer poetry citation examples from poetry.couplets for poetic senses. '
-                . 'Keep existing sense ids; upsert only — do not delete by omission. '
-                . 'Fill general.transliteration (roman of headword) — never empty. '
-                . 'ROMAN ONLY: transliteration and all romanization fields = plain Latin a–z/spaces/hyphens only. '
-                . 'No Arabic script; no zabar/zer/pesh (َُِ), tashdeed (ّ), sukun (ْ), tanween, or Latin accented letters (āīū). e.g. aadmi not ādmī. '
-                . 'Add forms[] / forms.inflections with gender/number/case/person/stem/suffix when known; null only if uncertain. '
-                . 'Propose multiword spans in expression_candidates[] (indexes from poetry.token_hints). '
-                . 'Set completion.completion_status=complete when required fields + curated senses are filled; else pending. '
-                . 'RELATIONS (critical — fill typed buckets, do not dump into related only): '
-                . 'Write relations[] with relation_type one of synonym|antonym|hypernym|related|singular|plural|dialect|derived|usage. '
-                . 'Use general_dictionary.synonyms/antonyms/hypernyms/related PLUS poetry context. '
-                . 'Honor relations_checklist.empty — fill those 0-count buckets when knowable; reclassify misfiled related→synonym. '
-                . 'Each item: related_word (required), romanization, note, gloss, part_of_speech when known. '
-                . 'synonym = near-same meaning; antonym = opposite; hypernym = broader class; '
-                . 'singular/plural = number pair; dialect = regional form (note=dialect name); '
-                . 'derived = derived noun/adj (محبت→محبتي); usage = people-say form + gloss example sentence; '
-                . 'related = only leftover associates that are not synonyms. '
-                . 'Keep existing relation ids; omit id for new rows. Do not echo general_dictionary/relations_checklist. '
-                . 'Sense source defaults: source_dictionary=Baakh Lughat, publisher=baakh.com, prepared_by=Kamran Wahid, publisher_url=https://baakh.com/. '
-                . 'Keep numeric ids. Paste back via Import JSON.',
+            // Kept short — full AI rules live in the Copy-for-AI prompt (avoid duplicating a huge blob in JSON).
+            '_instructions' => 'Complete this Baakh Lughat lemma (v2). Fill empty fields. '
+                . 'Sindhi primary definitions. Plain ASCII roman only. '
+                . 'Fill senses, typed relations, airab variants, forms.inflections. '
+                . 'Omit general_dictionary/relations_checklist in output. Keep numeric ids. Paste via Import JSON.',
             'id' => $lemma->id,
             'public_id' => $lemma->public_id,
 
+            // Poetry omitted from editor-json (full poems blow up ChatGPT paste size).
+            // Paste couplets separately in chat when poetic senses / expressions are needed.
             'poetry' => [
-                ...$poetryContext,
-                'token_hints' => $tokenHints,
+                'poetry_id' => $lemma->poetry_id,
+                'couplet_id' => $lemma->couplet_id,
+                'title' => null,
+                'source_couplet' => null,
+                'couplets' => [],
+                'token_hints' => [],
+                '_note' => 'Poetry text omitted to keep JSON small. Paste couplet(s) separately in chat when needed for poetic senses / expression_candidates. occurrence_summary still has frequency counts.',
             ],
 
             // Read-only reference for AI — not imported.
@@ -245,106 +219,9 @@ class LughatLemmaEditorJsonService
     }
 
     /**
-     * Whitespace tokens of the source couplet so AI can propose span expressions.
-     *
-     * @return list<array{index:int,surface:string,lemma_candidate:string}>
-     */
-    private function buildTokenHints(array $poetryContext): array
-    {
-        $text = (string) ($poetryContext['source_couplet']['text'] ?? '');
-        if ($text === '' && !empty($poetryContext['couplets'][0]['text'])) {
-            $text = (string) $poetryContext['couplets'][0]['text'];
-        }
-        if ($text === '') {
-            return [];
-        }
-
-        $parts = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $out = [];
-        $index = 0;
-        foreach ($parts as $raw) {
-            $surface = DictionaryText::stripPunctuation($raw);
-            $surface = trim($surface);
-            if ($surface === '' || !preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}]/u', $surface)) {
-                continue;
-            }
-            $out[] = [
-                'index' => $index,
-                'surface' => $surface,
-                'lemma_candidate' => DictionaryText::stripDiacritics($surface),
-            ];
-            $index++;
-        }
-
-        return $out;
-    }
-
-    /**
-     * Poetry / couplet source data for AI context (Sindhi only — no roman lines).
-     */
-    private function buildPoetryContext(LughatLemma $lemma): array
-    {
-        $context = [
-            'poetry_id' => $lemma->poetry_id,
-            'couplet_id' => $lemma->couplet_id,
-            'title' => null,
-            'source_couplet' => null,
-            'couplets' => [],
-        ];
-
-        if ($lemma->couplet_id) {
-            $source = Couplets::query()->find($lemma->couplet_id);
-            if ($source) {
-                $context['source_couplet'] = [
-                    'id' => $source->id,
-                    'text' => $this->plainText((string) $source->couplet_text),
-                    'lang' => $source->lang,
-                ];
-            }
-        }
-
-        if (!$lemma->poetry_id) {
-            return $context;
-        }
-
-        $poetry = Poetry::query()->find($lemma->poetry_id);
-        if (!$poetry) {
-            return $context;
-        }
-
-        $title = PoetryTranslations::query()
-            ->where('poetry_id', $poetry->id)
-            ->where(function ($q) {
-                $q->whereNull('lang')->orWhere('lang', 'sd')->orWhere('lang', 'snd');
-            })
-            ->value('title');
-
-        $context['title'] = $title ?: ($poetry->poetry_title ?? null);
-        $context['poetry_slug'] = $poetry->poetry_slug;
-        $context['poet_id'] = $poetry->poet_id;
-
-        $context['couplets'] = Couplets::query()
-            ->where('poetry_id', $poetry->id)
-            ->where(function ($q) {
-                $q->whereNull('lang')->orWhere('lang', 'sd')->orWhere('lang', 'snd');
-            })
-            ->orderBy('id')
-            ->get()
-            ->map(fn (Couplets $c) => [
-                'id' => $c->id,
-                'text' => $this->plainText((string) $c->couplet_text),
-            ])
-            ->values()
-            ->all();
-
-        return $context;
-    }
-
-    /**
-     * Compact general-dictionary / Open Lexicon snapshot for AI sense generation.
+     * Full general-dictionary snapshot for AI (old Sindhi dictionary).
+     * Prefer exact airab match; also attach other lookup_base variants.
      * Read-only context — stripped on import.
-     *
-     * @return array{found:bool, source:?string, word:?string, pos:?string, meanings:list<string>, meanings_en:list<string>, meanings_sd:list<string>, senses:list<array>}
      */
     private function buildGeneralDictionaryContext(LughatLemma $lemma): array
     {
@@ -352,6 +229,7 @@ class LughatLemmaEditorJsonService
         $empty = [
             'found' => false,
             'source' => null,
+            'match_type' => null,
             'word' => $word !== '' ? $word : null,
             'pos' => null,
             'meanings' => [],
@@ -367,82 +245,45 @@ class LughatLemmaEditorJsonService
             'dialect' => [],
             'derived' => [],
             'usage' => [],
-            '_note' => 'Read-only. Use with poetry.* to write Baakh Lughat senses[] and typed relations[]. Do not echo this key in output.',
+            'entries' => [],
+            'full_entry' => null,
+            '_note' => 'Read-only. Copy accurate meanings/relations from the old general dictionary into Baakh Lughat senses[] and typed relations[]. Prefer exact airab match in entries[]. Do not echo this key in output.',
         ];
 
         if ($word === '') {
             return $empty;
         }
 
-        $normalized = DictionaryText::normalizeForLookup($word);
-        $dbLemma = Lemma::query()
-            ->with([
-                'senses' => fn ($q) => $q->orderBy('sense_order')->limit(12),
-                'lemmaRelations',
-            ])
-            ->where(function ($q) use ($word, $normalized) {
-                $q->where('lemma', $word)
-                    ->orWhere('normalized_lemma', $normalized);
-            })
-            ->first();
+        $matches = $this->findGeneralDictionaryLemmas($word);
+        if ($matches->isNotEmpty()) {
+            $primary = $matches->first();
+            // Compact only — nested full dictionary_json made ChatGPT paste too large.
+            $entries = $matches->take(6)->map(function (Lemma $dbLemma) use ($word) {
+                return [
+                    'match_type' => $this->generalDictionaryMatchType($word, $dbLemma),
+                    'id' => $dbLemma->id,
+                    'lemma' => $dbLemma->lemma,
+                    'normalized_lemma' => $dbLemma->normalized_lemma,
+                    'lookup_base' => $dbLemma->lookup_base,
+                    'pos' => $dbLemma->pos,
+                    'transliteration' => $dbLemma->transliteration,
+                ];
+            })->values();
 
-        if ($dbLemma) {
-            $senses = $dbLemma->senses->map(fn ($sense) => [
-                'short_gloss' => $sense->short_gloss,
-                'definition' => $sense->definition,
-                'definition_sd' => $sense->definition_sd,
-                'definition_en' => $sense->definition_en,
-                'domain' => $sense->domain,
-                'usage_label' => $sense->usage_label ?? $sense->register,
-            ])->filter(fn ($s) => filled($s['definition']) || filled($s['short_gloss']) || filled($s['definition_sd']) || filled($s['definition_en']))
-                ->values()
-                ->all();
+            $compact = $this->compactGeneralDictionaryEntry($primary);
 
-            $relationsByType = [
-                'synonym' => [],
-                'antonym' => [],
-                'hypernym' => [],
-                'related' => [],
-                'singular' => [],
-                'plural' => [],
-                'dialect' => [],
-                'derived' => [],
-                'usage' => [],
-            ];
-            foreach ($dbLemma->lemmaRelations as $rel) {
-                $type = (string) ($rel->relation_type ?: 'related');
-                if (!isset($relationsByType[$type])) {
-                    $relationsByType[$type] = [];
-                }
-                $rw = trim((string) ($rel->related_word ?? ''));
-                if ($rw !== '') {
-                    $relationsByType[$type][] = $rw;
-                }
-            }
-            foreach ($relationsByType as $type => $words) {
-                $relationsByType[$type] = array_values(array_unique($words));
-            }
-
-            return [
-                'found' => $senses !== [] || filled($dbLemma->pos) || collect($relationsByType)->flatten()->isNotEmpty(),
+            return array_merge($empty, $compact, [
+                'found' => true,
                 'source' => 'site_dictionary',
-                'word' => $dbLemma->lemma,
-                'pos' => $dbLemma->pos,
-                'meanings' => collect($senses)->pluck('definition')->filter()->unique()->take(8)->values()->all(),
-                'meanings_en' => collect($senses)->pluck('definition_en')->filter()->unique()->take(8)->values()->all(),
-                'meanings_sd' => collect($senses)->pluck('definition_sd')->filter()->unique()->take(8)->values()->all(),
-                'senses' => $senses,
-                'synonyms' => $relationsByType['synonym'],
-                'antonyms' => $relationsByType['antonym'],
-                'hypernyms' => $relationsByType['hypernym'],
-                'related' => $relationsByType['related'],
-                'singular' => $relationsByType['singular'],
-                'plural' => $relationsByType['plural'],
-                'dialect' => $relationsByType['dialect'],
-                'derived' => $relationsByType['derived'],
-                'usage' => $relationsByType['usage'],
-                '_note' => 'Read-only. Merge into Baakh Lughat senses[] AND relations[] with correct relation_type. Do not dump everything as related. Do not echo this key in output.',
-            ];
+                'match_type' => $this->generalDictionaryMatchType($word, $primary),
+                'word' => $primary->lemma,
+                'entries' => $entries->all(),
+                'full_entry' => null,
+                'match_count' => $matches->count(),
+                '_note' => 'Read-only compact snapshot from the old general dictionary (senses + typed relation lists). '
+                    . 'Prefer match_type=exact / identity when several airab variants appear in entries[]. '
+                    . 'Merge into Baakh Lughat senses[] + typed relations[]. Do not echo this key in output.',
+            ]);
         }
 
         $fallback = app(BundledOpenLexiconLookup::class)->lookup($word);
@@ -463,25 +304,168 @@ class LughatLemmaEditorJsonService
             ->values()
             ->all();
 
-        return [
+        return array_merge($empty, [
             'found' => true,
             'source' => $fallback['source'] ?? 'bundled_open_lexicon',
+            'match_type' => 'open_lexicon',
             'word' => $fallback['word'] ?? $word,
             'pos' => $fallback['pos'] ?? null,
             'meanings' => array_values(array_slice($fallback['meanings'] ?? [], 0, 8)),
             'meanings_en' => array_values(array_slice($fallback['meanings_en'] ?? [], 0, 8)),
             'meanings_sd' => array_values(array_slice($fallback['meanings_sd'] ?? [], 0, 8)),
             'senses' => $senses,
-            'synonyms' => array_values($fallback['synonyms'] ?? []),
-            'antonyms' => array_values($fallback['antonyms'] ?? []),
-            'hypernyms' => array_values($fallback['hypernyms'] ?? []),
-            'related' => array_values($fallback['related'] ?? []),
+            'synonyms' => array_values(array_slice($fallback['synonyms'] ?? [], 0, 20)),
+            'antonyms' => array_values(array_slice($fallback['antonyms'] ?? [], 0, 12)),
+            'hypernyms' => array_values(array_slice($fallback['hypernyms'] ?? [], 0, 12)),
+            'related' => array_values(array_slice($fallback['related'] ?? [], 0, 12)),
+            'full_entry' => null,
+            'entries' => [[
+                'match_type' => 'open_lexicon',
+                'lemma' => $fallback['word'] ?? $word,
+                'pos' => $fallback['pos'] ?? null,
+            ]],
+            'match_count' => 1,
+        ]);
+    }
+
+    /**
+     * Exact airab → identity → all lookup_base variants (old dictionary often has several marked forms).
+     *
+     * @return Collection<int, Lemma>
+     */
+    private function findGeneralDictionaryLemmas(string $word): Collection
+    {
+        $identity = DictionaryText::normalizeForIdentity($word);
+        $base = DictionaryText::lookupBase($word);
+        $with = [
+            'senses',
+            'morphology',
+            'lemmaRelations.relatedLemma',
+        ];
+
+        $exact = Lemma::query()
+            ->with($with)
+            ->whereRaw(DictionaryText::binaryEquals('lemma'), [$word])
+            ->orderBy('id')
+            ->get();
+
+        $identityMatches = $identity === ''
+            ? collect()
+            : Lemma::query()
+                ->with($with)
+                ->whereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$identity])
+                ->orderBy('id')
+                ->get();
+
+        $hasLookupBase = \Illuminate\Support\Facades\Schema::hasColumn('lemmas', 'lookup_base');
+        $baseMatches = $base === ''
+            ? collect()
+            : Lemma::query()
+                ->with($with)
+                ->where(function ($q) use ($base, $hasLookupBase) {
+                    if ($hasLookupBase) {
+                        $q->whereRaw(DictionaryText::binaryEquals('lookup_base'), [$base])
+                            ->orWhereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$base]);
+                    } else {
+                        $q->whereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$base]);
+                    }
+                })
+                ->orderBy('id')
+                ->limit(12)
+                ->get();
+
+        // Prefer exact airab first, then identity, then other base variants.
+        return $exact
+            ->concat($identityMatches)
+            ->concat($baseMatches)
+            ->unique('id')
+            ->values();
+    }
+
+    private function generalDictionaryMatchType(string $word, Lemma $dbLemma): string
+    {
+        if (strcmp((string) $dbLemma->lemma, $word) === 0) {
+            return 'exact';
+        }
+        $identity = DictionaryText::normalizeForIdentity($word);
+        if ($identity !== '' && strcmp((string) $dbLemma->normalized_lemma, $identity) === 0) {
+            return 'identity';
+        }
+
+        return 'lookup_base';
+    }
+
+    /**
+     * Flat summary from the primary dictionary lemma (kept for older AI prompt fields).
+     */
+    private function compactGeneralDictionaryEntry(Lemma $dbLemma): array
+    {
+        $senses = $dbLemma->senses
+            ->take(8)
+            ->map(fn ($sense) => [
+                'short_gloss' => $sense->short_gloss,
+                'definition' => $sense->definition,
+                'definition_sd' => $sense->definition_sd,
+                'definition_en' => $sense->definition_en,
+                'english_equivalents' => array_values(array_slice(
+                    is_array($sense->english_equivalents) ? $sense->english_equivalents : [],
+                    0,
+                    8
+                )),
+                'domain' => $sense->domain,
+                'usage_label' => $sense->usage_label ?? $sense->register,
+            ])
+            ->filter(fn ($s) => filled($s['definition']) || filled($s['short_gloss']) || filled($s['definition_sd']) || filled($s['definition_en']))
+            ->values()
+            ->all();
+
+        $relationsByType = [
+            'synonym' => [],
+            'antonym' => [],
+            'hypernym' => [],
+            'related' => [],
             'singular' => [],
             'plural' => [],
             'dialect' => [],
             'derived' => [],
             'usage' => [],
-            '_note' => 'Read-only. Merge into Baakh Lughat senses[] AND relations[] with correct relation_type. Do not dump everything as related. Do not echo this key in output.',
+        ];
+        foreach ($dbLemma->lemmaRelations as $rel) {
+            $type = (string) ($rel->relation_type ?: 'related');
+            if (!isset($relationsByType[$type])) {
+                $relationsByType[$type] = [];
+            }
+            $rw = trim((string) ($rel->relatedLemma?->lemma ?: $rel->related_word ?: ''));
+            if ($rw !== '') {
+                $relationsByType[$type][] = $rw;
+            }
+        }
+        foreach ($relationsByType as $type => $words) {
+            $relationsByType[$type] = array_values(array_unique($words));
+        }
+
+        return [
+            'pos' => $dbLemma->pos,
+            'transliteration' => $dbLemma->transliteration,
+            'etymology' => $dbLemma->etymology,
+            'meanings' => collect($senses)->pluck('definition')->filter()->unique()->take(12)->values()->all(),
+            'meanings_en' => collect($senses)->pluck('definition_en')->filter()->unique()->take(12)->values()->all(),
+            'meanings_sd' => collect($senses)->pluck('definition_sd')->filter()->unique()->take(12)->values()->all(),
+            'senses' => $senses,
+            'synonyms' => $relationsByType['synonym'],
+            'antonyms' => $relationsByType['antonym'],
+            'hypernyms' => $relationsByType['hypernym'],
+            'related' => $relationsByType['related'],
+            'singular' => $relationsByType['singular'],
+            'plural' => $relationsByType['plural'],
+            'dialect' => $relationsByType['dialect'],
+            'derived' => $relationsByType['derived'],
+            'usage' => $relationsByType['usage'],
+            'morphology' => [
+                'root' => $dbLemma->morphology?->root,
+                'gender' => $dbLemma->morphology?->gender,
+                'number' => $dbLemma->morphology?->number,
+            ],
         ];
     }
 
@@ -510,14 +494,6 @@ class LughatLemmaEditorJsonService
             'empty' => $empty,
             '_note' => 'Read-only. Fill relations[] for every type in empty[] when knowable. Do not dump synonyms into related. Omit this key in output.',
         ];
-    }
-
-    private function plainText(string $htmlOrText): string
-    {
-        $text = html_entity_decode(strip_tags($htmlOrText), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace("/\r\n?/", "\n", $text) ?? $text;
-
-        return trim($text);
     }
 
     private function sensePreparedBy(LughatSense $sense): string

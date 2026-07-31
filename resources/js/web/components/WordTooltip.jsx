@@ -76,8 +76,20 @@ function computePosition(anchorRect, tooltipEl) {
 
 /**
  * WordTooltip — compact dictionary card near a clicked word.
+ * Pass `expressionPayload` for a pinned izafat / multiword expression
+ * (skips single-word lookup and shows the phrase meaning).
  */
-const WordTooltip = ({ word, onClose, anchorRect, isRtl, dictionarySource = 'general', poetryId = null }) => {
+const WordTooltip = ({
+    word,
+    onClose,
+    anchorRect,
+    isRtl,
+    dictionarySource = 'general',
+    poetryId = null,
+    coupletIndex = null,
+    tokenIndex = null,
+    expressionPayload = null,
+}) => {
     const tooltipRef = useRef(null);
     const [position, setPosition] = useState(null);
     const [data, setData] = useState(null);
@@ -90,10 +102,25 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl, dictionarySource = 'gen
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
+
+        if (expressionPayload) {
+            setData(expressionPayload);
+            setLoading(false);
+            setBodyKey((k) => k + 1);
+            return () => { cancelled = true; };
+        }
+
         const params = new URLSearchParams();
         if (dictionarySource === 'lughat') {
             params.set('dictionary', 'lughat');
-            if (poetryId) params.set('poetry_id', String(poetryId));
+        }
+        if (poetryId != null) {
+            params.set('poetry_id', String(poetryId));
+        }
+        // Prefer pinned izafat/expression when this token is inside a span.
+        if (coupletIndex != null && tokenIndex != null) {
+            params.set('couplet_index', String(coupletIndex));
+            params.set('token_index', String(tokenIndex));
         }
         const qs = params.toString();
         api.get(`/api/v1/word/${encodeURIComponent(word)}${qs ? `?${qs}` : ''}`)
@@ -106,7 +133,7 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl, dictionarySource = 'gen
                 }
             });
         return () => { cancelled = true; };
-    }, [word, dictionarySource, poetryId]);
+    }, [word, dictionarySource, poetryId, coupletIndex, tokenIndex, expressionPayload]);
 
     const requestClose = useCallback(() => {
         if (closingRef.current) return;
@@ -253,6 +280,11 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl, dictionarySource = 'gen
                         {(data?.dictionary === 'lughat' || data?.source === 'baakh_lughat') && (
                             <span className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-arabic">
                                 باک لغت
+                            </span>
+                        )}
+                        {data?.is_expression && (
+                            <span className="text-[10px] text-violet-800 bg-violet-50 px-1.5 py-0.5 rounded font-arabic">
+                                {data.expression_type === 'izafat' ? 'اضافت' : (data.expression_type || 'expression')}
                             </span>
                         )}
                         {data?.completion_status && (
@@ -485,13 +517,54 @@ const WordTooltip = ({ word, onClose, anchorRect, isRtl, dictionarySource = 'gen
     );
 };
 
+function isSindhiToken(token = '') {
+    return /[\u0600-\u06FF\u0750-\u077F]/.test(token);
+}
+
+function expressionLookupPayload(expr) {
+    if (!expr) return null;
+    const surface = expr.surface_text || '';
+    const poetic = (expr.poetic_gloss || '').trim();
+    const literal = (expr.literal_gloss || '').trim();
+    const type = expr.expression_type || 'izafat';
+    const meanings = [poetic, literal].filter(Boolean);
+    return {
+        found: meanings.length > 0 || !!surface,
+        word: surface,
+        pos: type === 'izafat' ? 'izafat' : type,
+        meanings,
+        meanings_en: literal ? [literal] : [],
+        meanings_sd: poetic ? [poetic] : [],
+        senses: meanings.length ? [{
+            short_gloss: type === 'izafat' ? 'اضافت' : type,
+            definition: poetic || literal,
+            definition_en: literal || null,
+            definition_sd: poetic || null,
+            is_preferred: true,
+        }] : [],
+        is_expression: true,
+        expression_type: type,
+        source: 'baakh_lughat',
+        dictionary: 'lughat',
+    };
+}
+
 /**
  * ClickableWord — renders a word as a clickable <span>.
  */
-export const ClickableWord = ({ word, isRtl, dictionarySource = 'general', poetryId = null }) => {
+export const ClickableWord = ({
+    word,
+    isRtl,
+    dictionarySource = 'general',
+    poetryId = null,
+    coupletIndex = null,
+    tokenIndex = null,
+    expression = null,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [rect, setRect] = useState(null);
     const wordRef = useRef(null);
+    const expressionPayload = expressionLookupPayload(expression);
 
     const refreshRect = useCallback(() => {
         const el = wordRef.current;
@@ -520,28 +593,38 @@ export const ClickableWord = ({ word, isRtl, dictionarySource = 'general', poetr
     }, [isOpen, refreshRect]);
 
     const cleanWord = cleanLookupWord(word);
-    if (!cleanWord) return <span>{word}</span>;
+    if (!cleanWord && !expressionPayload) return <span>{word}</span>;
+
+    const isExpr = !!expressionPayload;
 
     return (
         <>
             <span
                 ref={wordRef}
                 onClick={handleClick}
-                className={`cursor-pointer rounded-sm underline-offset-4 decoration-gray-300 transition-all duration-200 ease-out ${
-                    isOpen
-                        ? 'bg-amber-100/80 underline text-gray-900 ring-1 ring-amber-200 scale-[1.03]'
-                        : 'hover:underline hover:bg-gray-100/80'
+                title={isExpr ? (expression?.poetic_gloss || expression?.literal_gloss || expression?.surface_text) : undefined}
+                className={`cursor-pointer rounded-sm underline-offset-4 transition-all duration-200 ease-out ${
+                    isExpr
+                        ? (isOpen
+                            ? 'bg-violet-100/80 underline decoration-violet-400 text-gray-900 ring-1 ring-violet-200 scale-[1.03]'
+                            : 'underline decoration-violet-300 decoration-2 hover:bg-violet-50/80')
+                        : (isOpen
+                            ? 'bg-amber-100/80 underline decoration-gray-300 text-gray-900 ring-1 ring-amber-200 scale-[1.03]'
+                            : 'hover:underline hover:bg-gray-100/80 decoration-gray-300')
                 }`}
             >
                 {word}
             </span>
             {isOpen && rect && (
                 <WordTooltip
-                    word={cleanWord}
+                    word={expressionPayload?.word || cleanWord}
                     anchorRect={rect}
                     isRtl={isRtl}
                     dictionarySource={dictionarySource}
                     poetryId={poetryId}
+                    coupletIndex={coupletIndex}
+                    tokenIndex={tokenIndex}
+                    expressionPayload={expressionPayload}
                     onClose={() => setIsOpen(false)}
                 />
             )}
@@ -550,27 +633,128 @@ export const ClickableWord = ({ word, isRtl, dictionarySource = 'general', poetr
 };
 
 /**
- * CoupletWithWords — splits a couplet string into clickable words.
+ * CoupletWithWords — splits a couplet/line into clickable words.
+ * When expressionAnnotations cover tokens, those words become one connected
+ * phrase: click either part → izafat/expression meaning (no separate word pick).
  */
-export const CoupletWithWords = ({ text, isRtl, dictionarySource = 'general', poetryId = null }) => {
-    const tokens = text.split(/(\s+)/);
-    return (
-        <>
-            {tokens.map((token, i) =>
-                /^\s+$/.test(token)
-                    ? <span key={i}>{token}</span>
-                    : (
-                        <ClickableWord
-                            key={i}
-                            word={token}
-                            isRtl={isRtl}
-                            dictionarySource={dictionarySource}
-                            poetryId={poetryId}
-                        />
-                    )
-            )}
-        </>
-    );
+export const CoupletWithWords = ({
+    text,
+    isRtl,
+    dictionarySource = 'general',
+    poetryId = null,
+    coupletIndex = 0,
+    tokenOffset = 0,
+    expressionAnnotations = [],
+}) => {
+    const parts = String(text ?? '').split(/(\s+)/u);
+    let tokenIndex = tokenOffset;
+    const nodes = [];
+
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (/^\s+$/u.test(part)) {
+            nodes.push(<span key={`s-${i}`}>{part}</span>);
+            continue;
+        }
+
+        const surface = cleanLookupWord(part);
+        if (!surface || !isSindhiToken(surface)) {
+            nodes.push(<span key={`o-${i}`}>{part}</span>);
+            continue;
+        }
+
+        const idx = tokenIndex;
+        tokenIndex += 1;
+
+        const expr = (expressionAnnotations || []).find(
+            (a) => a.couplet_index === coupletIndex
+                && idx >= a.start_token_index
+                && idx <= a.end_token_index
+        );
+
+        // Start of an expression span on this line: join following covered words.
+        if (expr && idx === expr.start_token_index) {
+            const spanParts = [part];
+            let look = i + 1;
+            let nextIdx = idx + 1;
+            while (look < parts.length && nextIdx <= expr.end_token_index) {
+                const nxt = parts[look];
+                if (/^\s+$/u.test(nxt)) {
+                    spanParts.push(nxt);
+                    look += 1;
+                    continue;
+                }
+                const nxtSurface = cleanLookupWord(nxt);
+                if (!nxtSurface || !isSindhiToken(nxtSurface)) {
+                    break;
+                }
+                if (nextIdx > expr.end_token_index) break;
+                spanParts.push(nxt);
+                look += 1;
+                nextIdx += 1;
+            }
+            // Consume joined tokens from the loop
+            const consumedWords = nextIdx - idx;
+            tokenIndex = idx + consumedWords;
+            i = look - 1;
+
+            nodes.push(
+                <ClickableWord
+                    key={`e-${idx}`}
+                    word={spanParts.join('')}
+                    isRtl={isRtl}
+                    dictionarySource={dictionarySource}
+                    poetryId={poetryId}
+                    coupletIndex={coupletIndex}
+                    tokenIndex={idx}
+                    expression={expr}
+                />
+            );
+            continue;
+        }
+
+        // Covered by an expression that started on a previous line — still open expression.
+        if (expr) {
+            nodes.push(
+                <ClickableWord
+                    key={`ew-${idx}`}
+                    word={part}
+                    isRtl={isRtl}
+                    dictionarySource={dictionarySource}
+                    poetryId={poetryId}
+                    coupletIndex={coupletIndex}
+                    tokenIndex={idx}
+                    expression={expr}
+                />
+            );
+            continue;
+        }
+
+        nodes.push(
+            <ClickableWord
+                key={`w-${idx}`}
+                word={part}
+                isRtl={isRtl}
+                dictionarySource={dictionarySource}
+                poetryId={poetryId}
+                coupletIndex={coupletIndex}
+                tokenIndex={idx}
+            />
+        );
+    }
+
+    return <>{nodes}</>;
 };
+
+/** Count Sindhi word tokens in a line (matches admin / annotation indexing). */
+export function countSindhiWordTokens(text = '') {
+    return String(text)
+        .split(/(\s+)/u)
+        .filter((part) => {
+            if (/^\s+$/u.test(part)) return false;
+            const surface = cleanLookupWord(part);
+            return surface && isSindhiToken(surface);
+        }).length;
+}
 
 export default WordTooltip;

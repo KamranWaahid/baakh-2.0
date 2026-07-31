@@ -8,6 +8,7 @@ use App\Models\Poets;
 use App\Models\Tags;
 use App\Models\UserComments;
 use App\Traits\BaakhLikedTrait;
+use App\Services\LughatExpressionService;
 use App\Services\StaticCacheService;
 use Illuminate\Support\Str;
 use App\Traits\BaakhSeoTrait;
@@ -240,6 +241,8 @@ class PoetryController extends UserController
             }), // Array of couplets
             'content_style' => $poetry->content_style ?? 'center',
             'dictionary_source' => $poetry->dictionary_source ?? 'general',
+            'expression_annotations' => app(LughatExpressionService::class)
+                ->listPoetryAnnotationsForPublic((int) $poetry->id),
             'info' => $poetry->info?->info,
             'source' => $poetry->info?->source,
             'views' => $poetry->views,

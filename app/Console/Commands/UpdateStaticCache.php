@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Support\PoetImageUrl;
 use Illuminate\Console\Command;
+use App\Services\LughatExpressionService;
 use App\Services\StaticCacheService;
 use App\Models\Poetry;
 use App\Models\Poets;
@@ -442,6 +443,8 @@ class UpdateStaticCache extends Command
             }), // Array of couplets
             'content_style' => $p->content_style ?? 'center',
             'dictionary_source' => $p->dictionary_source ?? 'general',
+            'expression_annotations' => app(LughatExpressionService::class)
+                ->listPoetryAnnotationsForPublic((int) $p->id),
             'info' => $info->info ?? null,
             'source' => $info->source ?? null,
             'views' => $p->views ?? 0,

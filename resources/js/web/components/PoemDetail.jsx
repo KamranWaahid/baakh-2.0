@@ -165,6 +165,7 @@ const PoemDetail = ({ lang }) => {
                             interactive
                             dictionarySource={poem.dictionary_source === 'lughat' ? 'lughat' : 'general'}
                             poetryId={poem.id}
+                            expressionAnnotations={poem.expression_annotations || []}
                         />
                     ) : (
                         <div

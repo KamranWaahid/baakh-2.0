@@ -368,9 +368,9 @@ class LughatPoetryWordImporter
                     continue;
                 }
 
-                $hasDiacritics = (bool) preg_match('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', $surface);
-                $lookup = DictionaryText::normalizeForLookup($surface);
-                if ($lookup === '') {
+                $hasDiacritics = DictionaryText::hasDiacritics($surface);
+                $identity = DictionaryText::normalizeForIdentity($surface);
+                if ($identity === '') {
                     continue;
                 }
 
@@ -379,8 +379,9 @@ class LughatPoetryWordImporter
 
                 $out[] = [
                     'surface_form' => $surface,
-                    'normalized_form' => $lookup,
-                    'lemma' => DictionaryText::stripDiacritics($surface),
+                    'normalized_form' => $identity,
+                    'lookup_base' => DictionaryText::lookupBase($surface),
+                    'lemma' => $surface,
                     'couplet_id' => $couplet->id,
                     'token_index' => $tokenIndex,
                     'character_start' => $pos,
@@ -420,9 +421,7 @@ class LughatPoetryWordImporter
 
     public function cleanToken(string $token): ?string
     {
-        $token = DictionaryText::stripPunctuation($token);
-        $token = DictionaryText::stripDiacritics($token);
-        $token = trim($token);
+        $token = trim(DictionaryText::stripPunctuation($token));
 
         if ($token === '' || !preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}]/u', $token)) {
             return null;
@@ -491,9 +490,12 @@ class LughatPoetryWordImporter
 
     private function createLemmaStub(array $token, Poetry $poetry): LughatLemma
     {
+        $surface = $token['lemma'] ?: $token['surface_form'];
+
         return LughatLemma::create([
-            'lemma' => $token['lemma'],
+            'lemma' => $surface,
             'normalized_lemma' => $token['normalized_form'],
+            'lookup_base' => $token['lookup_base'] ?? DictionaryText::lookupBase($surface),
             'homograph_number' => 1,
             'language' => 'sd',
             'transliteration' => null,

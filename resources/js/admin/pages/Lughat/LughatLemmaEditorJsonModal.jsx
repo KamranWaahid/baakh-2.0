@@ -11,102 +11,95 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import {
-    Loader2, Copy, CheckCircle2, FileInput, Save, Sparkles,
+    Loader2, Copy, CheckCircle2, FileInput, Save, Sparkles, BookMarked,
 } from 'lucide-react';
 
-const AI_ENRICH_PROMPT = `Enrich this Baakh Lughat (poetic dictionary) lemma JSON.
+/** Compact prompt — keep under ChatGPT paste limits; rules stay dense. */
+const AI_ENRICH_PROMPT = `Enrich this Baakh Lughat lemma JSON. Return ONLY one valid JSON object (no markdown, no prose).
 
-You are given these inputs in the JSON:
-1) poetry.* — Sindhi couplets + token_hints where this word appears in verse (READ-ONLY context)
-2) general_dictionary.* — meanings + typed synonym/antonym/… lists from site dictionary / Open Lexicon (READ-ONLY)
-3) relations_checklist.empty — Linguistic Relations buckets that are still count 0 (READ-ONLY — fill them)
-4) senses / forms / relations — current Baakh Lughat editor data (upsert target)
+INPUTS in JSON: general_dictionary (compact READ-ONLY), relations_checklist.empty, current senses/forms/relations/variants. poetry.* is empty — if couplets are pasted separately in chat, use them for poetic senses / poetry_citation / expression_candidates; else leave expression_candidates=[].
 
-GOAL: return a COMPLETE lemma — fill every empty editor field you can. Do not leave blanks that block completion. Prefer best-effort filled values over empty strings. Only use null when truly unknown for optional grammar slots (case/person).
+KEEP keys: _schema,_name,_instructions,id,public_id,poetry,general,completion,morphology,senses,relations,variants,forms,expression_candidates,occurrence_summary. Omit general_dictionary + relations_checklist in output. Keep numeric ids.
 
-Return ONLY one valid JSON object. No markdown fences. No explanation before or after.
+FILL: lemma,normalized_lemma,pos,transliteration (never empty). ROMAN ONLY = ASCII a-z/spaces/hyphens (no Arabic, no َُِّْ, no āīū). Pronunciation fields when known. morphology when knowable → morphology_reviewed=true.
+NO GUILLEMETS: never wrap Sindhi words in « » or ‹ › (write آدمي not «آدمي»). Same for lemma, related_word, variants, definitions, glosses, notes.
 
-Schema: baakh.lughat.editor_json.v2
-Keep keys: _schema, _name, _instructions, id, public_id, poetry, general, completion, morphology, senses, relations, variants, forms, expression_candidates, occurrence_summary.
-You may omit general_dictionary and relations_checklist in the output (they are input-only).
-Keep top-level id/public_id and any existing numeric row ids.
-Keep poetry.* and occurrence_summary as read-only context (do not invent EN couplet lines).
+SENSES: generate NEW senses (omit id); keep existing ids. definition + short_gloss MUST be Sindhi; English only in definition_en / english_equivalents[]. Fill language_direction=sindhi, source_dictionary=Baakh Lughat, publisher=baakh.com, publisher_url=https://baakh.com/, prepared_by=Kamran Wahid, review_status=reviewed, status=approved. Include literal senses from general_dictionary AND poetic/figurative senses. english_equivalents required when English gloss is knowable.
 
-COMPLETE THE WORD (no empty required boxes):
-- general.lemma, general.normalized_lemma — keep/fill (never empty).
-- general.transliteration — REQUIRED roman of headword (never empty).
-- ROMAN ONLY (critical): transliteration and every romanization field must be plain Latin letters (a–z, spaces, hyphens). NO Arabic/Sindhi script. NO diacritic marks of any kind — no zabar/zer/pesh (َ ِ ُ), no tashdeed/shaddah (ّ), no sukun (ْ), no tanween, no hamza/madda marks, no combining accents (ā ī ū é). Write plain ASCII roman: aadmi not ādmī, not آدْمي, not áádmi. Same rule for relation/form/variant/example romanization.
-- general.pos — REQUIRED (noun/verb/adjective/…).
-- general.pronunciation_simple and/or general.phonetic — fill when possible; ipa if confident. IPA may use phonetic symbols; romanization fields must NOT.
-- morphology.root / gender / number when knowable from forms or dictionary; mark morphology_reviewed=true if you filled morphology.
-- At least one curated sense; usually several (see SENSES).
-- Every sense MUST fill: short_gloss, definition (primary, Sindhi), definition_sd when useful, optional definition_en, english_equivalents (string array of English gloss words, e.g. ["offspring","progeny","children"]), language_direction (prefer "sindhi"), source_dictionary, publisher, publisher_url, prepared_by, review_status="reviewed", status="approved".
-- english_equivalents is REQUIRED when an English gloss is knowable — never leave it empty if definition_en or common English glosses exist. Put short headword-style English words only (not full sentences).
-- Add ≥1 example per poetic sense when poetry.couplets allow (example_type=poetry_citation).
-- If you add variants or examples, set variants_reviewed / examples_reviewed true.
-- Set pronunciation_reviewed=true only if pronunciation fields are filled.
-- Set completion.completion_status="complete" and a short completion.completion_notes when all of the above are filled; otherwise "pending" and list what is still unknown.
-- general.source_confidence: 0–100.
-Set publish_romanization=false unless explicitly publishing.
+RELATIONS: typed synonym|antonym|hypernym|singular|plural|dialect|derived|usage|related — do NOT dump synonyms into related. Fill empty[] buckets when knowable. Each: related_word, romanization, note, gloss, part_of_speech.
 
-SENSES (most important — for poetry sense-tagging):
-- ALWAYS generate NEW senses (omit id for new rows). Keep existing sense ids.
-- PRIMARY DEFINITIONS IN SINDHI (critical): sense.definition and short_gloss MUST be written in Sindhi (Arabic script). Do not put English as the primary definition. Put English only in definition_en (optional secondary). definition_sd may repeat/clarify Sindhi when helpful.
-- Combine general_dictionary meanings WITH poetry understanding:
-  (a) Literal / general senses adapted from general_dictionary.* (usage_label e.g. "general" or "literal"; domain when known).
-  (b) NEW poetic / contextual senses based on how the word is used in poetry.source_couplet and poetry.couplets (usage_label e.g. "poetic", "figurative", "mystical", "romantic" as fits).
-- Goal: when an editor tags a word in a couplet, they can pick the sense that matches THAT poetic line so readers understand the verse.
-- Do NOT only copy one dictionary gloss — expand to cover both everyday and poetic readings.
-- Never leave sense definition/gloss/english_equivalents/language_direction/source empty when knowable.
-Source defaults on every sense: source_dictionary="Baakh Lughat", publisher="baakh.com", publisher_url="https://baakh.com/", prepared_by="Kamran Wahid".
+VARIANTS (critical): key "variant" + "type" (NOT variant_type). Types: spelling|misspelling|dialectal|historical|diacritic|normalized|short_vowel_variant|fully_voweled_variant|fatha_variant. Add ALL important airab forms (diacritic/short_vowel/fully_voweled/fatha) e.g. عشق→عِشْق,عشقُ,عَشق. variant may have اعراب; normalized_variant strips them. No random 5^n junk. Grammar → forms.inflections. Set variants_reviewed=true.
 
-FORMS / INFLECTIONS (critical for paradigms like تنھنجو/تنھنجي/تنھنجا/تنھنجون):
-Put structured forms in forms.inflections[]. For each form include when known:
-form, normalized_form, romanization, form_type, gender, number, case (or null), person, stem, suffix, confidence (0-1 or 0-100).
-Use null only for uncertain grammar — do not invent case/agreement. Prefer filling gender/number when clear.
-
-MULTIWORD EXPRESSIONS (separate from lemmas — do NOT make جامِ محبت a lemma):
-Keep individual lemmas (جام, محبت). Propose phrases in expression_candidates[] using poetry.token_hints indexes:
-{ "surface": "جامِ محبت", "start_token": 1, "end_token": 2, "type": "izafat", "literal_gloss": "cup of love", "poetic_interpretation": "metaphorical vessel of love", "confidence": 0.94 }
-Types: izafat|compound|collocation|idiom|metaphor|fixed_phrase|formulaic_phrase|reduplicative|name_or_title|other.
-Preserve izafat kasra in surface (جامِ محبت). Candidates enter a review inbox — do not treat as approved.
-
-UPSERT ONLY: do not omit rows to delete them. Set "_replace_missing": false (default).
-
-RELATIONS (critical — Linguistic Relations tab; do NOT leave empty when data exists):
-Fill relations[] using the CORRECT relation_type. Do NOT put synonyms into "related".
-Allowed relation_type values:
-- synonym — same/near meaning (e.g. آدمي ↔ انسان، ماڻهو، بشر)
-- antonym — opposite when clear
-- hypernym — broader class (e.g. آدمي → جاندار / مخلوق)
-- singular / plural — number pair of this lemma
-- dialect — regional form; set note to dialect name (e.g. Utradi)
-- derived — derived form (noun→agent/adj often ي: محبت→محبتي، خون→خوني); add gloss
-- usage — "people say" spoken form; put example sentence in gloss
-- related — ONLY leftover associates that are NOT synonyms/antonyms/hypernyms
-
-For EACH relation object include:
-{ "relation_type": "synonym", "related_word": "…", "romanization": "…", "note": null, "gloss": null, "part_of_speech": "noun" }
-Omit id for new rows; keep id when updating existing.
-Pull candidates from general_dictionary.synonyms / antonyms / hypernyms / related / plural / dialect / derived / usage AND from poetry usage.
-Also honor relations_checklist.empty — those buckets are currently 0 and should be filled when knowable (e.g. move انسان/ماڻهو/بشر from related → synonym).
-Aim for several synonyms when the general dictionary or common Sindhi usage provides them (as with آدمي).
-Prefer linking real Baakh Lughat lemmas via related_word that matches an existing headword when known.
-
-VARIANTS (spelling/dialect orthography only — not grammatical inflections; those go in forms.inflections):
-Use key "variant" (NOT "form") for the surface string. Use key "type" (NOT "variant_type").
-Allowed type values ONLY:
-spelling|misspelling|dialectal|historical|diacritic|normalized|short_vowel_variant|fully_voweled_variant|fatha_variant
-- diacritic = diacritic / airab forms (e.g. اولادُ)
-- fully_voweled_variant = fully vocalized form (e.g. اَولادُ) — American spelling "voweled", with _variant suffix
-- spelling = alternate orthography (e.g. اولاڌ)
-Example object:
-{ "variant": "اولاڌ", "type": "spelling", "romanization": "aulaadh", "dialect": null, "note": "…", "source": "Baakh Lughat" }
-Use Standard Sindhi Arabic script.
+FORMS: forms.inflections[] with form,normalized_form,romanization,form_type,gender,number,case,person,stem,suffix,confidence. completion_status=complete when filled else pending. publish_romanization=false.
 
 JSON:
 `;
+
+function slimLemmaForAi(lemma) {
+    if (!lemma || typeof lemma !== 'object') return lemma;
+
+    const gd = lemma.general_dictionary && typeof lemma.general_dictionary === 'object'
+        ? { ...lemma.general_dictionary }
+        : lemma.general_dictionary;
+
+    if (gd && typeof gd === 'object') {
+        delete gd.full_entry;
+        delete gd._note;
+        if (Array.isArray(gd.entries)) {
+            gd.entries = gd.entries.slice(0, 6).map((e) => ({
+                match_type: e.match_type,
+                id: e.id,
+                lemma: e.lemma,
+                pos: e.pos,
+                transliteration: e.transliteration,
+            }));
+        }
+        if (Array.isArray(gd.senses)) {
+            gd.senses = gd.senses.slice(0, 8);
+        }
+    }
+
+    const forms = lemma.forms && typeof lemma.forms === 'object'
+        ? {
+            inflections: Array.isArray(lemma.forms.inflections) ? lemma.forms.inflections : [],
+            idiomatic_expressions: [],
+            expressions: [],
+        }
+        : lemma.forms;
+
+    return {
+        _schema: lemma._schema,
+        _name: lemma._name,
+        id: lemma.id,
+        public_id: lemma.public_id,
+        general_dictionary: gd,
+        general: lemma.general,
+        completion: lemma.completion,
+        morphology: lemma.morphology,
+        senses: lemma.senses,
+        relations: lemma.relations,
+        relations_checklist: lemma.relations_checklist
+            ? { empty: lemma.relations_checklist.empty, counts: lemma.relations_checklist.counts }
+            : undefined,
+        variants: lemma.variants,
+        forms,
+        expression_candidates: [],
+        occurrence_summary: lemma.occurrence_summary,
+    };
+}
+
+function buildAiPayload(lemma) {
+    if (!lemma) return '';
+    // Compact JSON (no pretty-print) — much smaller for ChatGPT paste.
+    return AI_ENRICH_PROMPT + JSON.stringify(slimLemmaForAi(lemma));
+}
+
+function formatBytes(n) {
+    if (n < 1024) return `${n} chars`;
+    return `${(n / 1024).toFixed(1)} KB`;
+}
 
 function extractLemmaJson(raw) {
     const text = String(raw || '').trim();
@@ -134,7 +127,7 @@ function extractLemmaJson(raw) {
     throw new Error('Invalid JSON. Fix the syntax and try again.');
 }
 
-export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
+export default function LughatLemmaEditorJsonModal({ lemmaId, onClose, onImported }) {
     const queryClient = useQueryClient();
     const { data: lemma, isLoading } = useQuery({
         queryKey: ['lughat-lemma-editor-json', lemmaId],
@@ -147,15 +140,18 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
 
     const [copied, setCopied] = useState(false);
     const [copiedPrompt, setCopiedPrompt] = useState(false);
+    const [copiedDictionary, setCopiedDictionary] = useState(false);
     const [mode, setMode] = useState('view'); // view | input
     const [viewText, setViewText] = useState('');
     const [inputJson, setInputJson] = useState('');
     const [parseError, setParseError] = useState(null);
 
-    const aiPayload = useMemo(
-        () => (lemma ? AI_ENRICH_PROMPT + JSON.stringify(lemma, null, 2) : ''),
-        [lemma]
-    );
+    const aiPayload = useMemo(() => buildAiPayload(lemma), [lemma]);
+
+    const dictionaryContext = lemma?.general_dictionary;
+    const dictionaryFound = !!dictionaryContext?.found;
+    const dictionaryMatchCount = dictionaryContext?.match_count
+        || (Array.isArray(dictionaryContext?.entries) ? dictionaryContext.entries.length : 0);
 
     useEffect(() => {
         setMode('view');
@@ -163,6 +159,7 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
         setParseError(null);
         setCopied(false);
         setCopiedPrompt(false);
+        setCopiedDictionary(false);
     }, [lemmaId]);
 
     useEffect(() => {
@@ -180,12 +177,29 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
     };
 
     const handleCopyForAi = async () => {
-        const payload = viewText.trim() || aiPayload;
+        const payload = buildAiPayload(lemma) || viewText.trim();
         if (!payload) return;
         await navigator.clipboard.writeText(payload);
         setCopiedPrompt(true);
-        toast.success('Prompt + JSON copied. Paste into ChatGPT, then paste the reply JSON back via Input JSON.');
+        toast.success(
+            `Compact prompt copied (${formatBytes(payload.length)}). Poetry omitted — paste couplets separately if needed.`
+        );
         setTimeout(() => setCopiedPrompt(false), 2000);
+    };
+
+    const handleCopyDictionary = async () => {
+        if (!dictionaryContext) return;
+        // Compact dictionary only (same slim snapshot as AI).
+        const slim = slimLemmaForAi({ general_dictionary: dictionaryContext })?.general_dictionary
+            || dictionaryContext;
+        await navigator.clipboard.writeText(JSON.stringify(slim, null, 2));
+        setCopiedDictionary(true);
+        toast.success(
+            dictionaryFound
+                ? 'Compact general dictionary copied.'
+                : 'No general dictionary match found for this word (empty snapshot copied).'
+        );
+        setTimeout(() => setCopiedDictionary(false), 2000);
     };
 
     const handleOpenInput = () => {
@@ -213,6 +227,7 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
                     ? `Lemma updated. Roman “${roman}” saved to Romanizer + poetry EN.`
                     : 'Lemma rewritten from JSON.'
             );
+            onImported?.(data);
         },
         onError: (error) => {
             const message = error?.response?.data?.message
@@ -223,11 +238,11 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
         },
     });
 
-    const handleSubmitJson = () => {
-        setParseError(null);
+    const handleSubmitImport = () => {
         let parsed;
         try {
             parsed = extractLemmaJson(inputJson);
+            setParseError(null);
         } catch (error) {
             setParseError(error.message || 'Invalid JSON. Fix the syntax and try again.');
             return;
@@ -254,29 +269,67 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
                             <DialogTitle>Word Data JSON</DialogTitle>
                             <DialogDescription>
                                 {mode === 'view'
-                                    ? 'Edit box below has the AI prompt + JSON. Select all / Copy for AI → paste into ChatGPT → paste the reply via Input JSON.'
+                                    ? 'Compact AI payload (no poetry, slim dictionary). Copy for AI → ChatGPT → paste reply via Input JSON.'
                                     : 'Paste ONLY the JSON object ChatGPT returned (markdown fences are OK).'}
                             </DialogDescription>
+                            {lemma && (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {dictionaryFound ? (
+                                        <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                                            Dictionary: {dictionaryContext?.word || 'found'}
+                                            {dictionaryMatchCount > 1 ? ` · ${dictionaryMatchCount} variants` : ''}
+                                            {dictionaryContext?.match_type ? ` · ${dictionaryContext.match_type}` : ''}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-amber-800 border-amber-300">
+                                            Dictionary: not found
+                                        </Badge>
+                                    )}
+                                    {aiPayload && (
+                                        <Badge variant="outline" className="text-muted-foreground">
+                                            AI paste ~{formatBytes(aiPayload.length)}
+                                        </Badge>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        <div className="flex flex-wrap gap-2 shrink-0">
+                        <div className="flex flex-wrap gap-2">
+                            {mode === 'view' ? (
+                                <Button variant="outline" size="sm" onClick={handleOpenInput} disabled={!lemma}>
+                                    <FileInput className="h-4 w-4 mr-2" />
+                                    Input JSON
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" onClick={() => setMode('view')}>
+                                    Back
+                                </Button>
+                            )}
                             <Button variant="outline" size="sm" onClick={handleCopyForAi} disabled={!lemma || mode === 'input'}>
                                 {copiedPrompt ? <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> : <Sparkles className="h-4 w-4 mr-2" />}
                                 {copiedPrompt ? 'Copied' : 'Copy for AI'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleCopyDictionary}
+                                disabled={!lemma || mode === 'input'}
+                                title="Copy only general_dictionary (compact)"
+                            >
+                                {copiedDictionary ? <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> : <BookMarked className="h-4 w-4 mr-2" />}
+                                {copiedDictionary ? 'Copied' : 'Copy dictionary'}
                             </Button>
                             <Button variant="outline" size="sm" onClick={handleCopyJson} disabled={!lemma || mode === 'input'}>
                                 {copied ? <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> : <Copy className="h-4 w-4 mr-2" />}
                                 {copied ? 'Copied' : 'Copy JSON'}
                             </Button>
-                            <Button variant={mode === 'input' ? 'default' : 'outline'} size="sm" onClick={handleOpenInput} disabled={!lemma}>
-                                <FileInput className="h-4 w-4 mr-2" />
-                                Input JSON
-                            </Button>
                         </div>
                     </div>
                 </DialogHeader>
+
                 {isLoading ? (
-                    <div className="flex h-40 items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <div className="flex items-center justify-center py-16 text-muted-foreground">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        Loading lemma JSON…
                     </div>
                 ) : mode === 'input' ? (
                     <div className="flex flex-col gap-3 min-h-0 flex-1">
@@ -286,7 +339,7 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
                             className="font-mono text-xs min-h-[420px] flex-1"
                             dir="ltr"
                             spellCheck={false}
-                            placeholder={'Paste JSON only, e.g.\n{\n  "_schema": "baakh.lughat.editor_json.v1",\n  ...\n}'}
+                            placeholder={'Paste JSON only, e.g.\n{\n  "_schema": "baakh.lughat.editor_json.v2",\n  ...\n}'}
                         />
                         {parseError && (
                             <p className="text-sm text-destructive" role="alert">{parseError}</p>
@@ -295,7 +348,7 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
                             <Button variant="outline" onClick={() => setMode('view')} disabled={importJson.isPending}>
                                 Cancel
                             </Button>
-                            <Button onClick={handleSubmitJson} disabled={importJson.isPending || !inputJson.trim()}>
+                            <Button onClick={handleSubmitImport} disabled={importJson.isPending || !inputJson.trim()}>
                                 {importJson.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                                 Submit & Rewrite
                             </Button>
@@ -304,7 +357,7 @@ export default function LughatLemmaEditorJsonModal({ lemmaId, onClose }) {
                 ) : (
                     <div className="flex flex-col gap-2 min-h-0 flex-1">
                         <p className="text-xs text-muted-foreground">
-                            AI prompt + lemma JSON — edit if needed, then copy into ChatGPT.
+                            Compact AI prompt + lemma JSON — edit if needed, then copy into ChatGPT.
                         </p>
                         <Textarea
                             value={viewText}
