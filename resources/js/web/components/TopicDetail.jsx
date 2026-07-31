@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import PostCard from './PostCard';
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { BookOpen, ChevronRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, ChevronRight, ChevronLeft, User } from 'lucide-react';
 import AvatarImgOrIcon from './AvatarImgOrIcon';
 import { htmlToPlainText } from '../utils/html';
 
