@@ -1,6 +1,6 @@
 {
-  "_FitVerseBlock-d3646f1f.js": {
-    "file": "assets/FitVerseBlock-d3646f1f.js",
+  "_FitVerseBlock-0c3350f5.js": {
+    "file": "assets/FitVerseBlock-0c3350f5.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "resources/js/web/main.jsx",
@@ -10,12 +10,12 @@
       "_volume-2-b2a7dfde.js"
     ]
   },
-  "_PostCard-711a02e4.js": {
-    "file": "assets/PostCard-711a02e4.js",
+  "_PostCard-021b2145.js": {
+    "file": "assets/PostCard-021b2145.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_badge-e04067fa.js"
     ]
   },
@@ -101,12 +101,6 @@
       "_x-dfc327a8.js"
     ]
   },
-  "_scroll-text-1f89fd89.js": {
-    "file": "assets/scroll-text-1f89fd89.js",
-    "imports": [
-      "_x-dfc327a8.js"
-    ]
-  },
   "_separator-62c8536e.js": {
     "file": "assets/separator-62c8536e.js",
     "imports": [
@@ -150,19 +144,19 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-67d8e97d.css",
+    "file": "assets/app-f94f47bf.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
   "resources/js/admin/main.css": {
-    "file": "assets/main-223e2ced.css",
+    "file": "assets/main-6ec1d08b.css",
     "src": "resources/js/admin/main.css"
   },
   "resources/js/admin/main.jsx": {
     "css": [
-      "assets/main-223e2ced.css"
+      "assets/main-6ec1d08b.css"
     ],
-    "file": "assets/main-ff36ba51.js",
+    "file": "assets/main-c5a93b15.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -176,7 +170,6 @@
       "_external-link-212dec2f.js",
       "_SegmentedProgressBar-11a382b5.js",
       "_axios-ade11851.js",
-      "_scroll-text-1f89fd89.js",
       "_clock-8b02a8a4.js"
     ],
     "isEntry": true,
@@ -197,9 +190,9 @@
   "resources/js/lyrics/main.jsx": {
     "css": [
       "assets/main-878e776e.css",
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/main-01965546.js",
+    "file": "assets/main-2e53d9f3.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -211,20 +204,19 @@
   },
   "resources/js/web/components/CoupletsFeed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/CoupletsFeed-72bb30b9.js",
+    "file": "assets/CoupletsFeed-e7ab54d1.js",
     "imports": [
       "_radix-ui-bed44828.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_separator-62c8536e.js",
       "_PostCardSkeleton-9702b6d7.js",
       "_x-dfc327a8.js",
       "_useInfiniteQuery-a6365b45.js",
       "_index-9d3b4843.js",
       "resources/js/web/main.jsx",
-      "_scroll-text-1f89fd89.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_badge-e04067fa.js",
       "_recharts-74493c38.js",
       "_link-2-86aae0d7.js",
@@ -248,12 +240,12 @@
   },
   "resources/js/web/components/Feed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/Feed-92a0e27a.js",
+    "file": "assets/Feed-1a17ad01.js",
     "imports": [
       "_radix-ui-bed44828.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_x-dfc327a8.js",
       "_badge-e04067fa.js",
       "_separator-62c8536e.js",
@@ -261,7 +253,7 @@
       "_PostCardSkeleton-9702b6d7.js",
       "resources/js/web/main.jsx",
       "_useInfiniteQuery-a6365b45.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_link-2-86aae0d7.js",
       "_volume-2-b2a7dfde.js",
       "_axios-ade11851.js",
@@ -272,21 +264,21 @@
   },
   "resources/js/web/components/GenreFeed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/GenreFeed-f89e0149.js",
+    "file": "assets/GenreFeed-3e6b2fc5.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_badge-e04067fa.js",
       "_x-dfc327a8.js",
       "_useInfiniteQuery-a6365b45.js",
       "_index-9d3b4843.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_separator-62c8536e.js",
       "_PostCardSkeleton-9702b6d7.js",
       "_recharts-74493c38.js",
       "_axios-ade11851.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "resources/js/web/main.jsx",
       "_link-2-86aae0d7.js",
       "_volume-2-b2a7dfde.js"
@@ -296,22 +288,22 @@
   },
   "resources/js/web/components/PeriodFeed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/PeriodFeed-86998ad1.js",
+    "file": "assets/PeriodFeed-5c325f09.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_badge-e04067fa.js",
       "_x-dfc327a8.js",
       "_useInfiniteQuery-a6365b45.js",
       "_index-9d3b4843.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_separator-62c8536e.js",
       "_PostCardSkeleton-9702b6d7.js",
       "resources/js/web/main.jsx",
       "_recharts-74493c38.js",
       "_axios-ade11851.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_link-2-86aae0d7.js",
       "_volume-2-b2a7dfde.js"
     ],
@@ -320,14 +312,14 @@
   },
   "resources/js/web/components/PoemDetail.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/PoemDetail-695618eb.js",
+    "file": "assets/PoemDetail-cce83907.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
       "resources/js/web/main.jsx",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_badge-e04067fa.js",
       "_separator-62c8536e.js",
       "_dateUtils-29c5e816.js",
@@ -341,19 +333,19 @@
   },
   "resources/js/web/components/PoetProfile.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/PoetProfile-33c2c935.js",
+    "file": "assets/PoetProfile-fb4922dc.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_badge-e04067fa.js",
       "_SegmentedProgressBar-11a382b5.js",
       "_separator-62c8536e.js",
       "_x-dfc327a8.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_useInfiniteQuery-a6365b45.js",
       "_index-9d3b4843.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_html-5767ea50.js",
       "resources/js/web/main.jsx",
       "_link-2-86aae0d7.js",
@@ -366,12 +358,12 @@
   },
   "resources/js/web/components/PoetryFeed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/PoetryFeed-9b5f037b.js",
+    "file": "assets/PoetryFeed-b20dbabf.js",
     "imports": [
       "_radix-ui-bed44828.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_separator-62c8536e.js",
       "_PostCardSkeleton-9702b6d7.js",
       "_x-dfc327a8.js",
@@ -379,7 +371,7 @@
       "_index-9d3b4843.js",
       "resources/js/web/main.jsx",
       "_badge-e04067fa.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "_link-2-86aae0d7.js",
       "_volume-2-b2a7dfde.js",
       "_axios-ade11851.js",
@@ -390,9 +382,9 @@
   },
   "resources/js/web/components/PoetsFeed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/PoetsFeed-cbd1781b.js",
+    "file": "assets/PoetsFeed-f2aac2ba.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_badge-e04067fa.js",
@@ -409,9 +401,9 @@
   },
   "resources/js/web/components/ProsodyFeed.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/ProsodyFeed-8d7fd03b.js",
+    "file": "assets/ProsodyFeed-5a660138.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_badge-e04067fa.js",
@@ -429,9 +421,9 @@
   },
   "resources/js/web/components/SidebarLeft.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/SidebarLeft-d3179e06.js",
+    "file": "assets/SidebarLeft-6789f9db.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -445,12 +437,12 @@
   },
   "resources/js/web/components/SidebarRight.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
     "dynamicImports": [
       "_x-dfc327a8.js"
     ],
-    "file": "assets/SidebarRight-41a11aed.js",
+    "file": "assets/SidebarRight-f68c6071.js",
     "imports": [
       "resources/js/web/main.jsx",
       "_radix-ui-bed44828.js",
@@ -465,9 +457,9 @@
   },
   "resources/js/web/components/SocialCallback.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/SocialCallback-131663d8.js",
+    "file": "assets/SocialCallback-3839a9f7.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -481,18 +473,18 @@
   },
   "resources/js/web/components/TopicDetail.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/TopicDetail-de64f038.js",
+    "file": "assets/TopicDetail-5f0c8b6d.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
       "_badge-e04067fa.js",
-      "_PostCard-711a02e4.js",
+      "_PostCard-021b2145.js",
       "_html-5767ea50.js",
       "_axios-ade11851.js",
       "_recharts-74493c38.js",
-      "_FitVerseBlock-d3646f1f.js",
+      "_FitVerseBlock-0c3350f5.js",
       "resources/js/web/main.jsx",
       "_link-2-86aae0d7.js",
       "_volume-2-b2a7dfde.js"
@@ -502,7 +494,7 @@
   },
   "resources/js/web/main.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
     "dynamicImports": [
       "_x-dfc327a8.js",
@@ -532,7 +524,7 @@
       "resources/js/web/components/ExploreTopics.jsx",
       "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-4e201e55.js",
+    "file": "assets/main-2e218060.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -557,9 +549,9 @@
   },
   "resources/js/web/pages/ForgotPassword.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/ForgotPassword-e800f3c9.js",
+    "file": "assets/ForgotPassword-67562c7e.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -597,9 +589,9 @@
   },
   "resources/js/web/pages/Profile.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/Profile-9c2fcc86.js",
+    "file": "assets/Profile-12b89c24.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -629,9 +621,9 @@
   },
   "resources/js/web/pages/SetPassword.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/SetPassword-194bae5a.js",
+    "file": "assets/SetPassword-b680a008.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
@@ -647,9 +639,9 @@
   },
   "resources/js/web/pages/Settings.jsx": {
     "css": [
-      "assets/app-67d8e97d.css"
+      "assets/app-f94f47bf.css"
     ],
-    "file": "assets/Settings-a4894280.js",
+    "file": "assets/Settings-2b9407a4.js",
     "imports": [
       "_radix-ui-bed44828.js",
       "_x-dfc327a8.js",
