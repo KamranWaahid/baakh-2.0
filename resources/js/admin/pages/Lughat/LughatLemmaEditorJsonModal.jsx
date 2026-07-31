@@ -19,20 +19,25 @@ import {
 /** Compact prompt — keep under ChatGPT paste limits; rules stay dense. */
 const AI_ENRICH_PROMPT = `Enrich this Baakh Lughat lemma JSON. Return ONLY one valid JSON object (no markdown, no prose).
 
-INPUTS in JSON: general_dictionary (compact READ-ONLY), relations_checklist.empty, current senses/forms/relations/variants. poetry.* is empty — if couplets are pasted separately in chat, use them for poetic senses / poetry_citation / expression_candidates; else leave expression_candidates=[].
+RULE #1 — NEVER IGNORE EMPTY BOXES: empty_editor_fields.fields[] lists every null/empty Baakh Lughat editor input. Fill each path. Keep keys even if still unknown (null or []). Do not drop sections. Server marks complete only when checklist passes — default completion_status=pending.
 
-KEEP keys: _schema,_name,_instructions,id,public_id,poetry,general,completion,morphology,senses,relations,variants,forms,expression_candidates,occurrence_summary. Omit general_dictionary + relations_checklist in output. Keep numeric ids.
+INPUTS (read-only helpers — omit from output): general_dictionary, relations_checklist, empty_editor_fields, completion.missing_requirements. poetry.* is empty unless couplets are pasted separately in chat.
 
-FILL: lemma,normalized_lemma,pos,transliteration (never empty). ROMAN ONLY = ASCII a-z/spaces/hyphens (no Arabic, no َُِّْ, no āīū). Pronunciation fields when known. morphology when knowable → morphology_reviewed=true.
-NO GUILLEMETS: never wrap Sindhi words in « » or ‹ › (write آدمي not «آدمي»). Same for lemma, related_word, variants, definitions, glosses, notes.
+KEEP output keys: _schema,_name,_instructions,id,public_id,poetry,general,completion,morphology,senses,relations,variants,forms,expression_candidates,occurrence_summary. Keep numeric ids. NO GUILLEMETS «»/‹› (آدمي not «آدمي»).
 
-SENSES: generate NEW senses (omit id); keep existing ids. definition + short_gloss MUST be Sindhi; English only in definition_en / english_equivalents[]. Fill language_direction=sindhi, source_dictionary=Baakh Lughat, publisher=baakh.com, publisher_url=https://baakh.com/, prepared_by=Kamran Wahid, review_status=reviewed, status=approved. Include literal senses from general_dictionary AND poetic/figurative senses. english_equivalents required when English gloss is knowable.
+GENERAL (all boxes): lemma,normalized_lemma,pos,transliteration (ASCII a-z/spaces/hyphens only),ipa,phonetic,pronunciation_simple,audio_url (URL or null),syllabification,source_confidence,status,etymology,notes,search_keywords_sindhi[],search_keywords_english[],search_keywords_romanized[],metadata_region,metadata_dialect_notes,metadata_version,variants_reviewed,examples_reviewed,morphology_reviewed,pronunciation_reviewed,primary_meanings.{definition,definition_sd,definition_en}. Set *reviewed=true only after those sections are filled.
 
-RELATIONS: typed synonym|antonym|hypernym|singular|plural|dialect|derived|usage|related — do NOT dump synonyms into related. Fill empty[] buckets when knowable. Each: related_word, romanization, note, gloss, part_of_speech.
+MORPHOLOGY (all boxes): root,pattern,gender,number,case,tense — fill every knowable cell; for particle/postposition/conjunction at least pattern (e.g. غير متصرف حرف اضافت). morphology_reviewed=true when done.
 
-VARIANTS (critical): key "variant" + "type" (NOT variant_type). Types: spelling|misspelling|dialectal|historical|diacritic|normalized|short_vowel_variant|fully_voweled_variant|fatha_variant. Add ALL important airab forms (diacritic/short_vowel/fully_voweled/fatha) e.g. عشق→عِشْق,عشقُ,عَشق. variant may have اعراب; normalized_variant strips them. No random 5^n junk. Grammar → forms.inflections. Set variants_reviewed=true.
+SENSES (every sense — every box): definition,short_gloss,definition_sd (Sindhi Arabic script),definition_en,english_equivalents[] (required array),usage_label,domain,language_direction=sindhi,source_dictionary=Baakh Lughat,publisher=baakh.com,publisher_url=https://baakh.com/,prepared_by=Kamran Wahid,review_status=reviewed,status=approved,examples[{sentence,romanization,translation,source,citation,review_status}]. Keep existing sense ids; new senses omit id. Prefer 2–4 senses (literal + figurative/poetic).
 
-FORMS: forms.inflections[] with form,normalized_form,romanization,form_type,gender,number,case,person,stem,suffix,confidence. completion_status=complete when filled else pending. publish_romanization=false.
+RELATIONS (entry options): synonym|antonym|hypernym|singular|plural|dialect|derived|usage|related. MUST have typed synonym+ when knowable — do NOT dump near-synonyms only into related. Each row: relation_type,related_word,romanization,note,gloss,part_of_speech. Fill relations_checklist.empty buckets.
+
+VARIANTS (every box): variant,normalized_variant,type,romanization,dialect,note,source. Types: spelling|misspelling|dialectal|historical|diacritic|normalized|short_vowel_variant|fully_voweled_variant|fatha_variant. Airab in variant; normalized_variant strips airab. Grammar → forms.inflections. variants_reviewed=true.
+
+FORMS: inflections[{form,normalized_form,romanization,form_type,gender,number,case,person,stem,suffix,confidence,description}] required for noun/verb/adj. idiomatic_expressions[{phrase,romanization,english_gloss,example_sindhi,example_english}] when attested else []. expression_candidates when couplets justify multi-word phrases.
+
+COMPLETION: completion_status=pending unless every required editor box is truly filled. publish_romanization=false.
 
 JSON:
 `;
@@ -64,10 +69,21 @@ function slimLemmaForAi(lemma) {
     const forms = lemma.forms && typeof lemma.forms === 'object'
         ? {
             inflections: Array.isArray(lemma.forms.inflections) ? lemma.forms.inflections : [],
-            idiomatic_expressions: [],
+            idiomatic_expressions: Array.isArray(lemma.forms.idiomatic_expressions)
+                ? lemma.forms.idiomatic_expressions
+                : [],
             expressions: [],
         }
         : lemma.forms;
+
+    const emptyFields = lemma.empty_editor_fields && typeof lemma.empty_editor_fields === 'object'
+        ? {
+            count: lemma.empty_editor_fields.count,
+            fields: Array.isArray(lemma.empty_editor_fields.fields)
+                ? lemma.empty_editor_fields.fields.slice(0, 80)
+                : [],
+        }
+        : undefined;
 
     return {
         _schema: lemma._schema,
@@ -83,9 +99,10 @@ function slimLemmaForAi(lemma) {
         relations_checklist: lemma.relations_checklist
             ? { empty: lemma.relations_checklist.empty, counts: lemma.relations_checklist.counts }
             : undefined,
+        empty_editor_fields: emptyFields,
         variants: lemma.variants,
         forms,
-        expression_candidates: [],
+        expression_candidates: Array.isArray(lemma.expression_candidates) ? lemma.expression_candidates : [],
         occurrence_summary: lemma.occurrence_summary,
     };
 }
