@@ -34,23 +34,37 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useDebounce } from '@/hooks/useDebounce';
 
+const LUGHAT_FILTERS = [
+    { value: 'all', label: 'All' },
+    { value: 'processed', label: 'Lughat processed' },
+    { value: 'pending', label: 'Not processed' },
+];
+
 const PoetryList = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
     const [showTrash, setShowTrash] = useState(false);
+    const [lughatFilter, setLughatFilter] = useState('all');
     const debouncedSearch = useDebounce(search, 500);
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['poetry', page, debouncedSearch, showTrash],
+        queryKey: ['poetry', page, debouncedSearch, showTrash, lughatFilter],
         queryFn: async () => {
             const response = await api.get('/api/admin/poetry', {
-                params: { page, search: debouncedSearch, only_trashed: showTrash },
+                params: {
+                    page,
+                    search: debouncedSearch,
+                    only_trashed: showTrash,
+                    lughat: lughatFilter,
+                },
             });
             return response.data;
         },
         placeholderData: keepPreviousData,
     });
+
+    const lughatCounts = data?.lughat_counts || { all: 0, processed: 0, pending: 0 };
 
     const deleteMutation = useMutation({
         mutationFn: async (id) => {
@@ -193,7 +207,7 @@ const PoetryList = () => {
             <Card>
                 <CardHeader className="space-y-1">
                     <CardTitle className="text-xl">Manage Poetry</CardTitle>
-                    <div className="flex items-center py-2">
+                    <div className="flex flex-col gap-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                         <Input
                             placeholder="Search titles or poets..."
                             value={search}
@@ -203,6 +217,38 @@ const PoetryList = () => {
                             }}
                             className="max-w-full sm:max-w-sm"
                         />
+                        {!showTrash && (
+                            <div className="flex flex-wrap gap-2">
+                                {LUGHAT_FILTERS.map((f) => {
+                                    const count = lughatCounts[f.value === 'all' ? 'all' : f.value] ?? 0;
+                                    const active = lughatFilter === f.value;
+                                    return (
+                                        <Button
+                                            key={f.value}
+                                            type="button"
+                                            size="sm"
+                                            variant={active ? 'default' : 'outline'}
+                                            onClick={() => {
+                                                setLughatFilter(f.value);
+                                                setPage(1);
+                                            }}
+                                            title={
+                                                f.value === 'processed'
+                                                    ? 'Poetry saved through Baakh Lughat romanization'
+                                                    : f.value === 'pending'
+                                                        ? 'Still on legacy / not yet processed via Lughat edit'
+                                                        : 'All poetry'
+                                            }
+                                        >
+                                            {f.label}
+                                            <span className={`ml-1.5 text-xs ${active ? 'opacity-80' : 'text-muted-foreground'}`}>
+                                                {Number(count).toLocaleString()}
+                                            </span>
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -214,6 +260,7 @@ const PoetryList = () => {
                                     <TableHead>Poet</TableHead>
                                     <TableHead className="hidden lg:table-cell">Category</TableHead>
                                     <TableHead className="hidden md:table-cell">Status</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Lughat</TableHead>
                                     <TableHead className="hidden xl:table-cell">Added By</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
@@ -226,19 +273,20 @@ const PoetryList = () => {
                                             <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
                                             <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
                                             <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                                             <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                                         </TableRow>
                                     ))
                                 ) : isError ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center text-red-500">
+                                        <TableCell colSpan={7} className="h-24 text-center text-red-500">
                                             Error loading poetry.
                                         </TableCell>
                                     </TableRow>
                                 ) : data?.data?.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
+                                        <TableCell colSpan={7} className="h-24 text-center">
                                             No poetry found.
                                         </TableCell>
                                     </TableRow>
@@ -265,6 +313,13 @@ const PoetryList = () => {
                                                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                                     )}
                                                 </div>
+                                            </TableCell>
+                                            <TableCell className="hidden sm:table-cell">
+                                                {p.lughat_processed ? (
+                                                    <span className="text-xs font-semibold text-emerald-700">Processed</span>
+                                                ) : (
+                                                    <span className="text-xs font-semibold text-amber-700">Not processed</span>
+                                                )}
                                             </TableCell>
                                             <TableCell className="hidden xl:table-cell">
                                                 <div className="text-sm">

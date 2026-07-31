@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import React, { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '@/admin/api/axios';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,19 +21,24 @@ import { toast } from 'sonner';
 import {
     Search, Book, Layers, Type, Languages, ArrowRightLeft,
     ChevronLeft, ChevronRight, Loader2, Edit2, Eye, Copy, CheckCircle2,
-    Plus
+    Plus, BookCheck, BookX, SpellCheck
 } from 'lucide-react';
 import LemmaEditorJsonModal from './LemmaEditorJsonModal';
-import IncompleteWordOfTheDay from './IncompleteWordOfTheDay';
+import { cn } from '@/lib/utils';
 
 const DictionaryHome = () => {
+    const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [completionStatus, setCompletionStatus] = useState('all');
+    const [lughatStatus, setLughatStatus] = useState('all'); // all | added | remaining
     const [activeTab, setActiveTab] = useState('browse');
     const [viewingLemmaId, setViewingLemmaId] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isBatchScrapeModalOpen, setIsBatchScrapeModalOpen] = useState(false);
+    const [hesudharRunning, setHesudharRunning] = useState(false);
+    const [hesudharProgress, setHesudharProgress] = useState(null);
+    const hesudharCancelRef = useRef(false);
 
     // ── Stats ──
     const { data: stats } = useQuery({
@@ -44,17 +49,111 @@ const DictionaryHome = () => {
         }
     });
 
+    const { data: lughatStats } = useQuery({
+        queryKey: ['dictionary-lughat-stats'],
+        queryFn: async () => {
+            const res = await api.get('/api/admin/dictionary/lughat-stats');
+            return res.data;
+        }
+    });
+
     // ── Lemma list ──
     const { data: response, isLoading } = useQuery({
-        queryKey: ['dictionary-browse', search, page, completionStatus],
+        queryKey: ['dictionary-browse', search, page, completionStatus, lughatStatus],
         queryFn: async () => {
             const res = await api.get('/api/admin/dictionary/lemmas', {
-                params: { search, page, limit: 20, completion_status: completionStatus }
+                params: {
+                    search,
+                    page,
+                    limit: 20,
+                    completion_status: completionStatus,
+                    lughat_status: lughatStatus,
+                }
             });
             return res.data;
         },
         placeholderData: (prev) => prev
     });
+
+    const setLughatFilter = (next) => {
+        setLughatStatus(next);
+        setPage(1);
+    };
+
+    const runDictionaryHesudhar = async () => {
+        if (hesudharRunning) return;
+        const resumeFrom = hesudharProgress?.afterId && !hesudharProgress?.done
+            ? hesudharProgress.afterId
+            : 0;
+        const ok = window.confirm(
+            'Run Hesudhar on general-dictionary HEADWORDS only?\n\n'
+            + '• Fixes he / heh (ه ہ ھ) via WordNet + phonetic rules\n'
+            + '• Does NOT change meanings / senses\n'
+            + '• Runs in small batches so the server stays up\n'
+            + (resumeFrom > 0 ? `\nResume from lemma id #${resumeFrom}?\n` : '\n')
+            + 'Continue?'
+        );
+        if (!ok) return;
+
+        hesudharCancelRef.current = false;
+        setHesudharRunning(true);
+        let afterId = resumeFrom;
+        let totalScanned = resumeFrom > 0 ? (hesudharProgress?.scanned || 0) : 0;
+        let totalUpdated = resumeFrom > 0 ? (hesudharProgress?.updated || 0) : 0;
+        let totalConflicts = resumeFrom > 0 ? (hesudharProgress?.conflicts || 0) : 0;
+        const samples = [];
+
+        try {
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                if (hesudharCancelRef.current) break;
+                const res = await api.post('/api/admin/dictionary/hesudhar-lemmas', {
+                    after_id: afterId,
+                    limit: 400,
+                });
+                const batch = res.data?.data || {};
+                totalScanned += batch.scanned || 0;
+                totalUpdated += batch.updated || 0;
+                totalConflicts += batch.skipped_conflict || 0;
+                if (Array.isArray(batch.samples)) {
+                    samples.push(...batch.samples.slice(0, Math.max(0, 8 - samples.length)));
+                }
+                afterId = batch.next_after_id || afterId;
+                setHesudharProgress({
+                    scanned: totalScanned,
+                    updated: totalUpdated,
+                    conflicts: totalConflicts,
+                    afterId,
+                    done: !!batch.done,
+                });
+                if (batch.done) break;
+                // Small pause so we don't stampede the API between batches.
+                await new Promise((resolve) => setTimeout(resolve, 150));
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['dictionary-browse'] });
+            queryClient.invalidateQueries({ queryKey: ['dictionary-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['dictionary-lughat-stats'] });
+
+            if (hesudharCancelRef.current) {
+                toast.message(`Hesudhar stopped. Updated ${totalUpdated.toLocaleString()} headwords so far.`);
+            } else {
+                toast.success(
+                    `Hesudhar done. Scanned ${totalScanned.toLocaleString()}, updated ${totalUpdated.toLocaleString()}`
+                    + (totalConflicts ? `, skipped ${totalConflicts.toLocaleString()} conflicts` : '')
+                    + '.'
+                );
+            }
+        } catch (error) {
+            if (error?.response?.status === 429) {
+                toast.error('Rate limited. Wait ~30s, then click Hesudhar again — it resumes from the last cursor.');
+            } else {
+                toast.error(error?.response?.data?.message || 'Hesudhar batch failed.');
+            }
+        } finally {
+            setHesudharRunning(false);
+        }
+    };
 
     // ── Word lookup ──
     const [lookupWord, setLookupWord] = useState('');
@@ -88,12 +187,45 @@ const DictionaryHome = () => {
                         Sindhi Open Lexicon — {stats?.open_lexicon_entries?.toLocaleString() || '—'} entries
                     </p>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
+                    <Button
+                        variant="outline"
+                        onClick={runDictionaryHesudhar}
+                        disabled={hesudharRunning}
+                        className="w-full sm:w-auto"
+                        title="Fix he/heh on headwords only (batched)"
+                    >
+                        {hesudharRunning
+                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            : <SpellCheck className="mr-2 h-4 w-4" />}
+                        {hesudharRunning
+                            ? `Hesudhar… ${hesudharProgress?.scanned?.toLocaleString?.() || 0}`
+                            : 'Hesudhar'}
+                    </Button>
+                    {hesudharRunning && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                            onClick={() => { hesudharCancelRef.current = true; }}
+                        >
+                            Stop
+                        </Button>
+                    )}
                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" /> Add Word
                     </Button>
                 </div>
             </div>
+
+            {hesudharProgress && (
+                <p className="text-xs text-muted-foreground">
+                    Hesudhar progress: scanned {hesudharProgress.scanned?.toLocaleString()} ·
+                    updated {hesudharProgress.updated?.toLocaleString()} ·
+                    conflicts {hesudharProgress.conflicts?.toLocaleString()}
+                    {hesudharProgress.done ? ' · done' : ` · cursor #${hesudharProgress.afterId}`}
+                </p>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -103,7 +235,46 @@ const DictionaryHome = () => {
                 <StatCard icon={Type} label="Completion" value={`${stats?.completion_percentage ?? '—'}%`} sub={topSource?.source_dictionary || 'Top source'} />
             </div>
 
-            <IncompleteWordOfTheDay />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Card className={cn(lughatStatus === 'added' && 'ring-2 ring-emerald-500/40')}>
+                    <CardHeader className="pb-2">
+                        <CardDescription>Added in Baakh Lughat</CardDescription>
+                        <CardTitle className="text-3xl tabular-nums text-emerald-700">
+                            {lughatStats?.added?.toLocaleString() ?? '—'}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <Button
+                            size="sm"
+                            variant={lughatStatus === 'added' ? 'default' : 'outline'}
+                            className="w-full"
+                            onClick={() => setLughatFilter(lughatStatus === 'added' ? 'all' : 'added')}
+                        >
+                            <BookCheck className="mr-2 h-4 w-4" />
+                            {lughatStatus === 'added' ? 'Showing added' : 'See added'}
+                        </Button>
+                    </CardContent>
+                </Card>
+                <Card className={cn(lughatStatus === 'remaining' && 'ring-2 ring-amber-500/40')}>
+                    <CardHeader className="pb-2">
+                        <CardDescription>Remaining (not in Lughat)</CardDescription>
+                        <CardTitle className="text-3xl tabular-nums text-amber-700">
+                            {lughatStats?.remaining?.toLocaleString() ?? '—'}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <Button
+                            size="sm"
+                            variant={lughatStatus === 'remaining' ? 'default' : 'outline'}
+                            className="w-full"
+                            onClick={() => setLughatFilter(lughatStatus === 'remaining' ? 'all' : 'remaining')}
+                        >
+                            <BookX className="mr-2 h-4 w-4" />
+                            {lughatStatus === 'remaining' ? 'Showing remaining' : 'See remaining'}
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -143,6 +314,24 @@ const DictionaryHome = () => {
                                         </Button>
                                     ))}
                                 </div>
+                                <div className="flex items-center gap-1 rounded-md border p-1 overflow-x-auto max-w-full shrink-0">
+                                    {[
+                                        { key: 'all', label: 'All Lughat' },
+                                        { key: 'added', label: 'Added' },
+                                        { key: 'remaining', label: 'Remaining' },
+                                    ].map((item) => (
+                                        <Button
+                                            key={item.key}
+                                            type="button"
+                                            size="sm"
+                                            variant={lughatStatus === item.key ? 'default' : 'ghost'}
+                                            onClick={() => setLughatFilter(item.key)}
+                                            className="shrink-0"
+                                        >
+                                            {item.label}
+                                        </Button>
+                                    ))}
+                                </div>
                                 {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />}
                             </div>
                         </CardHeader>
@@ -157,6 +346,7 @@ const DictionaryHome = () => {
                                             <TableHead>Definition</TableHead>
                                             <TableHead>Source</TableHead>
                                             <TableHead>Senses</TableHead>
+                                            <TableHead>Lughat</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Completion</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
@@ -211,6 +401,13 @@ const DictionaryHome = () => {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
+                                                            {lemma.in_lughat ? (
+                                                                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Added</Badge>
+                                                            ) : (
+                                                                <Badge variant="outline" className="text-amber-800 border-amber-300">Remaining</Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
                                                             <Badge variant={
                                                                 lemma.status === 'approved' ? 'default' :
                                                                     lemma.status === 'rejected' ? 'destructive' : 'outline'
@@ -238,7 +435,7 @@ const DictionaryHome = () => {
                                             })
                                         ) : !isLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                                                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                                                     No words found.
                                                 </TableCell>
                                             </TableRow>

@@ -17,6 +17,7 @@ use App\Services\LughatExpressionService;
 use App\Services\LughatLemmaEditorJsonService;
 use App\Services\LughatLemmaJsonImportService;
 use App\Services\LughatMissingWordsService;
+use App\Services\LughatPoetryRomanService;
 use App\Services\LughatPoetrySenseAnnotationService;
 use App\Services\LughatPoetryWordImporter;
 use App\Services\LughatStructuredEntryService;
@@ -25,6 +26,7 @@ use App\Services\RomanizerService;
 use App\Support\DictionaryText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 
@@ -365,6 +367,32 @@ class LughatDictionaryController extends Controller
                 'poetic_gloss' => $expressionRow->poetic_gloss,
             ] : null,
         ], 201);
+    }
+
+    /**
+     * Resolve an existing Baakh Lughat lemma for a surface (with/without airab)
+     * or create a word-only stub. Never duplicates a normalize-match.
+     */
+    public function stubFromSurface(Request $request, LughatPoetryRomanService $roman)
+    {
+        $validated = $request->validate([
+            'surface' => 'required|string|max:255',
+        ]);
+
+        try {
+            $result = $roman->resolveOrCreateStub($validated['surface'], [
+                'source' => 'poetry_create_missing_word',
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'message' => $result['created']
+                ? 'Baakh Lughat stub created.'
+                : 'Existing Baakh Lughat lemma found (duplicate avoided).',
+            ...$result,
+        ], $result['created'] ? 201 : 200);
     }
 
     public function storeExpression(Request $request, LughatExpressionService $expressions)
@@ -844,15 +872,20 @@ class LughatDictionaryController extends Controller
         ]);
 
         $validated['normalized_lemma'] = $validated['normalized_lemma'] ?? $this->defaultNormalizedLemma($validated['lemma']);
+        $validated['lookup_base'] = $validated['lookup_base'] ?? DictionaryText::lookupBase($validated['lemma']);
         $validated['completion_status'] = LughatLemma::COMPLETION_PENDING;
         $validated['metadata_json'] = $validated['metadata_json'] ?? [
             'dictionary' => 'Baakh Lughat',
             'version' => '1',
         ];
 
-        $existing = LughatLemma::where('normalized_lemma', $validated['normalized_lemma'])
+        // Identity includes airab — نَھن and نُھن are different lemmas (BINARY).
+        $existing = LughatLemma::where('language', $validated['language'] ?? 'sd')
             ->where('homograph_number', $validated['homograph_number'] ?? 1)
-            ->where('language', $validated['language'] ?? 'sd')
+            ->where(function ($q) use ($validated) {
+                $q->whereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$validated['normalized_lemma']])
+                    ->orWhereRaw(DictionaryText::binaryEquals('lemma'), [$validated['lemma']]);
+            })
             ->first();
         if ($existing) {
             return response()->json([
@@ -1207,6 +1240,7 @@ class LughatDictionaryController extends Controller
 
         if (array_key_exists('lemma', $validated) && !array_key_exists('normalized_lemma', $validated)) {
             $validated['normalized_lemma'] = $this->defaultNormalizedLemma($validated['lemma']);
+            $validated['lookup_base'] = DictionaryText::lookupBase($validated['lemma']);
         }
 
         $lemma->update($validated);
@@ -1740,7 +1774,7 @@ class LughatDictionaryController extends Controller
 
     private function defaultNormalizedLemma(string $lemma): string
     {
-        return DictionaryText::normalizeForLookup($lemma);
+        return DictionaryText::normalizeForIdentity($lemma);
     }
 
     /**
@@ -1843,6 +1877,7 @@ class LughatDictionaryController extends Controller
         $lemma = LughatLemma::create([
             'lemma' => $word,
             'normalized_lemma' => $this->defaultNormalizedLemma($word),
+            'lookup_base' => DictionaryText::lookupBase($word),
             'transliteration' => $romanization,
             'pos' => $partOfSpeech,
             'status' => 'pending',
@@ -1885,30 +1920,46 @@ class LughatDictionaryController extends Controller
 
     private function findLemmaByDictionaryWord(string $word, ?int $excludeLemmaId = null): ?LughatLemma
     {
-        $normalizedWord = $this->defaultNormalizedLemma($word);
+        $identity = $this->defaultNormalizedLemma($word);
+        $base = DictionaryText::lookupBase($word);
 
         $lemma = LughatLemma::query()
             ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
-            ->where(function ($query) use ($word, $normalizedWord) {
-                $query->where('lemma', $word)
-                    ->orWhere('normalized_lemma', $normalizedWord)
-                    ->orWhereRaw($this->normalizedSql('lemma') . ' = ?', [$normalizedWord])
-                    ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalizedWord]);
+            ->where(function ($query) use ($word, $identity) {
+                $query->whereRaw(DictionaryText::binaryEquals('lemma'), [$word])
+                    ->orWhereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$identity]);
             })
-            ->orderByRaw('CASE WHEN lemma = ? THEN 0 ELSE 1 END', [$word])
+            ->orderByRaw('CASE WHEN BINARY lemma = ? THEN 0 ELSE 1 END', [$word])
             ->first();
 
         if ($lemma) {
             return $lemma;
         }
 
+        // Bare form without airab: unique base match only (never collapse نَھن/نُھن).
+        if (!DictionaryText::hasDiacritics($word) && $base !== '') {
+            $hasLookupBase = Schema::hasColumn('lughat_lemmas', 'lookup_base');
+            $matches = LughatLemma::query()
+                ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
+                ->where(function ($q) use ($base, $hasLookupBase) {
+                    if ($hasLookupBase) {
+                        $q->where('lookup_base', $base)->orWhere('normalized_lemma', $base);
+                    } else {
+                        $q->where('normalized_lemma', $base);
+                    }
+                })
+                ->limit(2)
+                ->get();
+            if ($matches->count() === 1) {
+                return $matches->first();
+            }
+        }
+
         return LughatLemma::query()
             ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
-            ->whereHas('variants', function ($query) use ($word, $normalizedWord) {
+            ->whereHas('variants', function ($query) use ($word, $identity) {
                 $query->where('variant', $word)
-                    ->orWhere('normalized_variant', $normalizedWord)
-                    ->orWhereRaw($this->normalizedSql('variant') . ' = ?', [$normalizedWord])
-                    ->orWhereRaw($this->normalizedSql('normalized_variant') . ' = ?', [$normalizedWord]);
+                    ->orWhere('normalized_variant', $identity);
             })
             ->first();
     }

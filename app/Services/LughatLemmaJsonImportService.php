@@ -219,6 +219,11 @@ class LughatLemmaJsonImportService
 
             if (is_string($value)) {
                 $trimmed = trim($value);
+                if ($field === 'lemma') {
+                    $trimmed = DictionaryText::stripPunctuation($trimmed);
+                } elseif (in_array($field, ['etymology', 'notes'], true)) {
+                    $trimmed = trim(DictionaryText::stripGuillemets($trimmed));
+                }
                 $updates[$field] = $trimmed === '' ? null : $trimmed;
                 continue;
             }
@@ -228,7 +233,8 @@ class LughatLemmaJsonImportService
 
         if ($updates !== []) {
             if (isset($updates['lemma']) && !array_key_exists('normalized_lemma', $updates)) {
-                $updates['normalized_lemma'] = DictionaryText::normalizeForLookup($updates['lemma']);
+                $updates['normalized_lemma'] = DictionaryText::normalizeForIdentity($updates['lemma']);
+                $updates['lookup_base'] = DictionaryText::lookupBase($updates['lemma']);
             }
 
             $lemma->update($updates);
@@ -282,6 +288,15 @@ class LughatLemmaJsonImportService
             $sensePayload = $this->extractFields($senseData, self::SENSE_FIELDS);
             $sensePayload['lemma_id'] = $lemma->id;
             unset($sensePayload['public_id']);
+
+            foreach (['definition', 'definition_sd', 'definition_en', 'short_gloss', 'full_definition', 'usage_notes', 'notes'] as $textField) {
+                if (isset($sensePayload[$textField]) && is_string($sensePayload[$textField])) {
+                    $sensePayload[$textField] = trim(DictionaryText::stripGuillemets($sensePayload[$textField]));
+                    if ($sensePayload[$textField] === '') {
+                        $sensePayload[$textField] = null;
+                    }
+                }
+            }
 
             if (!isset($sensePayload['sense_order'])) {
                 $sensePayload['sense_order'] = $index + 1;
@@ -447,12 +462,14 @@ class LughatLemmaJsonImportService
                 continue;
             }
 
-            $relatedWord = trim((string) (
+            $relatedWord = DictionaryText::stripPunctuation(trim((string) (
                 $row['related_word']
                 ?? $row['related_lemma']
                 ?? $row['word']
                 ?? ''
-            ));
+            )));
+            // Keep multi-word relations (هڪ آدمي) — stripPunctuation only removes marks.
+            $relatedWord = trim(DictionaryText::stripGuillemets($relatedWord));
             $relationType = $this->normalizeRelationType($row['relation_type'] ?? 'related');
             if ($relatedWord === '') {
                 continue;
@@ -528,8 +545,14 @@ class LughatLemmaJsonImportService
         $keepIds = [];
 
         foreach ($manualVariants as $variantData) {
-            $text = trim((string) ($variantData['variant'] ?? $variantData['form'] ?? $variantData['surface']));
+            // Keep airab; strip wrappers like «عِشْق» → عِشْق
+            $text = DictionaryText::stripPunctuation(trim((string) (
+                $variantData['variant'] ?? $variantData['form'] ?? $variantData['surface']
+            )));
             $type = $this->normalizeVariantType($variantData['type'] ?? $variantData['variant_type'] ?? 'spelling');
+            if ($text === '') {
+                continue;
+            }
 
             $normalizedOverride = $variantData['normalized_variant']
                 ?? $variantData['normalized_form']

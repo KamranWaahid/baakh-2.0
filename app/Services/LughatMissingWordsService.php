@@ -9,11 +9,12 @@ use App\Support\DictionaryText;
 
 /**
  * Find Sindhi tokens in free text that are not yet in Baakh Lughat.
+ * Airab is part of identity — نَھن and نُھن are tracked separately.
  */
 class LughatMissingWordsService
 {
     /**
-     * @return list<string> unique surface lemmas (diacritics stripped) missing from Lughat
+     * @return list<string> unique surfaces (airab preserved) missing from Lughat
      */
     public function missingFromText(string $text): array
     {
@@ -22,18 +23,19 @@ class LughatMissingWordsService
             return [];
         }
 
-        $normalized = array_values(array_unique(array_column($tokens, 'normalized')));
-        $known = $this->knownNormalizedSet($normalized);
-
         $missing = [];
         $seen = [];
         foreach ($tokens as $token) {
-            $n = $token['normalized'];
-            if (isset($known[$n]) || isset($seen[$n])) {
+            $identity = $token['identity'];
+            if (isset($seen[$identity])) {
                 continue;
             }
-            $seen[$n] = true;
-            $missing[] = $token['lemma'];
+            $seen[$identity] = true;
+
+            if ($this->existsInLughat($token['surface'], $identity, $token['lookup_base'])) {
+                continue;
+            }
+            $missing[] = $token['surface'];
         }
 
         sort($missing, SORT_STRING);
@@ -42,8 +44,6 @@ class LughatMissingWordsService
     }
 
     /**
-     * Create word-only lemma stubs for words not already present.
-     *
      * @param  list<string>  $words
      * @return array{created: list<array>, skipped_existing: list<string>, failed: list<array>}
      */
@@ -54,36 +54,28 @@ class LughatMissingWordsService
         $failed = [];
 
         foreach ($words as $raw) {
-            $surface = trim((string) $raw);
+            $surface = trim(DictionaryText::stripPunctuation((string) $raw));
             if ($surface === '') {
                 continue;
             }
 
-            $lemmaText = DictionaryText::stripDiacritics(DictionaryText::stripPunctuation($surface));
-            $lemmaText = trim($lemmaText);
-            $normalized = DictionaryText::normalizeForLookup($surface);
+            $identity = DictionaryText::normalizeForIdentity($surface);
+            $base = DictionaryText::lookupBase($surface);
 
-            if ($normalized === '' || $lemmaText === '') {
+            if ($identity === '') {
                 $failed[] = ['word' => $surface, 'reason' => 'empty_after_normalize'];
                 continue;
             }
 
-            $exists = LughatLemma::query()
-                ->where('normalized_lemma', $normalized)
-                ->where('homograph_number', 1)
-                ->where('language', 'sd')
-                ->exists()
-                || LughatWordForm::query()->where('normalized_form', $normalized)->whereNotNull('lemma_id')->exists()
-                || LughatInflection::query()->where('normalized_form', $normalized)->exists();
-
-            if ($exists) {
-                $skipped[] = $lemmaText;
+            if ($this->existsInLughat($surface, $identity, $base)) {
+                $skipped[] = $surface;
                 continue;
             }
 
             $lemma = LughatLemma::create([
-                'lemma' => $lemmaText,
-                'normalized_lemma' => $normalized,
+                'lemma' => $surface,
+                'normalized_lemma' => $identity,
+                'lookup_base' => $base,
                 'homograph_number' => 1,
                 'language' => 'sd',
                 'transliteration' => null,
@@ -100,7 +92,6 @@ class LughatMissingWordsService
             $created[] = [
                 'id' => $lemma->id,
                 'lemma' => $lemma->lemma,
-                'normalized_lemma' => $lemma->normalized_lemma,
             ];
         }
 
@@ -111,38 +102,54 @@ class LughatMissingWordsService
         ];
     }
 
-    /**
-     * @param  list<string>  $normalized
-     * @return array<string, true>
-     */
-    private function knownNormalizedSet(array $normalized): array
+    private function existsInLughat(string $surface, string $identity, string $base): bool
     {
-        if ($normalized === []) {
-            return [];
+        if (LughatLemma::query()
+            ->where(function ($q) use ($surface, $identity) {
+                $q->where('lemma', $surface)->orWhere('normalized_lemma', $identity);
+            })
+            ->exists()) {
+            return true;
         }
 
-        $known = [];
-        foreach (
-            LughatLemma::query()->whereIn('normalized_lemma', $normalized)->pluck('normalized_lemma') as $n
-        ) {
-            $known[$n] = true;
-        }
-        foreach (
-            LughatWordForm::query()->whereIn('normalized_form', $normalized)->pluck('normalized_form') as $n
-        ) {
-            $known[$n] = true;
-        }
-        foreach (
-            LughatInflection::query()->whereIn('normalized_form', $normalized)->pluck('normalized_form') as $n
-        ) {
-            $known[$n] = true;
+        if (LughatWordForm::query()
+            ->where(function ($q) use ($surface, $identity) {
+                $q->where('form', $surface)->orWhere('normalized_form', $identity);
+            })
+            ->whereNotNull('lemma_id')
+            ->exists()) {
+            return true;
         }
 
-        return $known;
+        if (LughatInflection::query()
+            ->where(function ($q) use ($surface, $identity) {
+                $q->where('form', $surface)->orWhere('normalized_form', $identity);
+            })
+            ->exists()) {
+            return true;
+        }
+
+        // Bare undiacritized surface: unique base match counts as present.
+        if (!DictionaryText::hasDiacritics($surface) && $base !== '') {
+            $hasLookupBase = \Illuminate\Support\Facades\Schema::hasColumn('lughat_lemmas', 'lookup_base');
+            $count = LughatLemma::query()
+                ->where(function ($q) use ($base, $hasLookupBase) {
+                    if ($hasLookupBase) {
+                        $q->where('lookup_base', $base)->orWhere('normalized_lemma', $base);
+                    } else {
+                        $q->where('normalized_lemma', $base);
+                    }
+                })
+                ->count();
+
+            return $count === 1;
+        }
+
+        return false;
     }
 
     /**
-     * @return list<array{surface: string, lemma: string, normalized: string}>
+     * @return list<array{surface: string, identity: string, lookup_base: string}>
      */
     private function extractTokens(string $text): array
     {
@@ -151,22 +158,26 @@ class LughatMissingWordsService
         $out = [];
 
         foreach ($parts as $raw) {
-            $surface = DictionaryText::stripPunctuation($raw);
-            $surface = trim($surface);
-            if ($surface === '' || !preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}]/u', $surface)) {
+            $surface = trim(DictionaryText::stripPunctuation($raw));
+            if ($surface === '' || !$this->isSindhiToken($surface)) {
                 continue;
             }
-            $normalized = DictionaryText::normalizeForLookup($surface);
-            if ($normalized === '') {
+            $identity = DictionaryText::normalizeForIdentity($surface);
+            if ($identity === '') {
                 continue;
             }
             $out[] = [
                 'surface' => $surface,
-                'lemma' => DictionaryText::stripDiacritics($surface),
-                'normalized' => $normalized,
+                'identity' => $identity,
+                'lookup_base' => DictionaryText::lookupBase($surface),
             ];
         }
 
         return $out;
+    }
+
+    private function isSindhiToken(string $word): bool
+    {
+        return (bool) preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{08A0}-\x{08FF}]/u', $word);
     }
 }

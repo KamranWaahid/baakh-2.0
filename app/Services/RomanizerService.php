@@ -72,6 +72,120 @@ class RomanizerService
     }
 
     /**
+     * Punctuation trimmed from token edges during bulk-check / transliterate.
+     *
+     * @return list<string>
+     */
+    private function edgePunctuation(): array
+    {
+        return ['،', '؛', '؟', '’', '‘', '”', '“', '?', '!', '.', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_', ':', ';', "\xD8\x9B"];
+    }
+
+    /**
+     * Trim edge punctuation only — keep zabar/zer/pesh (َ ِ ُ) on the surface.
+     */
+    public function cleanSurfaceToken(string $word): string
+    {
+        $cleanWord = trim($word);
+        $punctuation = $this->edgePunctuation();
+
+        while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, 0, 1), $punctuation, true)) {
+            $cleanWord = mb_substr($cleanWord, 1);
+        }
+        while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, -1), $punctuation, true)) {
+            $cleanWord = mb_substr($cleanWord, 0, -1);
+        }
+
+        return $cleanWord;
+    }
+
+    /**
+     * True when token is Sindhi/Arabic script (ignore Latin, digits, symbols).
+     */
+    public function isSindhiToken(string $word): bool
+    {
+        return (bool) preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{08A0}-\x{08FF}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', $word);
+    }
+
+    /**
+     * Whether transliterate() can resolve this Sindhi surface via the dictionary.
+     * Exact form, diacritic-stripped base, or Hesudhar-normalized base all count.
+     */
+    public function canRomanize(string $surface): bool
+    {
+        $surface = $this->cleanSurfaceToken($surface);
+        if ($surface === '' || !$this->isSindhiToken($surface)) {
+            return false;
+        }
+
+        $words = $this->map();
+
+        if (isset($words[$surface])) {
+            return true;
+        }
+
+        // DB exact (BINARY) — airab forms are distinct dictionary keys.
+        if (Romanizer::whereRaw('BINARY word_sd = ?', [$surface])->exists()) {
+            return true;
+        }
+
+        // Bare undiacritized surface may use base fallback; marked airab must match exact.
+        if (preg_match('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', $surface)) {
+            return false;
+        }
+
+        $baseWord = SindhiNormalizer::stripDiacritics($surface);
+        if ($baseWord !== '' && isset($words[$baseWord])) {
+            return true;
+        }
+
+        $normalizedBase = SindhiNormalizer::normalize($baseWord !== '' ? $baseWord : $surface);
+        if ($normalizedBase !== '' && isset($words[$normalizedBase])) {
+            return true;
+        }
+
+        if ($baseWord !== '' && $baseWord !== $surface && Romanizer::whereRaw('BINARY word_sd = ?', [$baseWord])->exists()) {
+            return true;
+        }
+        if ($normalizedBase !== '' && $normalizedBase !== $surface && $normalizedBase !== $baseWord
+            && Romanizer::whereRaw('BINARY word_sd = ?', [$normalizedBase])->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Unique Sindhi surfaces from text that the romanizer cannot resolve.
+     * Preserves airab on returned forms; skips Latin/digits/punctuation-only tokens.
+     *
+     * @return list<string>
+     */
+    public function findMissingWords(string $text): array
+    {
+        $tokens = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $missing = [];
+        $seen = [];
+
+        foreach ($tokens as $token) {
+            $surface = $this->cleanSurfaceToken($token);
+            if ($surface === '' || !$this->isSindhiToken($surface)) {
+                continue;
+            }
+            if (isset($seen[$surface])) {
+                continue;
+            }
+            $seen[$surface] = true;
+
+            if (!$this->canRomanize($surface)) {
+                $missing[] = $surface;
+            }
+        }
+
+        return array_values($missing);
+    }
+
+    /**
      * Transliterate multi-line Sindhi text using the Romanizer dictionary.
      */
     public function transliterate(string $text): string
@@ -124,6 +238,13 @@ class RomanizerService
 
                 if (isset($words[$cleanWord])) {
                     $processedWords[] = $foundPunctuationStart . $words[$cleanWord] . $foundPunctuationEnd;
+                    continue;
+                }
+
+                // Marked airab forms must match exactly — do not fall back to bare base.
+                $hasAirab = (bool) preg_match('/[\x{064B}-\x{065F}\x{0670}\x{06D6}-\x{06ED}]/u', $cleanWord);
+                if ($hasAirab) {
+                    $processedWords[] = $foundPunctuationStart . $cleanWord . $foundPunctuationEnd;
                     continue;
                 }
 

@@ -16,12 +16,11 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from 'sonner';
 import {
     Search, Book, Layers, Type, Languages, ArrowRightLeft,
     ChevronLeft, ChevronRight, Loader2, Edit2, Eye, Copy, CheckCircle2,
-    Plus, Trash2, ScrollText
+    Plus, Trash2
 } from 'lucide-react';
 import LughatLemmaEditorJsonModal from './LughatLemmaEditorJsonModal';
 
@@ -33,7 +32,6 @@ const LughatHome = () => {
     const [activeTab, setActiveTab] = useState('browse');
     const [viewingLemmaId, setViewingLemmaId] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [poetryImportResult, setPoetryImportResult] = useState(null);
 
     // ── Stats ──
     const { data: stats } = useQuery({
@@ -64,41 +62,6 @@ const LughatHome = () => {
             toast.success('Word deleted from Baakh Lughat.');
         },
         onError: () => toast.error('Failed to delete word.'),
-    });
-
-    const { data: poetryImportPeek, refetch: refetchPoetryPeek } = useQuery({
-        queryKey: ['lughat-poetry-import-peek'],
-        queryFn: async () => {
-            const res = await api.get('/api/admin/lughat/import-from-poetry');
-            return res.data;
-        },
-    });
-
-    const importFromPoetry = useMutation({
-        mutationFn: (payload = {}) => api.post('/api/admin/lughat/import-from-poetry', payload),
-        onSuccess: (res) => {
-            const data = res.data;
-            setPoetryImportResult(data);
-            queryClient.invalidateQueries({ queryKey: ['lughat-browse'] });
-            queryClient.invalidateQueries({ queryKey: ['lughat-stats'] });
-            queryClient.invalidateQueries({ queryKey: ['lughat-lemma-inbox'] });
-            refetchPoetryPeek();
-
-            if (data.done) {
-                toast.message('Poetry import finished', {
-                    description: 'No more poetry left after the current cursor.',
-                });
-                return;
-            }
-
-            toast.success(
-                `Poetry #${data.poetry?.id}: +${data.lemmas_created ?? data.created} lemmas` +
-                (data.occurrences_created != null ? ` · ${data.occurrences_created} occurrences` : '') +
-                (data.word_forms_created != null ? ` · ${data.word_forms_created} forms` : '') +
-                (data.skipped_duplicate ? ` · ${data.skipped_duplicate} already linked` : '')
-            );
-        },
-        onError: () => toast.error('Failed to import words from poetry.'),
     });
 
     const handleDeleteLemma = (lemma) => {
@@ -139,69 +102,11 @@ const LughatHome = () => {
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 shrink-0">
-                    <Button
-                        variant="outline"
-                        onClick={() => importFromPoetry.mutate({})}
-                        disabled={importFromPoetry.isPending || poetryImportPeek?.done}
-                        className="w-full sm:w-auto"
-                        title={
-                            poetryImportPeek?.poetry
-                                ? `Next: #${poetryImportPeek.poetry.id}${poetryImportPeek.poetry.title ? ` — ${poetryImportPeek.poetry.title}` : ''}`
-                                : 'No more poetry'
-                        }
-                    >
-                        {importFromPoetry.isPending
-                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            : <ScrollText className="mr-2 h-4 w-4" />}
-                        Get words from poetry
-                    </Button>
                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" /> Add Word
                     </Button>
                 </div>
             </div>
-
-            {poetryImportPeek && !poetryImportPeek.done && (
-                <p className="text-sm text-muted-foreground -mt-3">
-                    Next poetry: <span className="font-medium text-foreground">#{poetryImportPeek.poetry?.id}</span>
-                    {poetryImportPeek.poetry?.title ? (
-                        <span className="font-arabic" dir="rtl"> — {poetryImportPeek.poetry.title}</span>
-                    ) : null}
-                    {' · '}
-                    ~{poetryImportPeek.new_word_count?.toLocaleString() ?? '—'} new / {poetryImportPeek.word_count?.toLocaleString() ?? '—'} unique
-                    {poetryImportPeek.cursor > 0 && (
-                        <>
-                            {' · '}
-                            <button
-                                type="button"
-                                className="underline underline-offset-2 hover:text-foreground"
-                                onClick={() => {
-                                    if (!confirm('Reset poetry import cursor to the oldest poetry?')) return;
-                                    importFromPoetry.mutate({ reset: true });
-                                }}
-                            >
-                                Reset to oldest
-                            </button>
-                        </>
-                    )}
-                </p>
-            )}
-            {poetryImportPeek?.done && (
-                <p className="text-sm text-muted-foreground -mt-3">
-                    All poetry has been walked for word import.
-                    {' '}
-                    <button
-                        type="button"
-                        className="underline underline-offset-2 hover:text-foreground"
-                        onClick={() => {
-                            if (!confirm('Reset poetry import cursor to the oldest poetry?')) return;
-                            importFromPoetry.mutate({ reset: true });
-                        }}
-                    >
-                        Reset to oldest
-                    </button>
-                </p>
-            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -523,56 +428,6 @@ const LughatHome = () => {
 
             {/* Modal for Adding New Word */}
             <AddLemmaModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-
-            {/* Poetry import result */}
-            <Dialog open={!!poetryImportResult && !poetryImportResult.done} onOpenChange={(open) => { if (!open) setPoetryImportResult(null); }}>
-                <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                        <DialogTitle>Words from poetry</DialogTitle>
-                        <DialogDescription>
-                            Poetry #{poetryImportResult?.poetry?.id}
-                            {poetryImportResult?.poetry?.title ? ` — ${poetryImportResult.poetry.title}` : ''}
-                            . Diacritics (zabar/pesh/zer) stripped; duplicates skipped.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid grid-cols-3 gap-3 text-center py-2">
-                        <div>
-                            <p className="text-2xl font-bold">{poetryImportResult?.created ?? 0}</p>
-                            <p className="text-xs text-muted-foreground">Created</p>
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">{poetryImportResult?.skipped_duplicate ?? 0}</p>
-                            <p className="text-xs text-muted-foreground">Duplicates</p>
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">{poetryImportResult?.total_tokens ?? 0}</p>
-                            <p className="text-xs text-muted-foreground">Unique in poem</p>
-                        </div>
-                    </div>
-                    {poetryImportResult?.words?.length > 0 && (
-                        <ScrollArea className="h-48 rounded-md border p-3">
-                            <div className="flex flex-wrap gap-1.5 justify-end" dir="rtl">
-                                {poetryImportResult.words.map((w) => (
-                                    <Badge key={w} variant="secondary" className="font-arabic text-sm">{w}</Badge>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    )}
-                    <div className="flex justify-between gap-2 mt-2">
-                        <Button variant="outline" onClick={() => setPoetryImportResult(null)}>Close</Button>
-                        <Button
-                            onClick={() => importFromPoetry.mutate({})}
-                            disabled={importFromPoetry.isPending || !poetryImportResult?.next_poetry_id}
-                        >
-                            {importFromPoetry.isPending
-                                ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                : <ScrollText className="mr-2 h-4 w-4" />}
-                            Next poetry
-                            {poetryImportResult?.next_poetry_id ? ` (#${poetryImportResult.next_poetry_id})` : ''}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
 
         </div>
     );

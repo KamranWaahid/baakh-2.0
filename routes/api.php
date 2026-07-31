@@ -255,6 +255,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('poetry/check-slug', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkSlug']);
         Route::get('poetry/lughat-senses', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'lookupLughatSenses']);
         Route::get('poetry/lughat-expressions', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'lookupLughatExpressions']);
+        Route::post('poetry/lughat-roman-check', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkLughatRoman']);
+        Route::post('poetry/lughat-roman-transliterate', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'transliterateLughatRoman']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
 
@@ -296,6 +298,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::post('romanizer/standardize', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'standardize']);
         Route::post('romanizer/check-words', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'checkWords']);
         Route::post('romanizer/transliterate', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'transliterate']);
+        Route::get('romanizer/lughat-stats', [\App\Http\Controllers\Api\Admin\RomanizerController::class, 'lughatStats']);
         Route::apiResource('romanizer', \App\Http\Controllers\Api\Admin\RomanizerController::class);
 
         Route::get('dashboard', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'index']);
@@ -330,6 +333,10 @@ Route::middleware(['auth:sanctum', 'user_role'])
         // Dictionary Routes
     
         Route::get('dictionary/stats', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'stats']);
+        Route::get('dictionary/lughat-stats', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'lughatStats']);
+        Route::post('dictionary/hesudhar-lemmas', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'hesudharLemmas'])
+            ->middleware('throttle:admin-bulk')
+            ->withoutMiddleware([\Illuminate\Routing\Middleware\ThrottleRequests::class.':api']);
         Route::get('dictionary/word-of-the-day', [\App\Http\Controllers\Api\Admin\IncompleteWordOfTheDayController::class, 'show']);
         Route::post('dictionary/word-of-the-day/skip', [\App\Http\Controllers\Api\Admin\IncompleteWordOfTheDayController::class, 'skip']);
         Route::post('dictionary/word-of-the-day/save', [\App\Http\Controllers\Api\Admin\IncompleteWordOfTheDayController::class, 'save']);
@@ -373,6 +380,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::get('lughat/search', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'search']);
         Route::get('lughat/lookup-senses', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'lookupSenses']);
         Route::post('lughat/add-stubs', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'addStubs']);
+        Route::post('lughat/lemmas/stub-from-surface', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'stubFromSurface']);
         Route::apiResource('lughat/lemmas', \App\Http\Controllers\Api\Admin\LughatDictionaryController::class);
         Route::patch('lughat/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'approve']);
         Route::get('lughat/lemmas/{id}/editor-json', [\App\Http\Controllers\Api\Admin\LughatDictionaryController::class, 'editorJson']);

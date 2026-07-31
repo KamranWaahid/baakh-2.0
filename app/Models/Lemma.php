@@ -21,6 +21,7 @@ class Lemma extends Model
         'public_id',
         'lemma',
         'normalized_lemma',
+        'lookup_base',
         'transliteration',
         'ipa',
         'phonetic',

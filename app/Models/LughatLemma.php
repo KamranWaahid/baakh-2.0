@@ -24,6 +24,7 @@ class LughatLemma extends Model
         'public_id',
         'lemma',
         'normalized_lemma',
+        'lookup_base',
         'homograph_number',
         'language',
         'transliteration',
@@ -169,6 +170,11 @@ class LughatLemma extends Model
 
     public static function defaultNormalizedLemma(string $lemma): string
     {
-        return DictionaryText::normalizeForLookup($lemma);
+        return DictionaryText::normalizeForIdentity($lemma);
+    }
+
+    public static function defaultLookupBase(string $lemma): string
+    {
+        return DictionaryText::lookupBase($lemma);
     }
 }

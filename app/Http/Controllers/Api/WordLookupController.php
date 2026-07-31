@@ -19,6 +19,8 @@ class WordLookupController extends Controller
     /**
      * Look up a single word.
      * Query: dictionary=general|lughat. Optional poetry_id for preferred Baakh Lughat sense.
+     * Optional couplet_index + token_index: if that token is inside a pinned izafat /
+     * expression span, return the expression meaning instead of the single-word sense.
      */
     public function lookup(Request $request, string $word)
     {
@@ -29,6 +31,21 @@ class WordLookupController extends Controller
 
         $dictionary = strtolower((string) $request->query('dictionary', 'general'));
         $poetryId = $request->filled('poetry_id') ? (int) $request->query('poetry_id') : null;
+        $coupletIndex = $request->filled('couplet_index') ? (int) $request->query('couplet_index') : null;
+        $tokenIndex = $request->filled('token_index') ? (int) $request->query('token_index') : null;
+
+        if (
+            $poetryId
+            && $coupletIndex !== null
+            && $tokenIndex !== null
+            && in_array($dictionary, ['lughat', 'baakh_lughat', 'baakh', 'general'], true)
+        ) {
+            $expressions = app(LughatExpressionService::class);
+            $annotation = $expressions->findPoetryAnnotationForToken($poetryId, $coupletIndex, $tokenIndex);
+            if ($annotation) {
+                return response()->json($expressions->publicLookupPayload($annotation));
+            }
+        }
 
         if (in_array($dictionary, ['lughat', 'baakh_lughat', 'baakh'], true)) {
             $lughat = $this->lookupLughat($word, $poetryId);
@@ -44,10 +61,16 @@ class WordLookupController extends Controller
     private function lookupGeneral(string $word)
     {
         $with = ['morphology', 'variants', 'senses.examples', 'lemmaRelations', 'inflections', 'idiomaticExpressions'];
-        $normalized = DictionaryText::normalizeForLookup($word);
+        $identity = DictionaryText::normalizeForIdentity($word);
+        $base = DictionaryText::lookupBase($word);
 
+        // Airab is identity: never collapse نَھن / نُھن via diacritic strip.
         $lemma = $this->findLemmaExact($word, $with)
-            ?? $this->findLemmaNormalized($normalized, $with);
+            ?? $this->findLemmaByIdentityKey($identity, $with);
+
+        if (!$lemma && !DictionaryText::hasDiacritics($word)) {
+            $lemma = $this->findLemmaUniqueBase($base, $with);
+        }
 
         if (!$lemma) {
             $fallback = app(BundledOpenLexiconLookup::class)->lookup($word);
@@ -94,8 +117,9 @@ class WordLookupController extends Controller
 
     private function lookupLughat(string $word, ?int $poetryId = null): ?array
     {
-        $normalized = DictionaryText::normalizeForLookup($word);
-        if ($normalized === '') {
+        $identity = DictionaryText::normalizeForIdentity($word);
+        $base = DictionaryText::lookupBase($word);
+        if ($identity === '') {
             return null;
         }
 
@@ -103,22 +127,48 @@ class WordLookupController extends Controller
 
         $lemma = LughatLemma::query()
             ->with($with)
-            ->where(function ($q) use ($word, $normalized) {
-                $q->where('normalized_lemma', $normalized)->orWhere('lemma', $word);
+            ->where(function ($q) use ($word, $identity) {
+                $q->whereRaw(DictionaryText::binaryEquals('lemma'), [$word])
+                    ->orWhereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$identity]);
             })
             ->orderBy('homograph_number')
             ->first();
 
         if (!$lemma) {
             $form = LughatWordForm::query()->with(['lemma' => fn ($q) => $q->with($with)])
-                ->where('normalized_form', $normalized)->first();
+                ->where(function ($q) use ($word, $identity) {
+                    $q->whereRaw(DictionaryText::binaryEquals('form'), [$word])
+                        ->orWhereRaw(DictionaryText::binaryEquals('normalized_form'), [$identity]);
+                })
+                ->first();
             $lemma = $form?->lemma;
         }
 
         if (!$lemma) {
             $inf = LughatInflection::query()->with(['lemma' => fn ($q) => $q->with($with)])
-                ->where('normalized_form', $normalized)->first();
+                ->where(function ($q) use ($word, $identity) {
+                    $q->whereRaw(DictionaryText::binaryEquals('form'), [$word])
+                        ->orWhereRaw(DictionaryText::binaryEquals('normalized_form'), [$identity]);
+                })
+                ->first();
             $lemma = $inf?->lemma;
+        }
+
+        if (!$lemma && !DictionaryText::hasDiacritics($word) && $base !== '') {
+            $hasLookupBase = \Illuminate\Support\Facades\Schema::hasColumn('lughat_lemmas', 'lookup_base');
+            $matches = LughatLemma::query()
+                ->with($with)
+                ->where(function ($q) use ($base, $hasLookupBase) {
+                    if ($hasLookupBase) {
+                        $q->where('lookup_base', $base)->orWhere('normalized_lemma', $base);
+                    } else {
+                        $q->where('normalized_lemma', $base);
+                    }
+                })
+                ->orderBy('homograph_number')
+                ->limit(2)
+                ->get();
+            $lemma = $matches->count() === 1 ? $matches->first() : null;
         }
 
         if (!$lemma) {
@@ -130,7 +180,9 @@ class WordLookupController extends Controller
             $preferredSenseId = LughatPoetrySenseAnnotation::query()
                 ->where('poetry_id', $poetryId)
                 ->where('lemma_id', $lemma->id)
-                ->where('normalized_form', $normalized)
+                ->where(function ($q) use ($identity, $base) {
+                    $q->where('normalized_form', $identity)->orWhere('normalized_form', $base);
+                })
                 ->value('sense_id');
         }
 
@@ -352,8 +404,8 @@ class WordLookupController extends Controller
         return Lemma::query()
             ->with($with)
             ->where(function ($query) use ($word) {
-                $query->where('lemma', $word)
-                    ->orWhere('normalized_lemma', $word)
+                $query->whereRaw(DictionaryText::binaryEquals('lemma'), [$word])
+                    ->orWhereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$word])
                     ->orWhere('transliteration', $word)
                     ->orWhereHas('variants', function ($query) use ($word) {
                         $query->where('variant', $word)
@@ -372,42 +424,49 @@ class WordLookupController extends Controller
                     });
             })
             ->orderByRaw(
-                'CASE WHEN lemma = ? THEN 0 WHEN normalized_lemma = ? THEN 1 WHEN transliteration = ? THEN 2 ELSE 3 END',
+                'CASE WHEN BINARY lemma = ? THEN 0 WHEN BINARY normalized_lemma = ? THEN 1 WHEN transliteration = ? THEN 2 ELSE 3 END',
                 [$word, $word, $word]
             )
             ->first();
     }
 
-    /**
-     * Diacritic-insensitive headword match.
-     */
-    private function findLemmaNormalized(string $normalized, array $with): ?Lemma
+    /** Match on airab-preserving identity key. */
+    private function findLemmaByIdentityKey(string $identity, array $with): ?Lemma
     {
-        if ($normalized === '') {
+        if ($identity === '') {
             return null;
         }
 
         return Lemma::query()
             ->with($with)
-            ->where(function ($query) use ($normalized) {
-                $query->whereRaw($this->normalizedSql('lemma') . ' = ?', [$normalized])
-                    ->orWhereRaw($this->normalizedSql('normalized_lemma') . ' = ?', [$normalized])
-                    ->orWhereHas('variants', function ($query) use ($normalized) {
-                        $query->whereRaw($this->normalizedSql('variant') . ' = ?', [$normalized])
-                            ->orWhereRaw($this->normalizedSql('normalized_variant') . ' = ?', [$normalized]);
-                    })
-                    ->orWhereHas('inflections', function ($query) use ($normalized) {
-                        $query->whereRaw($this->normalizedSql('form') . ' = ?', [$normalized]);
-                    })
-                    ->orWhereHas('senses', function ($query) use ($normalized) {
-                        $query->whereRaw($this->normalizedSql('word_variant') . ' = ?', [$normalized]);
-                    });
-            })
-            ->orderByRaw(
-                'CASE WHEN ' . $this->normalizedSql('lemma') . ' = ? THEN 0 WHEN ' . $this->normalizedSql('normalized_lemma') . ' = ? THEN 1 ELSE 2 END',
-                [$normalized, $normalized]
-            )
+            ->whereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$identity])
+            ->orderBy('id')
             ->first();
+    }
+
+    /**
+     * Bare undiacritized query: only when exactly one base match exists.
+     */
+    private function findLemmaUniqueBase(string $base, array $with): ?Lemma
+    {
+        if ($base === '') {
+            return null;
+        }
+
+        $hasLookupBase = \Illuminate\Support\Facades\Schema::hasColumn('lemmas', 'lookup_base');
+        $matches = Lemma::query()
+            ->with($with)
+            ->where(function ($query) use ($base, $hasLookupBase) {
+                if ($hasLookupBase) {
+                    $query->where('lookup_base', $base);
+                }
+                $query->orWhere('normalized_lemma', $base)
+                    ->orWhereRaw($this->normalizedSql('lemma') . ' = ?', [$base]);
+            })
+            ->limit(2)
+            ->get();
+
+        return $matches->count() === 1 ? $matches->first() : null;
     }
 
     private function normalizedSql(string $column): string

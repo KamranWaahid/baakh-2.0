@@ -39,8 +39,10 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, SpellCheck, Loader2, Shuffle } from 'lucide-react';
+import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, SpellCheck, Loader2, Shuffle, RefreshCw } from 'lucide-react';
 import PoetryLughatSensePicker from './PoetryLughatSensePicker';
+import PoetryLughatMissingHighlight from './PoetryLughatMissingHighlight';
+import LughatLemmaEditorJsonModal from '../Lughat/LughatLemmaEditorJsonModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -67,7 +69,7 @@ const poetrySchema = z.object({
     category_id: z.string().min(1, 'Category is required'),
     topic_category_id: z.string().optional().nullable(),
     content_style: z.string().default('center'),
-    dictionary_source: z.enum(['general', 'lughat']).default('general'),
+    dictionary_source: z.enum(['general', 'lughat']).default('lughat'),
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
     poetry_info: z.string().optional(),
@@ -88,7 +90,14 @@ const CreatePoetry = () => {
 
     const [transliteratedText, setTransliteratedText] = useState('');
     const [isTransliterated, setIsTransliterated] = useState(isEdit); // Default true for edit, false for new
-    const [hasSindhiChars, setHasSindhiChars] = useState(false);
+    const [lughatRomanReady, setLughatRomanReady] = useState(false);
+    const [lughatRomanWords, setLughatRomanWords] = useState([]);
+    const [lughatRomanChecking, setLughatRomanChecking] = useState(false);
+    const [openingLughatSurface, setOpeningLughatSurface] = useState(null);
+    const [viewingLemmaId, setViewingLemmaId] = useState(null);
+    const [editingPoetryText, setEditingPoetryText] = useState(false);
+    const [lughatCheckNonce, setLughatCheckNonce] = useState(0);
+    const [legacyRomanSnapshot, setLegacyRomanSnapshot] = useState(null);
     const [slugError, setSlugError] = useState('');
     const [isCheckingSlug, setIsCheckingSlug] = useState(false);
     const [openPoet, setOpenPoet] = useState(false);
@@ -119,46 +128,6 @@ const CreatePoetry = () => {
         }
         autosizeTextarea(romanEditorRef.current, { minHeight: 280 });
     }, [poetryContent, transliteratedText, sensePickerMode, script, autosizeTextarea]);
-
-    // Reset transliteration status when content changes
-    useEffect(() => {
-        if (!allowAutoUpdates.current) return;
-        setIsTransliterated(false);
-    }, [poetryContent]);
-
-    // Live Transliterate Content
-    useEffect(() => {
-        if (!allowAutoUpdates.current) return;
-
-        if (!poetryContent) {
-            setTransliteratedText('');
-            return;
-        }
-
-        const timer = setTimeout(async () => {
-            try {
-                const response = await api.post('/api/admin/romanizer/transliterate', {
-                    text: poetryContent
-                });
-                setTransliteratedText(response.data.transliterated_text);
-                setIsTransliterated(true);
-            } catch (error) {
-                console.error("Content transliteration failed:", error);
-            }
-        }, 300); // Debounce 300ms for faster feedback
-
-        return () => clearTimeout(timer);
-    }, [poetryContent]);
-
-    // Validate Roman Text for Sindhi Characters
-    useEffect(() => {
-        const sindhiRegex = /[\u0600-\u06FF]/;
-        if (sindhiRegex.test(transliteratedText)) {
-            setHasSindhiChars(true);
-        } else {
-            setHasSindhiChars(false);
-        }
-    }, [transliteratedText]);
 
     const checkSlugUnique = async (slug) => {
         if (!slug) return;
@@ -205,7 +174,7 @@ const CreatePoetry = () => {
             category_id: '',
             topic_category_id: '',
             content_style: 'center',
-            dictionary_source: 'general',
+            dictionary_source: 'lughat',
             visibility: true,
             is_featured: false,
             poetry_info: '',
@@ -217,40 +186,138 @@ const CreatePoetry = () => {
         },
     });
 
-    // Auto-generate slug from title (only for new poetry)
     const title = form.watch('poetry_title');
-    useEffect(() => {
-        if (!allowAutoUpdates.current) return;
 
-        if (!title) {
+    const runLughatRomanPipeline = useCallback(async ({ titleText, bodyText, updateSlug = false } = {}) => {
+        const titleValue = titleText ?? form.getValues('poetry_title') ?? '';
+        const bodyValue = bodyText ?? poetryContent ?? '';
+
+        if (!titleValue.trim() && !bodyValue.trim()) {
+            setTransliteratedText('');
             setRomanTitle('');
+            setLughatRomanWords([]);
+            setLughatRomanReady(false);
+            setIsTransliterated(true);
             return;
         }
 
-        const timer = setTimeout(async () => {
-            // Auto-transliterate title
-            try {
-                const response = await api.post('/api/admin/romanizer/transliterate', {
-                    text: title
-                });
-                const roman = response.data.transliterated_text;
-                setRomanTitle(roman);
+        setLughatRomanChecking(true);
+        setIsTransliterated(false);
+        try {
+            const [checkRes, translitRes] = await Promise.all([
+                api.post('/api/admin/poetry/lughat-roman-check', {
+                    title: titleValue,
+                    text: bodyValue,
+                }),
+                api.post('/api/admin/poetry/lughat-roman-transliterate', {
+                    title: titleValue,
+                    text: bodyValue,
+                }),
+            ]);
 
-                // Generate slug from Roman title
-                const slug = roman
+            const check = checkRes.data || {};
+            const ready = !!check.ready;
+            setLughatRomanWords(Array.isArray(check.words) ? check.words : []);
+            setLughatRomanReady(ready);
+
+            const romanBody = translitRes.data?.roman_content ?? '';
+            const romanTitleValue = translitRes.data?.roman_title ?? '';
+
+            // New poetry: always preview Lughat roman.
+            // Legacy edit: keep saved Roman until every word is ready, then rebuild.
+            if (!isEdit || ready || !legacyRomanSnapshot) {
+                setTransliteratedText(romanBody);
+                setRomanTitle(romanTitleValue);
+            } else {
+                setTransliteratedText(legacyRomanSnapshot.body || '');
+                setRomanTitle(legacyRomanSnapshot.title || '');
+            }
+            setIsTransliterated(true);
+
+            if (updateSlug && romanTitleValue && !/[\u0600-\u06FF]/.test(romanTitleValue)) {
+                const slug = romanTitleValue
                     .toLowerCase()
                     .replace(/[^\w\s-]/g, '')
                     .replace(/[\s_-]+/g, '-')
                     .replace(/^-+|-+$/g, '');
-                form.setValue('poetry_slug', slug);
-                checkSlugUnique(slug);
-            } catch (error) {
-                console.error("Auto-transliteration failed:", error);
+                if (slug) {
+                    form.setValue('poetry_slug', slug);
+                    checkSlugUnique(slug);
+                }
             }
-        }, 500); // Debounce 500ms
+        } catch (error) {
+            console.error('Baakh Lughat roman check failed:', error);
+            setLughatRomanReady(false);
+            setIsTransliterated(false);
+        } finally {
+            setLughatRomanChecking(false);
+        }
+    }, [form, poetryContent, isEdit, legacyRomanSnapshot]);
+
+    // Live Baakh Lughat check + roman for title + body
+    useEffect(() => {
+        if (!allowAutoUpdates.current) return;
+
+        const timer = setTimeout(() => {
+            runLughatRomanPipeline({
+                titleText: title,
+                bodyText: poetryContent,
+                updateSlug: !isEdit,
+            });
+        }, 400);
 
         return () => clearTimeout(timer);
-    }, [title, isEdit, form]);
+    }, [title, poetryContent, runLughatRomanPipeline, isEdit, lughatCheckNonce]);
+
+    const unresolvedLughatWords = lughatRomanWords.filter(
+        (w) => w.status === 'missing_word' || w.status === 'missing_roman' || w.status === 'ambiguous'
+    );
+
+    const openLughatWord = async (word) => {
+        if (!word) return;
+        setOpeningLughatSurface(word.surface);
+        try {
+            let lemmaId = word.lemma_id;
+            if (!lemmaId) {
+                const res = await api.post('/api/admin/lughat/lemmas/stub-from-surface', {
+                    surface: word.surface,
+                });
+                lemmaId = res.data?.lemma_id;
+                if (res.data?.created) {
+                    toast.success(`Stub created for “${res.data.lemma || word.surface}”.`);
+                }
+            }
+            if (!lemmaId) {
+                toast.error('Could not open Baakh Lughat entry.');
+                return;
+            }
+            setViewingLemmaId(lemmaId);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to open Baakh Lughat entry.');
+        } finally {
+            setOpeningLughatSurface(null);
+        }
+    };
+
+    const handleLughatCheckAgain = () => {
+        runLughatRomanPipeline({
+            titleText: title,
+            bodyText: poetryContent,
+            updateSlug: !isEdit,
+        });
+    };
+
+    const showMissingHighlight = !sensePickerMode
+        && !editingPoetryText
+        && unresolvedLughatWords.length > 0
+        && !!poetryContent.trim();
+
+    // When all words resolve, leave edit-text mode so the normal editor returns.
+    useEffect(() => {
+        if (lughatRomanReady && editingPoetryText) {
+            setEditingPoetryText(false);
+        }
+    }, [lughatRomanReady, editingPoetryText]);
 
     useEffect(() => {
         if (isEdit && poetry) {
@@ -302,12 +369,20 @@ const CreatePoetry = () => {
             const romanCouplets = poetry.couplets?.filter(c => c.lang === 'en') || [];
 
             setPoetryContent(displayPersoCouplets.map(c => c.couplet_text).join('\n\n'));
-            setTransliteratedText(romanCouplets.map(c => c.couplet_text).join('\n\n'));
+            const legacyBody = romanCouplets.map(c => c.couplet_text).join('\n\n');
+            const legacyTitle = romanTranslation?.title || '';
+            // Keep legacy saved Roman until Lughat validation succeeds, then rebuild.
+            setLegacyRomanSnapshot({ title: legacyTitle, body: legacyBody });
+            setTransliteratedText(legacyBody);
+            setRomanTitle(legacyTitle);
+            setIsTransliterated(true);
+            setLughatRomanReady(false);
 
-            // Enable auto-updates after initial data load
+            // Enable auto-updates after initial data load, then validate vs Baakh Lughat.
             setTimeout(() => {
                 allowAutoUpdates.current = true;
-            }, 1000);
+                setLughatCheckNonce((n) => n + 1);
+            }, 800);
         }
     }, [isEdit, poetry, form]);
 
@@ -368,8 +443,15 @@ const CreatePoetry = () => {
             .map(text => text.trim())
             .filter(text => text.length > 0);
 
+        if (!lughatRomanReady) {
+            toast.error('Add missing Baakh Lughat words (with Roman spelling) before publishing.');
+            return;
+        }
+
         const transformedData = {
             ...data,
+            dictionary_source: data.dictionary_source || 'lughat',
+            romanization_source: 'baakh_lughat',
             couplets: coupletTexts.map(text => ({ couplet_text: text })),
             roman_title: romanTitle,
             roman_content: transliteratedText
@@ -470,18 +552,15 @@ const CreatePoetry = () => {
                                 Refine Hesudhar
                             </Button>
                             <Button variant="ghost" type="button" onClick={() => navigate('/admin/poetry')}>Cancel</Button>
-                            <Button type="submit" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
+                            <Button
+                                type="submit"
+                                disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || !lughatRomanReady || lughatRomanChecking}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8"
+                            >
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>
                         </div>
                     </div>
-
-                    {hasSindhiChars && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                            <strong className="font-bold">Warning: </strong>
-                            <span className="block sm:inline">The Roman text contains Sindhi characters. Please manually transliterate the remaining words in the Roman tab before publishing.</span>
-                        </div>
-                    )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-0 bg-white rounded-xl shadow-sm border min-h-[420px] md:min-h-[560px] h-auto self-start">
@@ -494,10 +573,14 @@ const CreatePoetry = () => {
 
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
                                         <div className="flex items-center gap-1 text-xs text-muted-foreground/80 font-medium px-2 py-1 rounded bg-muted/20">
-                                            {isTransliterated ? (
-                                                <span className="flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Auto-Transliterated</span>
+                                            {lughatRomanChecking ? (
+                                                <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Checking Lughat…</span>
+                                            ) : lughatRomanReady ? (
+                                                <span className="flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Lughat Roman ready</span>
+                                            ) : isTransliterated ? (
+                                                <span className="flex items-center gap-1 text-amber-700"><Languages className="h-3 w-3" /> Missing Lughat words</span>
                                             ) : (
-                                                <span className="flex items-center gap-1"><Languages className="h-3 w-3" /> Transliterating...</span>
+                                                <span className="flex items-center gap-1"><Languages className="h-3 w-3" /> Waiting…</span>
                                             )}
                                         </div>
                                         {/* formatting toolbar - only show in Perso mode */}
@@ -536,14 +619,46 @@ const CreatePoetry = () => {
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
                                             <BookOpen className="h-3 w-3" /> <span>Baakh Publishing Editor</span>
                                         </div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 flex-wrap justify-end">
+                                            {script === 'perso' && unresolvedLughatWords.length > 0 && (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 text-xs gap-1.5"
+                                                        onClick={handleLughatCheckAgain}
+                                                        disabled={lughatRomanChecking}
+                                                    >
+                                                        {lughatRomanChecking
+                                                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                            : <RefreshCw className="h-3.5 w-3.5" />}
+                                                        Check Again
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant={editingPoetryText ? 'default' : 'outline'}
+                                                        className="h-7 text-xs gap-1.5"
+                                                        onClick={() => {
+                                                            setEditingPoetryText((v) => !v);
+                                                            setSensePickerMode(false);
+                                                        }}
+                                                    >
+                                                        {editingPoetryText ? 'Show highlights' : 'Edit text'}
+                                                    </Button>
+                                                </>
+                                            )}
                                             {script === 'perso' && (
                                                 <Button
                                                     type="button"
                                                     size="sm"
                                                     variant={sensePickerMode ? 'default' : 'outline'}
                                                     className="h-7 text-xs gap-1.5"
-                                                    onClick={() => setSensePickerMode((v) => !v)}
+                                                    onClick={() => {
+                                                        setSensePickerMode((v) => !v);
+                                                        setEditingPoetryText(false);
+                                                    }}
                                                 >
                                                     <Shuffle className="h-3.5 w-3.5" />
                                                     {sensePickerMode ? 'Editing text' : 'Lughat senses'}
@@ -600,6 +715,20 @@ const CreatePoetry = () => {
                                                     onExpressionChange={setExpressionAnnotations}
                                                     contentStyle={form.watch('content_style')}
                                                 />
+                                            ) : showMissingHighlight ? (
+                                                <div className="space-y-3">
+                                                    <p className="text-xs text-amber-800/80 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                                                        Highlighted words are missing from Baakh Lughat or have no Roman spelling.
+                                                        Click the eye to open AI JSON (Copy for AI → Input JSON), same as Lughat Home.
+                                                    </p>
+                                                    <PoetryLughatMissingHighlight
+                                                        content={poetryContent}
+                                                        unresolvedWords={unresolvedLughatWords}
+                                                        contentStyle={form.watch('content_style')}
+                                                        openingSurface={openingLughatSurface}
+                                                        onOpenWord={openLughatWord}
+                                                    />
+                                                </div>
                                             ) : (
                                             <textarea
                                                 id="poetry-editor"
@@ -787,7 +916,7 @@ const CreatePoetry = () => {
                                         <Button variant="ghost" size="sm" type="button" className="text-destructive h-8 px-2" onClick={() => navigate('/admin/poetry')}>
                                             Cancel
                                         </Button>
-                                        <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || hasSindhiChars}>
+                                        <Button size="sm" type="submit" className="h-8 px-4" disabled={mutation.isPending || !isTransliterated || !!slugError || isCheckingSlug || !lughatRomanReady || lughatRomanChecking}>
                                             {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                                         </Button>
                                     </div>
@@ -1261,9 +1390,18 @@ const CreatePoetry = () => {
                     </div>
 
 
-                </form >
-            </Form >
-        </div >
+                </form>
+            </Form>
+
+            <LughatLemmaEditorJsonModal
+                lemmaId={viewingLemmaId}
+                onClose={() => setViewingLemmaId(null)}
+                onImported={() => {
+                    setViewingLemmaId(null);
+                    handleLughatCheckAgain();
+                }}
+            />
+        </div>
     );
 };
 

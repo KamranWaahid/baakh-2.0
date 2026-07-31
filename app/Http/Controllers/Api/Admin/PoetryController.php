@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Poetry;
 use App\Services\LughatExpressionService;
+use App\Services\LughatPoetryRomanService;
 use App\Services\LughatPoetrySenseAnnotationService;
 use App\Services\StaticCacheService;
 use App\Support\SafeUserData;
@@ -16,7 +17,16 @@ class PoetryController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:view_poetry')->only(['index', 'show', 'checkSlug', 'lookupLughatSenses', 'lookupLughatExpressions', 'senseAnnotations']);
+        $this->middleware('can:view_poetry')->only([
+            'index',
+            'show',
+            'checkSlug',
+            'lookupLughatSenses',
+            'lookupLughatExpressions',
+            'checkLughatRoman',
+            'transliterateLughatRoman',
+            'senseAnnotations',
+        ]);
         $this->middleware('can:create_poetry')->only(['create', 'store']);
         $this->middleware('can:edit_poetry')->only([
             'update',
@@ -84,6 +94,25 @@ class PoetryController extends Controller
             });
         }
 
+        // Lughat workflow: processed = saved via Baakh Lughat roman pipeline.
+        $lughatFilter = strtolower(trim((string) $request->get('lughat', 'all')));
+        if ($lughatFilter === 'processed') {
+            $query->where(function ($q) {
+                $q->where('romanization_source', Poetry::ROMANIZATION_BAAKH_LUGHAT)
+                    ->orWhere('dictionary_source', Poetry::DICTIONARY_LUGHAT);
+            });
+        } elseif (in_array($lughatFilter, ['pending', 'unprocessed', 'not_processed'], true)) {
+            $query->where(function ($q) {
+                $q->where(function ($inner) {
+                    $inner->whereNull('romanization_source')
+                        ->orWhere('romanization_source', '<>', Poetry::ROMANIZATION_BAAKH_LUGHAT);
+                })->where(function ($inner) {
+                    $inner->whereNull('dictionary_source')
+                        ->orWhere('dictionary_source', '<>', Poetry::DICTIONARY_LUGHAT);
+                });
+            });
+        }
+
         $perPage = $request->get('per_page', 10);
         $poetry = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
@@ -92,7 +121,34 @@ class PoetryController extends Controller
             return $this->serializeIndexItem($item);
         });
 
-        return response()->json($poetry);
+        $payload = $poetry->toArray();
+        $payload['lughat_counts'] = $this->lughatPoetryCounts($request->boolean('only_trashed'));
+
+        return response()->json($payload);
+    }
+
+    /**
+     * @return array{all:int,processed:int,pending:int}
+     */
+    private function lughatPoetryCounts(bool $onlyTrashed = false): array
+    {
+        $base = Poetry::query();
+        if ($onlyTrashed) {
+            $base->onlyTrashed();
+        }
+
+        $processed = (clone $base)->where(function ($q) {
+            $q->where('romanization_source', Poetry::ROMANIZATION_BAAKH_LUGHAT)
+                ->orWhere('dictionary_source', Poetry::DICTIONARY_LUGHAT);
+        })->count();
+
+        $all = (clone $base)->count();
+
+        return [
+            'all' => $all,
+            'processed' => $processed,
+            'pending' => max(0, $all - $processed),
+        ];
     }
 
     private function serializeIndexItem(Poetry $poetry): array
@@ -102,6 +158,7 @@ class PoetryController extends Controller
 
         $data = $poetry->toArray();
         $data['user'] = SafeUserData::basic($user, '/api/admin/poetry');
+        $data['lughat_processed'] = $poetry->usesLughatRomanization() || $poetry->usesBaakhLughat();
 
         return $data;
     }
@@ -147,6 +204,46 @@ class PoetryController extends Controller
             app(LughatPoetrySenseAnnotationService::class)->lookupSenses(
                 $validated['q'],
                 isset($validated['poetry_id']) ? (int) $validated['poetry_id'] : null
+            )
+        );
+    }
+
+    /**
+     * Check poetry title + body against Baakh Lughat for roman readiness.
+     */
+    public function checkLughatRoman(Request $request, LughatPoetryRomanService $roman)
+    {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:500',
+            'text' => 'nullable|string',
+        ]);
+
+        $result = $roman->check(
+            (string) ($validated['title'] ?? ''),
+            (string) ($validated['text'] ?? '')
+        );
+
+        // Publish-ready when every extracted Sindhi word has a Lughat roman.
+        // Empty text is not ready.
+        $result['ready'] = empty($result['empty']) && ($result['unresolved_count'] ?? 0) === 0;
+
+        return response()->json($result);
+    }
+
+    /**
+     * Build roman title/body from Baakh Lughat transliterations.
+     */
+    public function transliterateLughatRoman(Request $request, LughatPoetryRomanService $roman)
+    {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:500',
+            'text' => 'nullable|string',
+        ]);
+
+        return response()->json(
+            $roman->transliteratePair(
+                (string) ($validated['title'] ?? ''),
+                (string) ($validated['text'] ?? '')
             )
         );
     }
@@ -317,6 +414,7 @@ class PoetryController extends Controller
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
             'dictionary_source' => 'nullable|in:general,lughat',
+            'romanization_source' => 'nullable|in:legacy,baakh_lughat',
             'visibility' => 'required|boolean',
             'is_featured' => 'required|boolean',
             'couplets' => 'required|array|min:1',
@@ -347,6 +445,11 @@ class PoetryController extends Controller
             'expression_annotations.*.note' => 'nullable|string',
         ]);
 
+        $romanizationSource = $validated['romanization_source'] ?? Poetry::ROMANIZATION_BAAKH_LUGHAT;
+        if ($block = $this->lughatRomanPublishBlock($validated, $romanizationSource)) {
+            return $block;
+        }
+
         DB::beginTransaction();
         try {
             $poetry = Poetry::create([
@@ -359,7 +462,8 @@ class PoetryController extends Controller
                 'visibility' => $validated['visibility'],
                 'is_featured' => $validated['is_featured'],
                 'content_style' => $validated['content_style'],
-                'dictionary_source' => $validated['dictionary_source'] ?? 'general',
+                'dictionary_source' => $validated['dictionary_source'] ?? Poetry::DICTIONARY_LUGHAT,
+                'romanization_source' => $romanizationSource,
                 'book_id' => $validated['book_id'] ?? null,
                 'page_start' => $validated['page_start'] ?? null,
                 'page_end' => $validated['page_end'] ?? null,
@@ -438,6 +542,7 @@ class PoetryController extends Controller
             'poetry_title' => 'required|string|max:255',
             'content_style' => 'required|string',
             'dictionary_source' => 'nullable|in:general,lughat',
+            'romanization_source' => 'nullable|in:legacy,baakh_lughat',
             'visibility' => 'required|boolean',
             'is_featured' => 'required|boolean',
             'couplets' => 'required|array|min:1',
@@ -468,6 +573,12 @@ class PoetryController extends Controller
             'expression_annotations.*.note' => 'nullable|string',
         ]);
 
+        // Editing always migrates to Baakh Lughat roman when saving through the new UI.
+        $romanizationSource = $validated['romanization_source'] ?? Poetry::ROMANIZATION_BAAKH_LUGHAT;
+        if ($block = $this->lughatRomanPublishBlock($validated, $romanizationSource)) {
+            return $block;
+        }
+
         DB::beginTransaction();
         try {
             $poetry->update([
@@ -479,7 +590,8 @@ class PoetryController extends Controller
                 'visibility' => $validated['visibility'],
                 'is_featured' => $validated['is_featured'],
                 'content_style' => $validated['content_style'],
-                'dictionary_source' => $validated['dictionary_source'] ?? $poetry->dictionary_source ?? 'general',
+                'dictionary_source' => $validated['dictionary_source'] ?? $poetry->dictionary_source ?? Poetry::DICTIONARY_LUGHAT,
+                'romanization_source' => $romanizationSource,
                 'book_id' => $validated['book_id'] ?? null,
                 'page_start' => $validated['page_start'] ?? null,
                 'page_end' => $validated['page_end'] ?? null,
@@ -551,6 +663,46 @@ class PoetryController extends Controller
             DB::rollBack();
             return response()->json(['message' => 'Failed to update poetry: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * When publishing via Baakh Lughat romanization, every Sindhi token must have a roman value.
+     */
+    private function lughatRomanPublishBlock(array $validated, string $romanizationSource)
+    {
+        if ($romanizationSource !== Poetry::ROMANIZATION_BAAKH_LUGHAT) {
+            return null;
+        }
+
+        $sdText = collect($validated['couplets'] ?? [])
+            ->pluck('couplet_text')
+            ->implode("\n\n");
+        $check = app(LughatPoetryRomanService::class)->check(
+            (string) ($validated['poetry_title'] ?? ''),
+            $sdText
+        );
+
+        $ready = empty($check['empty']) && (int) ($check['unresolved_count'] ?? 0) === 0;
+        if ($ready) {
+            return null;
+        }
+
+        $unresolved = collect($check['words'] ?? [])
+            ->whereIn('status', [
+                LughatPoetryRomanService::STATUS_MISSING_WORD,
+                LughatPoetryRomanService::STATUS_MISSING_ROMAN,
+            ])
+            ->values()
+            ->all();
+
+        return response()->json([
+            'message' => 'Poetry cannot be published until every Sindhi word exists in Baakh Lughat with a Roman spelling.',
+            'lughat_roman_check' => [
+                'ready' => false,
+                'unresolved_count' => count($unresolved),
+                'words' => $unresolved,
+            ],
+        ], 422);
     }
 
     /** Bust public poem JSON cache so content_style / couplets update immediately. */

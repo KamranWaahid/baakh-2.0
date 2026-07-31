@@ -522,28 +522,122 @@ class LughatExpressionService
             ->orderBy('couplet_index')
             ->orderBy('start_token_index')
             ->get()
-            ->map(fn (LughatPoetryExpressionAnnotation $a) => [
-                'id' => $a->id,
-                'couplet_id' => $a->couplet_id,
-                'couplet_index' => $a->couplet_index,
-                'start_token_index' => $a->start_token_index,
-                'end_token_index' => $a->end_token_index,
-                'surface_text' => $a->surface_text,
-                'normalized_text' => $a->normalized_text,
-                'expression_id' => $a->expression_id,
-                'expression_type' => $a->expression_type ?: $a->expression?->expression_type,
-                'literal_gloss' => $a->expression?->literal_gloss,
-                'poetic_gloss' => $a->expression?->poetic_gloss,
-                'note' => $a->note,
-                'expression' => $a->expression ? [
-                    'id' => $a->expression->id,
-                    'expression' => $a->expression->expression,
-                    'expression_type' => $a->expression->expression_type,
-                    'literal_gloss' => $a->expression->literal_gloss,
-                    'poetic_gloss' => $a->expression->poetic_gloss,
-                ] : null,
-            ])
+            ->map(fn (LughatPoetryExpressionAnnotation $a) => $this->serializePoetryAnnotation($a))
             ->all();
+    }
+
+    /**
+     * Slim payload for public poem readers (izafat / collocation spans).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listPoetryAnnotationsForPublic(int $poetryId): array
+    {
+        return collect($this->listPoetryAnnotations($poetryId))
+            ->map(fn (array $a) => [
+                'couplet_index' => $a['couplet_index'],
+                'start_token_index' => $a['start_token_index'],
+                'end_token_index' => $a['end_token_index'],
+                'surface_text' => $a['surface_text'],
+                'expression_type' => $a['expression_type'] ?: 'izafat',
+                'literal_gloss' => $a['literal_gloss'],
+                'poetic_gloss' => $a['poetic_gloss'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Find a pinned expression covering a couplet token (for public word clicks).
+     */
+    public function findPoetryAnnotationForToken(int $poetryId, int $coupletIndex, int $tokenIndex): ?array
+    {
+        if (!Schema::hasTable('lughat_poetry_expression_annotations')) {
+            return null;
+        }
+
+        $annotation = LughatPoetryExpressionAnnotation::query()
+            ->with('expression')
+            ->where('poetry_id', $poetryId)
+            ->where('couplet_index', $coupletIndex)
+            ->where('start_token_index', '<=', $tokenIndex)
+            ->where('end_token_index', '>=', $tokenIndex)
+            ->orderByDesc('end_token_index')
+            ->orderBy('start_token_index')
+            ->first();
+
+        return $annotation ? $this->serializePoetryAnnotation($annotation) : null;
+    }
+
+    /**
+     * Public dictionary-card payload for a pinned poetic expression.
+     *
+     * @param  array<string, mixed>  $annotation
+     * @return array<string, mixed>
+     */
+    public function publicLookupPayload(array $annotation): array
+    {
+        $surface = (string) ($annotation['surface_text'] ?? '');
+        $poetic = trim((string) ($annotation['poetic_gloss'] ?? ''));
+        $literal = trim((string) ($annotation['literal_gloss'] ?? ''));
+        $note = trim((string) ($annotation['note'] ?? ''));
+        $type = (string) ($annotation['expression_type'] ?? 'izafat');
+
+        $meanings = collect([$poetic, $literal, $note])->filter()->unique()->values()->all();
+
+        return [
+            'found' => true,
+            'id' => $annotation['expression_id'] ?? $annotation['id'] ?? null,
+            'word' => $surface,
+            'romanized' => null,
+            'pos' => $type === 'izafat' ? 'izafat' : $type,
+            'meanings' => $meanings,
+            'meanings_en' => $literal !== '' ? [$literal] : [],
+            'meanings_sd' => $poetic !== '' ? [$poetic] : [],
+            'senses' => $meanings === [] ? [] : [[
+                'id' => null,
+                'short_gloss' => $type === 'izafat' ? 'اضافت' : $type,
+                'definition' => $poetic !== '' ? $poetic : ($literal !== '' ? $literal : $note),
+                'definition_en' => $literal !== '' ? $literal : null,
+                'definition_sd' => $poetic !== '' ? $poetic : null,
+                'is_preferred' => true,
+            ]],
+            'synonyms' => [],
+            'antonyms' => [],
+            'hypernyms' => [],
+            'is_expression' => true,
+            'expression_type' => $type,
+            'source' => 'baakh_lughat',
+            'dictionary' => 'lughat',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializePoetryAnnotation(LughatPoetryExpressionAnnotation $a): array
+    {
+        return [
+            'id' => $a->id,
+            'couplet_id' => $a->couplet_id,
+            'couplet_index' => $a->couplet_index,
+            'start_token_index' => $a->start_token_index,
+            'end_token_index' => $a->end_token_index,
+            'surface_text' => $a->surface_text,
+            'normalized_text' => $a->normalized_text,
+            'expression_id' => $a->expression_id,
+            'expression_type' => $a->expression_type ?: $a->expression?->expression_type,
+            'literal_gloss' => $a->expression?->literal_gloss,
+            'poetic_gloss' => $a->expression?->poetic_gloss,
+            'note' => $a->note,
+            'expression' => $a->expression ? [
+                'id' => $a->expression->id,
+                'expression' => $a->expression->expression,
+                'expression_type' => $a->expression->expression_type,
+                'literal_gloss' => $a->expression->literal_gloss,
+                'poetic_gloss' => $a->expression->poetic_gloss,
+            ] : null,
+        ];
     }
 
     private function nullable(mixed $value): ?string

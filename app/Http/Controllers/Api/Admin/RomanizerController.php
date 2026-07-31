@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Helpers\SindhiNormalizer;
+use App\Models\LughatLemma;
 use App\Models\Romanizer;
 use App\Services\RomanizerService;
+use App\Support\DictionaryText;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class RomanizerController extends Controller
 {
@@ -23,14 +26,61 @@ class RomanizerController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('word_sd', 'like', "%{$search}%")
-                ->orWhere('word_roman', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('word_sd', 'like', "%{$search}%")
+                    ->orWhere('word_roman', 'like', "%{$search}%");
+            });
+        }
+
+        $lughatStatus = $request->get('lughat_status', 'all');
+        if ($lughatStatus === 'added') {
+            $addedIds = $this->romanizerLughatOverlap()['added_ids'];
+            if ($addedIds === []) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('id', $addedIds);
+            }
+        } elseif ($lughatStatus === 'remaining') {
+            $addedIds = $this->romanizerLughatOverlap()['added_ids'];
+            if ($addedIds !== []) {
+                $query->whereNotIn('id', $addedIds);
+            }
         }
 
         $perPage = $request->get('per_page', 20);
         $words = $query->orderBy('id', 'desc')->paginate($perPage);
 
+        if ($lughatStatus === 'all' && $words->count() > 0) {
+            $addedLookup = array_fill_keys($this->romanizerLughatOverlap()['added_ids'], true);
+            $words->getCollection()->transform(function ($row) use ($addedLookup) {
+                $row->in_lughat = isset($addedLookup[$row->id]);
+
+                return $row;
+            });
+        } else {
+            $words->getCollection()->transform(function ($row) use ($lughatStatus) {
+                $row->in_lughat = $lughatStatus === 'added';
+
+                return $row;
+            });
+        }
+
         return response()->json($words);
+    }
+
+    /**
+     * Stats: Romanizer words already present in Baakh Lughat vs still remaining.
+     */
+    public function lughatStats()
+    {
+        $sets = $this->romanizerLughatOverlap();
+
+        return response()->json([
+            'total' => $sets['total'],
+            'added' => $sets['added'],
+            'remaining' => $sets['remaining'],
+            'lughat_lemmas' => $sets['lughat_lemmas'],
+        ]);
     }
 
     public function store(Request $request)
@@ -48,6 +98,8 @@ class RomanizerController extends Controller
             'word_roman' => strip_tags($validated['word_roman']),
             'user_id' => $validated['user_id']
         ]);
+
+        $this->forgetLughatOverlapCache();
 
         return response()->json([
             'message' => 'Word added to Romanizer dictionary',
@@ -75,6 +127,8 @@ class RomanizerController extends Controller
             'word_roman' => strip_tags($validated['word_roman'])
         ]);
 
+        $this->forgetLughatOverlapCache();
+
         return response()->json([
             'message' => 'Word updated successfully',
             'data' => $word
@@ -85,6 +139,8 @@ class RomanizerController extends Controller
     {
         $word = Romanizer::findOrFail($id);
         $word->delete();
+
+        $this->forgetLughatOverlapCache();
 
         return response()->json([
             'message' => 'Word deleted successfully'
@@ -103,65 +159,15 @@ class RomanizerController extends Controller
         }
     }
 
-    public function checkWords(Request $request)
+    public function checkWords(Request $request, RomanizerService $romanizer)
     {
         $request->validate([
             'text' => 'required|string'
         ]);
 
-        // Split by whitespace (space, tab, newline, etc.)
-        $get_text = preg_split('/\s+/u', $request->text, -1, PREG_SPLIT_NO_EMPTY);
-        $text = array_unique($get_text);
-        $missing = array();
-        // Punctuation to strip from beginning and end
-        $punctuation = ['،', '’', '‘', '”', '“', '?', '!', '؛', '.', '؟', ',', '"', "'", '(', ')', '[', ']', '{', '}', '-', '_'];
-
-        // Diacritics to strip globally from words
-        $diacritics = [
-            "\u{064B}", // Fathatayn
-            "\u{064C}", // Dammatayn
-            "\u{064D}", // Kasratayn
-            "\u{064E}", // Fatha
-            "\u{064F}", // Damma
-            "\u{0650}", // Kasra
-            "\u{0651}", // Shadda
-            "\u{0652}", // Sukun
-            "\u{0653}", // Maddah
-            "\u{0670}", // Superscript Alef
-        ];
-
-        foreach ($text as $word) {
-            $cleanWord = $word;
-
-            // Strip diacritics from the entire word
-            $cleanWord = str_replace($diacritics, '', $cleanWord);
-
-            // Strip punctuation from start
-            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, 0, 1), $punctuation)) {
-                $cleanWord = mb_substr($cleanWord, 1);
-            }
-
-            // Strip punctuation from end
-            while (mb_strlen($cleanWord) > 0 && in_array(mb_substr($cleanWord, -1), $punctuation)) {
-                $cleanWord = mb_substr($cleanWord, 0, -1);
-            }
-
-            // Normalize ALL Heh variants to standard Sindhi 'ھ' (U+06BE) for dictionary consistency check
-            // UPDATE: Use SindhiNormalizer for phonetic-contextual rules
-            $normalizedCleanWord = SindhiNormalizer::normalize($cleanWord);
-
-            $exists = Romanizer::where('word_sd', $cleanWord)->exists();
-            if (!$exists && $cleanWord !== $normalizedCleanWord) {
-                $exists = Romanizer::where('word_sd', $normalizedCleanWord)->exists();
-            }
-
-            if (!empty($cleanWord) && !$exists) {
-                $missing[] = $cleanWord;
-            }
-        }
-
-        // Re-index array to ensure JSON array (not object with numeric keys)
-        $missing = array_values(array_unique($missing));
+        // Only Sindhi surfaces the romanizer cannot resolve (exact / airab-base / normalized).
+        // Keeps zer/zabar/pesh on surfaces; skips Latin, digits, and punctuation-only tokens.
+        $missing = $romanizer->findMissingWords($request->text);
 
         return response()->json([
             'missing_words' => $missing,
@@ -190,5 +196,52 @@ class RomanizerController extends Controller
         return response()->json([
             'transliterated_text' => $romanizer->transliterate($request->text)
         ]);
+    }
+
+    /**
+     * @return array{added_ids: list<int>, remaining_ids: list<int>, added: int, remaining: int, total: int, lughat_lemmas: int}
+     */
+    private function romanizerLughatOverlap(): array
+    {
+        return Cache::remember('romanizer.lughat_overlap.v2', 60, function () {
+            $lughatKeys = [];
+            foreach (LughatLemma::query()->select(['lemma', 'normalized_lemma'])->cursor() as $lemma) {
+                foreach ([$lemma->lemma, $lemma->normalized_lemma] as $value) {
+                    if (!$value) {
+                        continue;
+                    }
+                    $identity = DictionaryText::normalizeForIdentity($value);
+                    if ($identity !== '') {
+                        $lughatKeys[$identity] = true;
+                    }
+                }
+            }
+
+            $addedIds = [];
+            $remainingIds = [];
+            foreach (Romanizer::query()->select(['id', 'word_sd'])->cursor() as $row) {
+                $identity = DictionaryText::normalizeForIdentity((string) $row->word_sd);
+                if ($identity !== '' && isset($lughatKeys[$identity])) {
+                    $addedIds[] = (int) $row->id;
+                } else {
+                    $remainingIds[] = (int) $row->id;
+                }
+            }
+
+            return [
+                'added_ids' => $addedIds,
+                'remaining_ids' => $remainingIds,
+                'added' => count($addedIds),
+                'remaining' => count($remainingIds),
+                'total' => count($addedIds) + count($remainingIds),
+                'lughat_lemmas' => LughatLemma::query()->count(),
+            ];
+        });
+    }
+
+    private function forgetLughatOverlapCache(): void
+    {
+        Cache::forget('romanizer.lughat_overlap');
+        Cache::forget('romanizer.lughat_overlap.v2');
     }
 }

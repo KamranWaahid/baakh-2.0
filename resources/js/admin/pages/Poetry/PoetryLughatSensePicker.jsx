@@ -238,7 +238,23 @@ export default function PoetryLughatSensePicker({
             )
         );
         onExpressionChange([...filtered, next]);
-        toast.success('Poetic expression pinned for this line.');
+
+        // Disable separate word senses for tokens covered by this expression.
+        if (typeof onChange === 'function') {
+            onChange(annotations.filter(
+                (a) => !(
+                    a.couplet_index === next.couplet_index
+                    && a.token_index >= next.start_token_index
+                    && a.token_index <= next.end_token_index
+                )
+            ));
+        }
+
+        toast.success(
+            (next.expression_type || 'izafat') === 'izafat'
+                ? 'Izafat pinned — words are connected for this line.'
+                : 'Poetic expression pinned for this line.'
+        );
         setActiveExpr(null);
         setLiteralGloss('');
         setPoeticGloss('');
@@ -267,8 +283,8 @@ export default function PoetryLughatSensePicker({
         const words = couplet?.wordTokens || [];
         const ann = annotationMap.get(annotationKey(token.coupletIndex, token.tokenIndex));
 
-        // Shift-click: link adjacent words into an expression
-        if (e.shiftKey && rangeAnchor && rangeAnchor.coupletIndex === token.coupletIndex) {
+        // Complete a pending expression link (Shift+click first word, then click second).
+        if (rangeAnchor && rangeAnchor.coupletIndex === token.coupletIndex) {
             const start = Math.min(rangeAnchor.tokenIndex, token.tokenIndex);
             const end = Math.max(rangeAnchor.tokenIndex, token.tokenIndex);
             if (end > start) {
@@ -280,20 +296,25 @@ export default function PoetryLughatSensePicker({
                     start,
                     end,
                     surface: surfaces.join(' '),
-                    type: end - start === 1 && hasTrailingKasra(surfaces[0]) ? 'izafat' : 'collocation',
+                    type: end - start === 1 ? 'izafat' : 'collocation',
                 });
+                return;
+            }
+            // Same word again — cancel link mode
+            if (rangeAnchor.tokenIndex === token.tokenIndex && !e.shiftKey) {
+                setRangeAnchor(null);
                 return;
             }
         }
 
-        // First click of a range (set anchor) when shift held alone
+        // First click of a range (set anchor) when shift held
         if (e.shiftKey) {
             setRangeAnchor({
                 coupletIndex: token.coupletIndex,
                 tokenIndex: token.tokenIndex,
                 surface: token.surface,
             });
-            toast.message('Shift-click the next word to form an expression.');
+            toast.message('Now click the next word to connect as izafat / expression.');
             return;
         }
 
@@ -434,7 +455,8 @@ export default function PoetryLughatSensePicker({
                 <p>Click a word to pin its Baakh Lughat sense for this line.</p>
                 <p>
                     Phrases like <span className="font-arabic">جامِ محبت</span> (izafat) appear underlined —
-                    click to pin the poetic expression. Shift-click two words to link any collocation.
+                    click to pin the poetic expression. Shift-click a word, then click the next word to connect
+                    them; after you pin, public readers get the izafat meaning for either word.
                 </p>
             </div>
 
