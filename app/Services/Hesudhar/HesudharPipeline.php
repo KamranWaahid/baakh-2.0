@@ -28,13 +28,19 @@ class HesudharPipeline
 
     /**
      * Full pipeline execution.
+     *
+     * @param  bool  $dictionaryOnly  When true, only apply Hesudhar WordNet matches.
+     *                                Misses keep the original surface (airab/endings intact).
      */
-    public function process(string $text): HesudharResult
+    public function process(string $text, bool $dictionaryOnly = false): HesudharResult
     {
         $result = new HesudharResult($text);
 
         // -- PHASE 1: Global pre-normalization --
-        $text = $this->phase1->run($text);
+        // Skip for dictionary-only poetry refine — Phase1 can still mutate letters.
+        if (!$dictionaryOnly) {
+            $text = $this->phase1->run($text);
+        }
 
         // -- Tokenize into words --
         $tokens = $this->tokenize($text);
@@ -79,6 +85,12 @@ class HesudharPipeline
                     $correctedTokens[] = $lookup;
                     continue;
                 }
+            }
+
+            // Poetry refine: search-only — do not rewrite unmatched tokens.
+            if ($dictionaryOnly) {
+                $correctedTokens[] = $originalToken;
+                continue;
             }
 
             // -- PHASE 4: Arabic citation bypass --

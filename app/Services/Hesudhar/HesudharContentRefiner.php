@@ -5,10 +5,11 @@ namespace App\Services\Hesudhar;
 use App\Models\Couplets;
 use App\Models\Poetry;
 use App\Models\PoetryTranslations;
-use App\Support\DictionaryText;
 
 /**
  * Applies dictionary-first Hesudhar correction to poetry/couplet DB content.
+ *
+ * Never strips airab as a rewrite. Only WordNet wrong→correct matches change text.
  */
 class HesudharContentRefiner
 {
@@ -22,17 +23,8 @@ class HesudharContentRefiner
         $allChanges = [];
 
         if (!preg_match('/<[^>]+>/u', $text)) {
-            $stripped = DictionaryText::stripDiacritics($text);
-            if ($stripped !== $text) {
-                $allChanges[] = [
-                    'original' => $text,
-                    'corrected' => $stripped,
-                    'source' => 'STRIP_DIACRITICS',
-                ];
-                $text = $stripped;
-            }
-
-            $result = $pipeline->process($text);
+            // Dictionary-only: search Hesudhar with/without airab; do not run phonetic rewrites.
+            $result = $pipeline->process($text, dictionaryOnly: true);
             $corrected = $result->correctedText;
             foreach ($result->changesLog as $change) {
                 $allChanges[] = $change;
@@ -50,17 +42,7 @@ class HesudharContentRefiner
                         return $chunk;
                     }
 
-                    $stripped = DictionaryText::stripDiacritics($chunk);
-                    if ($stripped !== $chunk) {
-                        $allChanges[] = [
-                            'original' => $chunk,
-                            'corrected' => $stripped,
-                            'source' => 'STRIP_DIACRITICS',
-                        ];
-                        $chunk = $stripped;
-                    }
-
-                    $result = $pipeline->process($chunk);
+                    $result = $pipeline->process($chunk, dictionaryOnly: true);
                     foreach ($result->changesLog as $change) {
                         $allChanges[] = $change;
                     }
