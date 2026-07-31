@@ -715,42 +715,45 @@ const CreatePoetry = () => {
                                                     onExpressionChange={setExpressionAnnotations}
                                                     contentStyle={form.watch('content_style')}
                                                 />
-                                            ) : showMissingHighlight ? (
-                                                <div className="space-y-3">
-                                                    <p className="text-xs text-amber-800/80 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                                                        Highlighted words are missing from Baakh Lughat or have no Roman spelling.
-                                                        Click the eye to open AI JSON (Copy for AI → Input JSON), same as Lughat Home.
-                                                    </p>
-                                                    <PoetryLughatMissingHighlight
-                                                        content={poetryContent}
-                                                        unresolvedWords={unresolvedLughatWords}
-                                                        contentStyle={form.watch('content_style')}
-                                                        openingSurface={openingLughatSurface}
-                                                        onOpenWord={openLughatWord}
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {showMissingHighlight && (
+                                                        <div className="space-y-3">
+                                                            <p className="text-xs text-amber-800/80 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                                                                Highlighted words are missing from Baakh Lughat or have no Roman spelling.
+                                                                Click the eye to open AI JSON. Edit the poem in the text box below — highlights do not replace your text.
+                                                            </p>
+                                                            <PoetryLughatMissingHighlight
+                                                                content={poetryContent}
+                                                                unresolvedWords={unresolvedLughatWords}
+                                                                contentStyle={form.watch('content_style')}
+                                                                openingSurface={openingLughatSurface}
+                                                                onOpenWord={openLughatWord}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    <textarea
+                                                        id="poetry-editor"
+                                                        ref={poetryEditorRef}
+                                                        dir="rtl"
+                                                        lang="sd"
+                                                        rows={8}
+                                                        className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-arabic ${
+                                                            form.watch('content_style') === 'center' ? 'text-center'
+                                                                : form.watch('content_style') === 'start' ? 'text-right'
+                                                                    : form.watch('content_style') === 'end' ? 'text-left'
+                                                                        : form.watch('content_style') === 'left' ? 'text-left'
+                                                                            : form.watch('content_style') === 'right' ? 'text-right'
+                                                                                : 'text-justify'
+                                                        }`}
+                                                        placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
+                                                        value={poetryContent}
+                                                        onChange={(e) => {
+                                                            setPoetryContent(e.target.value);
+                                                            autosizeTextarea(e.target, { minHeight: 280 });
+                                                        }}
                                                     />
                                                 </div>
-                                            ) : (
-                                            <textarea
-                                                id="poetry-editor"
-                                                ref={poetryEditorRef}
-                                                dir="rtl"
-                                                lang="sd"
-                                                rows={8}
-                                                className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-arabic ${
-                                                    form.watch('content_style') === 'center' ? 'text-center'
-                                                        : form.watch('content_style') === 'start' ? 'text-right'
-                                                            : form.watch('content_style') === 'end' ? 'text-left'
-                                                                : form.watch('content_style') === 'left' ? 'text-left'
-                                                                    : form.watch('content_style') === 'right' ? 'text-right'
-                                                                        : 'text-justify'
-                                                    }`}
-                                                placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
-                                                value={poetryContent}
-                                                onChange={(e) => {
-                                                    setPoetryContent(e.target.value);
-                                                    autosizeTextarea(e.target, { minHeight: 280 });
-                                                }}
-                                            />
                                             )}
                                         </TabsContent>
                                         <TabsContent value="roman" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">

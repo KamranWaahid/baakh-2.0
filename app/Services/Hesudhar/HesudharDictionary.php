@@ -3,6 +3,7 @@
 namespace App\Services\Hesudhar;
 
 use App\Models\BaakhHesudhar;
+use App\Support\DictionaryText;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -30,7 +31,10 @@ class HesudharDictionary
     }
 
     /**
-     * @return string|null Corrected form, or null if dictionary has no mapping
+     * Search Hesudhar with or without airab. Never returns a stripped form as a
+     * "correction" unless it is a real wrong→correct dictionary mapping.
+     *
+     * @return string|null Corrected form, original word (whitelist), or null if no mapping
      */
     public static function lookup(string $word): ?string
     {
@@ -41,26 +45,66 @@ class HesudharDictionary
 
         $maps = self::maps();
 
-        // 1) Exact wrong→correct
-        if (isset($maps['wrong'][$word])) {
-            return $maps['wrong'][$word];
+        $hit = self::lookupInMaps($word, $maps, preferOriginal: $word);
+        if ($hit !== null) {
+            return $hit;
         }
 
-        // 2) Already a known correct form — protect from algorithm rewrites
-        if (isset($maps['correct'][$word])) {
-            return $word;
+        // 4) Airab-insensitive search — match only; keep vocalized surface when identity/whitelist.
+        $stripped = DictionaryText::stripDiacritics($word);
+        if ($stripped !== '' && $stripped !== $word) {
+            $hit = self::lookupInMaps($stripped, $maps, preferOriginal: $word);
+            if ($hit !== null) {
+                return $hit;
+            }
+
+            foreach (self::variants($stripped) as $variant) {
+                if ($variant === $stripped || $variant === $word) {
+                    continue;
+                }
+                $hit = self::lookupInMaps($variant, $maps, preferOriginal: $word);
+                if ($hit !== null) {
+                    return $hit;
+                }
+            }
         }
 
-        // 3) Encoding variants (Heh / Yeh / Kaf families)
-        foreach (self::variants($word) as $variant) {
-            if ($variant === $word) {
+        return null;
+    }
+
+    /**
+     * @param  array{wrong: array<string,string>, correct: array<string,true>}  $maps
+     */
+    private static function lookupInMaps(string $key, array $maps, string $preferOriginal): ?string
+    {
+        if (isset($maps['wrong'][$key])) {
+            $correct = $maps['wrong'][$key];
+            // Identity mapping (correct indexed as wrong→correct) — keep original airab surface.
+            if ($correct === $key) {
+                return $preferOriginal;
+            }
+
+            return $correct;
+        }
+
+        if (isset($maps['correct'][$key])) {
+            return $preferOriginal;
+        }
+
+        foreach (self::variants($key) as $variant) {
+            if ($variant === $key) {
                 continue;
             }
             if (isset($maps['wrong'][$variant])) {
-                return $maps['wrong'][$variant];
+                $correct = $maps['wrong'][$variant];
+                if ($correct === $variant || $correct === $key) {
+                    return $preferOriginal;
+                }
+
+                return $correct;
             }
             if (isset($maps['correct'][$variant])) {
-                return $variant;
+                return $preferOriginal;
             }
         }
 
