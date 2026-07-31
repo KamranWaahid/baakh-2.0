@@ -41,10 +41,9 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
 
-            Route::middleware(['web', 'auth', 'user_role'])
-                ->prefix('/admin')
-                ->group(base_path('routes/admin.php'));
-
+            // Admin SPA is served from routes/web.php without server-side auth.
+            // React ProtectedRoute checks /api/auth/me. Do NOT wrap /admin in auth here
+            // or guests (and post-deploy expired sessions) get redirected to public "/".
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
