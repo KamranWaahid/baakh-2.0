@@ -227,6 +227,11 @@ const FitVerseBlock = ({
                         letterSpacing,
                         lineHeight: 1.45,
                         transform: scale < 0.999 ? `scale(${scale})` : undefined,
+                        // Single-line couplets need last-line justify; text-justify alone only
+                        // stretches wrapped lines (not the final/only line).
+                        ...(align === 'justify'
+                            ? { textAlignLast: 'justify', textJustify: 'inter-word' }
+                            : null),
                     }}
                     dir={isRtl ? 'rtl' : 'ltr'}
                 >

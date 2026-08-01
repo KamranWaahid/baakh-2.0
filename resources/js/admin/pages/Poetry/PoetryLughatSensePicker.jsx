@@ -20,8 +20,9 @@ import { toast } from 'sonner';
 const KASRA = '\u0650';
 
 function cleanToken(raw = '') {
+    // No \p{S}: Unicode miscategorises Sindhi ۾ / ۽ as Symbol.
     return String(raw)
-        .replace(/[\u060C\u061B\u061F\u06D4\u0640\u00AB\u00BB\u2018-\u201F\p{P}\p{S}]+/gu, '')
+        .replace(/[\u060C\u061B\u061F\u06D4\u0640\u0606-\u0608\u060B\u060E\u060F\u06DE\u06E9\u00AB\u00BB\u2018-\u201F\p{P}]+/gu, '')
         .trim();
 }
 
@@ -147,7 +148,7 @@ export default function PoetryLughatSensePicker({
         contentStyle === 'center' ? 'text-center'
             : contentStyle === 'start' || contentStyle === 'right' ? 'text-right'
                 : contentStyle === 'end' || contentStyle === 'left' ? 'text-left'
-                    : 'text-justify';
+                    : 'text-justify [text-align-last:justify]';
 
     const openExpression = ({ coupletIndex, start, end, surface, type = 'izafat' }) => {
         const existing = expressionMap.get(expressionKey(coupletIndex, start, end));
@@ -361,7 +362,8 @@ export default function PoetryLughatSensePicker({
         for (let i = 0; i < couplet.tokens.length; i++) {
             const token = couplet.tokens[i];
             if (token.type !== 'word') {
-                out.push(<span key={i}>{token.text}</span>);
+                // Keep spaces as text nodes so justified alignment can stretch them.
+                out.push(token.text);
                 continue;
             }
             if (covered.has(token.tokenIndex) && ![...expressionAnnotations].some(

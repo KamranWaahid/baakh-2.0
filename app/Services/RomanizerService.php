@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Helpers\SindhiNormalizer;
 use App\Models\Romanizer;
+use App\Support\DictionaryText;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -192,9 +193,12 @@ class RomanizerService
     {
         $words = $this->map();
 
-        $sindhiPunctuation = ['،', '؛', '؟', "\xD8\x9B", ':', ';', '{', '}', '[', ']', '(', ')'];
-        $romanPunctuation = ['.', '!', '?', ',', '"', "'", '"', '"'];
-        $allPunctuation = array_merge($sindhiPunctuation, $romanPunctuation);
+        $allPunctuation = [
+            '،', '؛', '؟', '۔',
+            '’', '‘', '”', '“', '«', '»', '‹', '›',
+            '?', '!', '.', ',', '"', "'",
+            '(', ')', '[', ']', '{', '}', '-', '_', ':', ';',
+        ];
 
         $diacriticMap = [
             "\u{064E}" => 'a',
@@ -216,14 +220,14 @@ class RomanizerService
 
                 $firstChar = mb_substr($cleanWord, 0, 1);
                 if (in_array($firstChar, $allPunctuation, true)) {
-                    $foundPunctuationStart = in_array($firstChar, $sindhiPunctuation, true) ? '' : $firstChar;
+                    $foundPunctuationStart = DictionaryText::romanizePunctuation($firstChar);
                     $cleanWord = mb_substr($cleanWord, 1);
                 }
 
                 if (mb_strlen($cleanWord) > 0) {
                     $lastChar = mb_substr($cleanWord, -1);
                     if (in_array($lastChar, $allPunctuation, true)) {
-                        $foundPunctuationEnd = in_array($lastChar, $sindhiPunctuation, true) ? '' : $lastChar;
+                        $foundPunctuationEnd = DictionaryText::romanizePunctuation($lastChar);
                         $cleanWord = mb_substr($cleanWord, 0, -1);
                     }
                 }
@@ -272,7 +276,7 @@ class RomanizerService
             $resultLines[] = implode(' ', $processedWords);
         }
 
-        return implode("\n", $resultLines);
+        return DictionaryText::romanizePunctuation(implode("\n", $resultLines));
     }
 
     /**

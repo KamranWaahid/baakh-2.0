@@ -11,10 +11,13 @@ const GAP = 8;
  * Strip punctuation from a poetry token before dictionary lookup.
  * Arabic comma (،) sits inside the Arabic Unicode block, so a letter-only
  * keep-list is not enough — punctuation must be removed explicitly.
+ *
+ * Do NOT use \p{S}: Unicode miscategorises Sindhi letters ۾ (U+06FE) and
+ * ۽ (U+06FD) as Symbol, which would wipe them before lookup.
  */
 function cleanLookupWord(token = '') {
     return String(token)
-        .replace(/[\u060C\u061B\u061F\u06D4\u0640\u00AB\u00BB\u2018-\u201F\p{P}\p{S}]+/gu, '')
+        .replace(/[\u060C\u061B\u061F\u06D4\u0640\u0606-\u0608\u060B\u060E\u060F\u06DE\u06E9\u00AB\u00BB\u2018-\u201F\p{P}]+/gu, '')
         .replace(/[^\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/gu, '')
         .trim();
 }
@@ -603,14 +606,14 @@ export const ClickableWord = ({
                 ref={wordRef}
                 onClick={handleClick}
                 title={isExpr ? (expression?.poetic_gloss || expression?.literal_gloss || expression?.surface_text) : undefined}
-                className={`cursor-pointer rounded-sm underline-offset-4 transition-all duration-200 ease-out ${
+                className={`cursor-pointer rounded-sm transition-all duration-200 ease-out ${
                     isExpr
                         ? (isOpen
-                            ? 'bg-violet-100/80 underline decoration-violet-400 text-gray-900 ring-1 ring-violet-200 scale-[1.03]'
-                            : 'underline decoration-violet-300 decoration-2 hover:bg-violet-50/80')
+                            ? 'bg-violet-100/80 text-gray-900 ring-1 ring-violet-200 scale-[1.03]'
+                            : 'hover:bg-violet-50/80')
                         : (isOpen
-                            ? 'bg-amber-100/80 underline decoration-gray-300 text-gray-900 ring-1 ring-amber-200 scale-[1.03]'
-                            : 'hover:underline hover:bg-gray-100/80 decoration-gray-300')
+                            ? 'bg-amber-100/80 text-gray-900 ring-1 ring-amber-200 scale-[1.03]'
+                            : 'hover:bg-gray-100/80')
                 }`}
             >
                 {word}
@@ -653,7 +656,9 @@ export const CoupletWithWords = ({
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (/^\s+$/u.test(part)) {
-            nodes.push(<span key={`s-${i}`}>{part}</span>);
+            // Keep spaces as real text nodes so CSS text-justify can stretch them.
+            // Wrapped <span> spaces are ignored by many browsers for justification.
+            nodes.push(part);
             continue;
         }
 

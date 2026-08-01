@@ -718,19 +718,13 @@ const CreatePoetry = () => {
                                             ) : (
                                                 <div className="space-y-4">
                                                     {showMissingHighlight && (
-                                                        <div className="space-y-3">
-                                                            <p className="text-xs text-amber-800/80 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                                                                Highlighted words are missing from Baakh Lughat or have no Roman spelling.
-                                                                Click the eye to open AI JSON. Edit the poem in the text box below — highlights do not replace your text.
-                                                            </p>
-                                                            <PoetryLughatMissingHighlight
-                                                                content={poetryContent}
-                                                                unresolvedWords={unresolvedLughatWords}
-                                                                contentStyle={form.watch('content_style')}
-                                                                openingSurface={openingLughatSurface}
-                                                                onOpenWord={openLughatWord}
-                                                            />
-                                                        </div>
+                                                        <PoetryLughatMissingHighlight
+                                                            content={poetryContent}
+                                                            unresolvedWords={unresolvedLughatWords}
+                                                            contentStyle={form.watch('content_style')}
+                                                            openingSurface={openingLughatSurface}
+                                                            onOpenWord={openLughatWord}
+                                                        />
                                                     )}
                                                     <textarea
                                                         id="poetry-editor"
@@ -744,7 +738,7 @@ const CreatePoetry = () => {
                                                                     : form.watch('content_style') === 'end' ? 'text-left'
                                                                         : form.watch('content_style') === 'left' ? 'text-left'
                                                                             : form.watch('content_style') === 'right' ? 'text-right'
-                                                                                : 'text-justify'
+                                                                                : 'text-justify [text-align-last:justify]'
                                                         }`}
                                                         placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
                                                         value={poetryContent}
@@ -773,7 +767,7 @@ const CreatePoetry = () => {
                                                 rows={8}
                                                 className={`w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-sans ${form.watch('content_style') === 'center' ? 'text-center' :
                                                     form.watch('content_style') === 'start' ? 'text-left' :
-                                                        form.watch('content_style') === 'end' ? 'text-right' : 'text-justify'
+                                                        form.watch('content_style') === 'end' ? 'text-right' : 'text-justify [text-align-last:justify]'
                                                     }`}
                                                 placeholder="Transliterated text will appear here..."
                                                 value={transliteratedText}

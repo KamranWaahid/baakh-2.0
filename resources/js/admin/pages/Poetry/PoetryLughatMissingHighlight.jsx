@@ -2,8 +2,9 @@ import React, { useMemo } from 'react';
 import { Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/** Arabic/Latin punctuation & symbols that must not join a Lughat surface. */
-const PUNCT_CLASS = '[\\u060C\\u061B\\u061F\\u06D4\\u0640\\u00AB\\u00BB\\u2039\\u203A\\u2018-\\u201F\\p{P}\\p{S}]';
+/** Arabic/Latin punctuation that must not join a Lughat surface.
+ *  No \p{S}: Unicode miscategorises Sindhi ۾ / ۽ as Symbol. */
+const PUNCT_CLASS = '[\\u060C\\u061B\\u061F\\u06D4\\u0640\\u0606-\\u0608\\u060B\\u060E\\u060F\\u06DE\\u06E9\\u00AB\\u00BB\\u2039\\u203A\\u2018-\\u201F\\p{P}]';
 
 function stripPunctuation(raw = '') {
     return String(raw)
@@ -55,7 +56,7 @@ export default function PoetryLughatMissingHighlight({
         contentStyle === 'center' ? 'text-center'
             : contentStyle === 'start' || contentStyle === 'right' ? 'text-right'
                 : contentStyle === 'end' || contentStyle === 'left' ? 'text-left'
-                    : 'text-justify';
+                    : 'text-justify [text-align-last:justify]';
 
     const couplets = useMemo(() => {
         return String(content || '')
@@ -68,7 +69,7 @@ export default function PoetryLughatMissingHighlight({
         const parts = String(text).split(/(\s+)/u);
         return parts.map((part, i) => {
             if (/^\s+$/u.test(part)) {
-                return <span key={`${keyPrefix}-s-${i}`}>{part}</span>;
+                return part;
             }
 
             const { lead, word, trail } = splitAffixedPunctuation(part);
