@@ -225,7 +225,7 @@ const FitVerseBlock = ({
                     style={{
                         fontSize: `${fontSize}px`,
                         letterSpacing,
-                        lineHeight: 1.45,
+                        lineHeight: align === 'justify' ? 1.75 : 1.65,
                         transform: scale < 0.999 ? `scale(${scale})` : undefined,
                         // Single-line couplets need last-line justify; text-justify alone only
                         // stretches wrapped lines (not the final/only line).
@@ -274,13 +274,15 @@ export function FitVerseGroup({
     poetryId = null,
     expressionAnnotations = [],
 }) {
-    const containerRef = useRef(null);
+    const shellRef = useRef(null);
     const sampleRef = useRef(null);
     const [lockedFit, setLockedFit] = useState({
         fontSize: baseFontSize,
         scale: 1,
         letterSpacing: 'normal',
     });
+    /** Inner column width — for justify, hugs the longest misra so gaps stay subtle. */
+    const [columnWidth, setColumnWidth] = useState(null);
 
     const allLines = useMemo(() => {
         if (!Array.isArray(couplets)) return [];
@@ -288,23 +290,44 @@ export function FitVerseGroup({
     }, [couplets]);
 
     useLayoutEffect(() => {
-        const container = containerRef.current;
-        if (!container || allLines.length === 0) return undefined;
+        const shell = shellRef.current;
+        if (!shell || allLines.length === 0) return undefined;
 
         let frame = 0;
 
         const measure = () => {
-            const available = container.clientWidth;
+            const available = shell.clientWidth;
             if (available <= 0) return;
 
-            const sampleEl = sampleRef.current || container;
-            const next = computeVerseFit(allLines, {
+            const sampleEl = sampleRef.current || shell;
+            // Soft reading cap so verses never stretch wall-to-wall on wide screens.
+            const readingCap = Math.min(
                 available,
+                align === 'justify' || align === 'center' ? 512 : available,
+            );
+
+            const next = computeVerseFit(allLines, {
+                available: readingCap,
                 baseFontSize,
                 minFontSize,
                 isRtl,
                 sampleEl,
             });
+
+            const natural = measureLinesWidth(allLines, {
+                fontSize: next.fontSize,
+                isRtl,
+                sampleEl,
+            });
+
+            let width = readingCap;
+            if (align === 'justify' && natural > 0) {
+                // Column ≈ longest line (+ hairline pad). Justify only fills a few px.
+                width = Math.min(readingCap, Math.ceil(natural + 10));
+            } else if (align === 'center' && natural > 0) {
+                width = Math.min(readingCap, Math.ceil(Math.max(natural + 16, readingCap * 0.88)));
+            }
+
             setLockedFit((prev) => (
                 prev.fontSize === next.fontSize
                 && prev.scale === next.scale
@@ -312,6 +335,7 @@ export function FitVerseGroup({
                     ? prev
                     : next
             ));
+            setColumnWidth((prev) => (prev === width ? prev : width));
         };
 
         const schedule = () => {
@@ -322,7 +346,7 @@ export function FitVerseGroup({
         schedule();
 
         const observer = new ResizeObserver(schedule);
-        observer.observe(container);
+        observer.observe(shell);
 
         const onFontsReady = () => schedule();
         if (document.fonts?.ready) {
@@ -335,7 +359,7 @@ export function FitVerseGroup({
             observer.disconnect();
             document.fonts?.removeEventListener?.('loadingdone', onFontsReady);
         };
-    }, [allLines, baseFontSize, minFontSize, isRtl]);
+    }, [allLines, baseFontSize, minFontSize, isRtl, align]);
 
     useEffect(() => {
         setLockedFit({
@@ -343,37 +367,45 @@ export function FitVerseGroup({
             scale: 1,
             letterSpacing: 'normal',
         });
-    }, [baseFontSize, couplets]);
+        setColumnWidth(null);
+    }, [baseFontSize, couplets, align]);
+
+    const centerColumn = align === 'justify' || align === 'center';
 
     return (
-        <div ref={containerRef} className={`w-full max-w-full ${className}`}>
-            {/* Font metrics probe — inherits serif / arabic from parent */}
+        <div ref={shellRef} className="w-full max-w-full">
             <div
-                ref={sampleRef}
-                aria-hidden
-                className="absolute opacity-0 pointer-events-none whitespace-nowrap"
-                style={{ fontSize: `${baseFontSize}px`, lineHeight: 1.45 }}
+                className={`w-full max-w-full ${centerColumn ? 'mx-auto' : ''} ${className}`}
+                style={columnWidth ? { maxWidth: `${columnWidth}px` } : undefined}
             >
-                {'\u00A0'}
+                {/* Font metrics probe — inherits serif / arabic from parent */}
+                <div
+                    ref={sampleRef}
+                    aria-hidden
+                    className="absolute opacity-0 pointer-events-none whitespace-nowrap"
+                    style={{ fontSize: `${baseFontSize}px`, lineHeight: 1.65 }}
+                >
+                    {'\u00A0'}
+                </div>
+                {Array.isArray(couplets) && couplets.map((couplet, index) => (
+                    <FitVerseBlock
+                        key={index}
+                        text={couplet}
+                        isRtl={isRtl}
+                        align={align}
+                        baseFontSize={baseFontSize}
+                        minFontSize={minFontSize}
+                        lineGap={lineGap}
+                        className={coupletClassName}
+                        interactive={interactive}
+                        lockedFit={lockedFit}
+                        dictionarySource={dictionarySource}
+                        poetryId={poetryId}
+                        coupletIndex={index}
+                        expressionAnnotations={expressionAnnotations}
+                    />
+                ))}
             </div>
-            {Array.isArray(couplets) && couplets.map((couplet, index) => (
-                <FitVerseBlock
-                    key={index}
-                    text={couplet}
-                    isRtl={isRtl}
-                    align={align}
-                    baseFontSize={baseFontSize}
-                    minFontSize={minFontSize}
-                    lineGap={lineGap}
-                    className={coupletClassName}
-                    interactive={interactive}
-                    lockedFit={lockedFit}
-                    dictionarySource={dictionarySource}
-                    poetryId={poetryId}
-                    coupletIndex={index}
-                    expressionAnnotations={expressionAnnotations}
-                />
-            ))}
         </div>
     );
 }

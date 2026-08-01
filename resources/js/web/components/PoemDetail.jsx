@@ -20,8 +20,8 @@ const PoemDetail = ({ lang }) => {
     const { poemSlug } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [verseBaseSize, setVerseBaseSize] = useState(21);
-    const [verseMinSize, setVerseMinSize] = useState(16);
+    const [verseBaseSize, setVerseBaseSize] = useState(17);
+    const [verseMinSize, setVerseMinSize] = useState(15);
     const [coupletGapClass, setCoupletGapClass] = useState('mb-5');
     const [lineGap, setLineGap] = useState(6);
 
@@ -32,11 +32,11 @@ const PoemDetail = ({ lang }) => {
         const mq = window.matchMedia('(min-width: 768px)');
         const sync = () => {
             const desktop = mq.matches;
-            // ~30% smaller than the previous 42/30 for a calmer reading scale.
-            setVerseBaseSize(desktop ? 29 : 21);
-            setVerseMinSize(desktop ? 18 : 15);
-            setCoupletGapClass(desktop ? 'mb-6' : 'mb-5');
-            setLineGap(desktop ? 6 : 5);
+            // Calm reading scale (+15% over the prior 20/15).
+            setVerseBaseSize(desktop ? 23 : 17);
+            setVerseMinSize(desktop ? 16 : 15);
+            setCoupletGapClass(desktop ? 'mb-8' : 'mb-6');
+            setLineGap(desktop ? 10 : 7);
         };
         sync();
         mq.addEventListener('change', sync);
@@ -151,8 +151,14 @@ const PoemDetail = ({ lang }) => {
                 </header>
 
 
-                {/* Body — one shared fit for all couplets so stanza sizes stay equal on mobile */}
-                <div className={`max-w-none text-gray-900 font-serif antialiased ${isRtl ? 'font-arabic' : ''}`}>
+                {/* Body — narrower reading measure; shared fit keeps couplets even */}
+                <div
+                    className={`relative mx-auto w-full max-w-[28rem] sm:max-w-[30rem] md:max-w-[32rem] text-gray-900 font-serif antialiased ${isRtl ? 'font-arabic' : ''}`}
+                >
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-[12%] -top-3 h-px bg-gradient-to-r from-transparent via-gray-200/80 to-transparent"
+                    />
                     {Array.isArray(poem.content) ? (
                         <FitVerseGroup
                             couplets={poem.content}
@@ -169,10 +175,14 @@ const PoemDetail = ({ lang }) => {
                         />
                     ) : (
                         <div
-                            className={`prose prose-xl max-w-none leading-[1.55] text-[26px] md:text-[34px] ${verseAlignClass(verseAlign)} whitespace-pre-line`}
+                            className={`prose prose-lg max-w-none leading-[1.7] text-[17px] md:text-[23px] ${verseAlignClass(verseAlign)} whitespace-pre-line`}
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(poem.content) }}
                         />
                     )}
+                    <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-x-[12%] -bottom-3 h-px bg-gradient-to-r from-transparent via-gray-200/80 to-transparent"
+                    />
 
                     {poem.info && (
                         <div
