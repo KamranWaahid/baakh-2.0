@@ -383,7 +383,14 @@ trait HasMedia
             $this->deleteImageFiles($oldImageUri, $thumbnail);
         }
 
-        return $this->uploadImage($file, $folderPath, $customName, $thumbnail);
+        // Replacements must get a new filename. Reusing "{slug}.webp" keeps the
+        // public URL identical, so browsers/CDN (and Eloquent dirty checks) treat
+        // the image as unchanged even after a successful overwrite.
+        $nameForUpload = $customName
+            ? Str::slug($customName) . '_' . strtolower(bin2hex(random_bytes(4)))
+            : null;
+
+        return $this->uploadImage($file, $folderPath, $nameForUpload, $thumbnail);
     }
 
 
