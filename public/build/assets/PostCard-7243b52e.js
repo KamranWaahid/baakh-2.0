@@ -1,4 +1,4 @@
-import{e as c,j as e}from"./radix-ui-bed44828.js";import{c as F,L as w}from"./x-dfc327a8.js";import{a as P,P as C}from"./FitVerseBlock-0c3350f5.js";import{q as M,E as N,K as R}from"./badge-e04067fa.js";/**
+import{e as c,j as e}from"./radix-ui-bed44828.js";import{c as F,L as w}from"./x-dfc327a8.js";import{a as P,P as C}from"./FitVerseBlock-914032a6.js";import{q as M,E as N,K as R}from"./badge-e04067fa.js";/**
  * @license lucide-react v0.563.0 - ISC
  *
  * This source code is licensed under the ISC license.

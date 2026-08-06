@@ -151,10 +151,13 @@ class LughatPoetryRomanService
                 $trimmed = mb_substr($trimmed, 0, -1);
             }
 
-            $out[] = $prefix . $roman . $suffix;
+            $out[] = DictionaryText::romanizePunctuation($prefix)
+                . $roman
+                . DictionaryText::romanizePunctuation($suffix);
         }
 
-        return implode('', $out);
+        // Convert any leftover Arabic punctuation (standalone marks, failed lookups).
+        return DictionaryText::romanizePunctuation(implode('', $out));
     }
 
     /**

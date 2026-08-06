@@ -22,6 +22,7 @@ export function resolveVerseAlign(contentStyle, { isRtl = true, isGhazal = false
 export function verseAlignClass(align) {
     if (align === 'center') return 'text-center';
     if (align === 'left') return 'text-left';
-    if (align === 'justify') return 'text-justify';
+    // text-align-last is required for single-line (couplet) justification
+    if (align === 'justify') return 'text-justify [text-align-last:justify]';
     return 'text-right';
 }

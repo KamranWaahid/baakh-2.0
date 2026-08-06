@@ -91,6 +91,9 @@ const EditPoetContent = () => {
     const [placeLabels, setPlaceLabels] = useState({});
     const [jsonModalOpen, setJsonModalOpen] = useState(false);
     const fileInputRef = useRef(null);
+    // Hydrate the form once per poet id. React Query refetches must not wipe a
+    // pending image selection (otherwise Save looks successful but sends no file).
+    const hydratedPoetIdRef = useRef(null);
 
     const { data: createData } = useQuery({
         queryKey: ['poets-create-data'],
@@ -131,53 +134,61 @@ const EditPoetContent = () => {
     });
 
     useEffect(() => {
-        if (poet) {
-            const labels = {};
-            const details = Array.isArray(poet.all_details) ? poet.all_details.map((d, index) => {
-                const birthId = d.birth_place != null && d.birth_place !== '' ? String(d.birth_place) : null;
-                const deathId = d.death_place != null && d.death_place !== '' ? String(d.death_place) : null;
-                if (birthId && d.birth_place_name) {
-                    labels[`birth:${index}`] = d.birth_place_name;
-                }
-                if (deathId && d.death_place_name) {
-                    labels[`death:${index}`] = d.death_place_name;
-                }
-                return {
-                    lang: d.lang || 'sd',
-                    poet_name: d.poet_name || '',
-                    poet_laqab: d.poet_laqab || '',
-                    pen_name: d.pen_name || '',
-                    tagline: d.tagline || '',
-                    poet_bio: d.poet_bio || '',
-                    birth_place: birthId,
-                    death_place: deathId,
-                };
-            }) : [];
-
-            form.reset({
-                poet_slug: poet.poet_slug || '',
-                date_of_birth: poet.date_of_birth || '',
-                date_of_death: poet.date_of_death || '',
-                visibility: poet.visibility === 1 || poet.visibility === true,
-                is_featured: poet.is_featured === 1 || poet.is_featured === true,
-                image: null,
-                details,
-            });
-            setPlaceLabels(labels);
-            setImageFile(null);
-            setRemoveImage(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-
-            const pic = poet.poet_pic_url || poet.poet_pic;
-            if (pic) {
-                setPreview(/^https?:\/\//i.test(pic) || pic.startsWith('blob:') ? pic : getImageUrl(pic, 'poet'));
-            } else {
-                setPreview(null);
-            }
+        if (!poet) {
+            return;
         }
-    }, [poet, form]);
+
+        const poetKey = String(poet.id ?? id);
+        if (hydratedPoetIdRef.current === poetKey) {
+            return;
+        }
+        hydratedPoetIdRef.current = poetKey;
+
+        const labels = {};
+        const details = Array.isArray(poet.all_details) ? poet.all_details.map((d, index) => {
+            const birthId = d.birth_place != null && d.birth_place !== '' ? String(d.birth_place) : null;
+            const deathId = d.death_place != null && d.death_place !== '' ? String(d.death_place) : null;
+            if (birthId && d.birth_place_name) {
+                labels[`birth:${index}`] = d.birth_place_name;
+            }
+            if (deathId && d.death_place_name) {
+                labels[`death:${index}`] = d.death_place_name;
+            }
+            return {
+                lang: d.lang || 'sd',
+                poet_name: d.poet_name || '',
+                poet_laqab: d.poet_laqab || '',
+                pen_name: d.pen_name || '',
+                tagline: d.tagline || '',
+                poet_bio: d.poet_bio || '',
+                birth_place: birthId,
+                death_place: deathId,
+            };
+        }) : [];
+
+        form.reset({
+            poet_slug: poet.poet_slug || '',
+            date_of_birth: poet.date_of_birth || '',
+            date_of_death: poet.date_of_death || '',
+            visibility: poet.visibility === 1 || poet.visibility === true,
+            is_featured: poet.is_featured === 1 || poet.is_featured === true,
+            image: null,
+            details,
+        });
+        setPlaceLabels(labels);
+        setImageFile(null);
+        setRemoveImage(false);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+
+        const pic = poet.poet_pic_url || poet.poet_pic;
+        if (pic) {
+            setPreview(/^https?:\/\//i.test(pic) || pic.startsWith('blob:') ? pic : getImageUrl(pic, 'poet'));
+        } else {
+            setPreview(null);
+        }
+    }, [poet, form, id]);
 
     const onSubmit = async (data) => {
         const dirty = form.formState.dirtyFields || {};
