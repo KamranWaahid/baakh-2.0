@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
 import AdminLayout from './layouts/AdminLayout';
 import api from './api/axios';
 import { Button } from '@/components/ui/button';
 import '../../css/admin.css';
+
+// Lazy: keeps recharts (~150KB gzip) out of the shared vendor graph used by the public web SPA.
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const AdminPageFallback = () => <div className="p-8">Loading...</div>;
 
 const ProtectedRoute = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null); // null = loading
@@ -126,7 +129,9 @@ const App = () => {
                     <Route path="/admin" element={
                         <ProtectedRoute>
                             <AdminLayout>
-                                <Dashboard />
+                                <Suspense fallback={<AdminPageFallback />}>
+                                    <Dashboard />
+                                </Suspense>
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

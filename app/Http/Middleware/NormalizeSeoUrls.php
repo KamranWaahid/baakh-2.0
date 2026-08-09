@@ -11,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Normalize crawlable URLs so Google stops accumulating redirect / soft-404 / duplicate signals.
  *
- * Handles: www→apex, legacy beta host→apex, trailing/double slashes, ?lang=, and legacy unprefixed routes.
+ * Handles: www→apex, legacy beta host→apex, trailing/double slashes, ?lang=,
+ * /home aliases, and legacy path shapes (/poets, /tags, /poetry, /couplets, …).
  */
 class NormalizeSeoUrls
 {
@@ -26,11 +27,6 @@ class NormalizeSeoUrls
             $path = rtrim($path, '/') ?: '/';
         }
 
-        // Never rewrite API, admin, assets, or health endpoints.
-        if ($this->shouldSkip($path)) {
-            return $next($request);
-        }
-
         $host = strtolower($request->getHost());
         $lyricsHosts = array_map('strtolower', config('app.lyrics_hosts', []));
         if (in_array($host, $lyricsHosts, true) || str_starts_with($host, 'lyrics.')) {
@@ -40,15 +36,20 @@ class NormalizeSeoUrls
         $scheme = 'https';
         $canonicalHost = $this->canonicalHost();
 
+        // Host redirects run before shouldSkip so robots.txt / sitemap also consolidate.
         // www.baakh.com → baakh.com
         if (str_starts_with($host, 'www.')) {
             return $this->redirectAway($scheme, $canonicalHost, $path, $request);
         }
 
         // Legacy staging host → canonical apex (baakh.com)
-        // Never redirect the lyrics subdomain into the archive apex.
         if (($host === 'beta.baakh.com' || str_starts_with($host, 'beta.')) && !str_starts_with($host, 'lyrics.')) {
             return $this->redirectAway($scheme, $canonicalHost, $path, $request);
+        }
+
+        // Never rewrite API, admin, assets, or health endpoints.
+        if ($this->shouldSkip($path)) {
+            return $next($request);
         }
 
         // Collapse accidental // in the path (e.g. /sd/poet/name//slug)
@@ -63,40 +64,160 @@ class NormalizeSeoUrls
             return redirect($this->withQuery($path, $request), 301);
         }
 
-        // /{lang}/periods → /{lang}/period (SPA route is singular)
-        if (preg_match('#^/(en|sd)/periods$#', $path, $m)) {
-            return redirect($this->withQuery('/' . $m[1] . '/period', $request), 301);
-        }
-
-        // ?lang=en|sd → /{lang}/... (and drop the query param)
+        $langFromQuery = null;
         if ($request->query->has('lang')) {
-            $lang = strtolower((string) $request->query('lang'));
-            if (in_array($lang, ['en', 'sd'], true)) {
-                $query = $request->query();
-                unset($query['lang']);
-
-                $prefixed = $this->ensureLangPrefix($path, $lang);
-                $target = $prefixed;
-                if ($query !== []) {
-                    $target .= '?' . http_build_query($query);
-                }
-
-                return redirect($target, 301);
+            $candidate = strtolower((string) $request->query('lang'));
+            if (in_array($candidate, ['en', 'sd'], true)) {
+                $langFromQuery = $candidate;
             }
         }
 
-        // Apex home → primary Sindhi locale (aligns canonical, hreflang, and client routing)
-        if ($path === '/') {
+        [$pathLang, $rest] = $this->splitLang($path);
+        $lang = $langFromQuery ?? $pathLang ?? 'sd';
+
+        // Single-hop canonicalization: lang preference + legacy path shapes.
+        $canonical = $this->canonicalPath($rest, $lang);
+        if ($canonical !== null) {
+            $needsRedirect = $canonical !== $path || $langFromQuery !== null;
+            if ($needsRedirect) {
+                return redirect($this->appendQueryWithoutLang($canonical, $request), 301);
+            }
+        } elseif ($langFromQuery !== null) {
+            // Modern path; only swap/add locale prefix and drop ?lang=
+            $prefixed = $this->ensureLangPrefix($path, $langFromQuery);
+            return redirect($this->appendQueryWithoutLang($prefixed, $request), 301);
+        } elseif ($path === '/') {
             return redirect($this->withQuery('/sd', $request), 301);
         }
 
-        // Legacy unprefixed content URLs → /sd/...
-        $legacy = $this->legacyRedirectTarget($path);
-        if ($legacy !== null) {
-            return redirect($legacy, 301);
+        return $next($request);
+    }
+
+    /**
+     * @return array{0: ?string, 1: string} [lang|null, path without lang prefix]
+     */
+    private function splitLang(string $path): array
+    {
+        if (preg_match('#^/(en|sd)(/.*)?$#', $path, $m)) {
+            $rest = $m[2] ?? '';
+            if ($rest === '') {
+                $rest = '/';
+            }
+
+            return [$m[1], $rest];
         }
 
-        return $next($request);
+        return [null, $path];
+    }
+
+    /**
+     * Map a locale-stripped path to its canonical localized form, or null if unchanged structurally
+     * and already correctly localized by the caller.
+     */
+    private function canonicalPath(string $rest, string $lang): ?string
+    {
+        // /{lang}/periods → /{lang}/period
+        if ($rest === '/periods') {
+            return '/' . $lang . '/period';
+        }
+
+        // Home aliases
+        if ($rest === '/' || $rest === '/home') {
+            return '/' . $lang;
+        }
+
+        // /poetry/{category}/{slug} → /{lang}/poet/{poet}/{category}/{slug}
+        if (preg_match('#^/poetry/([^/]+)/([^/]+)$#', $rest, $m)) {
+            $category = $m[1];
+            $slug = $m[2];
+            try {
+                $poetry = Poetry::query()
+                    ->with('poet:id,poet_slug')
+                    ->where('poetry_slug', $slug)
+                    ->first();
+            } catch (\Throwable) {
+                $poetry = null;
+            }
+            if ($poetry?->poet?->poet_slug) {
+                return '/' . $lang . '/poet/' . $poetry->poet->poet_slug . '/' . $category . '/' . $slug;
+            }
+
+            return '/' . $lang . '/' . $category;
+        }
+
+        // /poetry/{category}
+        if (preg_match('#^/poetry/([^/]+)$#', $rest, $m)) {
+            return '/' . $lang . '/' . $m[1];
+        }
+        if ($rest === '/poetry') {
+            return '/' . $lang . '/poetry';
+        }
+
+        // /couplets/{slug} → poet profile (no couplet detail route)
+        if (preg_match('#^/couplets/([^/]+)$#', $rest, $m)) {
+            try {
+                $couplet = Couplets::query()
+                    ->with('poet:id,poet_slug')
+                    ->where('couplet_slug', $m[1])
+                    ->first();
+            } catch (\Throwable) {
+                $couplet = null;
+            }
+            if ($couplet?->poet?->poet_slug) {
+                return '/' . $lang . '/poet/' . $couplet->poet->poet_slug;
+            }
+
+            return '/' . $lang . '/couplets';
+        }
+        if ($rest === '/couplets') {
+            return '/' . $lang . '/couplets';
+        }
+
+        // /poets/{slug}/... → /{lang}/poet/{slug}
+        if (preg_match('#^/poets/([^/]+)(/.*)?$#', $rest, $m)) {
+            return '/' . $lang . '/poet/' . $m[1];
+        }
+        if ($rest === '/poets') {
+            return '/' . $lang . '/poets';
+        }
+
+        // /poet/{slug}/... without lang (or already under wrong plural parents handled above)
+        if (preg_match('#^/poet(/.+)$#', $rest, $m)) {
+            return '/' . $lang . '/poet' . $m[1];
+        }
+
+        // /tags/... → /{lang}/tag/...
+        if (preg_match('#^/tags/(.+)$#', $rest, $m)) {
+            // Old URLs sometimes included category: /tags/foo/ghazal
+            $parts = explode('/', $m[1]);
+
+            return '/' . $lang . '/tag/' . $parts[0];
+        }
+        if ($rest === '/tags') {
+            return '/' . $lang . '/explore';
+        }
+
+        // Unprefixed /tag/... → add locale
+        if (preg_match('#^/tag/(.+)$#', $rest, $m)) {
+            return '/' . $lang . '/tag/' . $m[1];
+        }
+
+        // Misc legacy
+        $simple = [
+            '/privacy' => '/privacy',
+            '/prosody' => '/prosody',
+            '/genres' => '/explore',
+            '/help' => '/help',
+            '/about' => '/about',
+        ];
+        if (isset($simple[$rest])) {
+            return '/' . $lang . $simple[$rest];
+        }
+        if (str_starts_with($rest, '/genres/') || str_starts_with($rest, '/bundles/')) {
+            return '/' . $lang;
+        }
+
+        return null;
     }
 
     private function shouldSkip(string $path): bool
@@ -154,6 +275,17 @@ class NormalizeSeoUrls
         return $qs ? ($path . '?' . $qs) : $path;
     }
 
+    private function appendQueryWithoutLang(string $path, Request $request): string
+    {
+        $query = $request->query();
+        unset($query['lang']);
+        if ($query === []) {
+            return $path;
+        }
+
+        return $path . '?' . http_build_query($query);
+    }
+
     private function ensureLangPrefix(string $path, string $lang): string
     {
         if (preg_match('#^/(en|sd)(/|$)#', $path)) {
@@ -166,104 +298,5 @@ class NormalizeSeoUrls
         }
 
         return '/' . $lang . $path;
-    }
-
-    private function legacyRedirectTarget(string $path): ?string
-    {
-        // Already language-prefixed modern routes.
-        if (preg_match('#^/(en|sd)(/|$)#', $path)) {
-            return null;
-        }
-
-        // /poetry/{category}/{slug} → /sd/poet/{poet}/{category}/{slug}
-        if (preg_match('#^/poetry/([^/]+)/([^/]+)$#', $path, $m)) {
-            $category = $m[1];
-            $slug = $m[2];
-            try {
-                $poetry = Poetry::query()
-                    ->with('poet:id,poet_slug')
-                    ->where('poetry_slug', $slug)
-                    ->first();
-            } catch (\Throwable) {
-                $poetry = null;
-            }
-            if ($poetry?->poet?->poet_slug) {
-                return '/sd/poet/' . $poetry->poet->poet_slug . '/' . $category . '/' . $slug;
-            }
-
-            return '/sd/' . $category;
-        }
-
-        // /poetry/{category}
-        if (preg_match('#^/poetry/([^/]+)$#', $path, $m)) {
-            return '/sd/' . $m[1];
-        }
-        if ($path === '/poetry') {
-            return '/sd/poetry';
-        }
-
-        // /couplets/{slug} → poet profile (no couplet detail route)
-        if (preg_match('#^/couplets/([^/]+)$#', $path, $m)) {
-            try {
-                $couplet = Couplets::query()
-                    ->with('poet:id,poet_slug')
-                    ->where('couplet_slug', $m[1])
-                    ->first();
-            } catch (\Throwable) {
-                $couplet = null;
-            }
-            if ($couplet?->poet?->poet_slug) {
-                return '/sd/poet/' . $couplet->poet->poet_slug;
-            }
-
-            return '/sd/couplets';
-        }
-        if ($path === '/couplets') {
-            return '/sd/couplets';
-        }
-
-        // /poets/{slug}/... → /sd/poet/{slug}
-        if (preg_match('#^/poets/([^/]+)(/.*)?$#', $path, $m)) {
-            return '/sd/poet/' . $m[1];
-        }
-        if ($path === '/poets') {
-            return '/sd/poets';
-        }
-
-        // /poet/{slug}/... without lang
-        if (preg_match('#^/poet(/.+)$#', $path, $m)) {
-            return '/sd/poet' . $m[1];
-        }
-
-        // /tags/... → /sd/tag/...
-        if (preg_match('#^/tags/(.+)$#', $path, $m)) {
-            // Old URLs sometimes included category: /tags/foo/ghazal
-            $parts = explode('/', $m[1]);
-            return '/sd/tag/' . $parts[0];
-        }
-        if ($path === '/tags') {
-            return '/sd/explore';
-        }
-        if (preg_match('#^/tag/(.+)$#', $path, $m)) {
-            return '/sd/tag/' . $m[1];
-        }
-
-        // Misc legacy
-        $simple = [
-            '/periods' => '/sd/period',
-            '/privacy' => '/sd/privacy',
-            '/prosody' => '/sd/prosody',
-            '/genres' => '/sd/explore',
-            '/help' => '/sd/help',
-            '/about' => '/sd/about',
-        ];
-        if (isset($simple[$path])) {
-            return $simple[$path];
-        }
-        if (str_starts_with($path, '/genres/') || str_starts_with($path, '/bundles/')) {
-            return '/sd';
-        }
-
-        return null;
     }
 }

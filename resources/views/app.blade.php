@@ -12,16 +12,29 @@
     @vite(['resources/css/app.css', 'resources/js/web/main.jsx'], 'build')
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="preload" href="/api/v1/feed" as="fetch" crossorigin="anonymous">
+    @if(!empty($feedPreloadUrl))
+        <link rel="preload" href="{{ $feedPreloadUrl }}" as="fetch" crossorigin="anonymous">
+    @endif
+    @if(!empty($bootstrapFeed))
+        <script>
+            window.__BAAKH_BOOTSTRAP_FEED__ = @json($bootstrapFeed, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        </script>
+    @endif
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0GPQC53GE1"></script>
+    <!-- Google tag (gtag.js) — deferred so it does not compete with LCP -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-0GPQC53GE1');
+      window.addEventListener('load', function () {
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-0GPQC53GE1';
+        s.onload = function () {
+          gtag('js', new Date());
+          gtag('config', 'G-0GPQC53GE1');
+        };
+        document.head.appendChild(s);
+      });
     </script>
     <style>
         /* Crawlable for bots; visually hidden for users (React owns the UI). */

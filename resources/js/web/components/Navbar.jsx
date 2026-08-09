@@ -18,7 +18,7 @@ import { useMobileMenu } from '../contexts/MobileMenuContext';
 import SearchDialog from './SearchDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { getImageUrl } from '../utils/url';
-import NotificationBell from '../../admin/components/NotificationBell';
+const NotificationBell = React.lazy(() => import('../../admin/components/NotificationBell'));
 
 const Navbar = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -75,7 +75,9 @@ const Navbar = ({ lang }) => {
                 ) : user ? (
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2">
-                            <NotificationBell variant="web" />
+                            <React.Suspense fallback={null}>
+                                <NotificationBell variant="web" />
+                            </React.Suspense>
                         </div>
 
                         <DropdownMenu>

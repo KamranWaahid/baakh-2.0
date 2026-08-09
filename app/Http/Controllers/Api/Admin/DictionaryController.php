@@ -15,9 +15,11 @@ use App\Models\LemmaInflection;
 use App\Services\DictionaryCompletionService;
 use App\Services\DictionaryLemmaEditorJsonService;
 use App\Services\DictionaryLemmaJsonImportService;
+use App\Services\DictionaryToLughatCopyService;
 use App\Services\Hesudhar\DictionaryLemmaHesudharService;
 use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
+use App\Support\SindhiAlphabet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +124,11 @@ class DictionaryController extends Controller
             $this->applyLughatOverlapFilter($query, $lughatStatus);
         }
 
+        $letter = trim((string) $request->get('letter', ''));
+        if ($letter !== '' && SindhiAlphabet::isValidLetter($letter)) {
+            SindhiAlphabet::applyStartsWith($query, $letter, 'lemma');
+        }
+
         if ($request->has('status')) {
             if ($request->status !== 'all') {
                 $query->where('status', $request->status);
@@ -142,6 +149,34 @@ class DictionaryController extends Controller
         });
 
         return response()->json($page);
+    }
+
+    /**
+     * Copy a general-dictionary lemma into Baakh Lughat (data only).
+     */
+    public function copyToLughat($id, DictionaryToLughatCopyService $copier)
+    {
+        $lemma = Lemma::findOrFail($id);
+        $result = $copier->copy($lemma);
+        $target = $result['lughat_lemma'];
+
+        if ($result['already_existed']) {
+            return response()->json([
+                'message' => 'Already in Baakh Lughat — no changes made.',
+                'created' => false,
+                'already_existed' => true,
+                'lughat_lemma_id' => $target->id,
+                'data' => $target,
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Copied to Baakh Lughat.',
+            'created' => true,
+            'already_existed' => false,
+            'lughat_lemma_id' => $target->id,
+            'data' => $target,
+        ], 201);
     }
 
     public function stats()

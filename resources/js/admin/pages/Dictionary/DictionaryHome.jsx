@@ -26,12 +26,25 @@ import {
 import LemmaEditorJsonModal from './LemmaEditorJsonModal';
 import { cn } from '@/lib/utils';
 
+/** Sindhi alphabet chips for character-wise browsing (ا ب ت …). */
+const SINDHI_LETTERS = [
+    'ا', 'ب', 'ٻ', 'ڀ', 'ت', 'ٿ', 'ٽ', 'ٺ', 'ث', 'پ',
+    'ج', 'ڄ', 'جهہ', 'ڃ', 'چ', 'ڇ', 'ح', 'خ',
+    'د', 'ڌ', 'ڏ', 'ڊ', 'ڍ', 'ذ', 'ر', 'ڙ', 'ز',
+    'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ',
+    'ف', 'ڦ', 'ق', 'ڪ', 'ک', 'گ', 'ڳ', 'گهہ', 'ڱ',
+    'ل', 'م', 'ن', 'ڻ', 'و', 'ھ', 'ء', 'ي',
+];
+
 const DictionaryHome = () => {
     const queryClient = useQueryClient();
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [completionStatus, setCompletionStatus] = useState('all');
-    const [lughatStatus, setLughatStatus] = useState('all'); // all | added | remaining
+    // Default remaining so copied words (e.g. آدم) leave the main work table
+    const [lughatStatus, setLughatStatus] = useState('remaining'); // all | added | remaining
+    const [letter, setLetter] = useState('ا');
+    const [copyingId, setCopyingId] = useState(null);
     const [activeTab, setActiveTab] = useState('browse');
     const [viewingLemmaId, setViewingLemmaId] = useState(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -59,7 +72,7 @@ const DictionaryHome = () => {
 
     // ── Lemma list ──
     const { data: response, isLoading } = useQuery({
-        queryKey: ['dictionary-browse', search, page, completionStatus, lughatStatus],
+        queryKey: ['dictionary-browse', search, page, completionStatus, lughatStatus, letter],
         queryFn: async () => {
             const res = await api.get('/api/admin/dictionary/lemmas', {
                 params: {
@@ -68,6 +81,7 @@ const DictionaryHome = () => {
                     limit: 20,
                     completion_status: completionStatus,
                     lughat_status: lughatStatus,
+                    letter: letter || undefined,
                 }
             });
             return res.data;
@@ -78,6 +92,30 @@ const DictionaryHome = () => {
     const setLughatFilter = (next) => {
         setLughatStatus(next);
         setPage(1);
+    };
+
+    const setLetterFilter = (next) => {
+        setLetter((prev) => (prev === next ? '' : next));
+        setPage(1);
+    };
+
+    const copyToLughat = async (lemma) => {
+        if (!lemma?.id || copyingId) return;
+        setCopyingId(lemma.id);
+        try {
+            const res = await api.post(`/api/admin/dictionary/lemmas/${lemma.id}/copy-to-lughat`);
+            if (res.data?.already_existed) {
+                toast.message(`Already in Baakh Lughat (#${res.data.lughat_lemma_id}).`);
+            } else {
+                toast.success(`Copied “${lemma.lemma}” to Baakh Lughat.`);
+            }
+            queryClient.invalidateQueries({ queryKey: ['dictionary-browse'] });
+            queryClient.invalidateQueries({ queryKey: ['dictionary-lughat-stats'] });
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Copy to Baakh Lughat failed.');
+        } finally {
+            setCopyingId(null);
+        }
     };
 
     const runDictionaryHesudhar = async () => {
@@ -238,7 +276,7 @@ const DictionaryHome = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Card className={cn(lughatStatus === 'added' && 'ring-2 ring-emerald-500/40')}>
                     <CardHeader className="pb-2">
-                        <CardDescription>Added in Baakh Lughat</CardDescription>
+                        <CardDescription>Copied done (in Baakh Lughat)</CardDescription>
                         <CardTitle className="text-3xl tabular-nums text-emerald-700">
                             {lughatStats?.added?.toLocaleString() ?? '—'}
                         </CardTitle>
@@ -248,16 +286,16 @@ const DictionaryHome = () => {
                             size="sm"
                             variant={lughatStatus === 'added' ? 'default' : 'outline'}
                             className="w-full"
-                            onClick={() => setLughatFilter(lughatStatus === 'added' ? 'all' : 'added')}
+                            onClick={() => setLughatFilter(lughatStatus === 'added' ? 'remaining' : 'added')}
                         >
                             <BookCheck className="mr-2 h-4 w-4" />
-                            {lughatStatus === 'added' ? 'Showing added' : 'See added'}
+                            {lughatStatus === 'added' ? 'Showing copied done' : 'See copied done'}
                         </Button>
                     </CardContent>
                 </Card>
                 <Card className={cn(lughatStatus === 'remaining' && 'ring-2 ring-amber-500/40')}>
                     <CardHeader className="pb-2">
-                        <CardDescription>Remaining (not in Lughat)</CardDescription>
+                        <CardDescription>Remaining (not copied yet)</CardDescription>
                         <CardTitle className="text-3xl tabular-nums text-amber-700">
                             {lughatStats?.remaining?.toLocaleString() ?? '—'}
                         </CardTitle>
@@ -286,7 +324,7 @@ const DictionaryHome = () => {
                 {/* ── Browse Tab ── */}
                 <TabsContent value="browse" className="mt-4">
                     <Card>
-                        <CardHeader className="pb-3">
+                        <CardHeader className="pb-3 space-y-3">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                                 <div className="relative flex-1 w-full sm:max-w-md min-w-0">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -317,7 +355,7 @@ const DictionaryHome = () => {
                                 <div className="flex items-center gap-1 rounded-md border p-1 overflow-x-auto max-w-full shrink-0">
                                     {[
                                         { key: 'all', label: 'All Lughat' },
-                                        { key: 'added', label: 'Added' },
+                                        { key: 'added', label: 'Copied done' },
                                         { key: 'remaining', label: 'Remaining' },
                                     ].map((item) => (
                                         <Button
@@ -333,6 +371,33 @@ const DictionaryHome = () => {
                                     ))}
                                 </div>
                                 {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />}
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-xs text-muted-foreground">
+                                        Sindhi letter order (ا ب ت) — {letter ? `showing “${letter}”` : 'all letters'}
+                                    </p>
+                                    {letter && (
+                                        <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setLetterFilter(letter)}>
+                                            Clear letter
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-1 rounded-md border p-2 font-arabic" dir="rtl">
+                                    {SINDHI_LETTERS.map((ch) => (
+                                        <Button
+                                            key={ch}
+                                            type="button"
+                                            size="sm"
+                                            variant={letter === ch ? 'default' : 'outline'}
+                                            onClick={() => setLetterFilter(ch)}
+                                            className="h-8 min-w-8 px-2 text-base"
+                                            title={`Words starting with ${ch}`}
+                                        >
+                                            {ch}
+                                        </Button>
+                                    ))}
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -420,6 +485,26 @@ const DictionaryHome = () => {
                                                         </TableCell>
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-1">
+                                                                {!lemma.in_lughat ? (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="gap-1"
+                                                                        title="Copy this word into Baakh Lughat"
+                                                                        disabled={copyingId === lemma.id}
+                                                                        onClick={() => copyToLughat(lemma)}
+                                                                    >
+                                                                        {copyingId === lemma.id
+                                                                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                                            : <Copy className="h-3.5 w-3.5" />}
+                                                                        <span className="hidden sm:inline text-xs">To Lughat</span>
+                                                                    </Button>
+                                                                ) : (
+                                                                    <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 gap-1">
+                                                                        <CheckCircle2 className="h-3 w-3" />
+                                                                        Copied
+                                                                    </Badge>
+                                                                )}
                                                                 <Button size="sm" variant="ghost" onClick={() => setViewingLemmaId(lemma.id)}>
                                                                     <Eye className="h-3.5 w-3.5" />
                                                                 </Button>

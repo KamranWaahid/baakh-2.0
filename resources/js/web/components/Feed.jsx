@@ -22,10 +22,20 @@ const LoadingState = () => (
     </div>
 );
 
+const readBootstrapFeed = (lang, activeTab, urlCategory) => {
+    if (activeTab !== 'for-you' || urlCategory) return undefined;
+    const boot = typeof window !== 'undefined' ? window.__BAAKH_BOOTSTRAP_FEED__ : null;
+    if (!boot || boot.lang !== lang || !boot.payload?.data) return undefined;
+    return {
+        pages: [boot.payload],
+        pageParams: [1],
+    };
+};
+
 const FeedContent = ({ feedType, feeds, lang, isRtl, lastPostElementRef }) => {
     const feed = feeds[feedType];
     return (
-        <div className="space-y-8 mt-0 animate-fade-in-up">
+        <div className="space-y-8 mt-0">
             {feed.loading ? <LoadingState /> : feed.error ? (
                 <div className="py-20 flex flex-col items-center justify-center text-center">
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -111,6 +121,9 @@ const Feed = ({ lang }) => {
         getNextPageParam: (lastPage) => {
             return lastPage.current_page < lastPage.last_page ? lastPage.current_page + 1 : undefined;
         },
+        initialData: () => readBootstrapFeed(lang, activeTab, urlCategory),
+        // Prefer bootstrapped first page so LCP text can paint without waiting on /api/v1/feed.
+        staleTime: 60_000,
         enabled: activeTab !== 'bookmarked' || !!user,
         retry: 1,
     });
