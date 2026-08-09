@@ -13,9 +13,10 @@ import { MobileMenuProvider, useMobileMenu } from './contexts/MobileMenuContext'
 import { useSwipeGesture } from './hooks/useSwipeGesture';
 
 // Lazy Load Components for better performance (Code Splitting)
+import Feed from './components/Feed';
+
 const SidebarLeft = React.lazy(() => import('./components/SidebarLeft'));
 const SidebarRight = React.lazy(() => import('./components/SidebarRight'));
-const Feed = React.lazy(() => import('./components/Feed'));
 const PoetsFeed = React.lazy(() => import('./components/PoetsFeed'));
 const PoetProfile = React.lazy(() => import('./components/PoetProfile'));
 const PoetryFeed = React.lazy(() => import('./components/PoetryFeed'));

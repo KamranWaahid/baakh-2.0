@@ -1,144 +1,101 @@
 {
-  "_FitVerseBlock-914032a6.js": {
-    "file": "assets/FitVerseBlock-914032a6.js",
+  "_NotificationBell-39c967c5.js": {
+    "file": "assets/NotificationBell-39c967c5.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "resources/js/web/main.jsx",
-      "_badge-e04067fa.js",
-      "_x-dfc327a8.js",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js"
-    ]
+      "_radix-ui-4adf3cda.js",
+      "_useQuery-e4e656fa.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_circle-check-big-70bb700e.js"
+    ],
+    "isDynamicEntry": true
   },
-  "_PostCard-7243b52e.js": {
-    "file": "assets/PostCard-7243b52e.js",
+  "_SegmentedProgressBar-8593375e.js": {
+    "file": "assets/SegmentedProgressBar-8593375e.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_FitVerseBlock-914032a6.js",
-      "_badge-e04067fa.js"
-    ]
-  },
-  "_PostCardSkeleton-9702b6d7.js": {
-    "file": "assets/PostCardSkeleton-9702b6d7.js",
-    "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js"
-    ]
-  },
-  "_SegmentedProgressBar-11a382b5.js": {
-    "file": "assets/SegmentedProgressBar-11a382b5.js",
-    "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js"
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js"
     ]
   },
   "_axios-ade11851.js": {
     "file": "assets/axios-ade11851.js"
   },
-  "_badge-e04067fa.js": {
-    "file": "assets/badge-e04067fa.js",
+  "_badge-cde22160.js": {
+    "file": "assets/badge-cde22160.js",
     "imports": [
-      "_x-dfc327a8.js",
-      "_radix-ui-bed44828.js",
-      "_recharts-74493c38.js"
+      "_x-0bd59c38.js",
+      "_radix-ui-4adf3cda.js"
     ]
   },
-  "_clock-8b02a8a4.js": {
-    "file": "assets/clock-8b02a8a4.js",
+  "_circle-check-big-70bb700e.js": {
+    "file": "assets/circle-check-big-70bb700e.js",
     "imports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
+    ]
+  },
+  "_clock-b9751be5.js": {
+    "file": "assets/clock-b9751be5.js",
+    "imports": [
+      "_x-0bd59c38.js"
     ]
   },
   "_dateUtils-29c5e816.js": {
     "file": "assets/dateUtils-29c5e816.js"
   },
-  "_external-link-212dec2f.js": {
-    "file": "assets/external-link-212dec2f.js",
+  "_external-link-ff2ae3c5.js": {
+    "file": "assets/external-link-ff2ae3c5.js",
     "imports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
     ]
   },
-  "_eye-21e48978.js": {
-    "file": "assets/eye-21e48978.js",
+  "_eye-54926d24.js": {
+    "file": "assets/eye-54926d24.js",
     "imports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
     ]
   },
   "_html-5767ea50.js": {
     "file": "assets/html-5767ea50.js"
   },
-  "_index-9d3b4843.js": {
-    "file": "assets/index-9d3b4843.js",
+  "_index-16bb99a1.js": {
+    "file": "assets/index-16bb99a1.js",
     "imports": [
-      "_radix-ui-bed44828.js"
+      "_radix-ui-4adf3cda.js"
     ]
   },
-  "_link-2-86aae0d7.js": {
-    "file": "assets/link-2-86aae0d7.js",
+  "_lock-7226eaba.js": {
+    "file": "assets/lock-7226eaba.js",
     "imports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
     ]
   },
-  "_lock-4747f7b7.js": {
-    "file": "assets/lock-4747f7b7.js",
+  "_radix-ui-4adf3cda.js": {
+    "file": "assets/radix-ui-4adf3cda.js"
+  },
+  "_save-96cead47.js": {
+    "file": "assets/save-96cead47.js",
     "imports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
     ]
   },
-  "_radix-ui-bed44828.js": {
-    "file": "assets/radix-ui-bed44828.js"
-  },
-  "_recharts-74493c38.js": {
-    "file": "assets/recharts-74493c38.js",
+  "_switch-bf6d5091.js": {
+    "file": "assets/switch-bf6d5091.js",
     "imports": [
-      "_radix-ui-bed44828.js"
+      "_x-0bd59c38.js",
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js"
     ]
   },
-  "_save-a47421e4.js": {
-    "file": "assets/save-a47421e4.js",
+  "_useQuery-e4e656fa.js": {
+    "file": "assets/useQuery-e4e656fa.js",
     "imports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
     ]
   },
-  "_separator-62c8536e.js": {
-    "file": "assets/separator-62c8536e.js",
+  "_x-0bd59c38.js": {
+    "file": "assets/x-0bd59c38.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js"
-    ]
-  },
-  "_switch-b0bb4d26.js": {
-    "file": "assets/switch-b0bb4d26.js",
-    "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js",
-      "_x-dfc327a8.js"
-    ]
-  },
-  "_tabs-c6105a6a.js": {
-    "file": "assets/tabs-c6105a6a.js",
-    "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js"
-    ]
-  },
-  "_useInfiniteQuery-a6365b45.js": {
-    "file": "assets/useInfiniteQuery-a6365b45.js",
-    "imports": [
-      "_x-dfc327a8.js"
-    ]
-  },
-  "_volume-2-b2a7dfde.js": {
-    "file": "assets/volume-2-b2a7dfde.js",
-    "imports": [
-      "_x-dfc327a8.js"
-    ]
-  },
-  "_x-dfc327a8.js": {
-    "file": "assets/x-dfc327a8.js",
-    "imports": [
-      "_radix-ui-bed44828.js",
+      "_radix-ui-4adf3cda.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true
@@ -156,24 +113,48 @@
     "css": [
       "assets/main-be5290f2.css"
     ],
-    "file": "assets/main-f0a12943.js",
+    "dynamicImports": [
+      "resources/js/admin/pages/Dashboard.jsx"
+    ],
+    "file": "assets/main-a51a1c5b.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_switch-b0bb4d26.js",
-      "_badge-e04067fa.js",
-      "_recharts-74493c38.js",
-      "_link-2-86aae0d7.js",
-      "_save-a47421e4.js",
-      "_eye-21e48978.js",
-      "_tabs-c6105a6a.js",
-      "_external-link-212dec2f.js",
-      "_SegmentedProgressBar-11a382b5.js",
+      "_badge-cde22160.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_useQuery-e4e656fa.js",
+      "_NotificationBell-39c967c5.js",
+      "_switch-bf6d5091.js",
+      "_save-96cead47.js",
+      "_eye-54926d24.js",
+      "_external-link-ff2ae3c5.js",
+      "_SegmentedProgressBar-8593375e.js",
       "_axios-ade11851.js",
-      "_clock-8b02a8a4.js"
+      "_clock-b9751be5.js",
+      "_circle-check-big-70bb700e.js"
     ],
     "isEntry": true,
     "src": "resources/js/admin/main.jsx"
+  },
+  "resources/js/admin/pages/Dashboard.jsx": {
+    "file": "assets/Dashboard-96eda5eb.js",
+    "imports": [
+      "_radix-ui-4adf3cda.js",
+      "_switch-bf6d5091.js",
+      "_useQuery-e4e656fa.js",
+      "_x-0bd59c38.js",
+      "resources/js/admin/main.jsx",
+      "_badge-cde22160.js",
+      "_axios-ade11851.js",
+      "_NotificationBell-39c967c5.js",
+      "_circle-check-big-70bb700e.js",
+      "_save-96cead47.js",
+      "_eye-54926d24.js",
+      "_external-link-ff2ae3c5.js",
+      "_SegmentedProgressBar-8593375e.js",
+      "_clock-b9751be5.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/admin/pages/Dashboard.jsx"
   },
   "resources/js/app.js": {
     "file": "assets/app-60b97b66.js",
@@ -192,11 +173,12 @@
       "assets/main-878e776e.css",
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/main-da27202e.js",
+    "file": "assets/main-aba5d0a9.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_external-link-212dec2f.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_useQuery-e4e656fa.js",
+      "_external-link-ff2ae3c5.js",
       "_axios-ade11851.js"
     ],
     "isEntry": true,
@@ -206,82 +188,44 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/CoupletsFeed-525d95e6.js",
+    "file": "assets/CoupletsFeed-476ad8cc.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_PostCard-7243b52e.js",
-      "_separator-62c8536e.js",
-      "_PostCardSkeleton-9702b6d7.js",
-      "_x-dfc327a8.js",
-      "_useInfiniteQuery-a6365b45.js",
-      "_index-9d3b4843.js",
+      "_radix-ui-4adf3cda.js",
       "resources/js/web/main.jsx",
-      "_FitVerseBlock-914032a6.js",
-      "_badge-e04067fa.js",
-      "_recharts-74493c38.js",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js",
+      "_useQuery-e4e656fa.js",
+      "_index-16bb99a1.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/CoupletsFeed.jsx"
   },
   "resources/js/web/components/ExploreTopics.jsx": {
-    "file": "assets/ExploreTopics-154bdf12.js",
+    "file": "assets/ExploreTopics-40872273.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_useQuery-e4e656fa.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/ExploreTopics.jsx"
-  },
-  "resources/js/web/components/Feed.jsx": {
-    "css": [
-      "assets/app-3aff718b.css"
-    ],
-    "file": "assets/Feed-b3d6bedb.js",
-    "imports": [
-      "_radix-ui-bed44828.js",
-      "_PostCard-7243b52e.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_separator-62c8536e.js",
-      "_tabs-c6105a6a.js",
-      "_PostCardSkeleton-9702b6d7.js",
-      "resources/js/web/main.jsx",
-      "_useInfiniteQuery-a6365b45.js",
-      "_FitVerseBlock-914032a6.js",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
-    ],
-    "isDynamicEntry": true,
-    "src": "resources/js/web/components/Feed.jsx"
   },
   "resources/js/web/components/GenreFeed.jsx": {
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/GenreFeed-32a15161.js",
+    "file": "assets/GenreFeed-6cb4ccba.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js",
-      "_x-dfc327a8.js",
-      "_useInfiniteQuery-a6365b45.js",
-      "_index-9d3b4843.js",
-      "_PostCard-7243b52e.js",
-      "_separator-62c8536e.js",
-      "_PostCardSkeleton-9702b6d7.js",
-      "_recharts-74493c38.js",
-      "_axios-ade11851.js",
-      "_FitVerseBlock-914032a6.js",
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js",
+      "_useQuery-e4e656fa.js",
+      "_x-0bd59c38.js",
       "resources/js/web/main.jsx",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js"
+      "_index-16bb99a1.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/GenreFeed.jsx"
@@ -290,22 +234,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/PeriodFeed-19ac37ed.js",
+    "file": "assets/PeriodFeed-b0ceebf4.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js",
-      "_x-dfc327a8.js",
-      "_useInfiniteQuery-a6365b45.js",
-      "_index-9d3b4843.js",
-      "_PostCard-7243b52e.js",
-      "_separator-62c8536e.js",
-      "_PostCardSkeleton-9702b6d7.js",
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js",
+      "_useQuery-e4e656fa.js",
+      "_x-0bd59c38.js",
       "resources/js/web/main.jsx",
-      "_recharts-74493c38.js",
-      "_axios-ade11851.js",
-      "_FitVerseBlock-914032a6.js",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js"
+      "_index-16bb99a1.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PeriodFeed.jsx"
@@ -314,19 +251,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/PoemDetail-893edcbb.js",
+    "file": "assets/PoemDetail-449263b0.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_useQuery-e4e656fa.js",
       "resources/js/web/main.jsx",
-      "_FitVerseBlock-914032a6.js",
-      "_badge-e04067fa.js",
-      "_separator-62c8536e.js",
+      "_badge-cde22160.js",
       "_dateUtils-29c5e816.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js"
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoemDetail.jsx"
@@ -335,23 +268,17 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/PoetProfile-44b8095f.js",
+    "file": "assets/PoetProfile-4bfa27ae.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js",
-      "_SegmentedProgressBar-11a382b5.js",
-      "_separator-62c8536e.js",
-      "_x-dfc327a8.js",
-      "_PostCard-7243b52e.js",
-      "_useInfiniteQuery-a6365b45.js",
-      "_index-9d3b4843.js",
-      "_FitVerseBlock-914032a6.js",
-      "_html-5767ea50.js",
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js",
+      "_SegmentedProgressBar-8593375e.js",
       "resources/js/web/main.jsx",
-      "_link-2-86aae0d7.js",
-      "_recharts-74493c38.js",
-      "_axios-ade11851.js",
-      "_volume-2-b2a7dfde.js"
+      "_x-0bd59c38.js",
+      "_useQuery-e4e656fa.js",
+      "_index-16bb99a1.js",
+      "_html-5767ea50.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetProfile.jsx"
@@ -360,22 +287,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/PoetryFeed-8a0e1848.js",
+    "file": "assets/PoetryFeed-6f49e4a1.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_PostCard-7243b52e.js",
-      "_separator-62c8536e.js",
-      "_PostCardSkeleton-9702b6d7.js",
-      "_x-dfc327a8.js",
-      "_useInfiniteQuery-a6365b45.js",
-      "_index-9d3b4843.js",
+      "_radix-ui-4adf3cda.js",
       "resources/js/web/main.jsx",
-      "_badge-e04067fa.js",
-      "_FitVerseBlock-914032a6.js",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_useQuery-e4e656fa.js",
+      "_index-16bb99a1.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/PoetryFeed.jsx"
@@ -384,16 +304,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/PoetsFeed-157c8368.js",
+    "file": "assets/PoetsFeed-b1199122.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js",
-      "_x-dfc327a8.js",
-      "_useInfiniteQuery-a6365b45.js",
-      "_index-9d3b4843.js",
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js",
+      "_useQuery-e4e656fa.js",
       "resources/js/web/main.jsx",
+      "_x-0bd59c38.js",
+      "_index-16bb99a1.js",
       "_html-5767ea50.js",
-      "_recharts-74493c38.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -403,17 +322,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/ProsodyFeed-d8b90e98.js",
+    "file": "assets/ProsodyFeed-72907f12.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_badge-e04067fa.js",
-      "_x-dfc327a8.js",
-      "_switch-b0bb4d26.js",
-      "_tabs-c6105a6a.js",
-      "_separator-62c8536e.js",
+      "_radix-ui-4adf3cda.js",
+      "_badge-cde22160.js",
+      "_useQuery-e4e656fa.js",
+      "_x-0bd59c38.js",
+      "_switch-bf6d5091.js",
       "resources/js/web/main.jsx",
-      "_volume-2-b2a7dfde.js",
-      "_recharts-74493c38.js",
+      "_circle-check-big-70bb700e.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -423,34 +340,28 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/SidebarLeft-d3949aa1.js",
+    "file": "assets/SidebarLeft-94540390.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
       "resources/js/web/main.jsx",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/SidebarLeft.jsx"
   },
   "resources/js/web/components/SidebarRight.jsx": {
-    "css": [
-      "assets/app-3aff718b.css"
-    ],
     "dynamicImports": [
-      "_x-dfc327a8.js"
+      "_x-0bd59c38.js"
     ],
-    "file": "assets/SidebarRight-12b9e90e.js",
+    "file": "assets/SidebarRight-0a9a8ca3.js",
     "imports": [
-      "resources/js/web/main.jsx",
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
+      "_badge-cde22160.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
       "_dateUtils-29c5e816.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/SidebarRight.jsx"
@@ -459,14 +370,13 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/SocialCallback-12b4c0bb.js",
+    "file": "assets/SocialCallback-032f792d.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
       "resources/js/web/main.jsx",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_badge-cde22160.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/SocialCallback.jsx"
@@ -475,19 +385,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/TopicDetail-01fc3ddb.js",
+    "file": "assets/TopicDetail-c4ecd7bb.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_PostCard-7243b52e.js",
-      "_html-5767ea50.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js",
-      "_FitVerseBlock-914032a6.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
       "resources/js/web/main.jsx",
-      "_link-2-86aae0d7.js",
-      "_volume-2-b2a7dfde.js"
+      "_html-5767ea50.js",
+      "_useQuery-e4e656fa.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/TopicDetail.jsx"
@@ -497,11 +403,11 @@
       "assets/app-3aff718b.css"
     ],
     "dynamicImports": [
-      "_x-dfc327a8.js",
-      "_x-dfc327a8.js",
+      "_NotificationBell-39c967c5.js",
+      "_x-0bd59c38.js",
+      "_x-0bd59c38.js",
       "resources/js/web/components/SidebarLeft.jsx",
       "resources/js/web/components/SidebarRight.jsx",
-      "resources/js/web/components/Feed.jsx",
       "resources/js/web/components/PoetsFeed.jsx",
       "resources/js/web/components/PoetProfile.jsx",
       "resources/js/web/components/PoetryFeed.jsx",
@@ -524,25 +430,23 @@
       "resources/js/web/components/ExploreTopics.jsx",
       "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-1f80362a.js",
+    "file": "assets/main-baad3e1a.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_badge-cde22160.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_axios-ade11851.js"
     ],
     "isEntry": true,
     "src": "resources/js/web/main.jsx"
   },
   "resources/js/web/pages/About.jsx": {
-    "file": "assets/About-7b5d56ce.js",
+    "file": "assets/About-01580342.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/About.jsx"
@@ -551,38 +455,35 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/ForgotPassword-d91a279c.js",
+    "file": "assets/ForgotPassword-a3269dfd.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
       "resources/js/web/main.jsx",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/ForgotPassword.jsx"
   },
   "resources/js/web/pages/Help.jsx": {
-    "file": "assets/Help-2d78d83b.js",
+    "file": "assets/Help-937db790.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Help.jsx"
   },
   "resources/js/web/pages/Privacy.jsx": {
-    "file": "assets/Privacy-17d1feba.js",
+    "file": "assets/Privacy-a70716cb.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Privacy.jsx"
@@ -591,30 +492,29 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/Profile-efb48302.js",
+    "file": "assets/Profile-1017402d.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
       "resources/js/web/main.jsx",
-      "_badge-e04067fa.js",
-      "_save-a47421e4.js",
-      "_lock-4747f7b7.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_badge-cde22160.js",
+      "_save-96cead47.js",
+      "_lock-7226eaba.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Profile.jsx"
   },
   "resources/js/web/pages/ResetPassword.jsx": {
-    "file": "assets/ResetPassword-95ee3dc3.js",
+    "file": "assets/ResetPassword-151ece23.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_lock-4747f7b7.js",
-      "_eye-21e48978.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_circle-check-big-70bb700e.js",
+      "_lock-7226eaba.js",
+      "_eye-54926d24.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/ResetPassword.jsx"
@@ -623,16 +523,15 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/SetPassword-f29efe8d.js",
+    "file": "assets/SetPassword-e56a00a9.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
       "resources/js/web/main.jsx",
-      "_badge-e04067fa.js",
-      "_lock-4747f7b7.js",
-      "_eye-21e48978.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_badge-cde22160.js",
+      "_lock-7226eaba.js",
+      "_eye-54926d24.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/SetPassword.jsx"
@@ -641,41 +540,39 @@
     "css": [
       "assets/app-3aff718b.css"
     ],
-    "file": "assets/Settings-2a51abee.js",
+    "file": "assets/Settings-752bfe1c.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
       "resources/js/web/main.jsx",
-      "_badge-e04067fa.js",
-      "_lock-4747f7b7.js",
-      "_eye-21e48978.js",
-      "_clock-8b02a8a4.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_badge-cde22160.js",
+      "_lock-7226eaba.js",
+      "_eye-54926d24.js",
+      "_clock-b9751be5.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Settings.jsx"
   },
   "resources/js/web/pages/Status.jsx": {
-    "file": "assets/Status-8ee78bf4.js",
+    "file": "assets/Status-67258663.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_circle-check-big-70bb700e.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Status.jsx"
   },
   "resources/js/web/pages/Terms.jsx": {
-    "file": "assets/Terms-324263af.js",
+    "file": "assets/Terms-a088efb7.js",
     "imports": [
-      "_radix-ui-bed44828.js",
-      "_x-dfc327a8.js",
-      "_badge-e04067fa.js",
-      "_axios-ade11851.js",
-      "_recharts-74493c38.js"
+      "_radix-ui-4adf3cda.js",
+      "_x-0bd59c38.js",
+      "_badge-cde22160.js",
+      "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Terms.jsx"

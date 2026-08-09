@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Poets;
 use App\Models\Poetry;
+use App\Services\StaticCacheService;
 use App\Traits\BaakhSeoTrait;
 use Artesaos\SEOTools\Facades\SEOMeta;
 use Illuminate\Database\QueryException;
@@ -111,7 +112,39 @@ class SpaController extends Controller
                 : $this->listingCrawlHtml($locale, $segments),
         ]);
 
-        return view('app', compact('fallback'));
+        $feedPreloadUrl = null;
+        $bootstrapFeed = null;
+        if ($isHome) {
+            $feedPreloadUrl = '/api/v1/feed?lang=' . urlencode($locale) . '&page=1';
+            $bootstrapFeed = $this->homepageBootstrapFeed($locale);
+        }
+
+        return view('app', compact('fallback', 'feedPreloadUrl', 'bootstrapFeed'));
+    }
+
+    /**
+     * First feed page for home HTML so the SPA can paint LCP text without waiting on XHR.
+     */
+    private function homepageBootstrapFeed(string $locale): ?array
+    {
+        try {
+            $cached = app(StaticCacheService::class)->get("feed_page_1_{$locale}");
+            if (!is_array($cached) || $cached === []) {
+                return null;
+            }
+
+            return [
+                'lang' => $locale,
+                'payload' => [
+                    'data' => $cached,
+                    'current_page' => 1,
+                    'last_page' => 2,
+                    'total' => 100,
+                ],
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

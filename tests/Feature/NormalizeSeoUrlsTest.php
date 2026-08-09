@@ -6,6 +6,16 @@ use Tests\TestCase;
 
 class NormalizeSeoUrlsTest extends TestCase
 {
+    public function test_beta_host_redirects_robots_txt_to_apex(): void
+    {
+        $response = $this->get('https://beta.baakh.com/robots.txt');
+
+        $response->assertStatus(301);
+        $location = (string) $response->headers->get('Location');
+        $this->assertStringEndsWith('/robots.txt', $location);
+        $this->assertStringNotContainsString('beta.', $location);
+    }
+
     public function test_legacy_poets_index_redirects_to_sd(): void
     {
         $response = $this->get('/poets');
@@ -27,6 +37,62 @@ class NormalizeSeoUrlsTest extends TestCase
         $response = $this->get('/poets?lang=en');
 
         $response->assertRedirect('/en/poets');
+        $response->assertStatus(301);
+    }
+
+    public function test_lang_query_on_legacy_poet_slug_rewrites_in_one_hop(): void
+    {
+        $response = $this->get('/poets/hassan-dars?lang=en');
+
+        $response->assertRedirect('/en/poet/hassan-dars');
+        $response->assertStatus(301);
+    }
+
+    public function test_lang_query_on_legacy_tag_rewrites_in_one_hop(): void
+    {
+        $response = $this->get('/tags/thar?lang=en');
+
+        $response->assertRedirect('/en/tag/thar');
+        $response->assertStatus(301);
+    }
+
+    public function test_prefixed_legacy_tags_redirect_to_singular_tag(): void
+    {
+        $response = $this->get('/en/tags/thar');
+
+        $response->assertRedirect('/en/tag/thar');
+        $response->assertStatus(301);
+    }
+
+    public function test_prefixed_legacy_tags_with_category_drop_category(): void
+    {
+        $response = $this->get('/sd/tags/pireen/bait');
+
+        $response->assertRedirect('/sd/tag/pireen');
+        $response->assertStatus(301);
+    }
+
+    public function test_prefixed_legacy_poets_redirect_to_singular_poet(): void
+    {
+        $response = $this->get('/en/poets/hassan-dars');
+
+        $response->assertRedirect('/en/poet/hassan-dars');
+        $response->assertStatus(301);
+    }
+
+    public function test_home_aliases_redirect_to_locale_root(): void
+    {
+        $this->get('/home')->assertRedirect('/sd')->assertStatus(301);
+        $this->get('/en/home')->assertRedirect('/en')->assertStatus(301);
+        $this->get('/sd/home')->assertRedirect('/sd')->assertStatus(301);
+        $this->get('/home?lang=en')->assertRedirect('/en')->assertStatus(301);
+    }
+
+    public function test_lang_query_on_modern_path_only_swaps_locale(): void
+    {
+        $response = $this->get('/sd/poet/hassan-dars?lang=en');
+
+        $response->assertRedirect('/en/poet/hassan-dars');
         $response->assertStatus(301);
     }
 

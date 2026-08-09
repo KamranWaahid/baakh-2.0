@@ -57,13 +57,46 @@ class AppServiceProvider extends ServiceProvider
         // This prevents early resolution errors (TypeError regarding $request).
         $this->app->resolving('url', function ($url) {
             if (!method_exists($url, 'localized')) {
+                // Prefer /{lang}/... path prefixes over ?lang= (avoids redirect-only URLs in HTML).
                 $url->macro('localized', function ($path) {
                     $l = app()->getLocale();
-                    if ($l == 'sd') {
-                        return $path;
-                    } else {
-                        return $path . '?lang=' . $l;
+                    if (!in_array($l, ['en', 'sd'], true)) {
+                        $l = 'sd';
                     }
+
+                    if ($l === 'sd') {
+                        return $path;
+                    }
+
+                    if (preg_match('#^https?://#i', $path)) {
+                        $parts = parse_url($path);
+                        $urlPath = $parts['path'] ?? '/';
+                        if (preg_match('#^/(en|sd)(/|$)#', $urlPath)) {
+                            $urlPath = preg_replace('#^/(en|sd)#', '/en', $urlPath, 1) ?: '/en';
+                        } else {
+                            $urlPath = '/en' . ($urlPath === '/' ? '' : $urlPath);
+                        }
+
+                        $out = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? 'baakh.com') . $urlPath;
+                        if (!empty($parts['query'])) {
+                            $out .= '?' . $parts['query'];
+                        }
+                        if (!empty($parts['fragment'])) {
+                            $out .= '#' . $parts['fragment'];
+                        }
+
+                        return $out;
+                    }
+
+                    if (preg_match('#^/(en|sd)(/|$)#', $path)) {
+                        return preg_replace('#^/(en|sd)#', '/en', $path, 1) ?: '/en';
+                    }
+
+                    if ($path === '/' || $path === '') {
+                        return '/en';
+                    }
+
+                    return '/en' . (str_starts_with($path, '/') ? $path : '/' . $path);
                 });
             }
         });

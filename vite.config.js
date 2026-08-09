@@ -46,7 +46,10 @@ export default defineConfig({
             output: {
                 manualChunks(id) {
                     if (!id.includes('node_modules')) return;
-                    if (id.includes('recharts')) return 'recharts';
+                    // Do NOT split recharts into a shared chunk — with a multi-entry
+                    // admin+web build, Vite's modulepreload helper can land in a shared
+                    // chunk and force every public page to download ~110KB gzip of charts.
+                    // Lazy Dashboard keeps recharts inside the admin-only async chunk.
                     if (id.includes('@radix-ui')) return 'radix-ui';
                 },
             },

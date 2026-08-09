@@ -348,6 +348,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::apiResource('dictionary/lemmas', \App\Http\Controllers\Api\Admin\DictionaryController::class)
             ->names('dictionary.lemmas');
         Route::patch('dictionary/lemmas/{id}/approve', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'approve']);
+        Route::post('dictionary/lemmas/{id}/copy-to-lughat', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'copyToLughat']);
         Route::get('dictionary/lemmas/{id}/editor-json', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'editorJson']);
         Route::post('dictionary/lemmas/{id}/import-json', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'importJson']);
         Route::get('dictionary/lemmas/{id}/completion', [\App\Http\Controllers\Api\Admin\DictionaryController::class, 'completion']);

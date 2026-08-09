@@ -1,5 +1,10 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # If the vhost docroot is the project root (not public/), still send beta/www to apex.
+    RewriteCond %{HTTP_HOST} ^(www|beta)\.baakh\.com$ [NC]
+    RewriteRule ^ https://baakh.com%{REQUEST_URI} [L,R=301]
+
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

@@ -74,6 +74,41 @@
             "permanent": true
         },
         {
+            "source": "/home",
+            "destination": "/sd",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/home",
+            "destination": "/:lang",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/tags",
+            "destination": "/:lang/explore",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/tags/:slug",
+            "destination": "/:lang/tag/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/tags/:slug/:rest*",
+            "destination": "/:lang/tag/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/poets/:slug",
+            "destination": "/:lang/poet/:slug",
+            "permanent": true
+        },
+        {
+            "source": "/:lang(en|sd)/poets/:slug/:rest*",
+            "destination": "/:lang/poet/:slug",
+            "permanent": true
+        },
+        {
             "source": "/privacy",
             "destination": "/sd/privacy",
             "permanent": true
