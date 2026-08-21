@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,7 +32,7 @@ import {
     DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Trash2, Plus, Eye, EyeOff, Star, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, ChevronsUpDown, Check, Info, SpellCheck, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Eye, EyeOff, Star, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, ChevronsUpDown, Check, Info, SpellCheck, Loader2, Shuffle, RefreshCw } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -50,6 +50,20 @@ import {
     CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import PoetryLughatSensePicker from './PoetryLughatSensePicker';
+import PoetryLughatMissingHighlight from './PoetryLughatMissingHighlight';
+import LughatLemmaEditorJsonModal from '../Lughat/LughatLemmaEditorJsonModal';
+
+function clampCoupletToTwoLines(text) {
+    const normalized = String(text ?? '').replace(/\r\n?/g, '\n');
+    return normalized.split('\n').slice(0, 2).join('\n');
+}
+
+function coupletNonEmptyLineCount(text) {
+    return clampCoupletToTwoLines(text)
+        .split('\n')
+        .filter((line) => line.trim() !== '').length;
+}
 
 const coupletSchema = z.object({
     couplet_slug: z.string().min(2, 'Slug is required'),
@@ -76,6 +90,17 @@ const CreateCouplet = () => {
     const [script, setScript] = useState('perso'); // 'perso' | 'roman'
     const [slugError, setSlugError] = useState(null);
     const [coupletContent, setCoupletContent] = useState('');
+    const [lughatRomanReady, setLughatRomanReady] = useState(false);
+    const [lughatRomanWords, setLughatRomanWords] = useState([]);
+    const [lughatRomanChecking, setLughatRomanChecking] = useState(false);
+    const [openingLughatSurface, setOpeningLughatSurface] = useState(null);
+    const [viewingLemmaId, setViewingLemmaId] = useState(null);
+    const [editingCoupletText, setEditingCoupletText] = useState(false);
+    const [lughatCheckNonce, setLughatCheckNonce] = useState(0);
+    const [legacyRomanSnapshot, setLegacyRomanSnapshot] = useState(null);
+    const [sensePickerMode, setSensePickerMode] = useState(false);
+    const [senseAnnotations, setSenseAnnotations] = useState([]);
+    const [expressionAnnotations, setExpressionAnnotations] = useState([]);
     const queryClient = useQueryClient();
 
     const { data: meta, isLoading: isMetaLoading } = useQuery({
@@ -96,31 +121,80 @@ const CreateCouplet = () => {
     });
 
     // Prevent auto-updates on initial load for Edit mode
-    const allowAutoUpdates = React.useRef(!isEdit);
+    const allowAutoUpdates = useRef(!isEdit);
 
-    // Live Transliterate Content
-    useEffect(() => {
-        if (!allowAutoUpdates.current) return;
+    const runLughatRomanPipeline = useCallback(async ({ bodyText, updateSlug = false } = {}) => {
+        const bodyValue = clampCoupletToTwoLines(bodyText ?? coupletContent ?? '');
 
-        if (!coupletContent) {
+        if (!bodyValue.trim()) {
             setRomanContent('');
+            setLughatRomanWords([]);
+            setLughatRomanReady(false);
+            setIsTransliterated(true);
             return;
         }
 
-        const timer = setTimeout(async () => {
-            try {
-                const response = await api.post('/api/admin/romanizer/transliterate', {
-                    text: coupletContent
-                });
-                setRomanContent(response.data.transliterated_text);
-                setIsTransliterated(true);
-            } catch (error) {
-                console.error("Content transliteration failed:", error);
+        setLughatRomanChecking(true);
+        setIsTransliterated(false);
+        try {
+            const [checkRes, translitRes] = await Promise.all([
+                api.post('/api/admin/poetry/lughat-roman-check', {
+                    title: '',
+                    text: bodyValue,
+                }),
+                api.post('/api/admin/poetry/lughat-roman-transliterate', {
+                    title: '',
+                    text: bodyValue,
+                }),
+            ]);
+
+            const check = checkRes.data || {};
+            const ready = !!check.ready;
+            setLughatRomanWords(Array.isArray(check.words) ? check.words : []);
+            setLughatRomanReady(ready);
+
+            const romanBody = clampCoupletToTwoLines(translitRes.data?.roman_content ?? '');
+
+            if (!isEdit || ready || !legacyRomanSnapshot) {
+                setRomanContent(romanBody);
+            } else {
+                setRomanContent(legacyRomanSnapshot);
             }
-        }, 300);
+            setIsTransliterated(true);
+
+            if (updateSlug && romanBody && !/[\u0600-\u06FF]/.test(romanBody)) {
+                const firstLine = romanBody.split('\n')[0].trim();
+                const slug = firstLine
+                    .toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/[\s_-]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                if (slug) {
+                    form.setValue('couplet_slug', slug);
+                    checkSlugUnique(slug);
+                }
+            }
+        } catch (error) {
+            console.error('Baakh Lughat roman check failed:', error);
+            setLughatRomanReady(false);
+            setIsTransliterated(false);
+        } finally {
+            setLughatRomanChecking(false);
+        }
+    }, [coupletContent, isEdit, legacyRomanSnapshot]);
+
+    useEffect(() => {
+        if (!allowAutoUpdates.current) return;
+
+        const timer = setTimeout(() => {
+            runLughatRomanPipeline({
+                bodyText: coupletContent,
+                updateSlug: !isEdit,
+            });
+        }, 400);
 
         return () => clearTimeout(timer);
-    }, [coupletContent]);
+    }, [coupletContent, runLughatRomanPipeline, isEdit, lughatCheckNonce]);
 
     const applyFormat = (prefix, suffix = prefix) => {
         const el = document.getElementById('couplet-editor');
@@ -132,7 +206,7 @@ const CreateCouplet = () => {
         const selection = text.substring(start, end);
         const after = text.substring(end);
 
-        const newText = before + prefix + selection + suffix + after;
+        const newText = clampCoupletToTwoLines(before + prefix + selection + suffix + after);
         setCoupletContent(newText);
 
         setTimeout(() => {
@@ -172,26 +246,27 @@ const CreateCouplet = () => {
         }
     });
 
-    // Auto-generate slug from first line using romanizer (only for new)
+    // Auto-generate slug from first line using Baakh Lughat roman (only for new)
     const generateSlug = async (content) => {
         if (!content) return;
-        const firstLine = content.split('\n')[0].trim();
+        const firstLine = clampCoupletToTwoLines(content).split('\n')[0].trim();
         if (!firstLine) return;
 
         try {
-            const response = await api.post('/api/admin/romanizer/transliterate', {
-                text: firstLine
+            const response = await api.post('/api/admin/poetry/lughat-roman-transliterate', {
+                title: '',
+                text: firstLine,
             });
-            let roman = response.data.transliterated_text;
+            let roman = response.data?.roman_content || response.data?.transliterated_text || '';
 
-            // Generate slug from Roman text
             let slug = roman
                 .toLowerCase()
                 .replace(/[^\w\s-]/g, '')
                 .replace(/[\s_-]+/g, '-')
                 .replace(/^-+|-+$/g, '');
 
-            // Check uniqueness and auto-append if needed
+            if (!slug) return;
+
             let isAvailable = false;
             let counter = 0;
             let tempSlug = slug;
@@ -215,35 +290,30 @@ const CreateCouplet = () => {
     };
 
     useEffect(() => {
-        if (isEdit || !coupletContent) return;
-
-        const timer = setTimeout(() => {
-            generateSlug(coupletContent);
-        }, 800);
-
-        return () => clearTimeout(timer);
-    }, [coupletContent, isEdit]);
-
-    useEffect(() => {
         if (isEdit && couplet) {
             form.reset({
                 couplet_slug: couplet.couplet_slug || '',
                 poet_id: couplet.poet_id?.toString() || '',
                 topic_category_id: couplet.topic_category_id?.toString() || '',
-                visibility: true, // Independent couplets don't have separate visibility yet in the DB, but they are linked to Poetry
-                is_featured: false,
+                visibility: couplet.visibility === 1 || couplet.visibility === true,
+                is_featured: couplet.is_featured === 1 || couplet.is_featured === true,
                 couplet_tags: JSON.parse(couplet.couplet_tags || '[]'),
                 book_id: couplet.book_id?.toString() || '',
                 page_start: couplet.page_start?.toString() || '',
                 page_end: couplet.page_end?.toString() || '',
             });
-            setCoupletContent(couplet.couplet_text || '');
-            setRomanContent(couplet.roman_text || '');
+            const loaded = clampCoupletToTwoLines(couplet.couplet_text || '');
+            setCoupletContent(loaded);
+            const legacyBody = clampCoupletToTwoLines(couplet.roman_text || '');
+            setLegacyRomanSnapshot(legacyBody);
+            setRomanContent(legacyBody);
+            setIsTransliterated(true);
+            setLughatRomanReady(false);
 
-            // Re-enable auto-updates after initial data load
             setTimeout(() => {
                 allowAutoUpdates.current = true;
-            }, 1000);
+                setLughatCheckNonce((n) => n + 1);
+            }, 800);
         }
     }, [isEdit, couplet, form]);
 
@@ -252,14 +322,16 @@ const CreateCouplet = () => {
             const payload = {
                 poet_id: data.poet_id,
                 topic_category_id: data.topic_category_id,
-                couplet_text: coupletContent.trim(),
+                couplet_text: clampCoupletToTwoLines(coupletContent).trim(),
                 lang: 'sd',
                 couplet_slug: data.couplet_slug,
                 couplet_tags: data.couplet_tags,
                 book_id: data.book_id,
                 page_start: data.page_start,
                 page_end: data.page_end,
-                roman_content: romanContent.trim()
+                roman_content: clampCoupletToTwoLines(romanContent).trim(),
+                visibility: data.visibility,
+                is_featured: data.is_featured,
             };
 
             if (isEdit) {
@@ -287,12 +359,12 @@ const CreateCouplet = () => {
         },
         onSuccess: (data) => {
             if (data?.standardized_text != null) {
-                setCoupletContent(data.standardized_text);
+                setCoupletContent(clampCoupletToTwoLines(data.standardized_text));
                 toast.success(data.message || 'Text refined. Save to keep changes.');
                 return;
             }
             if (data?.couplet_text) {
-                setCoupletContent(data.couplet_text);
+                setCoupletContent(clampCoupletToTwoLines(data.couplet_text));
             }
             queryClient.invalidateQueries(['couplet', id]);
             queryClient.invalidateQueries(['couplets']);
@@ -315,16 +387,89 @@ const CreateCouplet = () => {
         refineHesudharMutation.mutate();
     };
 
+    const unresolvedLughatWords = lughatRomanWords.filter(
+        (w) => w.status === 'missing_word' || w.status === 'missing_roman' || w.status === 'ambiguous'
+    );
+
+    const openLughatWord = async (word) => {
+        if (!word) return;
+        setOpeningLughatSurface(word.surface);
+        try {
+            let lemmaId = word.lemma_id;
+            if (!lemmaId) {
+                const res = await api.post('/api/admin/lughat/lemmas/stub-from-surface', {
+                    surface: word.surface,
+                });
+                lemmaId = res.data?.lemma_id;
+                if (res.data?.created) {
+                    toast.success(`Stub created for “${res.data.lemma || word.surface}”.`);
+                }
+            }
+            if (!lemmaId) {
+                toast.error('Could not open Baakh Lughat entry.');
+                return;
+            }
+            setViewingLemmaId(lemmaId);
+        } catch (error) {
+            const existingId = error?.response?.data?.existing_id;
+            if (existingId) {
+                setViewingLemmaId(existingId);
+                return;
+            }
+            toast.error(error.response?.data?.message || 'Failed to open Baakh Lughat entry.');
+        } finally {
+            setOpeningLughatSurface(null);
+        }
+    };
+
+    const handleLughatCheckAgain = () => {
+        runLughatRomanPipeline({
+            bodyText: coupletContent,
+            updateSlug: !isEdit,
+        });
+    };
+
+    const showMissingHighlight = !sensePickerMode
+        && !editingCoupletText
+        && unresolvedLughatWords.length > 0
+        && !!coupletContent.trim();
+
+    useEffect(() => {
+        if (lughatRomanReady && editingCoupletText) {
+            setEditingCoupletText(false);
+        }
+    }, [lughatRomanReady, editingCoupletText]);
+
+    const handleTwoLineKeyDown = (e) => {
+        if (e.key !== 'Enter') return;
+        const value = e.target.value ?? '';
+        const pos = e.target.selectionStart ?? 0;
+        const lineIndex = value.slice(0, pos).split('\n').length - 1;
+        if (lineIndex >= 1) {
+            e.preventDefault();
+        }
+    };
+
     const onSubmit = (data) => {
-        const lines = coupletContent.split('\n').filter(line => line.trim() !== '');
-        if (lines.length !== 2) {
-            alert('Couplet must contain exactly 2 lines');
+        const lines = coupletNonEmptyLineCount(coupletContent);
+        if (lines !== 2) {
+            toast.error('Couplet must contain exactly 2 lines.');
+            return;
+        }
+        if (!lughatRomanReady) {
+            toast.error('Add missing Baakh Lughat words (with Roman spelling) before publishing.');
             return;
         }
         mutation.mutate(data);
     };
 
-    const lineCount = coupletContent.split('\n').filter(line => line.trim() !== '').length;
+    const lineCount = coupletNonEmptyLineCount(coupletContent);
+    const canPublish = !mutation.isPending
+        && lineCount === 2
+        && !slugError
+        && !isCheckingSlug
+        && lughatRomanReady
+        && !lughatRomanChecking;
 
     if (isMetaLoading || (isEdit && isCoupletLoading)) {
         return <div className="p-8 space-y-4">
@@ -363,7 +508,7 @@ const CreateCouplet = () => {
                                 Refine Hesudhar
                             </Button>
                             <Button variant="ghost" type="button" onClick={() => navigate('/admin/couplets')}>Cancel</Button>
-                            <Button type="submit" disabled={mutation.isPending || lineCount !== 2 || !!slugError || isCheckingSlug} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
+                            <Button type="submit" disabled={!canPublish} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-8">
                                 {mutation.isPending ? 'Saving...' : (isEdit ? 'Update' : 'Publish')}
                             </Button>
                         </div>
@@ -380,10 +525,12 @@ const CreateCouplet = () => {
 
                                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50 font-medium">
                                         <div className="flex items-center gap-1 text-xs text-muted-foreground/80 font-medium px-2 py-1 rounded bg-muted/20">
-                                            {isTransliterated ? (
-                                                <span className="flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Auto-Transliterated</span>
+                                            {lughatRomanChecking ? (
+                                                <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Checking Lughat…</span>
+                                            ) : lughatRomanReady ? (
+                                                <span className="flex items-center gap-1 text-green-600"><Check className="h-3 w-3" /> Lughat Roman ready</span>
                                             ) : (
-                                                <span className="flex items-center gap-1"><Languages className="h-3 w-3" /> Transliterating...</span>
+                                                <span className="flex items-center gap-1 text-amber-700"><Languages className="h-3 w-3" /> Missing Lughat words</span>
                                             )}
                                         </div>
                                         {/* formatting toolbar - only show in Perso mode */}
@@ -418,43 +565,134 @@ const CreateCouplet = () => {
                                 </div>
 
                                 <div className="p-6 md:p-10 space-y-4 max-w-4xl mx-auto w-full">
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground/50 font-medium">
                                             <BookOpen className="h-3 w-3" /> <span>Independent Couplet Editor</span>
                                         </div>
-                                        <div className="text-xs text-muted-foreground/50 font-medium whitespace-nowrap">
-                                            <span>{lineCount.toString().padStart(2, '0')} / 02 Lines</span>
+                                        <div className="flex items-center gap-3 flex-wrap justify-end">
+                                            {script === 'perso' && unresolvedLughatWords.length > 0 && (
+                                                <>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 text-xs gap-1.5"
+                                                        onClick={handleLughatCheckAgain}
+                                                        disabled={lughatRomanChecking}
+                                                    >
+                                                        {lughatRomanChecking
+                                                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                            : <RefreshCw className="h-3.5 w-3.5" />}
+                                                        Check Again
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant={editingCoupletText ? 'default' : 'outline'}
+                                                        className="h-7 text-xs gap-1.5"
+                                                        onClick={() => {
+                                                            setEditingCoupletText((v) => !v);
+                                                            setSensePickerMode(false);
+                                                        }}
+                                                    >
+                                                        {editingCoupletText ? 'Show highlights' : 'Edit text'}
+                                                    </Button>
+                                                </>
+                                            )}
+                                            {script === 'perso' && (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={sensePickerMode ? 'default' : 'outline'}
+                                                    className="h-7 text-xs gap-1.5"
+                                                    onClick={() => {
+                                                        setSensePickerMode((v) => !v);
+                                                        setEditingCoupletText(false);
+                                                    }}
+                                                >
+                                                    <Shuffle className="h-3.5 w-3.5" />
+                                                    {sensePickerMode ? 'Editing text' : 'Lughat senses'}
+                                                    {senseAnnotations.length + expressionAnnotations.length > 0 && (
+                                                        <span className="ml-0.5 rounded-full bg-background/20 px-1.5 text-[10px]">
+                                                            {senseAnnotations.length + expressionAnnotations.length}
+                                                        </span>
+                                                    )}
+                                                </Button>
+                                            )}
+                                            <div className="text-xs text-muted-foreground/50 font-medium whitespace-nowrap">
+                                                <span>{lineCount.toString().padStart(2, '0')} / 02 Lines</span>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div className="pt-6">
                                         <TabsContent value="perso" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
-                                            <textarea
-                                                id="couplet-editor"
-                                                dir="rtl"
-                                                lang="sd"
-                                                className="w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-arabic text-center"
-                                                placeholder="پنهنجي شاعري هتي لکو... نئين شعر لاءِ هڪ خالي لڪير ڇڏيو."
-                                                value={coupletContent}
-                                                onChange={(e) => {
-                                                    setCoupletContent(e.target.value);
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = e.target.scrollHeight + 'px';
-                                                }}
-                                            />
-                                            {lineCount !== 2 && lineCount > 0 && (
-                                                <p className="text-sm text-muted-foreground mt-4 text-center">
-                                                    Please write exactly 2 lines for the couplet.
-                                                </p>
+                                            {sensePickerMode ? (
+                                                <PoetryLughatSensePicker
+                                                    content={coupletContent}
+                                                    poetryId={null}
+                                                    annotations={senseAnnotations}
+                                                    onChange={setSenseAnnotations}
+                                                    expressionAnnotations={expressionAnnotations}
+                                                    onExpressionChange={setExpressionAnnotations}
+                                                    contentStyle="center"
+                                                />
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {showMissingHighlight && (
+                                                        <PoetryLughatMissingHighlight
+                                                            content={coupletContent}
+                                                            unresolvedWords={unresolvedLughatWords}
+                                                            contentStyle="center"
+                                                            openingSurface={openingLughatSurface}
+                                                            onOpenWord={openLughatWord}
+                                                        />
+                                                    )}
+                                                    {(!showMissingHighlight) && (
+                                                    <textarea
+                                                        id="couplet-editor"
+                                                        dir="rtl"
+                                                        lang="sd"
+                                                        rows={2}
+                                                        className="w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden bg-transparent leading-relaxed font-arabic text-center [field-sizing:content]"
+                                                        placeholder={"پهريون مصرع\nٻيون مصرع"}
+                                                        value={coupletContent}
+                                                        onKeyDown={handleTwoLineKeyDown}
+                                                        onChange={(e) => {
+                                                            setCoupletContent(clampCoupletToTwoLines(e.target.value));
+                                                            e.target.style.height = 'auto';
+                                                            e.target.style.height = `${e.target.scrollHeight}px`;
+                                                        }}
+                                                        onPaste={(e) => {
+                                                            e.preventDefault();
+                                                            const pasted = e.clipboardData.getData('text');
+                                                            const el = e.target;
+                                                            const start = el.selectionStart ?? coupletContent.length;
+                                                            const end = el.selectionEnd ?? coupletContent.length;
+                                                            const next = clampCoupletToTwoLines(
+                                                                coupletContent.slice(0, start) + pasted + coupletContent.slice(end)
+                                                            );
+                                                            setCoupletContent(next);
+                                                        }}
+                                                    />
+                                                    )}
+                                                    {lineCount !== 2 && lineCount > 0 && (
+                                                        <p className="text-sm text-muted-foreground mt-4 text-center">
+                                                            Write exactly two lines. A third line cannot be added.
+                                                        </p>
+                                                    )}
+                                                </div>
                                             )}
                                         </TabsContent>
                                         <TabsContent value="roman" className="m-0 border-0 p-0 hover:outline-none focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
                                             <textarea
                                                 dir="ltr"
-                                                className="w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none min-h-[500px] bg-transparent leading-relaxed font-sans text-center"
+                                                rows={2}
+                                                className="w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden bg-transparent leading-relaxed font-sans text-center [field-sizing:content]"
                                                 placeholder="Transliterated text will appear here..."
                                                 value={romanContent}
-                                                onChange={(e) => setRomanContent(e.target.value)}
+                                                onKeyDown={handleTwoLineKeyDown}
+                                                onChange={(e) => setRomanContent(clampCoupletToTwoLines(e.target.value))}
                                             />
                                         </TabsContent>
                                     </div>
@@ -492,7 +730,7 @@ const CreateCouplet = () => {
                                     />
                                 </CardContent>
                                 <CardFooter className="py-3 border-t">
-                                    <Button size="sm" className="w-full" disabled={mutation.isPending || lineCount !== 2 || !!slugError || isCheckingSlug}>
+                                    <Button size="sm" className="w-full" disabled={!canPublish}>
                                         {mutation.isPending ? 'Saving...' : (isEdit ? 'Update Couplet' : 'Publish Couplet')}
                                     </Button>
                                 </CardFooter>
@@ -870,6 +1108,15 @@ const CreateCouplet = () => {
                     </div>
                 </form>
             </Form>
+
+            <LughatLemmaEditorJsonModal
+                lemmaId={viewingLemmaId}
+                onClose={() => setViewingLemmaId(null)}
+                onImported={() => {
+                    setViewingLemmaId(null);
+                    handleLughatCheckAgain();
+                }}
+            />
         </div >
     );
 };

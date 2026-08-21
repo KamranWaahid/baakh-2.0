@@ -24,6 +24,16 @@
             "permanent": true
         },
         {
+            "source": "/poets/llms.txt",
+            "destination": "/sd/poets/llms.txt",
+            "permanent": true
+        },
+        {
+            "source": "/poetry/llms.txt",
+            "destination": "/sd/poetry/llms.txt",
+            "permanent": true
+        },
+        {
             "source": "/poetry",
             "destination": "/sd/poetry",
             "permanent": true
@@ -114,9 +124,86 @@
             "permanent": true
         },
         {
+            "source": "/about",
+            "destination": "/sd/about",
+            "permanent": true
+        },
+        {
+            "source": "/contact",
+            "destination": "/sd/contact",
+            "permanent": true
+        },
+        {
             "source": "/prosody",
             "destination": "/sd/prosody",
             "permanent": true
+        }
+    ],
+    "headers": [
+        {
+            "source": "/llms.txt",
+            "headers": [
+                { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
+        },
+        {
+            "source": "/.well-known/llms.txt",
+            "headers": [
+                { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
+        },
+        {
+            "source": "/:file(.*).md",
+            "headers": [
+                { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
+        },
+        {
+            "source": "/.well-known/ai-catalog.json",
+            "headers": [
+                { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
+        },
+        {
+            "source": "/.well-known/api-catalog",
+            "headers": [
+                { "key": "Content-Type", "value": "application/linkset+json" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" },
+                { "key": "Link", "value": "<https://www.rfc-editor.org/rfc/rfc9727>; rel=\"profile\"" }
+            ]
+        },
+        {
+            "source": "/.well-known/agent-skills/index.json",
+            "headers": [
+                { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
+        },
+        {
+            "source": "/.well-known/agent-skills",
+            "headers": [
+                { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
+        },
+        {
+            "source": "/.well-known/agent-skills/baakh-archive/SKILL.md",
+            "headers": [
+                { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Cache-Control", "value": "public, max-age=3600" }
+            ]
         }
     ],
     "routes": [
@@ -131,6 +218,82 @@
         {
             "src": "/robots.txt",
             "dest": "/public/robots.txt"
+        },
+        {
+            "src": "/llms.txt",
+            "dest": "/public/llms.txt"
+        },
+        {
+            "src": "/llms.md",
+            "dest": "/public/llms.md"
+        },
+        {
+            "src": "/index.md",
+            "dest": "/public/index.md"
+        },
+        {
+            "src": "/agents.md",
+            "dest": "/public/agents.md"
+        },
+        {
+            "src": "/auth.md",
+            "dest": "/public/auth.md"
+        },
+        {
+            "src": "/developers.md",
+            "dest": "/public/developers.md"
+        },
+        {
+            "src": "/api.md",
+            "dest": "/public/api.md"
+        },
+        {
+            "src": "/skill.md",
+            "dest": "/public/skill.md"
+        },
+        {
+            "src": "/agent.md",
+            "dest": "/public/agent.md"
+        },
+        {
+            "src": "/developer.md",
+            "dest": "/public/developer.md"
+        },
+        {
+            "src": "/.well-known/llms.txt",
+            "dest": "/public/.well-known/llms.txt"
+        },
+        {
+            "src": "/.well-known/ai-catalog.json",
+            "dest": "/public/.well-known/ai-catalog.json"
+        },
+        {
+            "src": "/.well-known/api-catalog",
+            "dest": "/public/.well-known/api-catalog.json"
+        },
+        {
+            "src": "/.well-known/agent-skills",
+            "dest": "/public/.well-known/agent-skills/index.md"
+        },
+        {
+            "src": "/.well-known/agent-skills/",
+            "dest": "/public/.well-known/agent-skills/index.md"
+        },
+        {
+            "src": "/.well-known/agent-skills/index.md",
+            "dest": "/public/.well-known/agent-skills/index.md"
+        },
+        {
+            "src": "/.well-known/agent-skills/index.json",
+            "dest": "/public/.well-known/agent-skills/index.json"
+        },
+        {
+            "src": "/.well-known/agent-skills/baakh-archive/SKILL.md",
+            "dest": "/public/.well-known/agent-skills/baakh-archive/SKILL.md"
+        },
+        {
+            "src": "/.well-known/(.*)",
+            "dest": "/api/index.php"
         },
         {
             "src": "/build/(.*)",

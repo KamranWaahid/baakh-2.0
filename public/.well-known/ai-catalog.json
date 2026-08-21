@@ -1,0 +1,57 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Baakh",
+    "identifier": "baakh.com",
+    "documentationUrl": "https://baakh.com/llms.txt",
+    "logoUrl": "https://baakh.com/assets/og/baakh-og-v2-1200x630.png",
+    "trustManifest": {
+      "identity": "https://baakh.com",
+      "identityType": "https"
+    }
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:baakh.com:archive:baakh-archive",
+      "displayName": "Baakh Sindhi poetry archive",
+      "type": "text/markdown",
+      "url": "https://baakh.com/.well-known/agent-skills/baakh-archive/SKILL.md",
+      "description": "Look up Sindhi poets and poems, cite canonical Baakh URLs, and negotiate Markdown.",
+      "tags": ["sindhi", "poetry", "archive"],
+      "capabilities": ["poet-lookup", "poem-text", "citation"],
+      "representativeQueries": [
+        "Where can I read Shaikh Ayaz poetry online?",
+        "Find Sindhi ghazals about watan on Baakh",
+        "Cite a Baakh URL for a Sindhi bait"
+      ],
+      "version": "1.0"
+    },
+    {
+      "identifier": "urn:air:baakh.com:docs:llms",
+      "displayName": "Baakh llms.txt",
+      "type": "text/markdown",
+      "url": "https://baakh.com/llms.txt",
+      "description": "Agent index for the archive: when to use Baakh, canonical URLs, and API entry points.",
+      "tags": ["docs", "llms.txt"],
+      "representativeQueries": [
+        "What is Baakh?",
+        "How should an agent call baakh.com?"
+      ],
+      "version": "1.0"
+    },
+    {
+      "identifier": "urn:air:baakh.com:api:v1",
+      "displayName": "Baakh public JSON API",
+      "type": "application/json",
+      "url": "https://baakh.com/api/v1/feed",
+      "description": "Read-only JSON for poets, poems, and the homepage feed. Query lang=sd or lang=en.",
+      "tags": ["api", "json"],
+      "capabilities": ["GET /api/v1/poets/{slug}", "GET /api/v1/poetry/{slug}", "GET /api/v1/feed"],
+      "representativeQueries": [
+        "GET the poet JSON for ishaq-samejo",
+        "Fetch the Baakh poetry feed in Sindhi"
+      ],
+      "version": "1.0"
+    }
+  ]
+}

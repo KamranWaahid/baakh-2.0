@@ -10,6 +10,8 @@ import AvatarImgOrIcon from './AvatarImgOrIcon';
 import { htmlToPlainText } from '../utils/html';
 
 import { useQuery } from '@tanstack/react-query';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { withBrand } from '../utils/pageTitle';
 
 const TopicDetail = () => {
     const { lang, slug } = useParams();
@@ -29,6 +31,9 @@ const TopicDetail = () => {
         },
         enabled: !!slug
     });
+
+    const topicName = data?.data?.name || data?.name;
+    usePageTitle(topicName ? withBrand(topicName, isRtl) : null);
 
     if (isLoading) {
         return (

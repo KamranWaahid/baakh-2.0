@@ -93,6 +93,7 @@ const Help = () => {
                     content: [
                         'Need more help? We are here to assist you.',
                         'Email us at: support@baakh.com',
+                        'Postal address and archive inquiries: use the Contact page.',
                         'Join our community on social media for updates and tips.'
                     ]
                 }
@@ -184,6 +185,7 @@ const Help = () => {
                     content: [
                         'وڌيڪ مدد جي ضرورت آهي؟ اسان توهان جي مدد لاءِ موجود آهيون.',
                         'اسان کي اي ميل ڪريو: support@baakh.com',
+                        'پوسٽل پتو ۽ آرڪائيو جا سوال: رابطو صفحو استعمال ڪريو.',
                         'اپڊيٽس ۽ ٽوٽڪن لاءِ سوشل ميڊيا تي اسان جي ڪميونٽي ۾ شامل ٿيو.'
                     ]
                 }

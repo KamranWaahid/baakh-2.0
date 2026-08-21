@@ -177,4 +177,103 @@ class LughatLemma extends Model
     {
         return DictionaryText::lookupBase($lemma);
     }
+
+    /**
+     * Another headword that would collide with $incomingLemma (unique key or same lookup_base).
+     * رُئيندي and unmarked رئيندي are the same word when only one catalog row exists.
+     */
+    public static function findConflictingHeadword(
+        int $exceptId,
+        string $incomingLemma,
+        ?string $incomingNormalized = null,
+        ?string $language = 'sd',
+        ?int $homograph = 1
+    ): ?self {
+        $incomingLemma = trim($incomingLemma);
+        if ($incomingLemma === '') {
+            return null;
+        }
+
+        $identity = DictionaryText::normalizeForIdentity($incomingLemma);
+        $normalizedCandidates = [];
+        foreach ([$identity, $incomingNormalized] as $value) {
+            if (!is_string($value)) {
+                continue;
+            }
+            $norm = DictionaryText::normalizeForIdentity($value);
+            if ($norm !== '') {
+                $normalizedCandidates[] = $norm;
+            }
+        }
+        $normalizedCandidates = array_values(array_unique($normalizedCandidates));
+
+        $query = static::query()->whereKeyNot($exceptId);
+        if (filled($language) && \Illuminate\Support\Facades\Schema::hasColumn((new static)->getTable(), 'language')) {
+            $query->where('language', $language);
+        }
+
+        $exact = (clone $query)->where(function ($q) use ($incomingLemma, $normalizedCandidates) {
+            $q->whereRaw(DictionaryText::binaryEquals('lemma'), [$incomingLemma]);
+            foreach ($normalizedCandidates as $norm) {
+                $q->orWhereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$norm]);
+            }
+        });
+        if ($homograph && \Illuminate\Support\Facades\Schema::hasColumn((new static)->getTable(), 'homograph_number')) {
+            $exact->where('homograph_number', $homograph);
+        }
+        $found = $exact->orderBy('id')->first();
+        if ($found) {
+            return $found;
+        }
+
+        $matches = static::findByLookupBase(DictionaryText::lookupBase($incomingLemma), 8)
+            ->where('id', '!=', $exceptId)
+            ->values();
+
+        if ($matches->count() === 1) {
+            return $matches->first();
+        }
+
+        if ($matches->count() > 1 && DictionaryText::hasDiacritics($incomingLemma)) {
+            $unmarked = $matches->filter(function (self $row) {
+                return !DictionaryText::hasDiacritics((string) $row->lemma)
+                    && !DictionaryText::hasDiacritics((string) ($row->normalized_lemma ?? ''));
+            })->values();
+            if ($unmarked->count() === 1) {
+                return $unmarked->first();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Lemmas whose stripped headword equals $base (ڪھي ↔ ڪَھي).
+     * Prefers the indexed lookup_base column; falls back to SQL airab-strip.
+     *
+     * @return \Illuminate\Support\Collection<int, static>
+     */
+    public static function findByLookupBase(string $base, int $limit = 8)
+    {
+        $base = DictionaryText::lookupBase($base);
+        if ($base === '') {
+            return collect();
+        }
+
+        $query = static::query()->orderBy('homograph_number');
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn((new static)->getTable(), 'lookup_base')) {
+            $indexed = (clone $query)->where('lookup_base', $base)->limit($limit)->get();
+            if ($indexed->isNotEmpty()) {
+                return $indexed;
+            }
+        }
+
+        $strippedLemma = DictionaryText::sqlLookupBase('lemma');
+
+        return $query->where(function ($q) use ($base, $strippedLemma) {
+            $q->where('normalized_lemma', $base)
+                ->orWhereRaw("{$strippedLemma} = ?", [$base]);
+        })->limit($limit)->get();
+    }
 }

@@ -55,6 +55,7 @@ const MobileMenu = ({ lang }) => {
         <>
             {/* Menu Panel */}
             <div
+                dir={isRtl ? 'rtl' : 'ltr'}
                 className={`fixed top-0 ${isRtl ? 'right-0' : 'left-0'} h-full w-[280px] bg-white z-[200] flex flex-col transition-transform duration-300 will-change-transform ${isMenuOpen
                     ? 'translate-x-0'
                     : isRtl
@@ -92,7 +93,7 @@ const MobileMenu = ({ lang }) => {
                                     document.dispatchEvent(new CustomEvent('open-search'));
                                 }, 150);
                             }}
-                            className={`flex items-center gap-3 w-full h-11 px-4 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-all text-sm text-gray-400 ${isRtl ? 'flex-row-reverse' : ''}`}
+                            className="flex items-center gap-3 w-full h-11 px-4 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-all text-sm text-gray-400"
                         >
                             <Search className="h-4 w-4 text-gray-400 flex-shrink-0" />
                             <span>{isRtl ? 'ڳوليو...' : 'Search Baakh...'}</span>
@@ -112,10 +113,10 @@ const MobileMenu = ({ lang }) => {
                                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium transition-all duration-150 active:scale-[0.98] ${active
                                             ? 'bg-black text-white'
                                             : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                                            } ${isRtl ? 'flex-row-reverse' : ''}`}
+                                            }`}
                                     >
                                         <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${active ? 'text-white' : 'text-gray-400'}`} />
-                                        <span className="flex-1">{item.label}</span>
+                                        <span className={`flex-1 ${isRtl ? 'font-arabic' : ''}`}>{item.label}</span>
                                         {active && <ChevronRight className={`h-4 w-4 opacity-50 ${isRtl ? 'rotate-180' : ''}`} />}
                                     </Link>
                                 );
@@ -131,7 +132,7 @@ const MobileMenu = ({ lang }) => {
                         <Link
                             to={langSwitchPath}
                             onClick={handleNavClick}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all active:scale-[0.98] ${isRtl ? 'flex-row-reverse' : ''}`}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all active:scale-[0.98]`}
                         >
                             <span className="h-[18px] w-[18px] flex items-center justify-center text-xs font-bold text-gray-400 flex-shrink-0">
                                 {lang === 'en' ? 'سِ' : 'En'}
@@ -156,7 +157,7 @@ const MobileMenu = ({ lang }) => {
                         ) : user ? (
                             <div className="space-y-1">
                                 {/* User Info */}
-                                <div className={`flex items-center gap-3 px-3 py-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                                <div className="flex items-center gap-3 px-3 py-3">
                                     <Avatar className="h-10 w-10 border-2 border-gray-100">
                                         <AvatarImage src={getImageUrl(user.avatar, 'user')} alt={user.name} />
                                         <AvatarFallback className="bg-muted font-semibold text-sm text-muted-foreground">
@@ -165,9 +166,9 @@ const MobileMenu = ({ lang }) => {
                                             )}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : ''}`}>
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{user.name}</p>
-                                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-sm font-semibold text-gray-900 truncate ${isRtl ? 'font-arabic' : ''}`}>{user.name}</p>
+                                        <p className="text-xs text-gray-400 truncate" dir="ltr">{user.email}</p>
                                     </div>
                                 </div>
 
@@ -175,33 +176,33 @@ const MobileMenu = ({ lang }) => {
                                 <Link
                                     to={`/${lang}/profile`}
                                     onClick={handleNavClick}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all active:scale-[0.98] ${isRtl ? 'flex-row-reverse' : ''}`}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all active:scale-[0.98]`}
                                 >
                                     <UserIcon className="h-[18px] w-[18px] text-gray-400 flex-shrink-0" />
-                                    <span>{isRtl ? 'پروفائل' : 'Profile'}</span>
+                                    <span className={isRtl ? 'font-arabic' : undefined}>{isRtl ? 'پروفائل' : 'Profile'}</span>
                                 </Link>
                                 <Link
                                     to={`/${lang}/settings`}
                                     onClick={handleNavClick}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all active:scale-[0.98] ${isRtl ? 'flex-row-reverse' : ''}`}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all active:scale-[0.98]`}
                                 >
                                     <Settings className="h-[18px] w-[18px] text-gray-400 flex-shrink-0" />
-                                    <span>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
+                                    <span className={isRtl ? 'font-arabic' : undefined}>{isRtl ? 'سيٽنگون' : 'Settings'}</span>
                                 </Link>
 
                                 <div className="mx-0 my-1.5 h-px bg-gray-100" />
 
                                 <button
                                     onClick={handleLogout}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-red-500 hover:bg-red-50 active:bg-red-100 transition-all w-full active:scale-[0.98] ${isRtl ? 'flex-row-reverse' : ''}`}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-red-500 hover:bg-red-50 active:bg-red-100 transition-all w-full active:scale-[0.98]"
                                 >
                                     <LogOut className="h-[18px] w-[18px] flex-shrink-0" />
-                                    <span>{isRtl ? 'لاگ آئوٽ' : 'Sign Out'}</span>
+                                    <span className={isRtl ? 'font-arabic' : undefined}>{isRtl ? 'لاگ آئوٽ' : 'Sign Out'}</span>
                                 </button>
                             </div>
                         ) : (
                             <div className="space-y-2 px-1">
-                                <p className={`text-xs text-gray-400 px-2 mb-3 ${isRtl ? 'text-right' : ''}`}>
+                                <p className={`text-xs text-gray-400 px-2 mb-3 ${isRtl ? 'font-arabic' : ''}`}>
                                     {isRtl ? 'پنھنجي اڪائونٽ ۾ سائن ان ڪريو' : 'Sign in to your account'}
                                 </p>
                                 <LoginModal
@@ -234,6 +235,7 @@ const MobileMenu = ({ lang }) => {
                         <Link to={`/${lang}/help`} className="hover:text-black transition-colors">{isRtl ? 'مدد' : 'Help'}</Link>
                         <Link to={`/${lang}/status`} className="hover:text-black transition-colors">{isRtl ? 'حالت' : 'Status'}</Link>
                         <Link to={`/${lang}/about`} className="hover:text-black transition-colors">{isRtl ? 'بابت' : 'About'}</Link>
+                        <Link to={`/${lang}/contact`} className="hover:text-black transition-colors">{isRtl ? 'رابطو' : 'Contact'}</Link>
                         <Link to={`/${lang}/privacy`} className="hover:text-black transition-colors">{isRtl ? 'رازداري' : 'Privacy'}</Link>
                         <Link to={`/${lang}/terms`} className="hover:text-black transition-colors">{isRtl ? 'شرطون' : 'Terms'}</Link>
                     </div>

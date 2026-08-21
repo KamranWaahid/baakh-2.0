@@ -871,22 +871,22 @@ class LughatDictionaryController extends Controller
             'couplet_id' => 'nullable|integer',
         ]);
 
-        $validated['normalized_lemma'] = $validated['normalized_lemma'] ?? $this->defaultNormalizedLemma($validated['lemma']);
-        $validated['lookup_base'] = $validated['lookup_base'] ?? DictionaryText::lookupBase($validated['lemma']);
+        $validated['normalized_lemma'] = $this->defaultNormalizedLemma($validated['lemma']);
+        $validated['lookup_base'] = DictionaryText::lookupBase($validated['lemma']);
         $validated['completion_status'] = LughatLemma::COMPLETION_PENDING;
         $validated['metadata_json'] = $validated['metadata_json'] ?? [
             'dictionary' => 'Baakh Lughat',
             'version' => '1',
         ];
 
-        // Identity includes airab — نَھن and نُھن are different lemmas (BINARY).
-        $existing = LughatLemma::where('language', $validated['language'] ?? 'sd')
-            ->where('homograph_number', $validated['homograph_number'] ?? 1)
-            ->where(function ($q) use ($validated) {
-                $q->whereRaw(DictionaryText::binaryEquals('normalized_lemma'), [$validated['normalized_lemma']])
-                    ->orWhereRaw(DictionaryText::binaryEquals('lemma'), [$validated['lemma']]);
-            })
-            ->first();
+        $existing = LughatLemma::findConflictingHeadword(
+            0,
+            $validated['lemma'],
+            $validated['normalized_lemma'],
+            $validated['language'] ?? 'sd',
+            (int) ($validated['homograph_number'] ?? 1)
+        );
+
         if ($existing) {
             return response()->json([
                 'message' => 'This word already exists in Baakh Lughat.',
@@ -1238,9 +1238,24 @@ class LughatDictionaryController extends Controller
             'pronunciation_reviewed' => 'nullable|boolean',
         ]);
 
-        if (array_key_exists('lemma', $validated) && !array_key_exists('normalized_lemma', $validated)) {
+        if (array_key_exists('lemma', $validated)) {
             $validated['normalized_lemma'] = $this->defaultNormalizedLemma($validated['lemma']);
             $validated['lookup_base'] = DictionaryText::lookupBase($validated['lemma']);
+        }
+
+        $conflict = LughatLemma::findConflictingHeadword(
+            (int) $lemma->id,
+            (string) ($validated['lemma'] ?? $lemma->lemma),
+            $validated['normalized_lemma'] ?? $lemma->normalized_lemma,
+            $lemma->language ?? 'sd',
+            (int) ($lemma->homograph_number ?? 1)
+        );
+        if ($conflict) {
+            return response()->json([
+                'message' => 'This word already exists in Baakh Lughat.',
+                'errors' => ['lemma' => ['This word already exists in Baakh Lughat (id ' . $conflict->id . ').']],
+                'existing_id' => $conflict->id,
+            ], 422);
         }
 
         $lemma->update($validated);
@@ -1938,18 +1953,8 @@ class LughatDictionaryController extends Controller
 
         // Bare form without airab: unique base match only (never collapse نَھن/نُھن).
         if (!DictionaryText::hasDiacritics($word) && $base !== '') {
-            $hasLookupBase = Schema::hasColumn('lughat_lemmas', 'lookup_base');
-            $matches = LughatLemma::query()
-                ->when($excludeLemmaId, fn ($query) => $query->whereKeyNot($excludeLemmaId))
-                ->where(function ($q) use ($base, $hasLookupBase) {
-                    if ($hasLookupBase) {
-                        $q->where('lookup_base', $base)->orWhere('normalized_lemma', $base);
-                    } else {
-                        $q->where('normalized_lemma', $base);
-                    }
-                })
-                ->limit(2)
-                ->get();
+            $matches = LughatLemma::findByLookupBase($base, 8)
+                ->when($excludeLemmaId, fn ($rows) => $rows->where('id', '!=', $excludeLemmaId)->values());
             if ($matches->count() === 1) {
                 return $matches->first();
             }

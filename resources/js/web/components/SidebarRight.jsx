@@ -121,6 +121,7 @@ const SidebarRight = ({ lang }) => {
                     <Link to={`/${lang}/help`} className="hover:text-black transition-colors">{isRtl ? 'مدد' : 'Help'}</Link>
                     <Link to={`/${lang}/status`} className="hover:text-black transition-colors">{isRtl ? 'حالت' : 'Status'}</Link>
                     <Link to={`/${lang}/about`} className="hover:text-black transition-colors">{isRtl ? 'بابت' : 'About'}</Link>
+                    <Link to={`/${lang}/contact`} className="hover:text-black transition-colors">{isRtl ? 'رابطو' : 'Contact'}</Link>
                     <Link to={`/${lang}/privacy`} className="hover:text-black transition-colors">{isRtl ? 'رازداري' : 'Privacy'}</Link>
                     <Link to={`/${lang}/terms`} className="hover:text-black transition-colors">{isRtl ? 'شرطون' : 'Terms'}</Link>
                 </div>

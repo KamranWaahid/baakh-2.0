@@ -88,6 +88,8 @@ import TalukasList from './pages/Locations/TalukasList';
 import UserForm from './pages/Users/UserForm';
 
 import TopicCategoryList from './pages/Topics/TopicCategoryList';
+import ProsodyTermList from './pages/Prosody/ProsodyTermList';
+import ProsodyTermForm from './pages/Prosody/ProsodyTermForm';
 import InformationSystem from './pages/System/InformationSystem';
 
 import LemmaInbox from './pages/Dictionary/LemmaInbox';
@@ -335,6 +337,27 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <CategoryForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/prosody" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ProsodyTermList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/prosody/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ProsodyTermForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/prosody/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <ProsodyTermForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

@@ -16,6 +16,7 @@ import { BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Avatar } from "@/components/ui/avatar";
 import AvatarImgOrIcon from './AvatarImgOrIcon';
+import { formatPeriodDateRange } from '@/lib/date-utils';
 
 const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
     const isRtl = lang === 'sd';
@@ -69,15 +70,18 @@ const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0">
-                <DialogHeader className="p-6 pb-4 border-b">
-                    <DialogTitle className={`text-2xl font-bold ${isRtl ? 'font-arabic text-right' : 'text-left'}`}>
+            <DialogContent
+                dir={isRtl ? 'rtl' : 'ltr'}
+                className="max-w-2xl w-[95vw] max-h-[90vh] flex flex-col p-0 overflow-hidden gap-0"
+            >
+                <DialogHeader className="p-6 pb-4 border-b text-start sm:text-start">
+                    <DialogTitle className={`text-2xl font-bold text-start ${isRtl ? 'font-arabic' : ''}`}>
                         {isRtl ? period.title_sd : period.title_en}
                     </DialogTitle>
-                    <div className={`flex items-center gap-1.5 mt-1 text-xs font-semibold text-gray-400 uppercase tracking-wider ${isRtl ? 'justify-end' : 'justify-start'}`}>
-                        <span>{period.date_range}</span>
+                    <div className={`flex items-center gap-1.5 mt-1 text-xs font-semibold text-gray-400 tracking-wider ${isRtl ? 'font-arabic' : 'uppercase'}`}>
+                        <span dir={isRtl ? 'rtl' : 'ltr'}>{formatPeriodDateRange(period.date_range, lang)}</span>
                     </div>
-                    <DialogDescription className={`${isRtl ? 'text-right' : 'text-left'} mt-4 text-gray-600`}>
+                    <DialogDescription className="text-start mt-4 text-gray-600">
                         {isRtl ? period.description_sd : period.description_en}
                     </DialogDescription>
                 </DialogHeader>
@@ -86,10 +90,10 @@ const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
                     {/* Poets Section */}
                     {poets?.length > 0 && (
                         <div className="p-6 pb-2">
-                            <h4 className={`text-sm font-bold text-gray-900 mb-4 ${isRtl ? 'text-right font-arabic' : 'text-left'}`}>
+                            <h4 className={`text-sm font-bold text-gray-900 mb-4 text-start ${isRtl ? 'font-arabic' : ''}`}>
                                 {isRtl ? 'هن دور جا شاعر' : 'Poets of this Period'}
                             </h4>
-                            <div className={`flex items-center gap-4 overflow-x-auto no-scrollbar pb-2 ${isRtl ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-2">
                                 {poets.map((poet) => (
                                     <Link
                                         key={poet.id}
@@ -115,7 +119,7 @@ const PeriodDetailsModal = ({ isOpen, onClose, period, lang }) => {
                     )}
 
                     <div className="p-6 pt-2">
-                        <h4 className={`text-sm font-bold text-gray-900 mb-6 mt-2 ${isRtl ? 'text-right font-arabic' : 'text-left'}`}>
+                        <h4 className={`text-sm font-bold text-gray-900 mb-6 mt-2 text-start ${isRtl ? 'font-arabic' : ''}`}>
                             {isRtl ? 'هن دور جي شاعري' : 'Poetry of this Period'}
                         </h4>
 

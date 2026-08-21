@@ -11,6 +11,7 @@ import MobileMenu from './components/MobileMenu';
 import CategoryNav from './components/CategoryNav';
 import { MobileMenuProvider, useMobileMenu } from './contexts/MobileMenuContext';
 import { useSwipeGesture } from './hooks/useSwipeGesture';
+import { listingDocumentTitle } from './utils/pageTitle';
 
 // Lazy Load Components for better performance (Code Splitting)
 import Feed from './components/Feed';
@@ -26,6 +27,7 @@ const PeriodFeed = React.lazy(() => import('./components/PeriodFeed'));
 const ProsodyFeed = React.lazy(() => import('./components/ProsodyFeed'));
 const PoemDetail = React.lazy(() => import('./components/PoemDetail'));
 const About = React.lazy(() => import('./pages/About'));
+const Contact = React.lazy(() => import('./pages/Contact'));
 const Privacy = React.lazy(() => import('./pages/Privacy'));
 const Terms = React.lazy(() => import('./pages/Terms'));
 const Help = React.lazy(() => import('./pages/Help'));
@@ -166,7 +168,7 @@ const ScrollToTop = () => {
     return null;
 };
 
-const BARE_ROUTE_RE = /^\/(en|sd)\/(about|privacy|terms|help|status|profile|settings|auth\/|password-reset\/)/;
+const BARE_ROUTE_RE = /^\/(en|sd)\/(about|contact|privacy|terms|help|status|profile|settings|auth\/|password-reset\/)/;
 
 const LanguageShell = () => {
     const { lang } = useParams();
@@ -179,16 +181,19 @@ const LanguageShell = () => {
         document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
         document.documentElement.lang = lang;
 
-        document.title = isRtl
-            ? 'باک - سنڌي شاعريءَ جو آرڪائيو'
-            : 'Baakh - Archive of Sindhi Poetry';
-
         if (isRtl) {
             document.body.classList.add('font-arabic');
         } else {
             document.body.classList.remove('font-arabic');
         }
     }, [isRtl, lang]);
+
+    useEffect(() => {
+        const title = listingDocumentTitle(location.pathname, isRtl);
+        if (title) {
+            document.title = title;
+        }
+    }, [location.pathname, isRtl]);
 
     if (!validLangs.includes(lang)) {
         return <Navigate to="/sd" replace />;
@@ -227,6 +232,7 @@ const App = () => {
                                 <Route path="tag/:slug" element={<TopicDetail />} />
                                 <Route path="topic/:slug" element={<TopicDetail />} />
                                 <Route path="about" element={<About />} />
+                                <Route path="contact" element={<Contact />} />
                                 <Route path="privacy" element={<Privacy />} />
                                 <Route path="terms" element={<Terms />} />
                                 <Route path="help" element={<Help />} />

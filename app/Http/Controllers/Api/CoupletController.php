@@ -24,7 +24,7 @@ class CoupletController extends Controller
 
         // Prefer static cache if no tag filtering and page 1
         if ((!$request->has('tag') || $request->tag === 'all') && $request->get('page', 1) == 1) {
-            $cached = $this->cache->get("couplets_list_{$lang}");
+            $cached = $this->cache->get("couplets_list_standalone_{$lang}");
             if ($cached) {
                 return response()->json([
                     'data' => $cached,
@@ -46,15 +46,12 @@ class CoupletController extends Controller
                     $q->where('lang', $lang);
                 }
             ])
-            ->where('lang', $lang);
+            ->where('lang', $lang)
+            ->standaloneTwoLine();
 
         if ($tag && $tag !== 'all') {
             $query->where('couplet_tags', 'like', '%"' . $tag . '"%');
         }
-
-        // Filter only those with at most 2 lines (1 newline)
-        // Using raw DB count for efficiency, handling \r\n and trailing newlines
-        $query->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1");
 
         $couplets = $query->latest()->paginate($perPage);
 
@@ -87,6 +84,7 @@ class CoupletController extends Controller
 
         // Fetch unique tags from poetry_couplets table
         $tagSlugs = Couplets::where('lang', $lang)
+            ->standaloneTwoLine()
             ->whereNotNull('couplet_tags')
             ->where('couplet_tags', '!=', '[]')
             ->pluck('couplet_tags')

@@ -22,3 +22,28 @@ export const formatDate = (dateString, lang = 'en') => {
         day: 'numeric'
     });
 };
+
+/**
+ * Localize stored period date_range strings (English AD copy) for sd vs en.
+ * Sindhi literary dates use ع after the year (عيسوي), matching archive body copy.
+ */
+export const formatPeriodDateRange = (dateRange, lang = 'en') => {
+    const raw = String(dateRange || '').trim();
+    if (!raw || lang !== 'sd') {
+        return raw;
+    }
+
+    let s = raw;
+    s = s.replace(/Pre-(\d+)\s*(?:A\.?\s*D\.?)/gi, '$1ع کان اڳ');
+    s = s.replace(/\bc\.\s*/gi, 'لڳ ڀڳ ');
+    s = s.replace(/\bcirca\s*/gi, 'لڳ ڀڳ ');
+    s = s.replace(/\bPresent\b/gi, 'اڄ تائين');
+    s = s.replace(/\bto\b/gi, '–');
+    s = s.replace(/\bA\.?\s*D\.?\b/gi, 'ع');
+    s = s.replace(/(\d)\s+ع/g, '$1ع');
+    s = s.replace(/\s+–\s+/g, ' – ');
+    s = s.replace(/\s+/g, ' ').trim();
+
+    return s;
+};
+

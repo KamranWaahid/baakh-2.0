@@ -154,7 +154,8 @@ class PoetryController extends UserController
             'category',
             'category.details' => function ($query) use ($locale) {
                 $query->where('lang', $locale);
-            }
+            },
+            'book',
         ])
             ->where('poetry_slug', $slug)
             ->where('visibility', 1)
@@ -172,7 +173,8 @@ class PoetryController extends UserController
                 'all_couplets' => function ($query) use ($locale) {
                     $query->orderByRaw("CASE WHEN lang = ? THEN 0 ELSE 1 END", [$locale]);
                 },
-                'category'
+                'category',
+                'book',
             ])
                 ->where(['poetry_slug' => $slug, 'visibility' => 1])
                 ->first();
@@ -267,6 +269,11 @@ class PoetryController extends UserController
                     : ($poetry->category?->slug ? ucfirst($poetry->category->slug) : 'General'),
                 'slug' => $poetry->category?->slug
             ],
+
+            'book' => $poetry->book ? [
+                'title' => $poetry->book->title,
+                'title_sd' => $poetry->book->title_sd,
+            ] : null,
 
             'tags' => $used_tags,
 

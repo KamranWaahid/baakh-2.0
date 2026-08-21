@@ -20,6 +20,7 @@ class CoupletController extends Controller
         }
 
         $query->where('lang', 'sd')
+            ->independent()
             ->addSelect([
                 'has_roman' => function ($q) {
                     $romanSlugExpression = DB::connection()->getDriverName() === 'sqlite'
@@ -149,7 +150,14 @@ class CoupletController extends Controller
             'page_start' => 'nullable|integer|min:1',
             'page_end' => 'nullable|integer|min:1',
             'roman_content' => 'nullable|string',
+            'visibility' => 'nullable|boolean',
+            'is_featured' => 'nullable|boolean',
         ]);
+
+        $validated['couplet_text'] = $this->requireTwoLineCouplet($validated['couplet_text']);
+        if (!empty($validated['roman_content'])) {
+            $validated['roman_content'] = $this->clampTwoLineCouplet($validated['roman_content']);
+        }
 
         $couplet = Couplets::create([
             'poetry_id' => 0, // Independent couplet
@@ -162,6 +170,8 @@ class CoupletController extends Controller
             'book_id' => $validated['book_id'] ?? null,
             'page_start' => $validated['page_start'] ?? null,
             'page_end' => $validated['page_end'] ?? null,
+            'visibility' => ($validated['visibility'] ?? true) ? 1 : 0,
+            'is_featured' => ($validated['is_featured'] ?? false) ? 1 : 0,
         ]);
 
         if (!empty($validated['roman_content'])) {
@@ -208,7 +218,14 @@ class CoupletController extends Controller
             'page_start' => 'nullable|integer|min:1',
             'page_end' => 'nullable|integer|min:1',
             'roman_content' => 'nullable|string',
+            'visibility' => 'nullable|boolean',
+            'is_featured' => 'nullable|boolean',
         ]);
+
+        $validated['couplet_text'] = $this->requireTwoLineCouplet($validated['couplet_text']);
+        if (!empty($validated['roman_content'])) {
+            $validated['roman_content'] = $this->clampTwoLineCouplet($validated['roman_content']);
+        }
 
         $oldSlug = $couplet->couplet_slug;
 
@@ -222,6 +239,12 @@ class CoupletController extends Controller
             'book_id' => $validated['book_id'] ?? null,
             'page_start' => $validated['page_start'] ?? null,
             'page_end' => $validated['page_end'] ?? null,
+            'visibility' => array_key_exists('visibility', $validated)
+                ? (($validated['visibility'] ?? true) ? 1 : 0)
+                : $couplet->visibility,
+            'is_featured' => array_key_exists('is_featured', $validated)
+                ? (($validated['is_featured'] ?? false) ? 1 : 0)
+                : $couplet->is_featured,
         ]);
 
         // Update or Create Roman version
@@ -349,5 +372,30 @@ class CoupletController extends Controller
                 'last_couplet_id' => $couplet->id
             ]);
         }
+    }
+
+    private function clampTwoLineCouplet(string $text): string
+    {
+        $normalized = str_replace(["\r\n", "\r"], "\n", $text);
+        $lines = array_slice(explode("\n", $normalized), 0, 2);
+
+        return implode("\n", $lines);
+    }
+
+    private function requireTwoLineCouplet(string $text): string
+    {
+        $clamped = $this->clampTwoLineCouplet($text);
+        $nonEmpty = array_values(array_filter(
+            explode("\n", $clamped),
+            fn ($line) => trim($line) !== ''
+        ));
+
+        if (count($nonEmpty) !== 2) {
+            abort(response()->json([
+                'message' => 'Couplet must contain exactly 2 lines.',
+            ], 422));
+        }
+
+        return implode("\n", array_map('trim', $nonEmpty));
     }
 }

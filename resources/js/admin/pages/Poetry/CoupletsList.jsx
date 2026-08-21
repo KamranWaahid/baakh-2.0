@@ -200,7 +200,7 @@ const CoupletsList = () => {
 
             <Card>
                 <CardContent>
-                    <div className="flex items-center pb-6">
+                    <div className="flex items-center pt-6 pb-6">
                         <Input
                             placeholder="Search couplet text or poets..."
                             value={search}

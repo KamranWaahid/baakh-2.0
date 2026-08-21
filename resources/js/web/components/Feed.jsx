@@ -8,8 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PostCardSkeleton from './skeletons/PostCardSkeleton';
 import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
 import { useAuth } from '../contexts/AuthContext';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
+
+const slugLabel = (slug) => {
+    if (!slug) return '';
+    return String(slug)
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (ch) => ch.toUpperCase());
+};
 
 const LoadingState = () => (
     <div className="space-y-8 mt-0">
@@ -95,6 +102,25 @@ const Feed = ({ lang }) => {
     const [activeTab, setActiveTab] = React.useState('for-you');
     const { stickyTopClass } = useStickyBelowNavbar();
 
+    const { data: genres } = useQuery({
+        queryKey: ['genres', lang],
+        queryFn: async () => (await api.get(`/api/v1/categories?lang=${lang}`)).data,
+        enabled: Boolean(urlCategory),
+        staleTime: 60_000,
+    });
+
+    const activeGenre = React.useMemo(() => {
+        if (!urlCategory || !Array.isArray(genres)) return null;
+        const slug = String(urlCategory).toLowerCase();
+        return genres.find((genre) => String(genre.slug || '').toLowerCase() === slug) || null;
+    }, [genres, urlCategory]);
+
+    const forYouLabel = urlCategory
+        ? (isRtl
+            ? (activeGenre?.sd_name || activeGenre?.name || urlCategory)
+            : (activeGenre?.en_name || activeGenre?.name || slugLabel(urlCategory)))
+        : (isRtl ? 'توهان لاءِ' : 'For you');
+
     // Unified Infinite Query for all tabs
     const {
         data,
@@ -176,7 +202,9 @@ const Feed = ({ lang }) => {
     return (
         <div className="flex-1 max-w-[720px] w-full mx-auto px-4 md:px-8 pt-2 pb-6 bg-white" dir={isRtl ? 'rtl' : 'ltr'}>
             <h1 className="sr-only">
-                {isRtl ? 'باک - سنڌي شاعريءَ جو آرڪائيو' : 'Baakh - Archive of Sindhi Poetry'}
+                {urlCategory
+                    ? (isRtl ? `${forYouLabel} | باک` : `${forYouLabel} | Baakh`)
+                    : (isRtl ? 'باک - سنڌي شاعريءَ جو آرڪائيو' : 'Baakh - Archive of Sindhi Poetry')}
             </h1>
             <Tabs defaultValue="for-you" className="w-full" onValueChange={setActiveTab} dir={isRtl ? 'rtl' : 'ltr'}>
                 <div
@@ -185,9 +213,9 @@ const Feed = ({ lang }) => {
                     <TabsList className="bg-transparent p-0 h-auto justify-start border-b-0 w-full rounded-none">
                         <TabsTrigger
                             value="for-you"
-                            className="rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3"
+                            className={`rounded-none border-b-2 border-transparent data-[state=active]:border-black data-[state=active]:shadow-none data-[state=active]:text-black text-gray-500 pb-3 ${urlCategory && isRtl ? 'font-arabic' : ''}`}
                         >
-                            {isRtl ? 'توهان لاءِ' : 'For you'}
+                            {forYouLabel}
                         </TabsTrigger>
                         <TabsTrigger
                             value="featured"

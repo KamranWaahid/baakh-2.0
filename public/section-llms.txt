@@ -1,0 +1,9 @@
+# Baakh section index
+
+## When to use this
+
+Use this section when browsing a listing area of the Sindhi poetry archive (poets, poetry, couplets, genre, period, explore, about, contact). Prefer the locale URL `/{lang}/{section}` with `Accept: text/markdown` or `?mode=agent`.
+
+- [llms.txt](https://baakh.com/llms.txt)
+- [Sitemap](https://baakh.com/sitemap.xml)
+- [Contact](https://baakh.com/en/contact)

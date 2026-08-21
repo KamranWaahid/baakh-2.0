@@ -39,10 +39,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, SpellCheck, Loader2, Shuffle, RefreshCw } from 'lucide-react';
+import { Trash2, Plus, Send, Eye, EyeOff, Star, Info, Settings, User, Folder, Tag as TagIcon, Link as LinkIcon, AlignCenter, ChevronDown, BookOpen, Bold, Italic, Strikethrough, Code, AlignLeft, AlignRight, AlignJustify, Link2, Quote, Languages, SpellCheck, Loader2, Shuffle, RefreshCw, Sparkles } from 'lucide-react';
 import PoetryLughatSensePicker from './PoetryLughatSensePicker';
 import PoetryLughatMissingHighlight from './PoetryLughatMissingHighlight';
 import LughatLemmaEditorJsonModal from '../Lughat/LughatLemmaEditorJsonModal';
+import PoetryTaxonomyJsonModal from './PoetryTaxonomyJsonModal';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -105,6 +106,7 @@ const CreatePoetry = () => {
     const [openTopicCategory, setOpenTopicCategory] = useState(false);
     const [openTags, setOpenTags] = useState(false);
     const [openBook, setOpenBook] = useState(false);
+    const [taxonomyJsonOpen, setTaxonomyJsonOpen] = useState(false);
     const [script, setScript] = useState('perso'); // 'perso' | 'roman'
     const [sensePickerMode, setSensePickerMode] = useState(false);
     const [senseAnnotations, setSenseAnnotations] = useState([]);
@@ -114,8 +116,14 @@ const CreatePoetry = () => {
 
     const autosizeTextarea = useCallback((el, { minHeight = 280 } = {}) => {
         if (!el) return;
-        el.style.height = 'auto';
-        el.style.height = `${Math.max(el.scrollHeight, minHeight)}px`;
+        // CSS min-height + overflow:hidden makes scrollHeight equal the clipped
+        // box (about 8 rows). Collapse both so the full poem can be measured.
+        const previousMinHeight = el.style.minHeight;
+        el.style.minHeight = '0px';
+        el.style.height = '0px';
+        const nextHeight = Math.max(el.scrollHeight, minHeight);
+        el.style.height = `${nextHeight}px`;
+        el.style.minHeight = previousMinHeight || `${minHeight}px`;
     }, []);
 
     // Prevent auto-updates on initial load for Edit mode
@@ -123,10 +131,23 @@ const CreatePoetry = () => {
 
     // Grow editors with content (typing, paste, edit load, auto-transliteration).
     useLayoutEffect(() => {
-        if (!sensePickerMode) {
-            autosizeTextarea(poetryEditorRef.current, { minHeight: 280 });
-        }
-        autosizeTextarea(romanEditorRef.current, { minHeight: 280 });
+        let cancelled = false;
+        const resize = () => {
+            if (cancelled) return;
+            if (!sensePickerMode) {
+                autosizeTextarea(poetryEditorRef.current, { minHeight: 280 });
+            }
+            autosizeTextarea(romanEditorRef.current, { minHeight: 280 });
+        };
+        resize();
+        const frame = requestAnimationFrame(resize);
+        document.fonts?.ready?.then(resize);
+        window.addEventListener('resize', resize);
+        return () => {
+            cancelled = true;
+            cancelAnimationFrame(frame);
+            window.removeEventListener('resize', resize);
+        };
     }, [poetryContent, transliteratedText, sensePickerMode, script, autosizeTextarea]);
 
     const checkSlugUnique = async (slug) => {
@@ -293,6 +314,11 @@ const CreatePoetry = () => {
             }
             setViewingLemmaId(lemmaId);
         } catch (error) {
+            const existingId = error?.response?.data?.existing_id;
+            if (existingId) {
+                setViewingLemmaId(existingId);
+                return;
+            }
             toast.error(error.response?.data?.message || 'Failed to open Baakh Lughat entry.');
         } finally {
             setOpeningLughatSurface(null);
@@ -543,6 +569,14 @@ const CreatePoetry = () => {
                             <Button
                                 variant="outline"
                                 type="button"
+                                onClick={() => setTaxonomyJsonOpen(true)}
+                            >
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                Tags JSON
+                            </Button>
+                            <Button
+                                variant="outline"
+                                type="button"
                                 onClick={handleRefineHesudhar}
                                 disabled={refineHesudharMutation.isPending}
                             >
@@ -731,8 +765,8 @@ const CreatePoetry = () => {
                                                         ref={poetryEditorRef}
                                                         dir="rtl"
                                                         lang="sd"
-                                                        rows={8}
-                                                        className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-arabic ${
+                                                        rows={2}
+                                                        className={`w-full p-0 text-2xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden bg-transparent leading-relaxed font-arabic [field-sizing:content] ${
                                                             form.watch('content_style') === 'center' ? 'text-center'
                                                                 : form.watch('content_style') === 'start' ? 'text-right'
                                                                     : form.watch('content_style') === 'end' ? 'text-left'
@@ -746,6 +780,7 @@ const CreatePoetry = () => {
                                                             setPoetryContent(e.target.value);
                                                             autosizeTextarea(e.target, { minHeight: 280 });
                                                         }}
+                                                        onInput={(e) => autosizeTextarea(e.target, { minHeight: 280 })}
                                                     />
                                                 </div>
                                             )}
@@ -764,8 +799,8 @@ const CreatePoetry = () => {
                                             <textarea
                                                 ref={romanEditorRef}
                                                 dir="ltr"
-                                                rows={8}
-                                                className={`w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden min-h-[280px] bg-transparent leading-relaxed font-sans ${form.watch('content_style') === 'center' ? 'text-center' :
+                                                rows={2}
+                                                className={`w-full p-0 text-xl border-none focus:outline-none focus:ring-0 placeholder:text-muted-foreground/15 resize-none overflow-hidden bg-transparent leading-relaxed font-sans [field-sizing:content] ${form.watch('content_style') === 'center' ? 'text-center' :
                                                     form.watch('content_style') === 'start' ? 'text-left' :
                                                         form.watch('content_style') === 'end' ? 'text-right' : 'text-justify [text-align-last:justify]'
                                                     }`}
@@ -775,6 +810,7 @@ const CreatePoetry = () => {
                                                     setTransliteratedText(e.target.value);
                                                     autosizeTextarea(e.target, { minHeight: 280 });
                                                 }}
+                                                onInput={(e) => autosizeTextarea(e.target, { minHeight: 280 })}
                                             />
                                         </TabsContent>
                                     </div>
@@ -1265,9 +1301,21 @@ const CreatePoetry = () => {
 
                             <Card className="shadow-sm">
                                 <CardHeader className="py-3">
-                                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                                        <TagIcon className="h-4 w-4" /> Tags
-                                    </CardTitle>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                            <TagIcon className="h-4 w-4" /> Tags
+                                        </CardTitle>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 px-2 text-xs"
+                                            onClick={() => setTaxonomyJsonOpen(true)}
+                                        >
+                                            <Sparkles className="h-3 w-3 mr-1" />
+                                            JSON
+                                        </Button>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex flex-wrap gap-2 mb-3">
@@ -1390,6 +1438,24 @@ const CreatePoetry = () => {
                 </form>
             </Form>
 
+            <PoetryTaxonomyJsonModal
+                open={taxonomyJsonOpen}
+                onClose={() => setTaxonomyJsonOpen(false)}
+                title={title}
+                poetryText={poetryContent}
+                topicCategoryId={form.watch('topic_category_id')}
+                tagIds={form.watch('poetry_tags') || []}
+                onApplied={async (result) => {
+                    await queryClient.invalidateQueries({ queryKey: ['poetry-meta'] });
+                    await queryClient.refetchQueries({ queryKey: ['poetry-meta'] });
+                    if (result?.topic_category_applied && result.topic_category_id) {
+                        form.setValue('topic_category_id', String(result.topic_category_id));
+                    }
+                    if (result?.tags_applied) {
+                        form.setValue('poetry_tags', (result.poetry_tags || []).map(String));
+                    }
+                }}
+            />
             <LughatLemmaEditorJsonModal
                 lemmaId={viewingLemmaId}
                 onClose={() => setViewingLemmaId(null)}
