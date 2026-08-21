@@ -213,7 +213,7 @@ class UpdateStaticCache extends Command
                 }
             ])
             ->where('lang', $locale)
-            ->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1")
+            ->standaloneTwoLine()
             ->latest()
             ->limit(20)
             ->get();
@@ -236,7 +236,7 @@ class UpdateStaticCache extends Command
             ];
         });
 
-        $this->cache->set("couplets_list_{$locale}", $transformed);
+        $this->cache->set("couplets_list_standalone_{$locale}", $transformed);
     }
 
     protected function updateCategoriesListCache($locale)
@@ -427,7 +427,8 @@ class UpdateStaticCache extends Command
             },
             'category.details' => function ($query) use ($locale) {
                 $query->where('lang', $locale);
-            }
+            },
+            'book',
         ]);
 
         $info = $p->info ?? $p->translations->first();
@@ -467,6 +468,11 @@ class UpdateStaticCache extends Command
                 'name' => $p->category_detail->cat_name ?? $p->category->slug ?? 'General',
                 'slug' => $p->category->slug ?? 'general'
             ],
+
+            'book' => $p->book ? [
+                'title' => $p->book->title,
+                'title_sd' => $p->book->title_sd,
+            ] : null,
 
             'tags' => $this->getTagsForPoetry($p, $locale),
 

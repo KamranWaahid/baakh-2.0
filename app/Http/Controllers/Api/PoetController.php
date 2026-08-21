@@ -272,9 +272,7 @@ class PoetController extends Controller
 
         $coupletsCount = \App\Models\Couplets::where('poet_id', $poet->id)
             ->where('lang', $lang)
-            ->where(function ($q) {
-                $q->whereNull('poetry_id')->orWhere('poetry_id', 0);
-            })
+            ->standaloneTwoLine()
             ->count();
 
         $data = [
@@ -302,6 +300,7 @@ class PoetController extends Controller
 
             'entries_count' => $poet->poetry_count ?? 0,
             'couplets_count' => $coupletsCount ?? 0,
+            'same_as' => \App\Support\PoetSameAs::urls($poet),
             'suggested' => $suggested,
             'books' => $poet->books()->where('visibility', 1)->with('progress')->get()->map(function ($book) {
                 return [
@@ -359,6 +358,7 @@ class PoetController extends Controller
                 'death_location_sd' => null,
                 'entries_count' => 0,
                 'couplets_count' => 0,
+                'same_as' => \App\Support\PoetSameAs::urls($fallbackPoet),
                 'suggested' => [],
                 'books' => [],
             ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -450,10 +450,7 @@ class PoetController extends Controller
         /** @var \Illuminate\Pagination\LengthAwarePaginator $couplets */
         $couplets = \App\Models\Couplets::where('poet_id', $poet->id)
             ->where('lang', $lang)
-            ->where(function ($q) {
-                $q->whereNull('poetry_id')->orWhere('poetry_id', 0);
-            })
-            ->whereRaw("(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) <= 1")
+            ->standaloneTwoLine()
             ->withCount('likes')
             ->latest()
             ->paginate(20);

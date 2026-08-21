@@ -9,7 +9,7 @@ const Privacy = () => {
     const content = {
         en: {
             title: 'Privacy Policy',
-            intro: 'Baakh is an independent, voluntary, non-governmental, and non-profit web archive platform. Therefore, we do not need to use anyone\'s data for marketing or profit. We take the protection of your personal information very seriously.',
+            intro: 'Baakh is an independent, voluntary, non-governmental, and non-profit web archive platform. Therefore, we do not need to use anyone\'s data for marketing or profit. We take the protection of your personal information very seriously. This policy explains what Baakh collects, why we collect it, and how you can ask us to delete it. Optional accounts exist only so readers can like and save poems.',
             sections: [
                 {
                     title: '1. What information do we collect?',
@@ -60,6 +60,13 @@ const Privacy = () => {
                     points: [
                         'Updates will be made from time to time to include new security measures or features.',
                         'Updated policies will be displayed on the website.'
+                    ]
+                },
+                {
+                    title: '8. Privacy questions',
+                    points: [
+                        'For account deletion or other privacy requests, email support@baakh.com or use the Contact page.',
+                        'Baakh Foundation operates baakh.com. There is no public telephone number; email is the contact channel.'
                     ]
                 }
             ]
@@ -117,6 +124,13 @@ const Privacy = () => {
                     points: [
                         'وقت بوقت اپڊيٽون ڪيون وينديون، جيئن نيون سيڪيورٽي تدابير يا فيچرز شامل ٿين.',
                         'اپڊيٽ ٿيل پاليسي ويب سائيٽ تي ظاهر ڪئي ويندي.'
+                    ]
+                },
+                {
+                    title: '8. رازداري جا سوال',
+                    points: [
+                        'اڪائونٽ ختم ڪرڻ يا ٻين رازداري درخواستن لاءِ support@baakh.com تي لکو يا رابطو صفحو استعمال ڪريو.',
+                        'باک فائونڊيشن baakh.com هلائي ٿي. پبلڪ فون نمبر ناهي؛ اي ميل رابطي جو ذريعو آهي.'
                     ]
                 }
             ]

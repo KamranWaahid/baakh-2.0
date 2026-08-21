@@ -14,6 +14,8 @@ import AvatarImgOrIcon from './AvatarImgOrIcon';
 import DOMPurify from 'dompurify';
 import { FitVerseGroup } from './FitVerseBlock';
 import { resolveVerseAlign, verseAlignClass } from '../utils/contentStyle';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { poemDocumentTitle } from '../utils/pageTitle';
 
 const PoemDetail = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -55,6 +57,12 @@ const PoemDetail = ({ lang }) => {
         retry: 1,
         staleTime: 5 * 60 * 1000
     });
+
+    usePageTitle(poemDocumentTitle({
+        title: poem?.title,
+        poetName: poem?.poet?.name,
+        category: poem?.category?.name,
+    }, isRtl));
 
     if (isLoading) {
         return (

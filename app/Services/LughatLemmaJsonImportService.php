@@ -86,6 +86,8 @@ class LughatLemmaJsonImportService
     {
         $payload = app(LughatLemmaEditorJsonService::class)->normalizeForImport($payload);
 
+        $lemma = $this->retargetToExistingHeadword($lemma, $payload);
+
         if (isset($payload['id']) && (int) $payload['id'] !== (int) $lemma->id) {
             throw new InvalidArgumentException('JSON id does not match this lemma.');
         }
@@ -204,6 +206,86 @@ class LughatLemmaJsonImportService
         });
     }
 
+    /**
+     * If pasted JSON names a headword that already exists (ڪَھي vs unmarked stub ڪھي,
+     * or رُئيندي vs catalog رئيندي), import onto that lemma instead of hitting the unique index.
+     */
+    private function retargetToExistingHeadword(LughatLemma $lemma, array &$payload): LughatLemma
+    {
+        $incoming = trim((string) ($payload['lemma'] ?? $lemma->lemma ?? ''));
+        if ($incoming === '') {
+            return $lemma;
+        }
+
+        $incomingNormalized = isset($payload['normalized_lemma'])
+            ? trim((string) $payload['normalized_lemma'])
+            : null;
+
+        $existing = LughatLemma::findConflictingHeadword(
+            (int) $lemma->id,
+            $incoming,
+            $incomingNormalized !== '' ? $incomingNormalized : null,
+            $lemma->language ?? 'sd',
+            (int) ($lemma->homograph_number ?? 1)
+        );
+
+        if (!$existing) {
+            return $lemma;
+        }
+
+        $this->rememberUnmarkedVariant($existing, (string) $lemma->lemma);
+
+        $isStub = in_array($lemma->status, ['pending', null], true);
+        if ($isStub && \Illuminate\Support\Facades\Schema::hasTable('lughat_senses')) {
+            $isStub = $lemma->senses()->doesntExist();
+        }
+
+        if (!$isStub) {
+            throw new InvalidArgumentException(
+                'This word already exists in Baakh Lughat (id '.$existing->id.'). Open that entry instead.'
+            );
+        }
+
+        $lemma->delete();
+        unset($payload['id'], $payload['public_id']);
+
+        return $existing;
+    }
+
+    private function rememberUnmarkedVariant(LughatLemma $lemma, string $surface): void
+    {
+        $surface = trim(DictionaryText::stripPunctuation($surface));
+        if ($surface === '' || strcmp($surface, (string) $lemma->lemma) === 0) {
+            return;
+        }
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('lughat_variants')) {
+            return;
+        }
+
+        $identity = DictionaryText::normalizeForIdentity($surface);
+        $exists = LughatVariant::query()
+            ->where('lemma_id', $lemma->id)
+            ->where(function ($q) use ($surface, $identity) {
+                $q->whereRaw(DictionaryText::binaryEquals('variant'), [$surface])
+                    ->orWhereRaw(DictionaryText::binaryEquals('normalized_variant'), [$identity]);
+            })
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        LughatVariant::create([
+            'lemma_id' => $lemma->id,
+            'variant' => $surface,
+            'normalized_variant' => $identity,
+            'type' => DictionaryText::hasDiacritics($surface) ? 'diacritic' : 'short_vowel_variant',
+            'note' => 'Unmarked poetry surface linked to the existing airab lemma.',
+            'source' => 'json_import_airab_match',
+        ]);
+    }
+
     private function applyLemmaFields(LughatLemma $lemma, array $payload): void
     {
         $updates = [];
@@ -253,12 +335,38 @@ class LughatLemmaJsonImportService
         }
 
         if ($updates !== []) {
-            if (isset($updates['lemma']) && !array_key_exists('normalized_lemma', $updates)) {
+            if (isset($updates['lemma'])) {
+                // Identity keeps airab. Do not trust AI's stripped normalized_lemma
+                // (رُئِندِي must not be stored as رئيندي — that unique key is often taken).
                 $updates['normalized_lemma'] = DictionaryText::normalizeForIdentity($updates['lemma']);
                 $updates['lookup_base'] = DictionaryText::lookupBase($updates['lemma']);
+            } elseif (isset($updates['normalized_lemma'])) {
+                $updates['lookup_base'] = DictionaryText::lookupBase($updates['normalized_lemma']);
             }
 
-            $lemma->update($updates);
+            $conflict = LughatLemma::findConflictingHeadword(
+                (int) $lemma->id,
+                (string) ($updates['lemma'] ?? $lemma->lemma),
+                $updates['normalized_lemma'] ?? null,
+                $lemma->language ?? 'sd',
+                (int) ($lemma->homograph_number ?? 1)
+            );
+            if ($conflict) {
+                throw new InvalidArgumentException(
+                    'This word already exists in Baakh Lughat (id '.$conflict->id.'). Open that entry instead.'
+                );
+            }
+
+            try {
+                $lemma->update($updates);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($this->isLexemeUniqueViolation($e)) {
+                    throw new InvalidArgumentException(
+                        'This word already exists in Baakh Lughat. Open the existing entry instead.'
+                    );
+                }
+                throw $e;
+            }
 
             if (!empty($updates['transliteration'])) {
                 app(RomanizerService::class)->upsert(
@@ -268,6 +376,21 @@ class LughatLemmaJsonImportService
                 );
             }
         }
+    }
+
+    private function isLexemeUniqueViolation(\Illuminate\Database\QueryException $e): bool
+    {
+        $sqlState = (string) ($e->errorInfo[0] ?? '');
+        $driverCode = (string) ($e->errorInfo[1] ?? '');
+        $message = $e->getMessage();
+
+        if (!str_contains($message, 'lughat_lemmas_lexeme_unique') && $sqlState !== '23000') {
+            return false;
+        }
+
+        return str_contains($message, 'lughat_lemmas_lexeme_unique')
+            || $driverCode === '1062'
+            || $driverCode === '19';
     }
 
     private function syncMorphology(LughatLemma $lemma, ?array $morphology): void

@@ -25,6 +25,8 @@ import {
 import { Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStickyBelowNavbar } from '../hooks/useStickyBelowNavbar';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { poetDocumentTitle } from '../utils/pageTitle';
 
 function BookCoverThumb({ src, alt, className, emptyClassName }) {
     const [broken, setBroken] = React.useState(() => !src);
@@ -125,6 +127,11 @@ const PoetProfile = ({ lang }) => {
             }
         }
     }, [inView, activeTab, hasPoetryNext, fetchPoetryNext, hasCoupletsNext, fetchCoupletsNext]);
+
+    const poetName = poet
+        ? (isRtl ? (poet.laqab_sd || poet.name_sd) : (poet.laqab_en || poet.name_en))
+        : '';
+    usePageTitle(poetDocumentTitle(poetName, isRtl));
 
     // Mock posts for now, or correct if API provided posts
     // For now we will keep the static posts structure but ideally this should also come from API

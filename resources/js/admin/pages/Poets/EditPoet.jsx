@@ -29,6 +29,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LocationCombobox } from '@/components/ui/location-combobox';
 import { getImageUrl } from '@/web/utils/url';
 import PoetEditorJsonModal from './PoetEditorJsonModal';
+import PoetIdentitiesFields, { appendPoetIdentities, identitiesFromPoet, EMPTY_POET_IDENTITIES } from './PoetIdentitiesFields';
 
 // Simple Error Boundary to catch render crashes
 class EditPoetErrorBoundary extends React.Component {
@@ -69,6 +70,15 @@ const poetSchema = z.object({
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
     image: z.any().optional(), // Image is optional in edit
+    identities: z.object({
+        wikipedia_url: z.string().optional().nullable(),
+        wikidata_id: z.string().optional().nullable(),
+        google_kgmid: z.string().optional().nullable(),
+        website_url: z.string().optional().nullable(),
+        twitter: z.string().optional().nullable(),
+        facebook: z.string().optional().nullable(),
+        instagram: z.string().optional().nullable(),
+    }).optional(),
     details: z.array(z.object({
         poet_name: z.string().min(3, "Name must be at least 3 characters"),
         poet_laqab: z.string().min(3, "Laqab must be at least 3 characters"),
@@ -124,6 +134,7 @@ const EditPoetContent = () => {
             visibility: true,
             is_featured: false,
             image: null,
+            identities: { ...EMPTY_POET_IDENTITIES },
             details: [],
         },
     });
@@ -173,6 +184,7 @@ const EditPoetContent = () => {
             visibility: poet.visibility === 1 || poet.visibility === true,
             is_featured: poet.is_featured === 1 || poet.is_featured === true,
             image: null,
+            identities: identitiesFromPoet(poet),
             details,
         });
         setPlaceLabels(labels);
@@ -210,6 +222,9 @@ const EditPoetContent = () => {
         }
         if (dirty.is_featured) {
             formData.append('is_featured', data.is_featured ? '1' : '0');
+        }
+        if (dirty.identities) {
+            appendPoetIdentities(formData, data.identities);
         }
 
         if (imageFile instanceof File) {
@@ -486,6 +501,8 @@ const EditPoetContent = () => {
                             />
                         </CardContent>
                     </Card>
+
+                    <PoetIdentitiesFields />
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">

@@ -20,7 +20,12 @@ class Poets extends Model
         'date_of_death',
         'visibility',
         'is_featured',
-        'poet_tags'
+        'poet_tags',
+        'identities',
+    ];
+
+    protected $casts = [
+        'identities' => 'array',
     ];
 
 

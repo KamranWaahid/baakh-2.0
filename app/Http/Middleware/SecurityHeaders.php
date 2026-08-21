@@ -35,6 +35,15 @@ class SecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
+        $links = [
+            '</llms.txt>; rel="describedby"; type="text/markdown"',
+            '</.well-known/ai-catalog.json>; rel="describedby"; type="application/json"',
+            '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
+            '</sitemap.xml>; rel="sitemap"; type="application/xml"',
+        ];
+        $existingLink = $response->headers->get('Link');
+        $response->headers->set('Link', trim(($existingLink ? $existingLink . ', ' : '') . implode(', ', $links)));
+
         // SPA HTML shells embed Vite hashed script URLs — never let browsers/proxies keep stale HTML.
         $contentType = (string) $response->headers->get('Content-Type', '');
         if (

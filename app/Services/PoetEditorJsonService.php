@@ -6,7 +6,9 @@ use App\Models\Cities;
 use App\Models\CityDetails;
 use App\Models\Poets;
 use App\Models\PoetsDetail;
+use App\Support\PoetSameAs;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 /**
@@ -44,13 +46,14 @@ class PoetEditorJsonService
 
         return [
             '_schema' => 'baakh.poet.editor_json.v1',
-            '_instructions' => 'Edit poet profile for Baakh. Always include details for BOTH lang=sd and lang=en (and ur if needed). Keep id and detail ids when present. Do NOT include or change image/poet_pic/photo fields. Use Standard Sindhi Arabic script for sd fields; English for en. birth_place / death_place may be city id or city name via birth_place_name / death_place_name. Paste back via Input JSON → Submit & Rewrite.',
+            '_instructions' => 'Edit poet profile for Baakh. Always include details for BOTH lang=sd and lang=en (and ur if needed). Keep id and detail ids when present. Do NOT include or change image/poet_pic/photo fields. Use Standard Sindhi Arabic script for sd fields; English for en. birth_place / death_place may be city id or city name via birth_place_name / death_place_name. identities are optional official URLs/usernames (Wikipedia, Wikidata, Knowledge Graph, website, social) — never invent them. Paste back via Input JSON → Submit & Rewrite.',
             'id' => $poet->id,
             'poet_slug' => $poet->poet_slug,
             'date_of_birth' => $poet->date_of_birth,
             'date_of_death' => $poet->date_of_death,
             'visibility' => (bool) $poet->visibility,
             'is_featured' => (bool) $poet->is_featured,
+            'identities' => PoetSameAs::emptyForm(is_array($poet->identities) ? $poet->identities : []),
             'details' => $details,
         ];
     }
@@ -125,6 +128,15 @@ class PoetEditorJsonService
             }
             if (array_key_exists('is_featured', $payload)) {
                 $updates['is_featured'] = filter_var($payload['is_featured'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            }
+            if (array_key_exists('identities', $payload)) {
+                try {
+                    $identities = PoetSameAs::sanitize(is_array($payload['identities']) ? $payload['identities'] : []);
+                } catch (ValidationException $exception) {
+                    $first = collect($exception->errors())->flatten()->first();
+                    throw new InvalidArgumentException($first ?: 'Invalid identities.');
+                }
+                $updates['identities'] = $identities !== [] ? $identities : null;
             }
 
             if ($updates !== []) {

@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, Feather, Music, Scroll, Star, Hash, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BookOpen, Hash, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import { Link } from 'react-router-dom';
-import GenreDetailsModal from './GenreDetailsModal';
 
 const GenreFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
-    const [selectedGenre, setSelectedGenre] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Fetch Genres
     const { data: genres, isLoading } = useQuery({
@@ -21,15 +17,10 @@ const GenreFeed = ({ lang }) => {
         }
     });
 
-    const handleGenreClick = (genre) => {
-        setSelectedGenre(genre);
-        setIsModalOpen(true);
-    };
-
     const GenreCard = ({ genre }) => (
-        <div
-            onClick={() => handleGenreClick(genre)}
-            className="group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full"
+        <Link
+            to={`/${lang}/${genre.slug}`}
+            className="group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 flex flex-col items-center text-center h-full"
         >
             <div className={`h-12 w-12 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center mb-4 transition-colors ${isRtl ? 'ml-0' : 'mr-0'}`}>
                 <Hash className="h-5 w-5 text-gray-400 group-hover:text-black transition-colors" />
@@ -55,7 +46,7 @@ const GenreFeed = ({ lang }) => {
                     {isRtl ? '←' : '→'}
                 </span>
             </div>
-        </div>
+        </Link>
     );
 
     return (
@@ -97,13 +88,6 @@ const GenreFeed = ({ lang }) => {
                     </p>
                 </div>
             )}
-
-            <GenreDetailsModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                genre={selectedGenre}
-                lang={lang}
-            />
         </div>
     );
 };

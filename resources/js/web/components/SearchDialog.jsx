@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../admin/api/axios';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AvatarImgOrIcon from './AvatarImgOrIcon';
+import { formatPeriodDateRange } from '@/lib/date-utils';
 
 const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
     const isRtl = lang === 'sd';
@@ -264,8 +265,8 @@ const SearchDialog = ({ open, onOpenChange, lang = 'en' }) => {
                                         <div className={`font-medium text-gray-900 ${isRtl ? 'font-arabic' : ''}`}>
                                             {period.title}
                                         </div>
-                                        <div className="text-xs text-gray-400">
-                                            {period.date_range}
+                                        <div className={`text-xs text-gray-400 ${isRtl ? 'font-arabic' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+                                            {formatPeriodDateRange(period.date_range, lang)}
                                         </div>
                                     </div>
                                 </button>

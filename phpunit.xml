@@ -28,5 +28,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="BAAKH_CONTACT_EMAIL" value="support@baakh.com"/>
+        <env name="BAAKH_CONTACT_PHONE" value="+92-21-1110000"/>
     </php>
 </phpunit>

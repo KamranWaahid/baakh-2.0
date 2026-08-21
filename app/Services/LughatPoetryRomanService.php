@@ -184,26 +184,42 @@ class LughatPoetryRomanService
             ];
         }
 
-        // Keep airab on the headword — نَھن and نُھن are different lemmas.
-        $attrs = [
-            'lemma' => $surface,
-            'normalized_lemma' => $identity,
-            'homograph_number' => 1,
-            'language' => 'sd',
-            'transliteration' => null,
-            'romanization_status' => 'proposed',
-            'status' => 'pending',
-            'completion_status' => LughatLemma::COMPLETION_PENDING,
-            'metadata_json' => array_merge([
-                'dictionary' => 'Baakh Lughat',
-                'version' => '2',
-                'source' => 'poetry_roman_check',
-            ], $metadata),
-        ];
-        if (Schema::hasColumn('lughat_lemmas', 'lookup_base')) {
-            $attrs['lookup_base'] = DictionaryText::lookupBase($surface);
+        try {
+            // Keep airab on the headword — نَھن and نُھن are different lemmas.
+            $attrs = [
+                'lemma' => $surface,
+                'normalized_lemma' => $identity,
+                'homograph_number' => 1,
+                'language' => 'sd',
+                'transliteration' => null,
+                'romanization_status' => 'proposed',
+                'status' => 'pending',
+                'completion_status' => LughatLemma::COMPLETION_PENDING,
+                'metadata_json' => array_merge([
+                    'dictionary' => 'Baakh Lughat',
+                    'version' => '2',
+                    'source' => 'poetry_roman_check',
+                ], $metadata),
+            ];
+            if (Schema::hasColumn('lughat_lemmas', 'lookup_base')) {
+                $attrs['lookup_base'] = DictionaryText::lookupBase($surface);
+            }
+            $lemma = LughatLemma::create($attrs);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Unique index / collation collision with an airab variant already in Lughat.
+            $existing = LughatLemma::findByLookupBase(DictionaryText::lookupBase($surface), 8);
+            if ($existing->count() === 1) {
+                $lemma = $existing->first();
+
+                return [
+                    'lemma_id' => (int) $lemma->id,
+                    'lemma' => (string) $lemma->lemma,
+                    'created' => false,
+                    'transliteration' => filled($lemma->transliteration) ? trim((string) $lemma->transliteration) : null,
+                ];
+            }
+            throw $e;
         }
-        $lemma = LughatLemma::create($attrs);
 
         return [
             'lemma_id' => (int) $lemma->id,
@@ -275,38 +291,37 @@ class LughatPoetryRomanService
             }
         }
 
-        // Bare form without airab: allow unique base match; never force one of many.
-        if (!DictionaryText::hasDiacritics($surface)) {
-            $base = DictionaryText::lookupBase($surface);
-            if ($base !== '') {
-                $hasLookupBase = Schema::hasColumn('lughat_lemmas', 'lookup_base');
-                $matches = LughatLemma::query()
-                    ->where(function ($q) use ($base, $hasLookupBase) {
-                        if ($hasLookupBase) {
-                            $q->where('lookup_base', $base)
-                                ->orWhere('normalized_lemma', $base);
-                        } else {
-                            // Pre-migration fallback: old rows stored stripped key in normalized_lemma.
-                            $q->where('normalized_lemma', $base);
-                        }
-                    })
-                    ->orderBy('homograph_number')
-                    ->limit(8)
-                    ->get(['id', 'lemma', 'transliteration']);
+        if (Schema::hasTable('lughat_variants')) {
+            $variant = \App\Models\LughatVariant::query()
+                ->with('lemma')
+                ->where(function ($q) use ($surface, $identity) {
+                    $q->whereRaw(DictionaryText::binaryEquals('variant'), [$surface])
+                        ->orWhereRaw(DictionaryText::binaryEquals('normalized_variant'), [$identity]);
+                })
+                ->first();
+            if ($variant?->lemma) {
+                return ['lemma' => $variant->lemma, 'matched_via' => 'variant'];
+            }
+        }
 
-                if ($matches->count() === 1) {
-                    return ['lemma' => $matches->first(), 'matched_via' => 'lookup_base_unique'];
-                }
-                if ($matches->count() > 1) {
-                    return [
-                        'lemma' => null,
-                        'matched_via' => 'ambiguous',
-                        'candidates' => $matches->map(fn ($m) => [
-                            'id' => (int) $m->id,
-                            'lemma' => (string) $m->lemma,
-                        ])->all(),
-                    ];
-                }
+        // Same stripped headword: رُئيندي ↔ رئيندي when only one catalog row exists.
+        // Bare unmarked queries with several airab variants stay ambiguous.
+        $base = DictionaryText::lookupBase($surface);
+        if ($base !== '') {
+            $matches = LughatLemma::findByLookupBase($base, 8);
+
+            if ($matches->count() === 1) {
+                return ['lemma' => $matches->first(), 'matched_via' => 'lookup_base_unique'];
+            }
+            if ($matches->count() > 1 && !DictionaryText::hasDiacritics($surface)) {
+                return [
+                    'lemma' => null,
+                    'matched_via' => 'ambiguous',
+                    'candidates' => $matches->map(fn ($m) => [
+                        'id' => (int) $m->id,
+                        'lemma' => (string) $m->lemma,
+                    ])->all(),
+                ];
             }
         }
 

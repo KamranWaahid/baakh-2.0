@@ -340,7 +340,52 @@ Route::get('{lang}/lyrics', function (string $lang) {
     return redirect()->away("{$base}/{$lang}", 301);
 })->where('lang', 'en|sd');
 
-Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|robots\.txt|_health|lyrics-site).*$')->name('web.spa');
+/*
+|--------------------------------------------------------------------------
+| Archive SPA — canonical public URLs (not the v1 API path shapes)
+|--------------------------------------------------------------------------
+| Public pages: /{lang}/poet/{slug} and /{lang}/poet/{slug}/{category}/{poem}
+| API lookup:   /api/v1/poets/{slug} and /api/v1/poetry/{slug}
+| Legacy HTML   /poets/{slug}, /poetry/{slug}, /tags/{slug} 301 via NormalizeSeoUrls.
+| Lyrics/singers live on lyrics.baakh.com, not the archive SPA.
+*/
+Route::prefix('{lang}')
+    ->where(['lang' => 'en|sd'])
+    ->group(function () {
+        Route::get('poet/{slug}/{category}/{poemSlug}', [\App\Http\Controllers\SpaController::class, 'index'])
+            ->name('spa.poetry');
+        Route::get('poet/{slug}', [\App\Http\Controllers\SpaController::class, 'index'])
+            ->name('spa.poet');
+        Route::get('tag/{slug}', [\App\Http\Controllers\SpaController::class, 'index'])
+            ->name('spa.tag');
+        Route::get('topic/{slug}', [\App\Http\Controllers\SpaController::class, 'index'])
+            ->name('spa.topic');
+    });
+
+Route::get('llms.txt', [\App\Http\Controllers\WellKnownController::class, 'llmsTxt'])->name('llms.txt');
+Route::get('llms.md', [\App\Http\Controllers\WellKnownController::class, 'llmsTxt']);
+Route::get('agents.md', [\App\Http\Controllers\WellKnownController::class, 'agentsMarkdown']);
+Route::get('index.md', [\App\Http\Controllers\WellKnownController::class, 'indexMarkdown']);
+Route::get('auth.md', [\App\Http\Controllers\WellKnownController::class, 'authMarkdown']);
+Route::get('developers.md', [\App\Http\Controllers\WellKnownController::class, 'developersMarkdown']);
+Route::get('api.md', [\App\Http\Controllers\WellKnownController::class, 'apiMarkdown']);
+Route::get('skill.md', [\App\Http\Controllers\WellKnownController::class, 'skillMarkdown']);
+Route::get('agent.md', [\App\Http\Controllers\WellKnownController::class, 'agentMarkdown']);
+Route::get('developer.md', [\App\Http\Controllers\WellKnownController::class, 'developerMarkdown']);
+Route::get('.well-known/llms.txt', [\App\Http\Controllers\WellKnownController::class, 'llmsTxt']);
+Route::get('.well-known/ai-catalog.json', [\App\Http\Controllers\WellKnownController::class, 'aiCatalog']);
+Route::get('.well-known/api-catalog', [\App\Http\Controllers\WellKnownController::class, 'apiCatalog']);
+
+Route::match(['GET', 'HEAD'], '.well-known/agent-skills/{path?}', [\App\Http\Controllers\AgentDiscoveryController::class, 'show'])
+    ->where('path', '.*')
+    ->name('agent-skills');
+
+Route::get('{lang}/index.md', [\App\Http\Controllers\WellKnownController::class, 'indexMarkdown'])
+    ->where('lang', 'en|sd');
+Route::get('{lang}/{section}/llms.txt', [\App\Http\Controllers\WellKnownController::class, 'sectionLlms'])
+    ->where(['lang' => 'en|sd', 'section' => 'poets|poetry|couplets|genre|period|explore|prosody|about|contact|help|privacy|terms']);
+
+Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|robots\.txt|llms\.txt|llms\.md|agents\.md|index\.md|auth\.md|developers\.md|api\.md|skill\.md|agent\.md|developer\.md|_health|lyrics-site|\.well-known).*$')->name('web.spa');
 
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);

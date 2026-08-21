@@ -82,6 +82,7 @@ class SitemapController extends Controller
                 ['path' => '/prosody', 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['path' => '/explore', 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['path' => '/about', 'priority' => '0.4', 'changefreq' => 'monthly'],
+                ['path' => '/contact', 'priority' => '0.4', 'changefreq' => 'monthly'],
                 ['path' => '/privacy', 'priority' => '0.2', 'changefreq' => 'yearly'],
                 ['path' => '/terms', 'priority' => '0.2', 'changefreq' => 'yearly'],
                 ['path' => '/help', 'priority' => '0.3', 'changefreq' => 'monthly'],

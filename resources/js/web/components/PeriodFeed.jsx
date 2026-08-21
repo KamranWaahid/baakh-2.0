@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/admin/api/axios';
 import PeriodDetailsModal from './PeriodDetailsModal';
+import { formatPeriodDateRange } from '@/lib/date-utils';
 
 const PeriodFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
@@ -34,21 +35,24 @@ const PeriodFeed = ({ lang }) => {
                 <div className={`h-12 w-12 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center transition-colors`}>
                     <History className="h-5 w-5 text-gray-400 group-hover:text-black transition-colors" />
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 text-xs font-medium text-gray-500">
-                    <Calendar className="h-3 w-3" />
-                    <span>{period.date_range}</span>
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 text-xs font-medium text-gray-500 ${isRtl ? 'font-arabic' : ''}`}>
+                    <Calendar className="h-3 w-3 shrink-0" />
+                    <span dir={isRtl ? 'rtl' : 'ltr'}>{formatPeriodDateRange(period.date_range, lang)}</span>
                 </div>
             </div>
 
-            <h3 className={`text-2xl font-bold text-gray-900 mb-2 ${isRtl ? 'font-arabic' : ''}`}>
+            <h3 className={`text-2xl font-bold text-gray-900 mb-2 line-clamp-2 ${isRtl ? 'font-arabic' : ''}`}>
                 {isRtl ? period.title_sd : period.title_en}
             </h3>
 
-            <span className={`text-xs font-medium text-gray-400 uppercase tracking-wider mb-4 ${isRtl ? 'font-sans' : ''}`}>
+            <span
+                dir={isRtl ? 'ltr' : 'rtl'}
+                className={`text-xs font-medium text-gray-400 tracking-wider mb-4 line-clamp-2 ${isRtl ? 'font-sans uppercase' : 'font-arabic'}`}
+            >
                 {isRtl ? period.title_en : period.title_sd}
             </span>
 
-            <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
+            <p className={`text-sm text-gray-500 leading-relaxed mb-6 flex-1 line-clamp-3 ${isRtl ? 'font-arabic' : ''}`}>
                 {isRtl ? period.description_sd : period.description_en}
             </p>
 

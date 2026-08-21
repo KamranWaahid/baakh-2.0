@@ -1,0 +1,29 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://baakh.com/",
+      "item": [
+        {
+          "href": "https://baakh.com/api/v1/feed",
+          "type": "application/json"
+        },
+        {
+          "href": "https://baakh.com/api/v1/poets/{slug}",
+          "type": "application/json"
+        },
+        {
+          "href": "https://baakh.com/api/v1/poetry/{slug}",
+          "type": "application/json"
+        },
+        {
+          "href": "https://baakh.com/api/health",
+          "type": "application/json"
+        },
+        {
+          "href": "https://baakh.com/llms.txt",
+          "type": "text/markdown"
+        }
+      ]
+    }
+  ]
+}

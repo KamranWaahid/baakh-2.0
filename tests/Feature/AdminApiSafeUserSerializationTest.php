@@ -68,17 +68,37 @@ class AdminApiSafeUserSerializationTest extends TestCase
             ->assertJsonPath('data.0.info.title', 'Test Poetry');
     }
 
-    public function test_admin_couplets_index_serializes_nested_poetry_user_safely(): void
+    public function test_admin_couplets_index_returns_only_independent_couplets(): void
     {
         $this->withoutMiddleware();
         $this->seedContentWithLegacyUser();
+
+        DB::table('poetry_couplets')->insert([
+            'id' => 2,
+            'poetry_id' => 0,
+            'poet_id' => 1,
+            'topic_category_id' => null,
+            'book_id' => null,
+            'couplet_slug' => 'independent-bait',
+            'couplet_text' => "First line\nSecond line",
+            'couplet_tags' => '[]',
+            'lang' => 'sd',
+            'page_start' => null,
+            'page_end' => null,
+            'visibility' => 1,
+            'is_featured' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+            'deleted_at' => null,
+        ]);
 
         $response = $this->getJson('/api/admin/couplets?page=1&search=&only_trashed=false&lang=sd');
 
         $response
             ->assertOk()
-            ->assertJsonPath('data.0.poetry.user.name', 'Legacy Admin')
-            ->assertJsonPath('data.0.couplet_text', 'First line');
+            ->assertJsonPath('data.0.couplet_text', "First line\nSecond line")
+            ->assertJsonPath('total', 1);
+        $this->assertCount(1, $response->json('data'));
     }
 
     public function test_admin_dashboard_stats_serializes_legacy_activity_users_safely(): void

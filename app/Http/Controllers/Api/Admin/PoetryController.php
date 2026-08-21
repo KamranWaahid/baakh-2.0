@@ -7,11 +7,13 @@ use App\Models\Poetry;
 use App\Services\LughatExpressionService;
 use App\Services\LughatPoetryRomanService;
 use App\Services\LughatPoetrySenseAnnotationService;
+use App\Services\PoetryTaxonomyJsonService;
 use App\Services\StaticCacheService;
 use App\Support\SafeUserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class PoetryController extends Controller
 {
@@ -26,6 +28,7 @@ class PoetryController extends Controller
             'checkLughatRoman',
             'transliterateLughatRoman',
             'senseAnnotations',
+            'taxonomyJson',
         ]);
         $this->middleware('can:create_poetry')->only(['create', 'store']);
         $this->middleware('can:edit_poetry')->only([
@@ -36,6 +39,12 @@ class PoetryController extends Controller
             'refineAllHesudhar',
             'syncSenseAnnotations',
         ]);
+        $this->middleware(function ($request, $next) {
+            if ($request->user()?->can('create_poetry') || $request->user()?->can('edit_poetry')) {
+                return $next($request);
+            }
+            abort(403);
+        })->only(['applyTaxonomyJson']);
         $this->middleware('can:delete_poetry')->only(['destroy']);
     }
     public function index(Request $request)
@@ -402,6 +411,57 @@ class PoetryController extends Controller
         $cache->set('admin_poetry_create_data', $data);
 
         return response()->json($data);
+    }
+
+    public function taxonomyJson(Request $request, PoetryTaxonomyJsonService $taxonomy)
+    {
+        $validated = $request->validate([
+            'kind' => 'nullable|in:topic_categories,tags,both',
+            'title' => 'nullable|string|max:255',
+            'text' => 'nullable|string|max:20000',
+            'topic_category_id' => 'nullable',
+            'tag_ids' => 'nullable|array',
+        ]);
+
+        return response()->json(
+            $taxonomy->copyPayload(
+                $validated['kind'] ?? 'both',
+                (string) ($validated['title'] ?? ''),
+                (string) ($validated['text'] ?? ''),
+                [
+                    'topic_category_id' => $validated['topic_category_id'] ?? null,
+                    'tag_ids' => $validated['tag_ids'] ?? [],
+                ]
+            )
+        );
+    }
+
+    public function applyTaxonomyJson(Request $request, PoetryTaxonomyJsonService $taxonomy)
+    {
+        $validated = $request->validate([
+            'payload' => 'required',
+        ]);
+
+        $payload = $validated['payload'];
+        if (is_string($payload)) {
+            $decoded = json_decode($payload, true);
+            if (!is_array($decoded)) {
+                return response()->json(['message' => 'payload must be valid JSON.'], 422);
+            }
+            $payload = $decoded;
+        }
+
+        if (!is_array($payload)) {
+            return response()->json(['message' => 'payload must be a JSON object.'], 422);
+        }
+
+        try {
+            $result = DB::transaction(fn () => $taxonomy->apply($payload));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json($result);
     }
 
     public function store(Request $request)

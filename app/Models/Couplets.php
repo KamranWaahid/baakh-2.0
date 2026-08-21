@@ -88,6 +88,31 @@ class Couplets extends Model
         return $this->morphMany(UserBookmark::class, 'bookmarkable');
     }
 
+    /**
+     * Standalone baits, not verses belonging to a longer poem.
+     */
+    public function scopeIndependent($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('poetry_id')->orWhere('poetry_id', 0);
+        });
+    }
+
+    /**
+     * Exactly two lines (one newline after trim). Excludes one-liners and ghazal extracts.
+     */
+    public function scopeTwoLine($query)
+    {
+        return $query->whereRaw(
+            "(LENGTH(TRIM(REPLACE(couplet_text, '\r', ''))) - LENGTH(REPLACE(TRIM(REPLACE(couplet_text, '\r', '')), '\n', ''))) = 1"
+        );
+    }
+
+    public function scopeStandaloneTwoLine($query)
+    {
+        return $query->independent()->twoLine();
+    }
+
 
     protected static function booted()
     {

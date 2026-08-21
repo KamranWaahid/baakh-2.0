@@ -77,11 +77,44 @@ class DictionaryText
     }
 
     /**
+     * Zero-width / format controls that make ڪھي look identical to a different stored string.
+     */
+    public static function stripInvisible(string $text): string
+    {
+        return preg_replace('/[\x{200B}-\x{200F}\x{FEFF}\x{00AD}]/u', '', $text) ?? $text;
+    }
+
+    /**
+     * Combining marks stripped for lookup_base / SQL REPLACE (zer, zabar, pesh, tanwin, …).
+     *
+     * @return list<string>
+     */
+    public static function diacriticMarks(): array
+    {
+        return ['ً', 'ٌ', 'ٍ', 'َ', 'ُ', 'ِ', 'ّ', 'ْ', 'ٰ', 'ٓ', 'ٔ', 'ٕ', 'ٖ', 'ٗ', '٘', 'ٙ', 'ٚ', 'ٛ', 'ٜ', 'ٝ', 'ٞ', 'ٟ'];
+    }
+
+    /**
+     * SQL expression: lowercase lemma with airab removed. Used when lookup_base is empty.
+     */
+    public static function sqlLookupBase(string $column): string
+    {
+        $expression = "LOWER(COALESCE({$column}, ''))";
+        foreach (array_merge(self::diacriticMarks(), ["\u{0640}", "\u{200B}", "\u{200C}", "\u{200D}", "\u{FEFF}"]) as $mark) {
+            $escaped = str_replace("'", "''", $mark);
+            $expression = "REPLACE({$expression}, '{$escaped}', '')";
+        }
+
+        return $expression;
+    }
+
+    /**
      * Canonical lemma identity key — keeps zer/zabar/pesh.
      * نَھن and نُھن stay distinct.
      */
     public static function normalizeForIdentity(string $text): string
     {
+        $text = self::stripInvisible($text);
         $text = self::stripPunctuation($text);
         $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
         $text = trim($text);
@@ -95,6 +128,7 @@ class DictionaryText
      */
     public static function lookupBase(string $text): string
     {
+        $text = self::stripInvisible($text);
         $text = self::stripPunctuation($text);
         $text = trim(self::stripDiacritics($text));
         $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
@@ -145,6 +179,11 @@ class DictionaryText
      */
     public static function binaryEquals(string $column, string $binding = '?'): string
     {
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        if ($driver === 'sqlite') {
+            return "{$column} = {$binding}";
+        }
+
         return "BINARY {$column} = {$binding}";
     }
 }

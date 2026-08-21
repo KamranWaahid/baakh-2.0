@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LocationCombobox } from '@/components/ui/location-combobox';
+import PoetIdentitiesFields, { appendPoetIdentities, EMPTY_POET_IDENTITIES } from './PoetIdentitiesFields';
 
 const poetSchema = z.object({
     poet_slug: z.string().min(3, 'Slug must be at least 3 characters'),
@@ -35,6 +36,15 @@ const poetSchema = z.object({
     visibility: z.boolean().default(true),
     is_featured: z.boolean().default(false),
     image: z.any().refine((files) => files?.length > 0, "Image is required"),
+    identities: z.object({
+        wikipedia_url: z.string().optional().nullable(),
+        wikidata_id: z.string().optional().nullable(),
+        google_kgmid: z.string().optional().nullable(),
+        website_url: z.string().optional().nullable(),
+        twitter: z.string().optional().nullable(),
+        facebook: z.string().optional().nullable(),
+        instagram: z.string().optional().nullable(),
+    }).optional(),
     details: z.array(z.object({
         poet_name: z.string().min(3, "Name must be at least 3 characters"),
         poet_laqab: z.string().min(3, "Laqab must be at least 3 characters"),
@@ -70,6 +80,7 @@ const CreatePoet = () => {
             date_of_death: '',
             visibility: true,
             is_featured: false,
+            identities: { ...EMPTY_POET_IDENTITIES },
             details: [
                 {
                     lang: 'sd',
@@ -98,6 +109,7 @@ const CreatePoet = () => {
         formData.append('visibility', data.visibility ? '1' : '0');
         formData.append('is_featured', data.is_featured ? '1' : '0');
         formData.append('image', data.image[0]);
+        appendPoetIdentities(formData, data.identities);
 
         data.details.forEach((detail, index) => {
             formData.append(`details[${index}][lang]`, detail.lang || 'sd');
@@ -261,6 +273,8 @@ const CreatePoet = () => {
                             />
                         </CardContent>
                     </Card>
+
+                    <PoetIdentitiesFields />
 
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">

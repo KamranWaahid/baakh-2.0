@@ -209,6 +209,7 @@ class NormalizeSeoUrls
             '/genres' => '/explore',
             '/help' => '/help',
             '/about' => '/about',
+            '/contact' => '/contact',
         ];
         if (isset($simple[$rest])) {
             return '/' . $lang . $simple[$rest];
@@ -238,12 +239,22 @@ class NormalizeSeoUrls
             '/livewire',
             '/og-image/',
             '/lyrics-site',
+            '/llms.txt',
+            '/llms.md',
+            '/agents.md',
+            '/index.md',
+            '/auth.md',
+            '/.well-known',
         ];
 
         foreach ($prefixes as $prefix) {
             if ($path === $prefix || str_starts_with($path, $prefix)) {
                 return true;
             }
+        }
+
+        if (str_ends_with($path, '.md') || str_ends_with($path, '/llms.txt')) {
+            return true;
         }
 
         return false;

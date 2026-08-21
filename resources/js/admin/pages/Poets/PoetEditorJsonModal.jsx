@@ -20,7 +20,7 @@ const AI_ENRICH_PROMPT = `Enrich this Baakh poet profile JSON.
 
 Return ONLY one valid JSON object. No markdown fences. No explanation before or after.
 
-Must keep the same shape and keys (_schema, _instructions, id, poet_slug, date_of_birth, date_of_death, visibility, is_featured, details).
+Must keep the same shape and keys (_schema, _instructions, id, poet_slug, date_of_birth, date_of_death, visibility, is_featured, identities, details).
 Do NOT include image, poet_pic, or any photo fields.
 Keep top-level id and any existing detail ids when present.
 details[] MUST include BOTH languages: one object with lang="sd" AND one with lang="en" (ur optional).
@@ -29,6 +29,7 @@ poet_name and poet_laqab are required (min 3 chars) per language.
 poet_bio / tagline / pen_name: write accurate, concise literary biography text.
 birth_place / death_place: city id as string when known, otherwise set birth_place_name / death_place_name (city name).
 Dates: YYYY-MM-DD or null. visibility / is_featured: boolean.
+identities: optional official URLs/usernames only when you are certain (wikipedia_url, wikidata_id, google_kgmid, website_url, twitter, facebook, instagram). Never invent Wikipedia, Wikidata, or Knowledge Graph IDs.
 Use Standard Sindhi Arabic script for sd fields; English for en fields.
 
 JSON:

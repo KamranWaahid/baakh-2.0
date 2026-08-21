@@ -258,6 +258,8 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::post('poetry/lughat-roman-check', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'checkLughatRoman']);
         Route::post('poetry/lughat-roman-transliterate', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'transliterateLughatRoman']);
         Route::get('poetry/create', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'create']);
+        Route::post('poetry/taxonomy-json', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'taxonomyJson']);
+        Route::post('poetry/taxonomy-json/apply', [\App\Http\Controllers\Api\Admin\PoetryController::class, 'applyTaxonomyJson']);
         Route::apiResource('poetry', \App\Http\Controllers\Api\Admin\PoetryController::class);
 
         Route::apiResource('lyrics-genres', \App\Http\Controllers\Api\Admin\LyricsGenreController::class);
@@ -289,6 +291,7 @@ Route::middleware(['auth:sanctum', 'user_role'])
         Route::apiResource('couplets', \App\Http\Controllers\Api\Admin\CoupletController::class);
         Route::apiResource('tags', \App\Http\Controllers\Api\Admin\TagController::class);
         Route::apiResource('categories', \App\Http\Controllers\Api\Admin\CategoryController::class);
+        Route::apiResource('prosody-terms', \App\Http\Controllers\Api\Admin\ProsodyTermController::class);
         Route::post('hesudhar/refresh', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'refresh']);
         Route::post('hesudhar/cleanse', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'cleanse']);
         Route::post('hesudhar/standardize', [\App\Http\Controllers\Api\Admin\HesudharController::class, 'standardize']);

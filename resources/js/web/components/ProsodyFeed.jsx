@@ -24,6 +24,9 @@ const IconMap = {
     Sunset
 };
 
+const isPattiItem = (item) =>
+    item?.title?.toLowerCase().includes('patti') || item?.title?.includes('پٽي');
+
 const ProsodyFeed = ({ lang }) => {
     const isRtl = lang === 'sd';
     const [showTool, setShowTool] = useState(false);
@@ -38,24 +41,26 @@ const ProsodyFeed = ({ lang }) => {
         }
     });
 
+    const conceptItems = Array.isArray(items)
+        ? items.filter((item) => !isPattiItem(item))
+        : [];
+
     const handleItemClick = (item) => {
-        const isPatti = item.title?.toLowerCase().includes('patti') || item.title?.includes('پٽي');
-        if (isPatti) {
+        if (isPattiItem(item)) {
             setShowTool(true);
-        } else {
-            setSelectedItem(item);
-            setIsModalOpen(true);
+            return;
         }
+        setSelectedItem(item);
+        setIsModalOpen(true);
     };
 
     const ConceptCard = ({ item }) => {
         const IconComponent = IconMap[item.icon] || Info;
-        const isPatti = item.title?.toLowerCase().includes('patti') || item.title?.includes('پٽي');
 
         return (
             <div
                 onClick={() => handleItemClick(item)}
-                className={`group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full ${isPatti ? 'ring-2 ring-black ring-offset-2' : ''}`}
+                className="group relative bg-white border border-gray-100 rounded-xl p-6 hover:border-black/20 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col items-center text-center h-full"
             >
                 <div className={`h-12 w-12 rounded-full bg-gray-50 group-hover:bg-gray-100 flex items-center justify-center mb-4 transition-colors`}>
                     <IconComponent className="h-5 w-5 text-gray-400 group-hover:text-black transition-colors" />
@@ -65,13 +70,21 @@ const ProsodyFeed = ({ lang }) => {
                     {item.title || '...'}
                 </h3>
 
-                <span className={`text-xs font-medium text-gray-400 uppercase tracking-wider mb-6 ${isRtl ? 'font-sans' : ''}`}>
+                <span className={`text-xs font-medium text-gray-400 tracking-wider mb-3 ${isRtl ? 'font-sans uppercase' : 'font-arabic'}`}>
                     {item.subtitle || '...'}
                 </span>
 
+                {item.description ? (
+                    <p className={`text-sm text-gray-500 leading-relaxed mb-6 flex-1 line-clamp-3 ${isRtl ? 'font-arabic' : ''}`}>
+                        {item.description}
+                    </p>
+                ) : (
+                    <div className="flex-1 mb-6" />
+                )}
+
                 <div className="mt-auto pt-4 w-full border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
                     <span className="flex items-center gap-1 font-medium text-black group-hover:underline underline-offset-4">
-                        {isPatti ? (isRtl ? 'پٽي کوليو' : 'Open Patti Tool') : (isRtl ? 'تفصيل' : 'Learn Details')}
+                        {isRtl ? 'تفصيل' : 'Learn Details'}
                     </span>
                     <span className="group-hover:translate-x-1 transition-transform duration-300 text-black">
                         {isRtl ? '←' : '→'}
@@ -129,7 +142,7 @@ const ProsodyFeed = ({ lang }) => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {Array.isArray(items) && items.map((item) => (
+                    {conceptItems.map((item) => (
                         <ConceptCard key={item.id} item={item} />
                     ))}
                 </div>

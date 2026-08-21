@@ -16,6 +16,12 @@ class NormalizeSeoUrlsTest extends TestCase
         $this->assertStringNotContainsString('beta.', $location);
     }
 
+    public function test_unprefixed_contact_redirects_to_sd(): void
+    {
+        $this->get('/contact')->assertRedirect('/sd/contact')->assertStatus(301);
+        $this->get('/about')->assertRedirect('/sd/about')->assertStatus(301);
+    }
+
     public function test_legacy_poets_index_redirects_to_sd(): void
     {
         $response = $this->get('/poets');

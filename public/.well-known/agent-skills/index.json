@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "baakh-archive",
+      "type": "skill-md",
+      "description": "Use Baakh when you need Sindhi poetry from the baakh.com archive: find a poet by name or slug, fetch a ghazal/bait/waee/nazm with original Sindhi and Roman text, cite a permanent Baakh URL, or look up a genre or topic. Do not use for song lyrics (lyrics.baakh.com), commercial book sales, general news, or non-Sindhi literature.",
+      "url": "https://baakh.com/.well-known/agent-skills/baakh-archive/SKILL.md",
+      "digest": "sha256:101659829d2816193d35cfdb3b9232a2f67799a4894e8d68d944f3f838904806"
+    }
+  ]
+}

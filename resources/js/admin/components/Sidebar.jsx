@@ -4,6 +4,7 @@ import useAuth from '../hooks/useAuth';
 import Logo from '../../web/components/Logo';
 import {
     LayoutDashboard,
+    Scale,
     Users,
     BookOpen,
     Feather,
@@ -156,6 +157,7 @@ const Sidebar = ({ onLinkClick }) => {
                     </SidebarGroup>
 
                     <SidebarLink to="/admin/categories" icon={AlignCenter}>Poetry Forms</SidebarLink>
+                    <SidebarLink to="/admin/prosody" icon={Scale}>Prosody</SidebarLink>
 
                     <SidebarGroup icon={Book} label="Dictionary">
                         <SidebarLink to="/admin/dictionary" icon={Book}>Dictionary Home</SidebarLink>

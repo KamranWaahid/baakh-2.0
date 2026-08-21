@@ -1,7 +1,41 @@
 User-agent: *
 Allow: /
+Allow: /llms.txt
+Allow: /.well-known/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /og-image/
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+
+# AI crawlers may read the public archive (same allow/deny as *).
+User-agent: GPTBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
 
 Sitemap: https://baakh.com/sitemap.xml

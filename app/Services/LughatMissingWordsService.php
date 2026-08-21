@@ -131,18 +131,7 @@ class LughatMissingWordsService
 
         // Bare undiacritized surface: unique base match counts as present.
         if (!DictionaryText::hasDiacritics($surface) && $base !== '') {
-            $hasLookupBase = \Illuminate\Support\Facades\Schema::hasColumn('lughat_lemmas', 'lookup_base');
-            $count = LughatLemma::query()
-                ->where(function ($q) use ($base, $hasLookupBase) {
-                    if ($hasLookupBase) {
-                        $q->where('lookup_base', $base)->orWhere('normalized_lemma', $base);
-                    } else {
-                        $q->where('normalized_lemma', $base);
-                    }
-                })
-                ->count();
-
-            return $count === 1;
+            return LughatLemma::findByLookupBase($base, 8)->count() === 1;
         }
 
         return false;

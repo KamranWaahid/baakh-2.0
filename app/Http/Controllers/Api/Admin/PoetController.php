@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Poets;
 use App\Services\PoetEditorJsonService;
 use App\Support\PoetImageUrl;
+use App\Support\PoetSameAs;
 use App\Traits\HasMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -109,6 +110,7 @@ class PoetController extends Controller
                 'visibility' => $poet->visibility,
                 'is_featured' => $poet->is_featured,
                 'poet_tags' => $poet->poet_tags,
+                'identities' => PoetSameAs::emptyForm(is_array($poet->identities) ? $poet->identities : []),
                 'all_details' => $poet->all_details->map(function ($detail) use ($cityLabel) {
                     return [
                         'id' => $detail->id,
@@ -193,7 +195,17 @@ class PoetController extends Controller
             'details.*.lang' => 'required|string',
             'details.*.birth_place' => 'nullable|exists:location_cities,id',
             'details.*.death_place' => 'nullable|exists:location_cities,id',
+            'identities' => 'nullable|array',
+            'identities.wikipedia_url' => 'nullable|string|max:500',
+            'identities.wikidata_id' => 'nullable|string|max:64',
+            'identities.google_kgmid' => 'nullable|string|max:128',
+            'identities.website_url' => 'nullable|string|max:500',
+            'identities.twitter' => 'nullable|string|max:128',
+            'identities.facebook' => 'nullable|string|max:255',
+            'identities.instagram' => 'nullable|string|max:128',
         ]);
+
+        $identities = PoetSameAs::sanitize($request->input('identities'));
 
         DB::beginTransaction();
         try {
@@ -215,6 +227,7 @@ class PoetController extends Controller
                 'visibility' => $request->visibility,
                 'is_featured' => $request->is_featured,
                 'poet_tags' => null,
+                'identities' => $identities !== [] ? $identities : null,
             ]);
 
             foreach ($request->details as $detail) {
@@ -259,7 +272,19 @@ class PoetController extends Controller
             'details.*.lang' => 'sometimes|required|string',
             'details.*.birth_place' => 'nullable|exists:location_cities,id',
             'details.*.death_place' => 'nullable|exists:location_cities,id',
+            'identities' => 'nullable|array',
+            'identities.wikipedia_url' => 'nullable|string|max:500',
+            'identities.wikidata_id' => 'nullable|string|max:64',
+            'identities.google_kgmid' => 'nullable|string|max:128',
+            'identities.website_url' => 'nullable|string|max:500',
+            'identities.twitter' => 'nullable|string|max:128',
+            'identities.facebook' => 'nullable|string|max:255',
+            'identities.instagram' => 'nullable|string|max:128',
         ]);
+
+        $identities = $request->has('identities')
+            ? PoetSameAs::sanitize($request->input('identities'))
+            : null;
 
         DB::beginTransaction();
         try {
@@ -305,6 +330,9 @@ class PoetController extends Controller
             }
             if ($request->hasFile('image') || $removeImage) {
                 $updates['poet_pic'] = $imagePath;
+            }
+            if ($request->has('identities')) {
+                $updates['identities'] = $identities !== [] ? $identities : null;
             }
 
             if (!empty($updates)) {
