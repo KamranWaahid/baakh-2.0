@@ -24,6 +24,7 @@ use App\Services\LughatStructuredEntryService;
 use App\Services\PoetryRomanSyncService;
 use App\Services\RomanizerService;
 use App\Support\DictionaryText;
+use App\Support\JsonColumn;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -786,9 +787,7 @@ class LughatDictionaryController extends Controller
             ->where('extra', '<>', '')
             ->get(['id', 'lemma_id', 'lexical_id', 'extra'])
             ->filter(function (LughatSense $sense) {
-                json_decode((string) $sense->extra, true);
-
-                return json_last_error() !== JSON_ERROR_NONE;
+                return JsonColumn::isMalformed($sense->getRawOriginal('extra'));
             });
 
         return response()->json([

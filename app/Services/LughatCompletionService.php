@@ -238,8 +238,17 @@ class LughatCompletionService
         ];
     }
 
-    public function isValidLanguageDirection(?string $direction): bool
+    public function isValidLanguageDirection(mixed $direction): bool
     {
+        if (is_array($direction)) {
+            $direction = implode('-', array_filter($direction, 'is_scalar'));
+        }
+
+        if (!is_string($direction) && !is_numeric($direction)) {
+            return false;
+        }
+
+        $direction = (string) $direction;
         if (!filled($direction)) {
             return false;
         }

@@ -7,6 +7,7 @@ use App\Models\Lemma;
 use App\Models\LughatInflection;
 use App\Models\LughatLemma;
 use App\Models\LughatPoetrySenseAnnotation;
+use App\Models\LughatVariant;
 use App\Models\LughatWordForm;
 use App\Services\BundledOpenLexiconLookup;
 use App\Services\LughatExpressionService;
@@ -154,21 +155,23 @@ class WordLookupController extends Controller
             $lemma = $inf?->lemma;
         }
 
-        if (!$lemma && !DictionaryText::hasDiacritics($word) && $base !== '') {
-            $hasLookupBase = \Illuminate\Support\Facades\Schema::hasColumn('lughat_lemmas', 'lookup_base');
-            $matches = LughatLemma::query()
-                ->with($with)
-                ->where(function ($q) use ($base, $hasLookupBase) {
-                    if ($hasLookupBase) {
-                        $q->where('lookup_base', $base)->orWhere('normalized_lemma', $base);
-                    } else {
-                        $q->where('normalized_lemma', $base);
-                    }
+        if (!$lemma && \Illuminate\Support\Facades\Schema::hasTable('lughat_variants')) {
+            $variant = LughatVariant::query()->with(['lemma' => fn ($q) => $q->with($with)])
+                ->where(function ($q) use ($word, $identity) {
+                    $q->whereRaw(DictionaryText::binaryEquals('variant'), [$word])
+                        ->orWhereRaw(DictionaryText::binaryEquals('normalized_variant'), [$identity]);
                 })
-                ->orderBy('homograph_number')
-                ->limit(2)
-                ->get();
-            $lemma = $matches->count() === 1 ? $matches->first() : null;
+                ->first();
+            $lemma = $variant?->lemma;
+        }
+
+        // Poetry often carries airab (پَرين) while Baakh Lughat stores unmarked پرين.
+        // Unique lookup_base match in both directions; never pick one of several airab variants.
+        if (!$lemma) {
+            $hit = LughatLemma::findConflictingHeadword(0, $word, $identity);
+            if ($hit) {
+                $lemma = LughatLemma::query()->with($with)->find($hit->id);
+            }
         }
 
         if (!$lemma) {
@@ -214,6 +217,8 @@ class WordLookupController extends Controller
                 'definition' => $sense->definition,
                 'definition_en' => $sense->definition_en,
                 'definition_sd' => $sense->definition_sd,
+                'source' => $sense->source_dictionary ?: $sense->source ?: 'Baakh Lughat',
+                'source_dictionary' => $sense->source_dictionary ?: 'Baakh Lughat',
                 'is_preferred' => $preferredSenseId && (int) $sense->id === (int) $preferredSenseId,
             ];
         })->all();

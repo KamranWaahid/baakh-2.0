@@ -19,6 +19,7 @@ use App\Services\DictionaryToLughatCopyService;
 use App\Services\Hesudhar\DictionaryLemmaHesudharService;
 use App\Services\StructuredDictionaryEntryService;
 use App\Support\DictionaryText;
+use App\Support\JsonColumn;
 use App\Support\SindhiAlphabet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -547,9 +548,7 @@ class DictionaryController extends Controller
             ->where('extra', '<>', '')
             ->get(['id', 'lemma_id', 'lexical_id', 'extra'])
             ->filter(function (Sense $sense) {
-                json_decode((string) $sense->extra, true);
-
-                return json_last_error() !== JSON_ERROR_NONE;
+                return JsonColumn::isMalformed($sense->getRawOriginal('extra'));
             });
 
         return response()->json([
