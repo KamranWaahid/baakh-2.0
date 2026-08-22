@@ -61,6 +61,7 @@ Route::prefix('auth')->group(function () {
     Route::middleware('throttle:12,1')->get('/google/redirect', [LoginWithGoogleController::class, 'loginWithGoogle']);
     Route::middleware('throttle:12,1')->get('/google/mobile', [MobileGoogleController::class, 'help']);
     Route::middleware('throttle:12,1')->post('/google/mobile', [MobileGoogleController::class, 'login']);
+    Route::middleware('throttle:12,1')->post('/google/handshake', [LoginWithGoogleController::class, 'exchangeHandshake']);
     Route::middleware('throttle:6,1')->post('/forgot-password', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendResetLinkEmail']);
     Route::middleware('throttle:6,1')->post('/reset-password', [\App\Http\Controllers\Api\Auth\ResetPasswordController::class, 'store']);
 

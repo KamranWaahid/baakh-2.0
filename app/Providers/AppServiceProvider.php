@@ -46,6 +46,14 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
         \Illuminate\Database\Schema\Builder::defaultStringLength(191);
 
+        if (! getenv('VERCEL')) {
+            try {
+                app(\App\Services\ViteBuildPublishService::class)->syncIfStale();
+            } catch (\Throwable) {
+                // Publishing is best-effort; a missing /build must not take down PHP.
+            }
+        }
+
         // Register Observers for Static Caching and Notifications
         \App\Models\Poetry::observe([\App\Observers\PoetryObserver::class, \App\Observers\ContentNotificationObserver::class]);
         \App\Models\Poets::observe([\App\Observers\PoetObserver::class, \App\Observers\ContentNotificationObserver::class]);

@@ -1,57 +1,56 @@
 {
-  "_NotificationBell-39c967c5.js": {
-    "file": "assets/NotificationBell-39c967c5.js",
+  "_NotificationBell-41751022.js": {
+    "file": "assets/NotificationBell-41751022.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_useQuery-e4e656fa.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
-      "_circle-check-big-70bb700e.js"
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
+      "_circle-check-big-9acb59b3.js"
     ],
     "isDynamicEntry": true
   },
-  "_SegmentedProgressBar-8593375e.js": {
-    "file": "assets/SegmentedProgressBar-8593375e.js",
+  "_SegmentedProgressBar-1ca5b74a.js": {
+    "file": "assets/SegmentedProgressBar-1ca5b74a.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js"
+      "_badge-2bd6467c.js"
     ]
   },
   "_axios-ade11851.js": {
     "file": "assets/axios-ade11851.js"
   },
-  "_badge-cde22160.js": {
-    "file": "assets/badge-cde22160.js",
+  "_badge-2bd6467c.js": {
+    "file": "assets/badge-2bd6467c.js",
     "imports": [
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "_radix-ui-4adf3cda.js"
     ]
   },
-  "_circle-check-big-70bb700e.js": {
-    "file": "assets/circle-check-big-70bb700e.js",
+  "_circle-check-big-9acb59b3.js": {
+    "file": "assets/circle-check-big-9acb59b3.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ]
   },
-  "_clock-b9751be5.js": {
-    "file": "assets/clock-b9751be5.js",
+  "_clock-471ba113.js": {
+    "file": "assets/clock-471ba113.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ]
   },
   "_dateUtils-29c5e816.js": {
     "file": "assets/dateUtils-29c5e816.js"
   },
-  "_external-link-ff2ae3c5.js": {
-    "file": "assets/external-link-ff2ae3c5.js",
+  "_external-link-a81fc88f.js": {
+    "file": "assets/external-link-a81fc88f.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ]
   },
-  "_eye-54926d24.js": {
-    "file": "assets/eye-54926d24.js",
+  "_eye-61faccfe.js": {
+    "file": "assets/eye-61faccfe.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ]
   },
   "_html-5767ea50.js": {
@@ -63,37 +62,37 @@
       "_radix-ui-4adf3cda.js"
     ]
   },
-  "_lock-7226eaba.js": {
-    "file": "assets/lock-7226eaba.js",
+  "_lock-e583186f.js": {
+    "file": "assets/lock-e583186f.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ]
   },
   "_radix-ui-4adf3cda.js": {
     "file": "assets/radix-ui-4adf3cda.js"
   },
-  "_save-96cead47.js": {
-    "file": "assets/save-96cead47.js",
+  "_save-c950fb40.js": {
+    "file": "assets/save-c950fb40.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ]
   },
-  "_switch-bf6d5091.js": {
-    "file": "assets/switch-bf6d5091.js",
+  "_switch-1d9f6c92.js": {
+    "file": "assets/switch-1d9f6c92.js",
     "imports": [
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js"
+      "_badge-2bd6467c.js"
     ]
   },
-  "_useQuery-e4e656fa.js": {
-    "file": "assets/useQuery-e4e656fa.js",
+  "_usePageTitle-c4efbf72.js": {
+    "file": "assets/usePageTitle-c4efbf72.js",
     "imports": [
-      "_x-0bd59c38.js"
+      "_radix-ui-4adf3cda.js"
     ]
   },
-  "_x-0bd59c38.js": {
-    "file": "assets/x-0bd59c38.js",
+  "_x-8c324b48.js": {
+    "file": "assets/x-8c324b48.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_axios-ade11851.js"
@@ -101,57 +100,55 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-3aff718b.css",
+    "file": "assets/app-37b84972.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
   "resources/js/admin/main.css": {
-    "file": "assets/main-be5290f2.css",
+    "file": "assets/main-409aeb5c.css",
     "src": "resources/js/admin/main.css"
   },
   "resources/js/admin/main.jsx": {
     "css": [
-      "assets/main-be5290f2.css"
+      "assets/main-409aeb5c.css"
     ],
     "dynamicImports": [
       "resources/js/admin/pages/Dashboard.jsx"
     ],
-    "file": "assets/main-a51a1c5b.js",
+    "file": "assets/main-270e7955.js",
     "imports": [
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_useQuery-e4e656fa.js",
-      "_NotificationBell-39c967c5.js",
-      "_switch-bf6d5091.js",
-      "_save-96cead47.js",
-      "_eye-54926d24.js",
-      "_external-link-ff2ae3c5.js",
-      "_SegmentedProgressBar-8593375e.js",
+      "_x-8c324b48.js",
+      "_NotificationBell-41751022.js",
+      "_switch-1d9f6c92.js",
+      "_save-c950fb40.js",
+      "_eye-61faccfe.js",
+      "_external-link-a81fc88f.js",
+      "_SegmentedProgressBar-1ca5b74a.js",
       "_axios-ade11851.js",
-      "_clock-b9751be5.js",
-      "_circle-check-big-70bb700e.js"
+      "_clock-471ba113.js",
+      "_circle-check-big-9acb59b3.js"
     ],
     "isEntry": true,
     "src": "resources/js/admin/main.jsx"
   },
   "resources/js/admin/pages/Dashboard.jsx": {
-    "file": "assets/Dashboard-96eda5eb.js",
+    "file": "assets/Dashboard-1f22e91f.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_switch-bf6d5091.js",
-      "_useQuery-e4e656fa.js",
-      "_x-0bd59c38.js",
+      "_switch-1d9f6c92.js",
+      "_x-8c324b48.js",
       "resources/js/admin/main.jsx",
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js",
-      "_NotificationBell-39c967c5.js",
-      "_circle-check-big-70bb700e.js",
-      "_save-96cead47.js",
-      "_eye-54926d24.js",
-      "_external-link-ff2ae3c5.js",
-      "_SegmentedProgressBar-8593375e.js",
-      "_clock-b9751be5.js"
+      "_NotificationBell-41751022.js",
+      "_circle-check-big-9acb59b3.js",
+      "_save-c950fb40.js",
+      "_eye-61faccfe.js",
+      "_external-link-a81fc88f.js",
+      "_SegmentedProgressBar-1ca5b74a.js",
+      "_clock-471ba113.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/admin/pages/Dashboard.jsx"
@@ -171,14 +168,13 @@
   "resources/js/lyrics/main.jsx": {
     "css": [
       "assets/main-878e776e.css",
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/main-aba5d0a9.js",
+    "file": "assets/main-864269a2.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_useQuery-e4e656fa.js",
-      "_external-link-ff2ae3c5.js",
+      "_x-8c324b48.js",
+      "_external-link-a81fc88f.js",
       "_axios-ade11851.js"
     ],
     "isEntry": true,
@@ -186,45 +182,37 @@
   },
   "resources/js/web/components/CoupletsFeed.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/CoupletsFeed-476ad8cc.js",
+    "file": "assets/CoupletsFeed-deaf9a44.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "resources/js/web/main.jsx",
-      "_useQuery-e4e656fa.js",
+      "_x-8c324b48.js",
       "_index-16bb99a1.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/CoupletsFeed.jsx"
   },
   "resources/js/web/components/ExploreTopics.jsx": {
-    "file": "assets/ExploreTopics-40872273.js",
+    "file": "assets/ExploreTopics-fa88d891.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
-      "_useQuery-e4e656fa.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/components/ExploreTopics.jsx"
   },
   "resources/js/web/components/GenreFeed.jsx": {
-    "css": [
-      "assets/app-3aff718b.css"
-    ],
-    "file": "assets/GenreFeed-6cb4ccba.js",
+    "file": "assets/GenreFeed-6031255f.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js",
-      "_useQuery-e4e656fa.js",
-      "_x-0bd59c38.js",
-      "resources/js/web/main.jsx",
-      "_index-16bb99a1.js",
+      "_badge-2bd6467c.js",
+      "_x-8c324b48.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -232,14 +220,13 @@
   },
   "resources/js/web/components/PeriodFeed.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/PeriodFeed-b0ceebf4.js",
+    "file": "assets/PeriodFeed-c40583b1.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js",
-      "_useQuery-e4e656fa.js",
-      "_x-0bd59c38.js",
+      "_badge-2bd6467c.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
       "_index-16bb99a1.js",
       "_axios-ade11851.js"
@@ -249,16 +236,16 @@
   },
   "resources/js/web/components/PoemDetail.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/PoemDetail-449263b0.js",
+    "file": "assets/PoemDetail-91f26372.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_useQuery-e4e656fa.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_dateUtils-29c5e816.js",
+      "_usePageTitle-c4efbf72.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -266,18 +253,18 @@
   },
   "resources/js/web/components/PoetProfile.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/PoetProfile-4bfa27ae.js",
+    "file": "assets/PoetProfile-c67686fd.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js",
-      "_SegmentedProgressBar-8593375e.js",
+      "_badge-2bd6467c.js",
+      "_SegmentedProgressBar-1ca5b74a.js",
       "resources/js/web/main.jsx",
-      "_x-0bd59c38.js",
-      "_useQuery-e4e656fa.js",
+      "_x-8c324b48.js",
       "_index-16bb99a1.js",
       "_html-5767ea50.js",
+      "_usePageTitle-c4efbf72.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -285,16 +272,15 @@
   },
   "resources/js/web/components/PoetryFeed.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/PoetryFeed-6f49e4a1.js",
+    "file": "assets/PoetryFeed-bf7bc3b7.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "resources/js/web/main.jsx",
-      "_useQuery-e4e656fa.js",
+      "_x-8c324b48.js",
       "_index-16bb99a1.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -302,15 +288,14 @@
   },
   "resources/js/web/components/PoetsFeed.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/PoetsFeed-b1199122.js",
+    "file": "assets/PoetsFeed-f7219460.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js",
-      "_useQuery-e4e656fa.js",
+      "_badge-2bd6467c.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
-      "_x-0bd59c38.js",
       "_index-16bb99a1.js",
       "_html-5767ea50.js",
       "_axios-ade11851.js"
@@ -320,17 +305,16 @@
   },
   "resources/js/web/components/ProsodyFeed.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/ProsodyFeed-72907f12.js",
+    "file": "assets/ProsodyFeed-8fd37d4f.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_badge-cde22160.js",
-      "_useQuery-e4e656fa.js",
-      "_x-0bd59c38.js",
-      "_switch-bf6d5091.js",
+      "_badge-2bd6467c.js",
+      "_x-8c324b48.js",
+      "_switch-1d9f6c92.js",
       "resources/js/web/main.jsx",
-      "_circle-check-big-70bb700e.js",
+      "_circle-check-big-9acb59b3.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -338,13 +322,13 @@
   },
   "resources/js/web/components/SidebarLeft.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/SidebarLeft-94540390.js",
+    "file": "assets/SidebarLeft-8b27e688.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -353,13 +337,13 @@
   },
   "resources/js/web/components/SidebarRight.jsx": {
     "dynamicImports": [
-      "_x-0bd59c38.js"
+      "_x-8c324b48.js"
     ],
-    "file": "assets/SidebarRight-0a9a8ca3.js",
+    "file": "assets/SidebarRight-4d760cb5.js",
     "imports": [
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "_dateUtils-29c5e816.js",
       "_axios-ade11851.js"
     ],
@@ -368,14 +352,14 @@
   },
   "resources/js/web/components/SocialCallback.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/SocialCallback-032f792d.js",
+    "file": "assets/SocialCallback-63400d92.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -383,16 +367,16 @@
   },
   "resources/js/web/components/TopicDetail.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/TopicDetail-c4ecd7bb.js",
+    "file": "assets/TopicDetail-10cebc6a.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "resources/js/web/main.jsx",
       "_html-5767ea50.js",
-      "_useQuery-e4e656fa.js",
+      "_usePageTitle-c4efbf72.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -400,12 +384,12 @@
   },
   "resources/js/web/main.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
     "dynamicImports": [
-      "_NotificationBell-39c967c5.js",
-      "_x-0bd59c38.js",
-      "_x-0bd59c38.js",
+      "_NotificationBell-41751022.js",
+      "_x-8c324b48.js",
+      "_x-8c324b48.js",
       "resources/js/web/components/SidebarLeft.jsx",
       "resources/js/web/components/SidebarRight.jsx",
       "resources/js/web/components/PoetsFeed.jsx",
@@ -417,6 +401,7 @@
       "resources/js/web/components/ProsodyFeed.jsx",
       "resources/js/web/components/PoemDetail.jsx",
       "resources/js/web/pages/About.jsx",
+      "resources/js/web/pages/Contact.jsx",
       "resources/js/web/pages/Privacy.jsx",
       "resources/js/web/pages/Terms.jsx",
       "resources/js/web/pages/Help.jsx",
@@ -430,36 +415,47 @@
       "resources/js/web/components/ExploreTopics.jsx",
       "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-baad3e1a.js",
+    "file": "assets/main-a974e2d0.js",
     "imports": [
-      "_badge-cde22160.js",
+      "_badge-2bd6467c.js",
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "_axios-ade11851.js"
     ],
     "isEntry": true,
     "src": "resources/js/web/main.jsx"
   },
   "resources/js/web/pages/About.jsx": {
-    "file": "assets/About-01580342.js",
+    "file": "assets/About-7ee4b0f4.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/About.jsx"
   },
-  "resources/js/web/pages/ForgotPassword.jsx": {
-    "css": [
-      "assets/app-3aff718b.css"
-    ],
-    "file": "assets/ForgotPassword-a3269dfd.js",
+  "resources/js/web/pages/Contact.jsx": {
+    "file": "assets/Contact-219ef484.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
+      "_axios-ade11851.js"
+    ],
+    "isDynamicEntry": true,
+    "src": "resources/js/web/pages/Contact.jsx"
+  },
+  "resources/js/web/pages/ForgotPassword.jsx": {
+    "css": [
+      "assets/app-37b84972.css"
+    ],
+    "file": "assets/ForgotPassword-9404b3ef.js",
+    "imports": [
+      "_radix-ui-4adf3cda.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "resources/js/web/main.jsx",
       "_axios-ade11851.js"
     ],
@@ -467,22 +463,22 @@
     "src": "resources/js/web/pages/ForgotPassword.jsx"
   },
   "resources/js/web/pages/Help.jsx": {
-    "file": "assets/Help-937db790.js",
+    "file": "assets/Help-15645898.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Help.jsx"
   },
   "resources/js/web/pages/Privacy.jsx": {
-    "file": "assets/Privacy-a70716cb.js",
+    "file": "assets/Privacy-fedb903a.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -490,30 +486,30 @@
   },
   "resources/js/web/pages/Profile.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/Profile-1017402d.js",
+    "file": "assets/Profile-50134369.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
-      "_badge-cde22160.js",
-      "_save-96cead47.js",
-      "_lock-7226eaba.js",
+      "_badge-2bd6467c.js",
+      "_save-c950fb40.js",
+      "_lock-e583186f.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Profile.jsx"
   },
   "resources/js/web/pages/ResetPassword.jsx": {
-    "file": "assets/ResetPassword-151ece23.js",
+    "file": "assets/ResetPassword-071f3d4c.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
-      "_circle-check-big-70bb700e.js",
-      "_lock-7226eaba.js",
-      "_eye-54926d24.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
+      "_circle-check-big-9acb59b3.js",
+      "_lock-e583186f.js",
+      "_eye-61faccfe.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -521,16 +517,16 @@
   },
   "resources/js/web/pages/SetPassword.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/SetPassword-e56a00a9.js",
+    "file": "assets/SetPassword-9f281e43.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
-      "_badge-cde22160.js",
-      "_lock-7226eaba.js",
-      "_eye-54926d24.js",
+      "_badge-2bd6467c.js",
+      "_lock-e583186f.js",
+      "_eye-61faccfe.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
@@ -538,40 +534,40 @@
   },
   "resources/js/web/pages/Settings.jsx": {
     "css": [
-      "assets/app-3aff718b.css"
+      "assets/app-37b84972.css"
     ],
-    "file": "assets/Settings-752bfe1c.js",
+    "file": "assets/Settings-88553613.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
+      "_x-8c324b48.js",
       "resources/js/web/main.jsx",
-      "_badge-cde22160.js",
-      "_lock-7226eaba.js",
-      "_eye-54926d24.js",
-      "_clock-b9751be5.js",
+      "_badge-2bd6467c.js",
+      "_lock-e583186f.js",
+      "_eye-61faccfe.js",
+      "_clock-471ba113.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Settings.jsx"
   },
   "resources/js/web/pages/Status.jsx": {
-    "file": "assets/Status-67258663.js",
+    "file": "assets/Status-14040264.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
-      "_circle-check-big-70bb700e.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
+      "_circle-check-big-9acb59b3.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
     "src": "resources/js/web/pages/Status.jsx"
   },
   "resources/js/web/pages/Terms.jsx": {
-    "file": "assets/Terms-a088efb7.js",
+    "file": "assets/Terms-e7ba7334.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
-      "_x-0bd59c38.js",
-      "_badge-cde22160.js",
+      "_x-8c324b48.js",
+      "_badge-2bd6467c.js",
       "_axios-ade11851.js"
     ],
     "isDynamicEntry": true,
