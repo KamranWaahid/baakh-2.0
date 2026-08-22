@@ -483,16 +483,16 @@ class HomeController extends UserController
         $perPage = 10;
         $userId = auth('sanctum')->id();
 
-        if ($page == 1 && !$filter && !$request->has('period_id')) {
-            $cache = app(StaticCacheService::class);
-            $cachedFeed = $cache->get("feed_page_1_{$lang}");
+        $filtered = (bool) $filter
+            || $request->filled('period_id')
+            || $request->filled('category')
+            || $userId;
+        $cache = app(StaticCacheService::class);
+
+        if ((int) $page === 1 && !$filtered) {
+            $cachedFeed = $cache->getFeedPage($lang);
             if ($cachedFeed) {
-                return response()->json([
-                    'data' => $cachedFeed,
-                    'current_page' => 1,
-                    'last_page' => 2, // Mock for simple load
-                    'total' => 100
-                ]);
+                return response()->json($cachedFeed);
             }
         }
 
@@ -554,6 +554,13 @@ class HomeController extends UserController
             }
         }
 
+        if ($request->filled('category')) {
+            $slug = (string) $request->get('category');
+            $query->whereHas('category', function ($q) use ($slug) {
+                $q->where('slug', $slug);
+            });
+        }
+
         if ($request->has('period_id')) {
             $period = \App\Models\Period::find($request->period_id);
             $years = $period?->yearRange();
@@ -592,6 +599,15 @@ class HomeController extends UserController
                 'is_bookmarked' => $userId ? (bool) ($p->is_bookmarked ?? false) : false,
             ];
         });
+
+        if ((int) $page === 1 && !$filtered) {
+            $cache->putFeedPage(
+                $lang,
+                $poetry->getCollection()->values()->all(),
+                $poetry->lastPage(),
+                $poetry->total()
+            );
+        }
 
         return response()->json($poetry);
     }

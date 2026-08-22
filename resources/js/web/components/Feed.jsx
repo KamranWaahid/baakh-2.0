@@ -147,9 +147,11 @@ const Feed = ({ lang }) => {
         getNextPageParam: (lastPage) => {
             return lastPage.current_page < lastPage.last_page ? lastPage.current_page + 1 : undefined;
         },
-        initialData: () => readBootstrapFeed(lang, activeTab, urlCategory),
-        // Prefer bootstrapped first page so LCP text can paint without waiting on /api/v1/feed.
-        staleTime: 60_000,
+        placeholderData: () => readBootstrapFeed(lang, activeTab, urlCategory),
+        staleTime: 0,
+        gcTime: 60_000,
+        refetchOnMount: 'always',
+        refetchOnWindowFocus: true,
         enabled: activeTab !== 'bookmarked' || !!user,
         retry: 1,
     });

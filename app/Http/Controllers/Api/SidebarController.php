@@ -34,13 +34,13 @@ class SidebarController extends Controller
 
         // Fetch featured poetry (where is_featured = 1)
         // Ensure distinct poets by uniqueing by poet_id, and randomize on each reload
-        $picks = \Illuminate\Support\Facades\Cache::remember("sidebar_staff_picks_{$lang}", 300, function () use ($lang, $monthMap) {
+        $picks = \Illuminate\Support\Facades\Cache::remember("sidebar_staff_picks_{$lang}", 60, function () use ($lang, $monthMap) {
             return Poetry::where('is_featured', 1)
                 ->where('visibility', 1)
                 ->with(['translations', 'poet.all_details', 'category'])
-                ->inRandomOrder()
+                ->latest()
                 ->get()
-                ->unique('poet_id') // Ensure 3 different poets
+                ->unique('poet_id')
                 ->take(3)
                 ->values()
                 ->map(function ($poetry) use ($lang, $monthMap) {
