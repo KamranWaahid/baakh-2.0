@@ -23,6 +23,13 @@
 
     RewriteEngine On
 
+    # Google OAuth callback query strings (code, scope=https://...) are often
+    # blocked by cPanel ModSecurity. Primary web login uses Google Identity
+    # Services in a popup so this path is only a fallback. LiteSpeed honors
+    # this per-URL skip; Apache ignores the unknown env flag.
+    RewriteRule ^auth/google-callback$ - [E=noabort:1]
+    RewriteRule ^api/auth/google/(mobile|handshake)$ - [E=noabort:1]
+
     # Force apex host before anything else (incl. robots.txt / ErrorDocument).
     # beta's vhost must share this public/ dir; otherwise fix the host in cPanel.
     RewriteCond %{HTTP_HOST} ^(www|beta)\.baakh\.com$ [NC]

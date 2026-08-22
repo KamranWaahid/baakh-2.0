@@ -70,6 +70,9 @@
             window.__BAAKH_BOOTSTRAP_FEED__ = @json($bootstrapFeed, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         </script>
     @endif
+    <script>
+        window.__BAAKH_GOOGLE_CLIENT_ID__ = @json((string) config('services.google.client_id'));
+    </script>
 
     <!-- Google tag (gtag.js) — deferred so it does not compete with LCP -->
     <script>

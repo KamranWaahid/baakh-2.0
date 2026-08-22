@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Mail\WelcomeMail;
-use Illuminate\Support\Str;
-use Laravel\Socialite\Facades\Socialite;
+use App\Support\GoogleOAuthHandshake;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 
 class LoginWithGoogleController extends Controller
@@ -40,6 +39,8 @@ class LoginWithGoogleController extends Controller
         }
 
         Log::info("Google Login Attempt: " . $googleUser->getEmail() . " (ID: " . $googleUser->getId() . ")");
+
+        $isNewUser = false;
 
         // Check if a user with this Google ID already exists (including soft deleted)
         $user = User::withTrashed()->where('google_id', $googleUser->getId())->first();
@@ -98,21 +99,38 @@ class LoginWithGoogleController extends Controller
         // Update last login
         $user->updateLastLogin();
 
-        // Create Sanctum Token for the SPA
+        // Create Sanctum Token for the SPA. Never put the raw token in the URL —
+        // cPanel ModSecurity treats Sanctum's `id|secret` format as command injection.
         $token = $user->createToken('auth_token')->plainTextToken;
+        $handshake = GoogleOAuthHandshake::put($token, $isNewUser);
 
         $lang = app()->getLocale();
+        $redirectUrl = "/{$lang}/auth/social-callback?k=".$handshake;
 
-        // Redirect to the SPA callback route with the token
-        $redirectUrl = "/{$lang}/auth/social-callback?token=" . urlencode($token);
-        if (isset($isNewUser) && $isNewUser) {
-            $redirectUrl .= "&new_user=1";
-        }
-
-        Log::info("Redirecting to: " . $redirectUrl);
+        Log::info("Redirecting to Google handshake callback");
 
         return redirect($redirectUrl);
     }
 
+    public function exchangeHandshake(Request $request)
+    {
+        $validated = $request->validate([
+            'k' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]+$/'],
+        ]);
 
+        $payload = GoogleOAuthHandshake::pull($validated['k']);
+        if (!$payload) {
+            return response()->json([
+                'message' => 'Google login expired. Please try again.',
+                'error' => 'handshake_expired',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Login successful',
+            'token' => $payload['token'],
+            'token_type' => 'Bearer',
+            'new_user' => $payload['new_user'],
+        ]);
+    }
 }

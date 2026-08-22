@@ -13,9 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import api from '../../admin/api/axios';
 import { useAuth } from '../contexts/AuthContext';
+import { googleClientId, prefetchGoogleIdentity, requestGoogleAccessToken } from '../utils/googleLogin';
 
 const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
-    const { setUser, checkAuth } = useAuth();
+    const { checkAuth } = useAuth();
     const [mode, setMode] = useState('initial'); // initial, login, register
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -42,8 +43,69 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
     };
 
     const handleOpenChange = (isOpen) => {
+        if (isOpen) prefetchGoogleIdentity();
         if (!isOpen) resetModal();
         if (onOpenChange) onOpenChange(isOpen);
+    };
+
+    const isAdminUser = (user) => {
+        const userRoles = user?.roles || [];
+        const hasAdminRole = userRoles.some((role) => {
+            const r = String(role).toLowerCase();
+            return ['admin', 'admins', 'super_admin', 'superadmin'].includes(r);
+        });
+        return hasAdminRole || user?.permissions?.includes('view_dashboard');
+    };
+
+    const finishAuth = async (data) => {
+        if (!data?.token) {
+            throw new Error('missing_token');
+        }
+
+        localStorage.setItem('auth_token', data.token);
+        const lang = window.location.pathname.includes('/en') ? 'en' : 'sd';
+
+        if (data.new_user) {
+            window.location.href = `/${lang}/auth/set-password`;
+            return;
+        }
+
+        const updatedUser = await checkAuth();
+        if (isAdminUser(updatedUser)) {
+            window.location.href = '/admin';
+            return;
+        }
+
+        handleOpenChange(false);
+    };
+
+    const handleGoogleLogin = async () => {
+        setError(null);
+        setLoading(true);
+
+        try {
+            if (googleClientId() && window.google?.accounts?.oauth2) {
+                const accessToken = await requestGoogleAccessToken();
+                const response = await api.post('/api/auth/google/mobile', {
+                    access_token: accessToken,
+                });
+                await finishAuth(response.data);
+                return;
+            }
+        } catch (err) {
+            const cancelled = ['popup_closed', 'popup_failed_to_open', 'google_popup_closed', 'access_denied'].includes(err?.message);
+            if (cancelled) {
+                setLoading(false);
+                return;
+            }
+            if (err?.response) {
+                setError(err.response.data?.message || (isRtl ? 'گوگل لاگ ان ناڪام ويو. مهرباني ڪري ٻيهر ڪوشش ڪريو.' : 'Google login failed. Please try again.'));
+                setLoading(false);
+                return;
+            }
+        }
+
+        window.location.href = '/login/with-google';
     };
 
     const dialogProps = {
@@ -62,23 +124,7 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
                 password: formData.password
             });
 
-            if (response.data.token) {
-                localStorage.setItem('auth_token', response.data.token);
-                const updatedUser = await checkAuth();
-
-                // Robust role check: case-insensitive and handles singular/plural
-                const userRoles = updatedUser?.roles || [];
-                const isAdmin = userRoles.some(role => {
-                    const r = role.toLowerCase();
-                    return ['admin', 'admins', 'super_admin', 'superadmin'].includes(r);
-                });
-
-                if (isAdmin) {
-                    window.location.href = '/admin';
-                } else {
-                    handleOpenChange(false);
-                }
-            }
+            await finishAuth(response.data);
         } catch (err) {
             const validationErrors = err.response?.data?.errors;
             if (validationErrors) {
@@ -99,23 +145,7 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
 
         try {
             const response = await api.post('/api/auth/register', formData);
-            if (response.data.token) {
-                localStorage.setItem('auth_token', response.data.token);
-                const updatedUser = await checkAuth();
-
-                const userRoles = updatedUser?.roles || [];
-                const isAdmin = userRoles.some(role => {
-                    const r = role.toLowerCase();
-                    return ['admin', 'admins', 'super_admin', 'superadmin'].includes(r);
-                });
-
-                if (isAdmin) {
-                    window.location.href = '/admin';
-                } else {
-                    handleOpenChange(false);
-                }
-            }
-
+            await finishAuth(response.data);
         } catch (err) {
             const validationErrors = err.response?.data?.errors;
             if (validationErrors) {
@@ -133,16 +163,21 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
         <div className="flex flex-col gap-3">
             <Button
                 variant="outline"
-                disabled
-                aria-disabled="true"
-                className="rounded-full h-12 border-black/10 justify-start px-4 relative font-normal text-base opacity-50 cursor-not-allowed pointer-events-none"
+                type="button"
+                disabled={loading}
+                onClick={handleGoogleLogin}
+                className="rounded-full h-12 border-black/10 hover:border-black hover:bg-transparent justify-start px-4 relative font-normal text-base"
             >
-                <svg className="h-5 w-5 absolute left-4" viewBox="0 0 24 24" aria-hidden>
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.46 1.82 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                </svg>
+                {loading ? (
+                    <Loader2 className="h-5 w-5 absolute left-4 animate-spin" />
+                ) : (
+                    <svg className="h-5 w-5 absolute left-4" viewBox="0 0 24 24" aria-hidden>
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.46 1.82 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                )}
                 <span className="flex-1 text-center">{isRtl ? 'گوگل سان لاگ ان ٿيو' : 'Sign in with Google'}</span>
             </Button>
 
@@ -159,13 +194,21 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
                 <span className="text-black font-medium">
                     {isRtl ? 'اڪائونٽ ناهي؟ ' : 'No account? '}
                 </span>
-                <span
-                    aria-disabled="true"
-                    className="text-black/40 font-bold cursor-not-allowed select-none"
+                <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                    className="text-black font-bold hover:underline disabled:opacity-50"
                 >
                     {isRtl ? 'گوگل سان جاري رکو' : 'Continue with Google'}
-                </span>
+                </button>
             </div>
+            {error && (
+                <div className="flex items-center gap-2 text-sm text-red-500 bg-red-50 p-3 rounded-lg mt-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{error}</span>
+                </div>
+            )}
         </div>
     );
 
@@ -306,13 +349,6 @@ const LoginModal = ({ trigger, isRtl = false, open, onOpenChange }) => {
                     <DialogTitle className={`text-center text-3xl font-medium tracking-tight ${isRtl ? 'font-arabic' : 'font-serif'}`}>
                         {mode === 'register' ? (isRtl ? 'گوگل سان جاري رکو.' : 'Continue with Google.') : (isRtl ? 'ڀلي ڪري آيا.' : 'Welcome back.')}
                     </DialogTitle>
-                    {mode === 'initial' && (
-                        <p className={`mt-4 text-center text-sm leading-relaxed text-amber-800 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 ${isRtl ? 'font-arabic' : ''}`}>
-                            {isRtl
-                                ? 'فني مسئلن سبب گوگل لاگ اِن جو فيچر عارضي طور غير فعال آهي. اسان ان کي جلد بحال ڪري رهيا آهيون. توهان جي صبر جي مهرباني.'
-                                : 'Due to technical issues, Google login is temporarily disabled. We are restoring it soon. Thank you for your patience.'}
-                        </p>
-                    )}
                     <DialogDescription className="sr-only">
                         {isRtl ? 'پنهنجي اڪائونٽ ۾ لاگ ان ٿيو يا نئون اڪائونٽ ٺاهيو.' : 'Login to your account or create a new one.'}
                     </DialogDescription>
