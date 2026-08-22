@@ -13,7 +13,7 @@ class ViteBuildPublishService
 {
     public function manifestFingerprint(): ?string
     {
-        $manifest = public_path('build/manifest.json');
+        $manifest = $this->sourceBuildPath().'/manifest.json';
         if (!is_file($manifest)) {
             return null;
         }
@@ -44,7 +44,7 @@ class ViteBuildPublishService
      */
     public function publishToDocumentRoot(): array
     {
-        $source = public_path('build');
+        $source = $this->sourceBuildPath();
         $fingerprint = $this->manifestFingerprint();
         $docRoot = $this->documentRoot();
 
@@ -128,5 +128,67 @@ class ViteBuildPublishService
         }
 
         return $keep;
+    }
+
+    protected function sourceBuildPath(): string
+    {
+        return public_path('build');
+    }
+
+    /**
+     * HTTP self-heal: if Apache document-root /build is behind Laravel public/build,
+     * copy it before Blade emits @vite hashes the browser cannot fetch.
+     */
+    public function syncIfStale(): bool
+    {
+        if (getenv('VERCEL') || app()->runningInConsole()) {
+            return false;
+        }
+
+        $sourceManifest = $this->sourceBuildPath().'/manifest.json';
+        if (!is_file($sourceManifest)) {
+            return false;
+        }
+
+        $docRoot = $this->documentRoot();
+        if ($docRoot === null) {
+            return false;
+        }
+
+        $target = $docRoot.'/build';
+        $sourceDir = $this->sourceBuildPath();
+        $sourceReal = realpath($sourceDir) ?: $sourceDir;
+        $targetReal = is_dir($target) ? (realpath($target) ?: $target) : $target;
+        if ($sourceReal === $targetReal) {
+            return false;
+        }
+
+        $targetManifest = $target.'/manifest.json';
+        $sourceHash = hash_file('sha256', $sourceManifest) ?: '';
+        $targetHash = is_file($targetManifest) ? (hash_file('sha256', $targetManifest) ?: '') : '';
+        if ($sourceHash !== '' && $sourceHash === $targetHash) {
+            return false;
+        }
+
+        $lockPath = storage_path('framework/vite-publish.lock');
+        File::ensureDirectoryExists(dirname($lockPath));
+        $lock = fopen($lockPath, 'c');
+        if ($lock === false) {
+            $this->publishToDocumentRoot();
+
+            return true;
+        }
+
+        try {
+            if (!flock($lock, LOCK_EX | LOCK_NB)) {
+                return false;
+            }
+            $this->publishToDocumentRoot();
+
+            return true;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 }
