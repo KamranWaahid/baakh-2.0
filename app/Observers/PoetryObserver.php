@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Poetry;
 use App\Services\StaticCacheService;
 use App\Traits\SQLiteTrait;
+use Illuminate\Support\Facades\Cache;
 
 class PoetryObserver
 {
@@ -68,6 +69,10 @@ class PoetryObserver
         $this->cache->forget('poets_list_en');
         $this->cache->forget('explore_topics_sd');
         $this->cache->forget('explore_topics_en');
+        Cache::forget('sidebar_staff_picks_sd');
+        Cache::forget('sidebar_staff_picks_en');
+        Cache::forget('sidebar_topics_sd');
+        Cache::forget('sidebar_topics_en');
 
         if ($p) {
             $this->cache->forget("poetry_detail_{$p->poetry_slug}_sd");

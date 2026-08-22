@@ -299,19 +299,14 @@ class SpaController extends Controller
     private function homepageBootstrapFeed(string $locale): ?array
     {
         try {
-            $cached = app(StaticCacheService::class)->get("feed_page_1_{$locale}");
-            if (!is_array($cached) || $cached === []) {
+            $cached = app(StaticCacheService::class)->getFeedPage($locale);
+            if ($cached === null) {
                 return null;
             }
 
             return [
                 'lang' => $locale,
-                'payload' => [
-                    'data' => $cached,
-                    'current_page' => 1,
-                    'last_page' => 2,
-                    'total' => 100,
-                ],
+                'payload' => $cached,
             ];
         } catch (\Throwable) {
             return null;

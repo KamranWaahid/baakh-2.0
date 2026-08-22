@@ -135,7 +135,10 @@ class UpdateStaticCache extends Command
             ->where('visibility', 1)
             ->whereHas('poet', function ($q) {
                 $q->where('visibility', 1);
-            })
+            });
+
+        $total = (clone $query)->count();
+        $query = $query
             ->latest()
             ->limit(10)
             ->get();
@@ -158,7 +161,12 @@ class UpdateStaticCache extends Command
             ];
         });
 
-        $this->cache->set("feed_page_1_{$locale}", $transformed);
+        $this->cache->putFeedPage(
+            $locale,
+            $transformed->values()->all(),
+            max(1, (int) ceil($total / 10)),
+            $total
+        );
     }
 
     protected function updatePoetsListCache($locale)
