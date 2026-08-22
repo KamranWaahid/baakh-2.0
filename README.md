@@ -20,7 +20,6 @@ This project is aimed to work on small tools of Baakh and thus it is named *Baak
 
 ## Contributing
 - **[Charan Jamali](https://twitter.com/chaarooxyz)**
-- **[Aamir Zia Charan](https://twitter.com/charanzia)**
 
 ## How to use
 - Clone this repository or create a pull request
