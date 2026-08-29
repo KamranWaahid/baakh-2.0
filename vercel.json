@@ -145,7 +145,7 @@
             "headers": [
                 { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
                 { "key": "Access-Control-Allow-Origin", "value": "*" },
-                { "key": "Cache-Control", "value": "public, max-age=3600" }
+                { "key": "Cache-Control", "value": "public, max-age=21600" }
             ]
         },
         {
@@ -153,7 +153,7 @@
             "headers": [
                 { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
                 { "key": "Access-Control-Allow-Origin", "value": "*" },
-                { "key": "Cache-Control", "value": "public, max-age=3600" }
+                { "key": "Cache-Control", "value": "public, max-age=21600" }
             ]
         },
         {
@@ -221,11 +221,11 @@
         },
         {
             "src": "/llms.txt",
-            "dest": "/public/llms.txt"
+            "dest": "/api/index.php"
         },
         {
             "src": "/llms.md",
-            "dest": "/public/llms.md"
+            "dest": "/api/index.php"
         },
         {
             "src": "/index.md",
@@ -261,7 +261,7 @@
         },
         {
             "src": "/.well-known/llms.txt",
-            "dest": "/public/.well-known/llms.txt"
+            "dest": "/api/index.php"
         },
         {
             "src": "/.well-known/ai-catalog.json",

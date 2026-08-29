@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\LlmsTxtService;
 use Symfony\Component\HttpFoundation\Response;
 
 
 /**
  * Machine-readable discovery files Ora and other agents probe at well-known
  * and root paths. These must never fall through to the SPA HTML shell.
- * On Vercel, the same files are also served statically from public/.
+ * llms.txt variants are generated from the live archive (see LlmsTxtService).
  */
 class WellKnownController extends Controller
 {
@@ -20,9 +21,26 @@ class WellKnownController extends Controller
         'prosody', 'about', 'contact', 'help', 'privacy', 'terms',
     ];
 
-    public function llmsTxt(): Response
+    public function llmsTxt(LlmsTxtService $llms): Response
     {
-        return $this->markdownFromPublic('llms.txt');
+        return $this->markdownFile($llms->index(), $llms->lastModified());
+    }
+
+    public function docsLlms(LlmsTxtService $llms): Response
+    {
+        return $this->markdownFile($llms->docs(), $llms->lastModified());
+    }
+
+    public function apiLlms(LlmsTxtService $llms): Response
+    {
+        return $this->markdownFile($llms->api(), $llms->lastModified());
+    }
+
+    public function poetryMonthLlms(LlmsTxtService $llms, int $year, int $month): Response
+    {
+        $page = max(1, (int) request()->query('page', 1));
+
+        return $this->markdownFile($llms->poetryByMonth($year, $month, $page), $llms->lastModified());
     }
 
     public function agentsMarkdown(): Response
@@ -117,12 +135,17 @@ class WellKnownController extends Controller
         ], $extraHeaders)));
     }
 
-    private function markdownFile(string $body): Response
+    private function markdownFile(string $body, ?\DateTimeInterface $lastModified = null): Response
     {
-        return response($body, 200, $this->corsHeaders([
+        $headers = [
             'Content-Type' => 'text/markdown; charset=utf-8',
-            'Cache-Control' => 'public, max-age=3600',
-        ]));
+            'Cache-Control' => 'public, max-age=21600',
+        ];
+        if ($lastModified) {
+            $headers['Last-Modified'] = $lastModified->format(\DATE_RFC7231);
+        }
+
+        return response($body, 200, $this->corsHeaders($headers));
     }
 
     /**

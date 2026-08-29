@@ -35,6 +35,9 @@ class GenerateSitemapCache extends Command
             '/sitemap/categories.xml',
             '/sitemap/tags.xml',
             '/sitemap/topics.xml',
+            '/llms.txt',
+            '/docs/llms.txt',
+            '/api/llms.txt',
         ];
 
         $bar = $this->output->createProgressBar(count($endpoints));
@@ -70,6 +73,10 @@ class GenerateSitemapCache extends Command
             'sitemap:categories',
             'sitemap:tags',
             'sitemap:topics',
+            'llms:index',
+            'llms:docs',
+            'llms:api',
+            'llms:snapshot',
         ];
 
         foreach ($prefixes as $key) {
@@ -85,6 +92,7 @@ class GenerateSitemapCache extends Command
                 for ($page = 1; $page <= 20; $page++) {
                     Cache::forget("sitemap:poetry:{$year}:{$month}:{$page}");
                     Cache::forget("sitemap:couplets:{$year}:{$month}:{$page}");
+                    Cache::forget("llms:poetry:{$year}:{$month}:{$page}");
                 }
             }
         }

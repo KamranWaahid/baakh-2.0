@@ -23,6 +23,8 @@ use App\Support\SafeUserData;
 |
 */
 
+Route::get('/llms.txt', [\App\Http\Controllers\WellKnownController::class, 'apiLlms']);
+
 Route::get('/health', function () {
     return response()->json([
         'ok' => true,

@@ -206,6 +206,7 @@ Route::get('/_health/database', function () {
 | reachable by defining them here under explicit /api/* paths.
 */
 Route::prefix('api')->group(function () {
+    Route::get('/llms.txt', [\App\Http\Controllers\WellKnownController::class, 'apiLlms']);
     Route::get('/health', function () {
         return response()->json([
             'ok' => true,
@@ -370,6 +371,10 @@ Route::prefix('{lang}')
 
 Route::get('llms.txt', [\App\Http\Controllers\WellKnownController::class, 'llmsTxt'])->name('llms.txt');
 Route::get('llms.md', [\App\Http\Controllers\WellKnownController::class, 'llmsTxt']);
+Route::get('docs/llms.txt', [\App\Http\Controllers\WellKnownController::class, 'docsLlms'])->name('llms.docs');
+Route::get('llms/poetry-{year}-{month}.txt', [\App\Http\Controllers\WellKnownController::class, 'poetryMonthLlms'])
+    ->where(['year' => '[0-9]{4}', 'month' => '0?[1-9]|1[0-2]'])
+    ->name('llms.poetry.month');
 Route::get('agents.md', [\App\Http\Controllers\WellKnownController::class, 'agentsMarkdown']);
 Route::get('index.md', [\App\Http\Controllers\WellKnownController::class, 'indexMarkdown']);
 Route::get('auth.md', [\App\Http\Controllers\WellKnownController::class, 'authMarkdown']);
@@ -391,7 +396,7 @@ Route::get('{lang}/index.md', [\App\Http\Controllers\WellKnownController::class,
 Route::get('{lang}/{section}/llms.txt', [\App\Http\Controllers\WellKnownController::class, 'sectionLlms'])
     ->where(['lang' => 'en|sd', 'section' => 'poets|poetry|couplets|genre|period|explore|prosody|about|contact|help|privacy|terms']);
 
-Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|robots\.txt|llms\.txt|llms\.md|agents\.md|index\.md|auth\.md|developers\.md|api\.md|skill\.md|agent\.md|developer\.md|_health|lyrics-site|\.well-known).*$')->name('web.spa');
+Route::get('{any?}', [\App\Http\Controllers\SpaController::class, 'index'])->where('any', '^(?!admin|api|build|docs/llms\.txt|robots\.txt|llms\.txt|llms/|llms\.md|agents\.md|index\.md|auth\.md|developers\.md|api\.md|skill\.md|agent\.md|developer\.md|_health|lyrics-site|\.well-known).*$')->name('web.spa');
 
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);

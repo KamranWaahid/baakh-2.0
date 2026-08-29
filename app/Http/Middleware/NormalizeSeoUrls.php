@@ -241,6 +241,8 @@ class NormalizeSeoUrls
             '/lyrics-site',
             '/llms.txt',
             '/llms.md',
+            '/llms/',
+            '/docs/llms.txt',
             '/agents.md',
             '/index.md',
             '/auth.md',
