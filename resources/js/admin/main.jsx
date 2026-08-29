@@ -118,6 +118,8 @@ import UsageTrends from './pages/Analytics/UsageTrends';
 import UnderDevelopment from './components/UnderDevelopment';
 import Settings from './pages/Settings';
 import EmailTemplates from './pages/Emails/EmailTemplates';
+import MobileNotificationList from './pages/MobileNotifications/MobileNotificationList';
+import MobileNotificationForm from './pages/MobileNotifications/MobileNotificationForm';
 
 
 const App = () => {
@@ -532,6 +534,27 @@ const App = () => {
                         <ProtectedRoute>
                             <AdminLayout>
                                 <EmailTemplates />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/mobile-notifications" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <MobileNotificationList />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/mobile-notifications/create" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <MobileNotificationForm />
+                            </AdminLayout>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/mobile-notifications/:id/edit" element={
+                        <ProtectedRoute>
+                            <AdminLayout>
+                                <MobileNotificationForm />
                             </AdminLayout>
                         </ProtectedRoute>
                     } />

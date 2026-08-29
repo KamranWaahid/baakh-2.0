@@ -76,6 +76,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage_settings',
             'view_activity_logs',
 
+            // Mobile app notifications
+            'view_mobile_notifications',
+            'manage_mobile_notifications',
+
             // Romanizer & Tools
             'use_romanizer',
             'manage_romanizer',
@@ -133,6 +137,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_activity_logs',
             'use_romanizer',
             'manage_romanizer',
+            'view_mobile_notifications',
+            'manage_mobile_notifications',
         ]);
 
         // Editor - Content editing and publishing
@@ -161,6 +167,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_bundles',
             'view_dashboard',
             'use_romanizer',
+            'view_mobile_notifications',
+            'manage_mobile_notifications',
         ]);
 
         // Contributor - Content creation only

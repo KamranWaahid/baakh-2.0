@@ -189,6 +189,16 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function mobileDevices()
+    {
+        return $this->hasMany(MobileDevice::class);
+    }
+
+    public function mobileNotificationReceipts()
+    {
+        return $this->hasMany(MobileNotificationReceipt::class);
+    }
+
     /**
      * Check if user is active.
      */

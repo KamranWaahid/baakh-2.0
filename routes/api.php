@@ -138,6 +138,12 @@ Route::prefix('v1')->group(function () {
         Route::post('interactions/bookmark', [App\Http\Controllers\Api\UserInteractionController::class, 'toggleBookmark']);
         Route::post('send-email', [\App\Http\Controllers\Api\EmailController::class, 'send']);
     });
+
+    Route::get('mobile/notifications', [\App\Http\Controllers\Api\MobileNotificationController::class, 'index']);
+    Route::post('mobile/devices', [\App\Http\Controllers\Api\MobileNotificationController::class, 'registerDevice']);
+    Route::delete('mobile/devices', [\App\Http\Controllers\Api\MobileNotificationController::class, 'unregisterDevice']);
+    Route::post('mobile/notifications/{id}/read', [\App\Http\Controllers\Api\MobileNotificationController::class, 'markRead']);
+    Route::post('mobile/notifications/{id}/opened', [\App\Http\Controllers\Api\MobileNotificationController::class, 'markOpened']);
 });
 
 
@@ -202,6 +208,9 @@ Route::middleware(['auth:sanctum', 'user_role'])->prefix('admin')->group(functio
     Route::post('notifications/{notification}/read', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'markRead']);
     Route::post('notifications/read-all', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'markAllRead']);
     Route::delete('notifications/clear', [\App\Http\Controllers\Api\Admin\NotificationController::class, 'clear']);
+
+    Route::apiResource('mobile-notifications', \App\Http\Controllers\Api\Admin\MobileNotificationController::class);
+    Route::post('mobile-notifications/{id}/publish', [\App\Http\Controllers\Api\Admin\MobileNotificationController::class, 'publish']);
 
     // Database & Maintenance
     Route::get('databases', [DatabaseController::class, 'index']);
