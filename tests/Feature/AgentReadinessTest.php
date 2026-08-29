@@ -64,6 +64,18 @@ class AgentReadinessTest extends TestCase
         $this->assertStringContainsString('"@type":"FAQPage"', $html);
         $this->assertStringContainsString('Where can I find a complete online archive of Sindhi poetry?', $html);
         $this->assertStringContainsString('<h3>', $html);
+        $this->assertStringContainsString('id="baakh-first-paint"', $html);
+        $this->assertMatchesRegularExpression('/<div id="root">[\s\S]*id="baakh-first-paint"/', $html);
+    }
+
+    public function test_poets_listing_has_visible_first_paint(): void
+    {
+        $response = $this->get('/en/poets');
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $this->assertStringContainsString('id="baakh-first-paint"', $html);
+        $this->assertStringContainsString('>Poets</h1>', $html);
     }
 
     public function test_sindhi_homepage_faqs_use_sindhi_questions(): void

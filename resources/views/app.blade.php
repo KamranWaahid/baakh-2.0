@@ -58,8 +58,20 @@
         <script type="application/ld+json">{!! json_encode($graph, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
     @endforeach
 
+    @php
+        $webCss = null;
+        try {
+            $webCss = Vite::asset('resources/css/app.css');
+        } catch (\Throwable) {
+            $webCss = null;
+        }
+    @endphp
+    @if($webCss)
+        <link rel="preload" href="{{ $webCss }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="{{ $webCss }}"></noscript>
+    @endif
     @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/web/main.jsx'], 'build')
+    @vite(['resources/js/web/main.jsx'], 'build')
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     @if(!empty($feedPreloadUrl))
@@ -102,7 +114,43 @@
             white-space: nowrap;
             border: 0;
         }
+        /* Visible until React mounts — this is the mobile LCP element. */
+        #baakh-first-paint {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 72px 16px 24px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            color: #111;
+        }
+        #baakh-first-paint h1 {
+            font-size: 1.5rem;
+            line-height: 1.3;
+            font-weight: 700;
+            margin: 0 0 1.25rem;
+        }
+        #baakh-first-paint h2 {
+            font-size: 1.25rem;
+            line-height: 1.35;
+            font-weight: 700;
+            margin: 0 0 1.5rem;
+        }
+        #baakh-first-paint .baakh-fp-meta,
+        #baakh-first-paint .baakh-fp-poet {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 0 0 0.35rem;
+        }
+        #baakh-first-paint .baakh-fp-poet {
+            font-size: 1.15rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
     </style>
+    @if(!empty($bootstrapPoets))
+        <script>
+            window.__BAAKH_BOOTSTRAP_POETS__ = @json($bootstrapPoets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        </script>
+    @endif
 </head>
 
 <body class="antialiased font-sans">
@@ -119,7 +167,7 @@
             <div class="poetry-fallback-render">{!! $rawText !!}</div>
         @endif
     </noscript>
-    <div id="root"></div>
+    <div id="root">@if(!empty($firstPaintHtml)){!! $firstPaintHtml !!}@else<div id="baakh-first-paint"><h1>{{ $h1 }}</h1></div>@endif</div>
 </body>
 
 </html>

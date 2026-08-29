@@ -147,11 +147,15 @@ const Feed = ({ lang }) => {
         getNextPageParam: (lastPage) => {
             return lastPage.current_page < lastPage.last_page ? lastPage.current_page + 1 : undefined;
         },
-        placeholderData: () => readBootstrapFeed(lang, activeTab, urlCategory),
-        staleTime: 0,
+        initialData: () => readBootstrapFeed(lang, activeTab, urlCategory),
+        initialDataUpdatedAt: () => {
+            const boot = typeof window !== 'undefined' ? window.__BAAKH_BOOTSTRAP_FEED__ : null;
+            return boot?.generated_at || Date.now();
+        },
+        staleTime: 30_000,
         gcTime: 60_000,
-        refetchOnMount: 'always',
-        refetchOnWindowFocus: true,
+        refetchOnMount: true,
+        refetchOnWindowFocus: false,
         enabled: activeTab !== 'bookmarked' || !!user,
         retry: 1,
     });

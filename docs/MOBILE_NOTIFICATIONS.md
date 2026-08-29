@@ -12,7 +12,7 @@ Use this to implement in-app notifications and device registration. The inbox an
 - Optional on all notification endpoints
 - If the user is logged in, send: `Authorization: Bearer {sanctum_token}`
 - Logged-in users also receive `signed_in` campaigns and keep read/opened state
-- Guests only see `everyone` + `guests`
+- **Guests only see** `everyone` **+** `guests`
 
 ### Headers
 
@@ -23,6 +23,8 @@ Authorization: Bearer {token}   // if logged in
 ```
 
 ---
+
+
 
 ## 1. Register this device
 
@@ -42,15 +44,19 @@ Call after the FCM token is ready, and again after login.
 }
 ```
 
-| Field | Required | Notes |
-|---|---|---|
-| `token` | yes | FCM device token |
-| `platform` | yes | Must be `"android"` |
-| `provider` | no | Defaults to `"fcm"` on Android |
-| `device_id` | recommended | One UUID per install. Keep it. |
-| `app_version` | no | e.g. `"1.0.0"` |
-| `locale` | no | `"sd"` or `"en"`. Default `"sd"` |
-| `push_enabled` | no | Default `true` |
+
+| Field          | Required    | Notes                            |
+| -------------- | ----------- | -------------------------------- |
+| `token`        | yes         | FCM device token                 |
+| `platform`     | yes         | Must be `"android"`              |
+| `provider`     | no          | Defaults to `"fcm"` on Android   |
+| `device_id`    | recommended | One UUID per install. Keep it.   |
+| `app_version`  | no          | e.g. `"1.0.0"`                   |
+| `locale`       | no          | `"sd"` or `"en"`. Default `"sd"` |
+| `push_enabled` | no          | Default `true`                   |
+
+
+
 
 ### Response
 
@@ -65,6 +71,8 @@ Call after the FCM token is ready, and again after login.
   }
 }
 ```
+
+
 
 ### Unregister
 
@@ -84,17 +92,23 @@ or:
 
 ---
 
+
+
 ## 2. Inbox
 
 `GET /api/v1/mobile/notifications?lang=sd&platform=android`
 
-| Query | Values | Notes |
-|---|---|---|
-| `lang` | `sd` (default), `en` | Title, body, and CTA are already localized |
-| `platform` | `android` | Hides iOS-only campaigns |
+
+| Query      | Values               | Notes                                      |
+| ---------- | -------------------- | ------------------------------------------ |
+| `lang`     | `sd` (default), `en` | Title, body, and CTA are already localized |
+| `platform` | `android`            | Hides iOS-only campaigns                   |
+
 
 - Max 50 items
 - Draft, expired, and future-scheduled items are not returned
+
+
 
 ### Response
 
@@ -132,6 +146,8 @@ or:
 
 ---
 
+
+
 ## 3. Mark read / opened
 
 Seen in the list:
@@ -154,21 +170,25 @@ Then open `deep_link`. If the app cannot handle that scheme, open `https://baakh
 
 ---
 
+
+
 ## Types and navigation
 
-| `type` | Meaning | Typical `deep_link` |
-|---|---|---|
-| `daily_verse` | Daily couplet | `baakh://couplets` |
-| `new_poetry` | New poem | `baakh://poetry` or `baakh://poetry/{slug}` |
-| `new_poet` | New poet | `baakh://poets` or `baakh://poet/{slug}` |
-| `featured` | Staff pick | `baakh://featured` |
-| `word_of_the_day` | Dictionary | `baakh://dictionary` |
-| `new_lyrics` | New lyrics | `baakh://lyrics` |
-| `reminder` | Reading reminder | `baakh://home` |
-| `app_update` | App update | `baakh://settings` |
-| `announcement` | General note | `baakh://announcements` |
-| `event` | Literary event | `baakh://events` |
-| `bookmark_nudge` | Continue reading | `baakh://bookmarks` |
+
+| `type`            | Meaning          | Typical `deep_link`                         |
+| ----------------- | ---------------- | ------------------------------------------- |
+| `daily_verse`     | Daily couplet    | `baakh://couplets`                          |
+| `new_poetry`      | New poem         | `baakh://poetry` or `baakh://poetry/{slug}` |
+| `new_poet`        | New poet         | `baakh://poets` or `baakh://poet/{slug}`    |
+| `featured`        | Staff pick       | `baakh://featured`                          |
+| `word_of_the_day` | Dictionary       | `baakh://dictionary`                        |
+| `new_lyrics`      | New lyrics       | `baakh://lyrics`                            |
+| `reminder`        | Reading reminder | `baakh://home`                              |
+| `app_update`      | App update       | `baakh://settings`                          |
+| `announcement`    | General note     | `baakh://announcements`                     |
+| `event`           | Literary event   | `baakh://events`                            |
+| `bookmark_nudge`  | Continue reading | `baakh://bookmarks`                         |
+
 
 Unknown types: still show the card and follow `deep_link` / `web_path`.
 
@@ -193,6 +213,8 @@ baakh://bookmarks
 
 ---
 
+
+
 ## What to build now
 
 1. Get FCM token → `POST /api/v1/mobile/devices`
@@ -206,6 +228,8 @@ Sindhi (`lang=sd`) must be RTL.
 
 ---
 
+
+
 ## Not ready yet
 
 The server **stores** FCM tokens but does **not** send Firebase pushes yet.
@@ -215,6 +239,8 @@ Do not wait for a push payload. Use the inbox API.
 When push is enabled later, the data payload will reuse the same fields: `id`, `type`, `title`, `body`, `deep_link`.
 
 ---
+
+
 
 ## Quick test (no login)
 

@@ -37,6 +37,21 @@ class StaticCacheServiceTest extends TestCase
         ]);
 
         $this->assertNull($cache->getFeedPage('en'));
+        $stale = $cache->getFeedPage('en', true);
+        $this->assertNotNull($stale);
+        $this->assertSame('stale', $stale['data'][0]['slug']);
+    }
+
+    public function test_get_poets_list_returns_cached_rows(): void
+    {
+        $cache = app(StaticCacheService::class);
+        $cache->set('poets_list_sd', [
+            ['slug' => 'shah-latif', 'laqab_sd' => 'ڀٽائي'],
+        ]);
+
+        $list = $cache->getPoetsList('sd');
+        $this->assertNotNull($list);
+        $this->assertSame('shah-latif', $list[0]['slug']);
     }
 
     public function test_put_feed_page_is_readable_within_ttl(): void

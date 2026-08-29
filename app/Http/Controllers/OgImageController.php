@@ -21,6 +21,13 @@ class OgImageController extends Controller
 
     public function generatePoetryImage(string $slug)
     {
+        // Link previews and crawlers use the static brand card. Generating a
+        // per-poem PNG is reserved for in-app download — GD under crawl load
+        // was the source of the GSC 5xx report on /og-image/*.
+        if (!request()->boolean('download')) {
+            return $this->fallbackPng(200, noindex: true);
+        }
+
         try {
             $poetry = Poetry::query()
                 ->with([
@@ -32,7 +39,7 @@ class OgImageController extends Controller
                 ->first();
 
             if (!$poetry) {
-                return $this->fallbackPng(404);
+                return $this->fallbackPng(410, noindex: true);
             }
 
             $poet = $poetry->poet;
@@ -134,7 +141,8 @@ class OgImageController extends Controller
 
             $response = response($image->encodeByExtension('png')->toString())
                 ->header('Content-Type', 'image/png')
-                ->header('Cache-Control', 'public, max-age=604800');
+                ->header('Cache-Control', 'public, max-age=604800')
+                ->header('X-Robots-Tag', 'noindex, nofollow');
 
             if (request()->has('download')) {
                 $filename = Str::slug($poetryInfo?->title ?? $slug) . '-baakh.png';
@@ -149,14 +157,14 @@ class OgImageController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->fallbackPng(200);
+            return $this->fallbackPng(200, noindex: true);
         }
     }
 
     /**
      * Solid brand-colored PNG so crawlers never see a 5xx from /og-image/*.
      */
-    private function fallbackPng(int $status)
+    private function fallbackPng(int $status, bool $noindex = true)
     {
         static $png = null;
         if ($png === null) {
@@ -165,16 +173,20 @@ class OgImageController extends Controller
             );
         }
 
-        $brand = public_path('assets/og/baakh-og-v2-1200x630.png');
-        if (is_file($brand) && is_readable($brand)) {
-            return response(file_get_contents($brand), $status)
-                ->header('Content-Type', 'image/png')
-                ->header('Cache-Control', 'public, max-age=3600');
+        $headers = [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=86400',
+        ];
+        if ($noindex) {
+            $headers['X-Robots-Tag'] = 'noindex, nofollow';
         }
 
-        return response($png, $status)
-            ->header('Content-Type', 'image/png')
-            ->header('Cache-Control', 'public, max-age=300');
+        $brand = public_path('assets/og/baakh-og-v2-1200x630.png');
+        if (is_file($brand) && is_readable($brand)) {
+            return response(file_get_contents($brand), $status)->withHeaders($headers);
+        }
+
+        return response($png, $status)->withHeaders($headers);
     }
 
     private function resolveFontPath(): ?string

@@ -130,6 +130,16 @@ const PoetsFeed = ({ lang }) => {
             .map(part => part.charAt(0).toUpperCase() + part.slice(1))
             .join(' ');
 
+    const readBootstrapPoets = () => {
+        if (search || selectedTag !== 'all') return undefined;
+        const boot = typeof window !== 'undefined' ? window.__BAAKH_BOOTSTRAP_POETS__ : null;
+        if (!boot || boot.lang !== lang || !boot.payload?.data) return undefined;
+        return {
+            pages: [boot.payload],
+            pageParams: [1],
+        };
+    };
+
     const { data: tagsData } = useQuery({
         queryKey: ['poet-tags', lang],
         queryFn: async () => {
@@ -157,7 +167,7 @@ const PoetsFeed = ({ lang }) => {
     } = useInfiniteQuery({
         queryKey: ['poets-feed', search, selectedTag, lang],
         queryFn: async ({ pageParam = 1 }) => {
-            const params = { search, page: pageParam };
+            const params = { search, page: pageParam, lang };
             if (selectedTag !== 'all') {
                 params.tag = selectedTag;
             }
@@ -169,6 +179,11 @@ const PoetsFeed = ({ lang }) => {
                 return lastPage.current_page + 1;
             }
             return undefined;
+        },
+        initialData: readBootstrapPoets,
+        initialDataUpdatedAt: () => {
+            const boot = typeof window !== 'undefined' ? window.__BAAKH_BOOTSTRAP_POETS__ : null;
+            return boot?.generated_at || Date.now();
         },
         retry: 1,
         refetchOnWindowFocus: false,
