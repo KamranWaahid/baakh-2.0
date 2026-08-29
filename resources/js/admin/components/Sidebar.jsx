@@ -28,6 +28,7 @@ import {
     Globe,
     Music2,
     Mic2,
+    Bell,
 } from 'lucide-react';
 
 export const SidebarContext = React.createContext({ onLinkClick: () => { } });
@@ -189,6 +190,7 @@ const Sidebar = ({ onLinkClick }) => {
                     <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
                     <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
+                    <SidebarLink to="/admin/mobile-notifications" icon={Bell}>App Notifications</SidebarLink>
                     <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
                     {isSuperAdmin && (
                         <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>
