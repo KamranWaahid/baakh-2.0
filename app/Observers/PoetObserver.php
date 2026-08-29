@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Poets;
 use App\Models\Search\UnifiedPoets;
 use App\Traits\SQLiteTrait;
+use App\Services\LlmsTxtService;
 use App\Services\StaticCacheService;
 use Illuminate\Support\Facades\Cache;
 
@@ -30,6 +31,7 @@ class PoetObserver
 
         Cache::forget('admin_all_poets_sd');
         Cache::forget('admin_poets_ids');
+        app(LlmsTxtService::class)->forget();
     }
 
     /**

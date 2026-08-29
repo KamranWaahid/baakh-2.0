@@ -52,7 +52,7 @@ class AgentReadinessTest extends TestCase
         $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $this->assertGreaterThanOrEqual(500, mb_strlen(preg_replace('/\s+/', ' ', $text) ?? ''));
         $this->assertVaryIncludesAccept($response);
-        $this->assertStringContainsString('"@type":"Organization"', $html);
+        $this->assertStringContainsString('"@type":["Organization","ArchiveOrganization"]', $html);
         $this->assertStringContainsString('"sameAs"', $html);
         $this->assertStringContainsString('x.com/BaakhConnect', $html);
         $this->assertStringContainsString('"contactPoint"', $html);
@@ -62,9 +62,15 @@ class AgentReadinessTest extends TestCase
         $this->assertStringContainsString('Karachi', $html);
         $this->assertStringContainsString('/en/contact', $html);
         $this->assertStringContainsString('"@type":"FAQPage"', $html);
+        $this->assertStringContainsString('"@type":"Service"', $html);
+        $this->assertStringContainsString('Open-source digital literary archive', $html);
+        $this->assertStringContainsString('"@type":"SoftwareSourceCode"', $html);
+        $this->assertStringContainsString('"@type":"Dataset"', $html);
+        $this->assertStringContainsString('ArchiveOrganization', $html);
         $this->assertStringContainsString('Where can I find a complete online archive of Sindhi poetry?', $html);
         $this->assertStringContainsString('<h3>', $html);
         $this->assertStringContainsString('id="baakh-first-paint"', $html);
+        $this->assertStringContainsString('baakh-fp-bar', $html);
         $this->assertMatchesRegularExpression('/<div id="root">[\s\S]*id="baakh-first-paint"/', $html);
     }
 
@@ -75,6 +81,7 @@ class AgentReadinessTest extends TestCase
         $response->assertOk();
         $html = $response->getContent();
         $this->assertStringContainsString('id="baakh-first-paint"', $html);
+        $this->assertStringContainsString('baakh-fp-bar', $html);
         $this->assertStringContainsString('>Poets</h1>', $html);
     }
 
@@ -148,6 +155,31 @@ class AgentReadinessTest extends TestCase
         $this->assertStringContainsString('https://baakh.com/en/contact', $body);
         $this->assertStringContainsString('Accept: text/markdown', $body);
         $this->assertStringContainsString('/.well-known/agent-skills/', $body);
+        $this->assertStringContainsString('Last updated:', $body);
+        $this->assertStringContainsString('Archive snapshot:', $body);
+        $this->assertStringContainsString('/docs/llms.txt', $body);
+        $this->assertStringContainsString('/api/llms.txt', $body);
+        $this->assertStringContainsString('## Recently updated poetry', $body);
+        $this->assertStringContainsString('## Poetry by month', $body);
+    }
+
+    public function test_docs_and_api_llms_txt_are_dynamic(): void
+    {
+        foreach (['/docs/llms.txt', '/api/llms.txt'] as $path) {
+            $response = $this->get($path);
+            $response->assertOk();
+            $response->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+            $body = $response->getContent();
+            $this->assertStringStartsWith('# Baakh', $body);
+            $this->assertStringContainsString('Last updated:', $body);
+            $this->assertStringContainsString('Archive snapshot:', $body);
+            $this->assertStringNotContainsString('<html', $body);
+        }
+
+        $month = $this->get('/llms/poetry-' . now()->format('Y') . '-' . now()->format('n') . '.txt');
+        $month->assertOk();
+        $month->assertSee('Baakh poetry', false);
+        $month->assertSee('Last updated:', false);
     }
 
     public function test_contact_page_is_crawlable_without_javascript(): void

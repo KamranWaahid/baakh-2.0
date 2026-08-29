@@ -162,7 +162,6 @@ class SpaController extends Controller
             return $this->renderSpa($fallback, [
                 'feedPreloadUrl' => $feedPreloadUrl,
                 'bootstrapFeed' => $bootstrapFeed,
-                'firstPaintHtml' => $this->homeFirstPaintHtml($locale, $title, $bootstrapFeed),
             ]);
         }
 
@@ -179,10 +178,8 @@ class SpaController extends Controller
 
             $viewData = [];
             if ($listingKey === 'poets') {
-                $bootstrapPoets = $this->poetsBootstrap($locale);
                 $viewData = [
-                    'bootstrapPoets' => $bootstrapPoets,
-                    'firstPaintHtml' => $this->poetsFirstPaintHtml($locale, $bootstrapPoets),
+                    'bootstrapPoets' => $this->poetsBootstrap($locale),
                 ];
             }
 
@@ -204,13 +201,7 @@ class SpaController extends Controller
                     ]);
                 }
 
-                $genreName = $genre->details->firstWhere('lang', $locale)?->cat_name
-                    ?? $genre->details->first()?->cat_name
-                    ?? $genre->slug;
-
-                return $this->renderSpa($fallback, [
-                    'firstPaintHtml' => $this->homeFirstPaintHtml($locale, (string) $genreName, null),
-                ]);
+                return $this->renderSpa($fallback);
             }
         }
 
@@ -459,71 +450,6 @@ class SpaController extends Controller
                 'entries_count' => $poet->poetry_count ?? 0,
             ];
         })->all();
-    }
-
-    /**
-     * Visible HTML inside #root so mobile LCP is the first poem title, not a blank SPA shell.
-     */
-    private function homeFirstPaintHtml(string $locale, string $heading, ?array $bootstrapFeed): string
-    {
-        $isSd = $locale === 'sd';
-        $dir = $isSd ? 'rtl' : 'ltr';
-        $items = is_array($bootstrapFeed['payload']['data'] ?? null)
-            ? array_slice($bootstrapFeed['payload']['data'], 0, 3)
-            : [];
-
-        $html = '<div id="baakh-first-paint" dir="' . $dir . '">';
-        $html .= '<h1>' . e($heading) . '</h1>';
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $author = e((string) ($item['author'] ?? ''));
-            $title = e((string) ($item['title'] ?? $item['slug'] ?? ''));
-            if ($title === '') {
-                continue;
-            }
-            $html .= '<article class="baakh-fp-card">';
-            if ($author !== '') {
-                $html .= '<p class="baakh-fp-meta">' . $author . '</p>';
-            }
-            $html .= '<h2>' . $title . '</h2>';
-            $html .= '</article>';
-        }
-        $html .= '</div>';
-
-        return $html;
-    }
-
-    /**
-     * Visible poets heading + names so /sd/poets and /en/poets paint LCP without JS.
-     */
-    private function poetsFirstPaintHtml(string $locale, ?array $bootstrapPoets): string
-    {
-        $isSd = $locale === 'sd';
-        $dir = $isSd ? 'rtl' : 'ltr';
-        $heading = $isSd ? 'شاعر' : 'Poets';
-        $items = is_array($bootstrapPoets['payload']['data'] ?? null)
-            ? array_slice($bootstrapPoets['payload']['data'], 0, 6)
-            : [];
-
-        $html = '<div id="baakh-first-paint" dir="' . $dir . '">';
-        $html .= '<h1>' . e($heading) . '</h1>';
-        foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $name = $isSd
-                ? (string) ($item['laqab_sd'] ?? $item['name_sd'] ?? $item['slug'] ?? '')
-                : (string) ($item['laqab_en'] ?? $item['name_en'] ?? $item['slug'] ?? '');
-            if ($name === '') {
-                continue;
-            }
-            $html .= '<p class="baakh-fp-poet">' . e($name) . '</p>';
-        }
-        $html .= '</div>';
-
-        return $html;
     }
 
     /**

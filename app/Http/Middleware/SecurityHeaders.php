@@ -37,6 +37,8 @@ class SecurityHeaders
 
         $links = [
             '</llms.txt>; rel="describedby"; type="text/markdown"',
+            '</docs/llms.txt>; rel="describedby"; type="text/markdown"',
+            '</api/llms.txt>; rel="describedby"; type="text/markdown"',
             '</.well-known/ai-catalog.json>; rel="describedby"; type="application/json"',
             '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
             '</sitemap.xml>; rel="sitemap"; type="application/xml"',

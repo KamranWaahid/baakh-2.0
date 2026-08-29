@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Allow: /llms.txt
+Allow: /docs/llms.txt
+Allow: /api/llms.txt
+Allow: /llms/
 Allow: /.well-known/
 Disallow: /admin/
 Disallow: /api/
@@ -10,31 +13,37 @@ Content-Signal: search=yes, ai-input=yes, ai-train=no
 # AI crawlers may read the public archive (same allow/deny as *).
 User-agent: GPTBot
 Allow: /
+Allow: /api/llms.txt
 Disallow: /admin/
 Disallow: /api/
 
 User-agent: ChatGPT-User
 Allow: /
+Allow: /api/llms.txt
 Disallow: /admin/
 Disallow: /api/
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /api/llms.txt
 Disallow: /admin/
 Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /
+Allow: /api/llms.txt
 Disallow: /admin/
 Disallow: /api/
 
 User-agent: Applebot-Extended
 Allow: /
+Allow: /api/llms.txt
 Disallow: /admin/
 Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
+Allow: /api/llms.txt
 Disallow: /admin/
 Disallow: /api/
 

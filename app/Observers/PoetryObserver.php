@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Poetry;
+use App\Services\LlmsTxtService;
 use App\Services\StaticCacheService;
 use App\Traits\SQLiteTrait;
 use Illuminate\Support\Facades\Cache;
@@ -73,6 +74,7 @@ class PoetryObserver
         Cache::forget('sidebar_staff_picks_en');
         Cache::forget('sidebar_topics_sd');
         Cache::forget('sidebar_topics_en');
+        app(LlmsTxtService::class)->forget($p);
 
         if ($p) {
             $this->cache->forget("poetry_detail_{$p->poetry_slug}_sd");

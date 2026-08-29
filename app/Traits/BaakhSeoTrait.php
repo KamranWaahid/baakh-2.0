@@ -101,6 +101,7 @@ trait BaakhSeoTrait
 
         // Identity graph first so homepage parsers see Organization (not only WebSite).
         JsonLdMulti::setType('Organization');
+        JsonLdMulti::addValue('@type', ['Organization', 'ArchiveOrganization']);
         foreach ($this->organizationSchemaFields() as $property => $value) {
             JsonLdMulti::addValue($property, $value);
         }
@@ -139,6 +140,10 @@ trait BaakhSeoTrait
             JsonLdMulti::setType('FAQPage');
             JsonLdMulti::addValue('inLanguage', $currentLang);
             JsonLdMulti::addValue('mainEntity', $additionalData['faqs']);
+        }
+
+        if (!empty($additionalData['site_nav'])) {
+            $this->emitArchiveServiceSchema($isSd, $currentLang);
         }
 
         return [
@@ -1516,6 +1521,90 @@ trait BaakhSeoTrait
             'address' => $address,
             'sameAs' => array_values(array_filter(config('baakh.same_as', []))),
         ];
+    }
+
+    /**
+     * Extra homepage types so AI/SEO crawlers see more than ItemList + FAQPage.
+     * Service is free public access. Dataset is the archive catalog. No invented star ratings.
+     */
+    private function emitArchiveServiceSchema(bool $isSd, string $lang): void
+    {
+        JsonLdMulti::newJsonLd();
+        JsonLdMulti::setType('Service');
+        JsonLdMulti::setTitle($isSd ? 'اوپن سورس سنڌي شاعري ڊجيٽل آرڪائيو' : 'Open-source digital archive of Sindhi poetry');
+        JsonLdMulti::setDescription($isSd
+            ? 'مفت ۽ اوپن سورس آن لائن رسائي: شاعر پروفائلون، غزل، بيت، وايون ۽ نظم اصل سنڌي ۽ رومن ۾.'
+            : 'Free, open-source online access to Sindhi poet profiles, ghazals, baits, waee, and nazms in original script and Roman Sindhi.');
+        JsonLdMulti::addValue('@id', url('/') . '#archive-service');
+        JsonLdMulti::addValue('url', url('/' . $lang));
+        JsonLdMulti::addValue('serviceType', 'Open-source digital literary archive');
+        JsonLdMulti::addValue('category', 'Open Source');
+        JsonLdMulti::addValue('provider', ['@id' => url('/') . '#organization']);
+        JsonLdMulti::addValue('areaServed', [
+            '@type' => 'Country',
+            'name' => 'Pakistan',
+        ]);
+        JsonLdMulti::addValue('audience', [
+            '@type' => 'Audience',
+            'audienceType' => $isSd ? 'پڙهندڙ، شاگرد ۽ محقق' : 'Readers, students, and researchers',
+        ]);
+        JsonLdMulti::addValue('inLanguage', ['sd', 'en']);
+        JsonLdMulti::addValue('isAccessibleForFree', true);
+        JsonLdMulti::addValue('offers', [
+            '@type' => 'Offer',
+            'price' => '0',
+            'priceCurrency' => 'PKR',
+            'availability' => 'https://schema.org/InStock',
+            'url' => url('/' . $lang),
+        ]);
+
+        JsonLdMulti::newJsonLd();
+        JsonLdMulti::setType('SoftwareSourceCode');
+        JsonLdMulti::setTitle($isSd ? 'باک اوپن سورس ڪوڊ' : 'Baakh open-source code');
+        JsonLdMulti::setDescription($isSd
+            ? 'سنڌي شاعري آرڪائيو جو کليل سورس ايپليڪيشن.'
+            : 'Open-source application that powers the Baakh Sindhi poetry archive.');
+        JsonLdMulti::addValue('@id', url('/') . '#source-code');
+        JsonLdMulti::addValue('codeRepository', 'https://github.com/KamranWaahid/baakh-2.0');
+        JsonLdMulti::addValue('url', 'https://github.com/KamranWaahid/baakh-2.0');
+        JsonLdMulti::addValue('programmingLanguage', ['PHP', 'JavaScript']);
+        JsonLdMulti::addValue('isAccessibleForFree', true);
+        JsonLdMulti::addValue('creator', ['@id' => url('/') . '#organization']);
+
+        JsonLdMulti::newJsonLd();
+        JsonLdMulti::setType('Dataset');
+        JsonLdMulti::setTitle($isSd ? 'باک سنڌي شاعري ڊيٽاسيٽ' : 'Baakh Sindhi poetry dataset');
+        JsonLdMulti::setDescription($isSd
+            ? 'کليل ڪيٽلاگ: شاعر، صنفون، موضوع ۽ مستقل URLs شاعريءَ لاءِ.'
+            : 'Open catalog of Sindhi poets, genres, topics, and permanent URLs for poems.');
+        JsonLdMulti::addValue('@id', url('/') . '#archive-dataset');
+        JsonLdMulti::addValue('url', url('/sitemap.xml'));
+        JsonLdMulti::addValue('license', url('/' . $lang . '/terms'));
+        JsonLdMulti::addValue('creator', ['@id' => url('/') . '#organization']);
+        JsonLdMulti::addValue('isAccessibleForFree', true);
+        JsonLdMulti::addValue('inLanguage', ['sd', 'en']);
+        JsonLdMulti::addValue('distribution', [
+            [
+                '@type' => 'DataDownload',
+                'encodingFormat' => 'application/xml',
+                'contentUrl' => url('/sitemap.xml'),
+            ],
+            [
+                '@type' => 'DataDownload',
+                'encodingFormat' => 'text/markdown',
+                'contentUrl' => url('/llms.txt'),
+            ],
+            [
+                '@type' => 'DataDownload',
+                'encodingFormat' => 'text/markdown',
+                'contentUrl' => url('/docs/llms.txt'),
+            ],
+            [
+                '@type' => 'DataDownload',
+                'encodingFormat' => 'text/markdown',
+                'contentUrl' => url('/api/llms.txt'),
+            ],
+        ]);
     }
 
     private function siteNavListItems(string $locale): array

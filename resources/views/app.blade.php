@@ -67,8 +67,8 @@
         }
     @endphp
     @if($webCss)
-        <link rel="preload" href="{{ $webCss }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-        <noscript><link rel="stylesheet" href="{{ $webCss }}"></noscript>
+        <link rel="preload" href="{{ $webCss }}" as="style">
+        <link rel="stylesheet" href="{{ $webCss }}">
     @endif
     @viteReactRefresh
     @vite(['resources/js/web/main.jsx'], 'build')
@@ -114,36 +114,32 @@
             white-space: nowrap;
             border: 0;
         }
-        /* Visible until React mounts — this is the mobile LCP element. */
+        html, body {
+            margin: 0;
+            background: #fff;
+            min-height: 100%;
+        }
+        /* Same chrome as the React navbar until #root is replaced. */
         #baakh-first-paint {
-            max-width: 720px;
-            margin: 0 auto;
-            padding: 72px 16px 24px;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-            color: #111;
+            min-height: 100dvh;
+            background: #fff;
         }
-        #baakh-first-paint h1 {
-            font-size: 1.5rem;
-            line-height: 1.3;
-            font-weight: 700;
-            margin: 0 0 1.25rem;
-        }
-        #baakh-first-paint h2 {
-            font-size: 1.25rem;
-            line-height: 1.35;
-            font-weight: 700;
-            margin: 0 0 1.5rem;
-        }
-        #baakh-first-paint .baakh-fp-meta,
-        #baakh-first-paint .baakh-fp-poet {
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin: 0 0 0.35rem;
-        }
-        #baakh-first-paint .baakh-fp-poet {
-            font-size: 1.15rem;
-            padding: 0.75rem 0;
+        #baakh-first-paint .baakh-fp-bar {
+            height: 56px;
             border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+        }
+        #baakh-first-paint .baakh-fp-logo {
+            display: flex;
+            width: 28px;
+            height: 28px;
+        }
+        #baakh-first-paint .baakh-fp-logo img {
+            width: 28px;
+            height: 28px;
         }
     </style>
     @if(!empty($bootstrapPoets))
@@ -167,7 +163,7 @@
             <div class="poetry-fallback-render">{!! $rawText !!}</div>
         @endif
     </noscript>
-    <div id="root">@if(!empty($firstPaintHtml)){!! $firstPaintHtml !!}@else<div id="baakh-first-paint"><h1>{{ $h1 }}</h1></div>@endif</div>
+    <div id="root"><div id="baakh-first-paint" class="baakh-app-shell" aria-hidden="true"><div class="baakh-fp-bar"><span class="baakh-fp-logo"><img src="/favicon.svg" width="28" height="28" alt=""></span></div></div></div>
 </body>
 
 </html>
