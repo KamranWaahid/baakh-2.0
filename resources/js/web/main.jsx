@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation, Outlet } from 'react-router-dom';
-import '../../css/app.css';
 
 // Components
 import Navbar from './components/Navbar';

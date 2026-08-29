@@ -93,7 +93,13 @@ Route::any('{lang}/admin/{any?}', function (Request $request, string $lang, $any
     return view('admin.app');
 })->where('lang', 'en|sd')->where('any', '.*')->name('admin.spa.locale');
 
-Route::get('og-image/poetry/{slug}', [\App\Http\Controllers\OgImageController::class, 'generatePoetryImage'])->name('og.poetry');
+Route::get('og-image/poetry/{slug}', [\App\Http\Controllers\OgImageController::class, 'generatePoetryImage'])
+    ->withoutMiddleware([
+        \Illuminate\Session\Middleware\StartSession::class,
+        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+        \App\Http\Middleware\VerifyCsrfToken::class,
+    ])
+    ->name('og.poetry');
 
 /*
 |--------------------------------------------------------------------------

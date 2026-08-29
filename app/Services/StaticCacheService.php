@@ -37,13 +37,13 @@ class StaticCacheService
     }
 
     /**
-     * Homepage “For you” page-1 payload, or null when missing/stale.
+     * Homepage “For you” page-1 payload, or null when missing (and stale, unless allowed).
      *
      * @return array{data: list<array>, current_page: int, last_page: int, total: int}|null
      */
-    public function getFeedPage(string $locale): ?array
+    public function getFeedPage(string $locale, bool $allowStale = false): ?array
     {
-        $cached = $this->get("feed_page_1_{$locale}", self::FEED_TTL_SECONDS);
+        $cached = $this->get("feed_page_1_{$locale}", $allowStale ? null : self::FEED_TTL_SECONDS);
         if (!is_array($cached) || !isset($cached['data']) || !is_array($cached['data']) || $cached['data'] === []) {
             return null;
         }
@@ -54,6 +54,21 @@ class StaticCacheService
             'last_page' => max(1, (int) ($cached['last_page'] ?? 1)),
             'total' => (int) ($cached['total'] ?? count($cached['data'])),
         ];
+    }
+
+    /**
+     * Cached poets index, or null when missing.
+     *
+     * @return list<array>|null
+     */
+    public function getPoetsList(string $locale): ?array
+    {
+        $cached = $this->get("poets_list_{$locale}");
+        if (!is_array($cached) || $cached === []) {
+            return null;
+        }
+
+        return array_values($cached);
     }
 
     public function putFeedPage(string $locale, array $items, int $lastPage, int $total): void

@@ -121,6 +121,7 @@ const Sidebar = ({ onLinkClick }) => {
                 </a>
                 <nav className="flex-1 px-4 flex flex-col gap-1">
                     <SidebarLink to="/admin" icon={LayoutDashboard}>Dashboard</SidebarLink>
+                    <SidebarLink to="/admin/mobile-notifications" icon={Bell}>App Notifications</SidebarLink>
 
                     <div className="my-2 border-t" />
                     <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">Content</div>
@@ -190,7 +191,6 @@ const Sidebar = ({ onLinkClick }) => {
                     <div className="px-3 text-xs font-semibold text-muted-foreground mb-2 mt-2">System</div>
 
                     <SidebarLink to="/admin/system/info" icon={Info}>Information System</SidebarLink>
-                    <SidebarLink to="/admin/mobile-notifications" icon={Bell}>App Notifications</SidebarLink>
                     <SidebarLink to="/admin/teams" icon={Users}>Admins & Teams</SidebarLink>
                     {isSuperAdmin && (
                         <SidebarLink to="/admin/roles" icon={Shield}>Roles & Permissions</SidebarLink>

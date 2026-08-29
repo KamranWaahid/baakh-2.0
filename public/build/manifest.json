@@ -1,6 +1,6 @@
 {
-  "_NotificationBell-41751022.js": {
-    "file": "assets/NotificationBell-41751022.js",
+  "_NotificationBell-fa549d27.js": {
+    "file": "assets/NotificationBell-fa549d27.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -100,27 +100,27 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-37b84972.css",
+    "file": "assets/app-ba701d98.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
   "resources/js/admin/main.css": {
-    "file": "assets/main-409aeb5c.css",
+    "file": "assets/main-44e05cbf.css",
     "src": "resources/js/admin/main.css"
   },
   "resources/js/admin/main.jsx": {
     "css": [
-      "assets/main-409aeb5c.css"
+      "assets/main-44e05cbf.css"
     ],
     "dynamicImports": [
       "resources/js/admin/pages/Dashboard.jsx"
     ],
-    "file": "assets/main-270e7955.js",
+    "file": "assets/main-56554485.js",
     "imports": [
       "_badge-2bd6467c.js",
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
-      "_NotificationBell-41751022.js",
+      "_NotificationBell-fa549d27.js",
       "_switch-1d9f6c92.js",
       "_save-c950fb40.js",
       "_eye-61faccfe.js",
@@ -134,7 +134,7 @@
     "src": "resources/js/admin/main.jsx"
   },
   "resources/js/admin/pages/Dashboard.jsx": {
-    "file": "assets/Dashboard-1f22e91f.js",
+    "file": "assets/Dashboard-37b5376d.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_switch-1d9f6c92.js",
@@ -142,7 +142,7 @@
       "resources/js/admin/main.jsx",
       "_badge-2bd6467c.js",
       "_axios-ade11851.js",
-      "_NotificationBell-41751022.js",
+      "_NotificationBell-fa549d27.js",
       "_circle-check-big-9acb59b3.js",
       "_save-c950fb40.js",
       "_eye-61faccfe.js",
@@ -168,9 +168,9 @@
   "resources/js/lyrics/main.jsx": {
     "css": [
       "assets/main-878e776e.css",
-      "assets/app-37b84972.css"
+      "assets/app-ba701d98.css"
     ],
-    "file": "assets/main-864269a2.js",
+    "file": "assets/main-17b9b411.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -181,10 +181,7 @@
     "src": "resources/js/lyrics/main.jsx"
   },
   "resources/js/web/components/CoupletsFeed.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/CoupletsFeed-deaf9a44.js",
+    "file": "assets/CoupletsFeed-fc6ecbae.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "resources/js/web/main.jsx",
@@ -219,10 +216,7 @@
     "src": "resources/js/web/components/GenreFeed.jsx"
   },
   "resources/js/web/components/PeriodFeed.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/PeriodFeed-c40583b1.js",
+    "file": "assets/PeriodFeed-5b45f99f.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_badge-2bd6467c.js",
@@ -235,10 +229,7 @@
     "src": "resources/js/web/components/PeriodFeed.jsx"
   },
   "resources/js/web/components/PoemDetail.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/PoemDetail-91f26372.js",
+    "file": "assets/PoemDetail-d51c26d6.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -252,10 +243,7 @@
     "src": "resources/js/web/components/PoemDetail.jsx"
   },
   "resources/js/web/components/PoetProfile.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/PoetProfile-c67686fd.js",
+    "file": "assets/PoetProfile-bc1b9cba.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_badge-2bd6467c.js",
@@ -271,10 +259,7 @@
     "src": "resources/js/web/components/PoetProfile.jsx"
   },
   "resources/js/web/components/PoetryFeed.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/PoetryFeed-bf7bc3b7.js",
+    "file": "assets/PoetryFeed-3a5adb8c.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "resources/js/web/main.jsx",
@@ -287,10 +272,7 @@
     "src": "resources/js/web/components/PoetryFeed.jsx"
   },
   "resources/js/web/components/PoetsFeed.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/PoetsFeed-f7219460.js",
+    "file": "assets/PoetsFeed-c09ce0b6.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_badge-2bd6467c.js",
@@ -304,10 +286,7 @@
     "src": "resources/js/web/components/PoetsFeed.jsx"
   },
   "resources/js/web/components/ProsodyFeed.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/ProsodyFeed-8fd37d4f.js",
+    "file": "assets/ProsodyFeed-4fee6ff1.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_badge-2bd6467c.js",
@@ -321,10 +300,7 @@
     "src": "resources/js/web/components/ProsodyFeed.jsx"
   },
   "resources/js/web/components/SidebarLeft.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/SidebarLeft-8b27e688.js",
+    "file": "assets/SidebarLeft-57671d94.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -351,10 +327,7 @@
     "src": "resources/js/web/components/SidebarRight.jsx"
   },
   "resources/js/web/components/SocialCallback.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/SocialCallback-63400d92.js",
+    "file": "assets/SocialCallback-723149b8.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -366,10 +339,7 @@
     "src": "resources/js/web/components/SocialCallback.jsx"
   },
   "resources/js/web/components/TopicDetail.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/TopicDetail-10cebc6a.js",
+    "file": "assets/TopicDetail-2333526f.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -383,11 +353,8 @@
     "src": "resources/js/web/components/TopicDetail.jsx"
   },
   "resources/js/web/main.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
     "dynamicImports": [
-      "_NotificationBell-41751022.js",
+      "_NotificationBell-fa549d27.js",
       "_x-8c324b48.js",
       "_x-8c324b48.js",
       "resources/js/web/components/SidebarLeft.jsx",
@@ -415,7 +382,7 @@
       "resources/js/web/components/ExploreTopics.jsx",
       "resources/js/web/components/TopicDetail.jsx"
     ],
-    "file": "assets/main-a974e2d0.js",
+    "file": "assets/main-6629c6c4.js",
     "imports": [
       "_badge-2bd6467c.js",
       "_radix-ui-4adf3cda.js",
@@ -448,10 +415,7 @@
     "src": "resources/js/web/pages/Contact.jsx"
   },
   "resources/js/web/pages/ForgotPassword.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/ForgotPassword-9404b3ef.js",
+    "file": "assets/ForgotPassword-9ed6d1cb.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -485,10 +449,7 @@
     "src": "resources/js/web/pages/Privacy.jsx"
   },
   "resources/js/web/pages/Profile.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/Profile-50134369.js",
+    "file": "assets/Profile-e09f73d9.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -516,10 +477,7 @@
     "src": "resources/js/web/pages/ResetPassword.jsx"
   },
   "resources/js/web/pages/SetPassword.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/SetPassword-9f281e43.js",
+    "file": "assets/SetPassword-afe3158d.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",
@@ -533,10 +491,7 @@
     "src": "resources/js/web/pages/SetPassword.jsx"
   },
   "resources/js/web/pages/Settings.jsx": {
-    "css": [
-      "assets/app-37b84972.css"
-    ],
-    "file": "assets/Settings-88553613.js",
+    "file": "assets/Settings-0708a548.js",
     "imports": [
       "_radix-ui-4adf3cda.js",
       "_x-8c324b48.js",

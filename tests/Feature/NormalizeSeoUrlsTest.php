@@ -116,6 +116,7 @@ class NormalizeSeoUrlsTest extends TestCase
 
         $this->assertNotEquals(500, $response->status());
         $response->assertHeader('Content-Type', 'image/png');
+        $response->assertHeader('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function test_periods_plural_redirects_to_singular(): void

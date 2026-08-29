@@ -162,6 +162,7 @@ class SpaController extends Controller
             return $this->renderSpa($fallback, [
                 'feedPreloadUrl' => $feedPreloadUrl,
                 'bootstrapFeed' => $bootstrapFeed,
+                'firstPaintHtml' => $this->homeFirstPaintHtml($locale, $title, $bootstrapFeed),
             ]);
         }
 
@@ -176,7 +177,16 @@ class SpaController extends Controller
                 ]);
             }
 
-            return $this->renderSpa($fallback);
+            $viewData = [];
+            if ($listingKey === 'poets') {
+                $bootstrapPoets = $this->poetsBootstrap($locale);
+                $viewData = [
+                    'bootstrapPoets' => $bootstrapPoets,
+                    'firstPaintHtml' => $this->poetsFirstPaintHtml($locale, $bootstrapPoets),
+                ];
+            }
+
+            return $this->renderSpa($fallback, $viewData);
         }
 
         if ($listingKey !== '') {
@@ -194,7 +204,13 @@ class SpaController extends Controller
                     ]);
                 }
 
-                return $this->renderSpa($fallback);
+                $genreName = $genre->details->firstWhere('lang', $locale)?->cat_name
+                    ?? $genre->details->first()?->cat_name
+                    ?? $genre->slug;
+
+                return $this->renderSpa($fallback, [
+                    'firstPaintHtml' => $this->homeFirstPaintHtml($locale, (string) $genreName, null),
+                ]);
             }
         }
 
@@ -299,18 +315,215 @@ class SpaController extends Controller
     private function homepageBootstrapFeed(string $locale): ?array
     {
         try {
-            $cached = app(StaticCacheService::class)->getFeedPage($locale);
+            $cache = app(StaticCacheService::class);
+            $cached = $cache->getFeedPage($locale) ?? $cache->getFeedPage($locale, true);
+            if ($cached === null) {
+                $cached = $this->liveFeedPage($locale);
+            }
             if ($cached === null) {
                 return null;
             }
 
             return [
                 'lang' => $locale,
+                'generated_at' => (int) (microtime(true) * 1000),
                 'payload' => $cached,
             ];
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @return array{data: list<array>, current_page: int, last_page: int, total: int}|null
+     */
+    private function liveFeedPage(string $locale): ?array
+    {
+        try {
+            $rows = Poetry::query()
+                ->with([
+                    'info' => fn ($q) => $q->where('lang', $locale),
+                    'poet_details' => fn ($q) => $q->where('lang', $locale),
+                    'poet:id,poet_slug,poet_pic',
+                    'category:id,slug',
+                    'category_detail' => fn ($q) => $q->where('lang', $locale),
+                ])
+                ->where('visibility', 1)
+                ->whereHas('poet', fn ($q) => $q->where('visibility', 1))
+                ->latest()
+                ->limit(8)
+                ->get();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($rows->isEmpty()) {
+            return null;
+        }
+
+        $data = $rows->map(function (Poetry $p) {
+            return [
+                'id' => $p->id,
+                'title' => $p->info?->title ?? $p->poetry_title ?? $p->poetry_slug,
+                'slug' => $p->poetry_slug,
+                'author' => $p->poet_details?->poet_laqab ?? 'Unknown',
+                'author_avatar' => null,
+                'cover' => null,
+                'date' => $p->created_at?->toIso8601String(),
+                'readTime' => '5 min read',
+                'category' => $p->category_detail?->cat_name ?? $p->category?->slug ?? 'General',
+                'cat_slug' => $p->category?->slug,
+                'poet_slug' => $p->poet?->poet_slug,
+                'likes' => 0,
+                'is_liked' => false,
+                'is_bookmarked' => false,
+            ];
+        })->all();
+
+        return [
+            'data' => $data,
+            'current_page' => 1,
+            'last_page' => 2,
+            'total' => max(8, count($data)),
+        ];
+    }
+
+    /**
+     * @return array{lang: string, generated_at: int, payload: array{data: list<array>, current_page: int, last_page: int, total: int}}|null
+     */
+    private function poetsBootstrap(string $locale): ?array
+    {
+        try {
+            $list = app(StaticCacheService::class)->getPoetsList($locale);
+            if ($list === null) {
+                $list = $this->livePoetsList($locale);
+            }
+            if ($list === null || $list === []) {
+                return null;
+            }
+
+            $page = array_slice($list, 0, 20);
+
+            return [
+                'lang' => $locale,
+                'generated_at' => (int) (microtime(true) * 1000),
+                'payload' => [
+                    'data' => $page,
+                    'current_page' => 1,
+                    'last_page' => max(1, (int) ceil(count($list) / 20)),
+                    'total' => count($list),
+                    'per_page' => 20,
+                ],
+            ];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return list<array>|null
+     */
+    private function livePoetsList(string $locale): ?array
+    {
+        try {
+            $poets = Poets::query()
+                ->with('all_details')
+                ->withCount('poetry')
+                ->where('visibility', 1)
+                ->latest()
+                ->limit(20)
+                ->get();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($poets->isEmpty()) {
+            return null;
+        }
+
+        return $poets->map(function (Poets $poet) use ($locale) {
+            $detail = $poet->all_details->firstWhere('lang', $locale)
+                ?? $poet->all_details->first();
+            $other = $poet->all_details->firstWhere('lang', $locale === 'sd' ? 'en' : 'sd');
+
+            return [
+                'id' => $poet->id,
+                'slug' => $poet->poet_slug,
+                'avatar' => null,
+                'name_en' => (string) (($locale === 'en' ? $detail?->poet_name : $other?->poet_name) ?: $detail?->poet_name ?: $poet->poet_slug),
+                'name_sd' => (string) (($locale === 'sd' ? $detail?->poet_name : $other?->poet_name) ?: $detail?->poet_name ?: $poet->poet_slug),
+                'laqab_en' => (string) (($locale === 'en' ? $detail?->poet_laqab : $other?->poet_laqab) ?: $detail?->poet_laqab ?: $detail?->poet_name ?: $poet->poet_slug),
+                'laqab_sd' => (string) (($locale === 'sd' ? $detail?->poet_laqab : $other?->poet_laqab) ?: $detail?->poet_laqab ?: $detail?->poet_name ?: $poet->poet_slug),
+                'bio_en' => '',
+                'bio_sd' => '',
+                'entries_count' => $poet->poetry_count ?? 0,
+            ];
+        })->all();
+    }
+
+    /**
+     * Visible HTML inside #root so mobile LCP is the first poem title, not a blank SPA shell.
+     */
+    private function homeFirstPaintHtml(string $locale, string $heading, ?array $bootstrapFeed): string
+    {
+        $isSd = $locale === 'sd';
+        $dir = $isSd ? 'rtl' : 'ltr';
+        $items = is_array($bootstrapFeed['payload']['data'] ?? null)
+            ? array_slice($bootstrapFeed['payload']['data'], 0, 3)
+            : [];
+
+        $html = '<div id="baakh-first-paint" dir="' . $dir . '">';
+        $html .= '<h1>' . e($heading) . '</h1>';
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $author = e((string) ($item['author'] ?? ''));
+            $title = e((string) ($item['title'] ?? $item['slug'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+            $html .= '<article class="baakh-fp-card">';
+            if ($author !== '') {
+                $html .= '<p class="baakh-fp-meta">' . $author . '</p>';
+            }
+            $html .= '<h2>' . $title . '</h2>';
+            $html .= '</article>';
+        }
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * Visible poets heading + names so /sd/poets and /en/poets paint LCP without JS.
+     */
+    private function poetsFirstPaintHtml(string $locale, ?array $bootstrapPoets): string
+    {
+        $isSd = $locale === 'sd';
+        $dir = $isSd ? 'rtl' : 'ltr';
+        $heading = $isSd ? 'شاعر' : 'Poets';
+        $items = is_array($bootstrapPoets['payload']['data'] ?? null)
+            ? array_slice($bootstrapPoets['payload']['data'], 0, 6)
+            : [];
+
+        $html = '<div id="baakh-first-paint" dir="' . $dir . '">';
+        $html .= '<h1>' . e($heading) . '</h1>';
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $name = $isSd
+                ? (string) ($item['laqab_sd'] ?? $item['name_sd'] ?? $item['slug'] ?? '')
+                : (string) ($item['laqab_en'] ?? $item['name_en'] ?? $item['slug'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $html .= '<p class="baakh-fp-poet">' . e($name) . '</p>';
+        }
+        $html .= '</div>';
+
+        return $html;
     }
 
     /**
