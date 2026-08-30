@@ -82,7 +82,7 @@ class GoogleOAuthHandshakeTest extends TestCase
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
 
-        $response = $this->get('/auth/google-callback');
+        $response = $this->get('/auth/google-callback?code=test-oauth-code');
         $response->assertRedirect();
 
         $location = (string) $response->headers->get('Location');
@@ -94,6 +94,24 @@ class GoogleOAuthHandshakeTest extends TestCase
             User::query()->where('google_id', 'google-123')->exists(),
             'Google user should be created and linked.'
         );
+    }
+
+    public function test_android_google_callback_returns_deep_link_bridge(): void
+    {
+        $response = $this->get('/auth/google-callback');
+
+        $response->assertOk();
+        $response->assertSee('baakh://auth/google-callback', false);
+        $response->assertSee('Signing in', false);
+        $this->assertStringContainsString('text/html', (string) $response->headers->get('Content-Type'));
+    }
+
+    public function test_android_client_query_uses_deep_link_even_with_code(): void
+    {
+        $response = $this->get('/auth/google-callback?code=from-app&client=android');
+
+        $response->assertOk();
+        $response->assertSee('baakh://auth/google-callback', false);
     }
 
     private function createAuthSchema(): void

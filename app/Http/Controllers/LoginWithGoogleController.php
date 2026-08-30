@@ -24,8 +24,15 @@ class LoginWithGoogleController extends Controller
         return $driver->stateless()->redirect();
     }
 
-    public function googleAuthorized()
+    public function googleAuthorized(Request $request)
     {
+        // Android Custom Tabs land here with tokens in the URL hash (never sent
+        // to PHP). Return a 200 page that hands query+hash to baakh://.
+        // Web Socialite always includes ?code= — leave that path unchanged.
+        if ($this->isAndroidAppCallback($request)) {
+            return $this->androidAppCallbackPage();
+        }
+
         // Retrieve user data from Google
         /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
         $driver = Socialite::driver('google');
@@ -110,6 +117,28 @@ class LoginWithGoogleController extends Controller
         Log::info("Redirecting to Google handshake callback");
 
         return redirect($redirectUrl);
+    }
+
+    /**
+     * Android app Custom Tab / WebView callback — not used by the website.
+     */
+    private function isAndroidAppCallback(Request $request): bool
+    {
+        if (in_array($request->query('client'), ['android', 'app'], true)
+            || in_array($request->query('source'), ['android', 'app'], true)) {
+            return true;
+        }
+
+        return ! $request->filled('code');
+    }
+
+    private function androidAppCallbackPage()
+    {
+        return response()
+            ->view('auth.google-android-callback')
+            ->header('Content-Type', 'text/html; charset=utf-8')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function exchangeHandshake(Request $request)
